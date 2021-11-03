@@ -6,7 +6,7 @@ import zipfile
 
 import uncompyle_dir
 
-thread_decode = 150  # Самое лучше значение 20, чем выше, тем больше нагрузка на ЦП
+thread_decode = 150  # Самое лучшее значение 20, чем выше, тем больше нагрузка на ЦП
 
 time_start = time.time()
 wot_path_pak = None
