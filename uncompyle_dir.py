@@ -1,9 +1,13 @@
-import os, subprocess
-from tqdm import tqdm
+import os
+import subprocess
 from threading import Thread
+
+from tqdm import tqdm
+
 
 def __decompile_file(file, new_file):
     subprocess.call(f'uncompyle6 -o {new_file} {file}', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 
 def decompile_dir(dir_wot_pak, count_thread=10):
     total = 0
@@ -30,6 +34,7 @@ def decompile_dir(dir_wot_pak, count_thread=10):
                 all_thread.append(thread)
                 progress.update()
     progress.close()
+
 
 def remove_pyc_file(dir_wot_pak):
     total = 0

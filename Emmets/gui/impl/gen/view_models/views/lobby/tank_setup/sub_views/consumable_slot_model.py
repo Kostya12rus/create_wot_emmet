@@ -1,0 +1,42 @@
+# uncompyle6 version 3.8.0
+# Python bytecode 2.7 (62211)
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/tank_setup/sub_views/consumable_slot_model.py
+from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.base_slot_model import BaseSlotModel
+
+class ConsumableSlotModel(BaseSlotModel):
+    __slots__ = ()
+
+    def __init__(self, properties=22, commands=0):
+        super(ConsumableSlotModel, self).__init__(properties=properties, commands=commands)
+
+    def getDescription(self):
+        return self._getString(18)
+
+    def setDescription(self, value):
+        self._setString(18, value)
+
+    def getIsBuiltIn(self):
+        return self._getBool(19)
+
+    def setIsBuiltIn(self, value):
+        self._setBool(19, value)
+
+    def getItemName(self):
+        return self._getString(20)
+
+    def setItemName(self, value):
+        self._setString(20, value)
+
+    def getIsBuyMoreDisabled(self):
+        return self._getBool(21)
+
+    def setIsBuyMoreDisabled(self, value):
+        self._setBool(21, value)
+
+    def _initialize(self):
+        super(ConsumableSlotModel, self)._initialize()
+        self._addStringProperty('description', '')
+        self._addBoolProperty('isBuiltIn', False)
+        self._addStringProperty('itemName', '')
+        self._addBoolProperty('isBuyMoreDisabled', False)
