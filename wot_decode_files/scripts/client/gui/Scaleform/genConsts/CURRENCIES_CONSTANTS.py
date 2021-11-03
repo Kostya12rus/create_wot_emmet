@@ -1,0 +1,26 @@
+# uncompyle6 version 3.8.0
+# Python bytecode 2.7 (62211)
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# Embedded file name: scripts/client/gui/Scaleform/genConsts/CURRENCIES_CONSTANTS.py
+
+
+class CURRENCIES_CONSTANTS(object):
+    GOLD = 'gold'
+    CREDITS = 'credits'
+    CRYSTAL = 'crystal'
+    EVENT_COIN = 'eventCoin'
+    BPCOIN = 'bpcoin'
+    XP_COST = 'xp'
+    FREE_XP = 'freeXP'
+    ERROR = 'error'
+    SINGAPORE_ALTERNATIVE_CURRENCIES_SET = [GOLD, CREDITS]
+    GOLD_COLOR = 16761699
+    CREDITS_COLOR = 13556185
+    CRYSTAL_COLOR = 13224374
+    EVENT_COIN_COLOR = 13224374
+    BPCOIN_COLOR = 15327935
+    CREDITS_INDEX = 0
+    GOLD_INDEX = 1
+    CRYSTAL_INDEX = 2
+    EVENT_COIN_INDEX = 3
+    BPCOIN_INDEX = 4
