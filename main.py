@@ -47,7 +47,6 @@ print('{:.5f}s'.format(time.time()-remove_pyc_time), 'файлы .pyc удале
 client_dir = local_pak_decode_path / 'scripts' / 'client'
 client_common_dir = local_pak_decode_path / 'scripts' / 'client_common'
 common_dir = local_pak_decode_path / 'scripts' / 'common'
-
 emmet_dir = pathlib.Path('Emmets')
 if emmet_dir.is_dir():
     dir_del_time = time.time()
@@ -62,7 +61,4 @@ subprocess.call(fr'XCOPY "{client_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*
 subprocess.call(fr'XCOPY "{client_common_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q', shell=True)
 subprocess.call(fr'XCOPY "{common_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q', shell=True)
 print('{:.5f}s'.format(time.time() - copy_time), 'emmet создан', )
-
 print('{:.5f}s'.format(time.time()-time_start), 'затрачено времени')
-
-# F:\World_of_Tanks_RU

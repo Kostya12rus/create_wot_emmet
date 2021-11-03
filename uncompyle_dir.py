@@ -2,8 +2,7 @@ import os, subprocess
 from tqdm import tqdm
 from threading import Thread
 
-
-def decompile_file(file, new_file):
+def __decompile_file(file, new_file):
     subprocess.call(f'uncompyle6 -o {new_file} {file}', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 def decompile_dir(dir_wot_pak, count_thread=10):
@@ -26,7 +25,7 @@ def decompile_dir(dir_wot_pak, count_thread=10):
                 file_path = os.path.join(dir_path, filename)
                 original_filename = filename.split('.')[0]
                 original_filepath = dir_path + '/' + original_filename + '.py'
-                thread = Thread(target=decompile_file, args=(file_path, original_filepath, ), daemon=True)
+                thread = Thread(target=__decompile_file, args=(file_path, original_filepath,), daemon=True)
                 thread.start()
                 all_thread.append(thread)
                 progress.update()
