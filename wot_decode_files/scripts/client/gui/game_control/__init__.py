@@ -70,6 +70,7 @@ def getGameControllersConfig(manager):
     from gui.game_control.veh_post_progression_controller import VehiclePostProgressionController
     from gui.game_control.wot_plus_controller import WotPlusNotificationController
     from gui.game_control.year_hare_affair_controller import YearHareAffairController as _YearHareAffairController
+    from gui.game_control.shop_sales_event_controller import ShopSalesEventController as _ShopSalesController
     tracker = GameStateTracker()
     tracker.init()
     manager.addInstance(_interface.IGameStateTracker, tracker, finalizer='fini')
@@ -136,3 +137,4 @@ def getGameControllersConfig(manager):
     _config(_interface.ISteamRegistrationOverlay, _SteamRegistrationOverlay())
     _config(_interface.IWotPlusNotificationController, WotPlusNotificationController())
     _config(_interface.IYearHareAffairController, _YearHareAffairController())
+    _config(_interface.IShopSalesEventController, _ShopSalesController())
