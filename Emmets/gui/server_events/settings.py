@@ -4,7 +4,7 @@
 # Embedded file name: scripts/client/gui/server_events/settings.py
 import time
 from contextlib import contextmanager
-from account_helpers.AccountSettings import DOG_TAGS, WOT_PLUS
+from account_helpers.AccountSettings import DOG_TAGS, WOT_PLUS, TELECOM_RENTALS
 from gui.shared import utils
 from helpers import dependency
 from skeletons.gui.server_events import IEventsCache
@@ -78,6 +78,29 @@ class _WotPlusSettings(utils.SettingRootRecord):
     @classmethod
     def _getSettingName(cls):
         return WOT_PLUS
+
+
+class _TelecomRentalsSettings(utils.SettingRootRecord):
+
+    def __init__(self, isTelecomRentalsEnabled=False, isTelecomRentalsBlocked=False, pendingRentals=None):
+        super(_TelecomRentalsSettings, self).__init__(isTelecomRentalsEnabled=isTelecomRentalsEnabled, isTelecomRentalsBlocked=isTelecomRentalsBlocked, pendingRentals=pendingRentals or set())
+
+    def setTelecomRentalsEnabledState(self, isEnabled):
+        self.update(isTelecomRentalsEnabled=isEnabled)
+
+    def setTelecomRentalsBlockedState(self, isBlocked):
+        self.update(isTelecomRentalsBlocked=isBlocked)
+
+    def setRentPending(self, vehCD):
+        self.update(pendingRentals=self.pendingRentals | {vehCD})
+
+    def resetRentPending(self, vehCD):
+        self.pendingRentals.discard(vehCD)
+        self.update(pendingRentals=self.pendingRentals)
+
+    @classmethod
+    def _getSettingName(cls):
+        return TELECOM_RENTALS
 
 
 class _QuestSettings(utils.SettingRootRecord):
@@ -233,5 +256,16 @@ def getWotPlusSettings():
 @contextmanager
 def wotPlusSettings():
     s = getWotPlusSettings()
+    yield s
+    s.save()
+
+
+def getTelecomRentalsSettings():
+    return _TelecomRentalsSettings.load()
+
+
+@contextmanager
+def telecomRentalsSettings():
+    s = getTelecomRentalsSettings()
     yield s
     s.save()

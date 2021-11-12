@@ -2330,6 +2330,8 @@ RECORDS = (
  (
   'singleAchievements', 'october21', 'p', 'B', 1),
  (
+  'singleAchievements', 'november21', 'p', 'B', 1),
+ (
   'singleAchievements', 'hw2019Medal', 'p', 'B', 1),
  (
   'singleAchievements', 'hw2019Medal1', 'p', 'B', 1),
@@ -4107,7 +4109,8 @@ RECORD_DB_IDS = {('total', 'creationTime'): 68,
    ('achievements', 'whiteTiger2012'): 1639, 
    ('singleAchievements', 'october21'): 1640, 
    ('singleAchievements', 'hw2021Medal1'): 1641, 
-   ('singleAchievements', 'hw2021Medal2'): 1642}
+   ('singleAchievements', 'hw2021Medal2'): 1642, 
+   ('singleAchievements', 'november21'): 1643}
 DB_ID_TO_RECORD = dict([ (value, key) for key, value in RECORD_DB_IDS.iteritems() ])
 RECORD_DB_IDS.update({('vehTypeFrags', ''): 863, 
    ('a15x15Cut', ''): 864, 
