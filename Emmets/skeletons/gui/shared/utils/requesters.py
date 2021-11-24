@@ -134,6 +134,10 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def dynamicCurrencyStatuses(self):
+        raise NotImplementedError
+
+    @property
     def credits(self):
         raise NotImplementedError
 
@@ -351,6 +355,10 @@ class IStatsRequester(IRequester):
 
     @property
     def oldVehInvIDs(self):
+        raise NotImplementedError
+
+    @property
+    def dynamicCurrencies(self):
         raise NotImplementedError
 
     def getMapsBlackList(self):

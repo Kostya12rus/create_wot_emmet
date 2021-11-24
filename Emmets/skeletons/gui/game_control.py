@@ -302,6 +302,10 @@ class IWalletController(IGameController):
         raise NotImplementedError
 
     @property
+    def dynamicComponentsStatuses(self):
+        raise NotImplementedError
+
+    @property
     def isSyncing(self):
         raise NotImplementedError
 
@@ -1930,6 +1934,29 @@ class IVehiclePostProgressionController(IGameController):
 class IWotPlusNotificationController(IGameController):
 
     def processSwitchNotifications(self):
+        raise NotImplementedError
+
+
+class ISeniorityAwardsController(IGameController):
+    onUpdated = None
+
+    @property
+    def isEnabled(self):
+        raise NotImplementedError
+
+    @property
+    def endTimestamp(self):
+        raise NotImplementedError
+
+    @property
+    def showNotificationLastCallTimestamp(self):
+        raise NotImplementedError
+
+    @property
+    def needShowNotification(self):
+        raise NotImplementedError
+
+    def getSACoin(self):
         raise NotImplementedError
 
 

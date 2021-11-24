@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/marathon/marathon_reward_helper.py
 from collections import namedtuple
+import re
 from gui.impl.gen import R
 from gui.shared.gui_items import Vehicle
 from helpers import dependency, int2roman
@@ -45,3 +46,22 @@ def showMarathonReward(vehicleCD, videoShownKey):
             window = MarathonRewardViewWindow(specialRewardData)
             window.load()
     return
+
+
+def getRewardImage(path):
+    if path is None:
+        return ''
+    else:
+        return path.replace('../', 'img://gui/')
+
+
+def getRewardLabel(label):
+    if label is None:
+        return ''
+    else:
+        return re.sub('\\D', '', label)
+
+
+def getRewardOverlayType(overlayType):
+    label = overlayType['big'] if overlayType else ''
+    return label.replace('Big', '')
