@@ -2,7 +2,6 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/tank_setup/context_menu/base.py
-from constants import PREBATTLE_TYPE, QUEUE_TYPE
 from gui.Scaleform.daapi.view.lobby.shared.cm_handlers import ContextMenu, CMLabel
 from gui.Scaleform.framework.managers.context_menu import CM_BUY_COLOR
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.base_setup_model import BaseSetupModel
@@ -10,7 +9,6 @@ from gui.impl.lobby.tank_setup.tank_setup_helper import NONE_ID
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 from skeletons.gui.shared import IItemsCache
-from gui.prb_control.dispatcher import g_prbLoader
 FIRST_SLOT = 0
 SECOND_SLOT = 1
 THIRD_SLOT = 2
@@ -33,11 +31,6 @@ class TankSetupCMLabel(object):
 class BaseTankSetupContextMenu(ContextMenu):
     _gui = dependency.descriptor(IGuiLoader)
     _itemsCache = dependency.descriptor(IItemsCache)
-
-    @property
-    def isInEventMode(self):
-        state = g_prbLoader.getDispatcher().getFunctionalState()
-        return state.isInPreQueue(QUEUE_TYPE.EVENT_BATTLES) or state.isInUnit(PREBATTLE_TYPE.EVENT)
 
     def _sendSlotAction(self, actionType, **kwargs):
         view = self._getEmitterView()

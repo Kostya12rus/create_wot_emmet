@@ -144,6 +144,7 @@ def removeVehicleCamouflages(vehicle):
             outfit = vehicle.getOutfit(season)
             if outfit:
                 outfit.hull.slotFor(GUI_ITEM_TYPE.CAMOUFLAGE).clear()
+                vehicle.removeOutfitForSeason(season)
 
         return
 

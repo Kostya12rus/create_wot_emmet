@@ -161,7 +161,7 @@ class _PreBattleDispatcher(ListenersCollection):
         return
 
     @async
-    def leave(self, ctx, callback=None):
+    def leave(self, ctx, callback=None, ignoreConfirmation=False):
         if ctx.getRequestType() != _RQ_TYPE.LEAVE:
             LOG_ERROR('Invalid context to leave prebattle/unit', ctx)
             if callback is not None:
@@ -173,13 +173,13 @@ class _PreBattleDispatcher(ListenersCollection):
                 callback(False)
             return
         entity = self.__entity
-        meta = entity.getConfirmDialogMeta(ctx)
-        if meta:
-            entity.showDialog(meta, lambda result: self.__leaveCallback(result, ctx, callback))
-            return
-        else:
-            self.__leaveLogic(ctx, callback)
-            return
+        if not ignoreConfirmation:
+            meta = entity.getConfirmDialogMeta(ctx)
+            if meta:
+                entity.showDialog(meta, lambda result: self.__leaveCallback(result, ctx, callback))
+                return
+        self.__leaveLogic(ctx, callback)
+        return
 
     def __leaveCallback(self, result, ctx, callback=None):
         if not result:
@@ -310,7 +310,7 @@ class _PreBattleDispatcher(ListenersCollection):
                 callback(True)
             return
         self.__entity.setCoolDown(ctx.getRequestType(), ctx.getCooldown())
-        result = yield self.leave(ctx)
+        result = yield self.leave(ctx, ignoreConfirmation=action.ignoreConfirmation)
         if callback is not None:
             callback(result)
         return

@@ -5,8 +5,11 @@
 import typing
 from skeletons.gui.shared.utils import requesters
 if typing.TYPE_CHECKING:
+    from Event import Event
+    from gui.shared.utils.requesters import battle_pass_requester
     from gui.veh_post_progression.models.progression import PostProgressionItem
     from items.vehicles import VehicleType
+    from new_year import ny_requester
 
 class IItemsRequester(requesters.IRequester):
 
@@ -72,6 +75,14 @@ class IItemsRequester(requesters.IRequester):
 
     @property
     def battlePass(self):
+        raise NotImplementedError
+
+    @property
+    def giftSystem(self):
+        raise NotImplementedError
+
+    @property
+    def festivity(self):
         raise NotImplementedError
 
     def requestUserDossier(self, databaseID, callback):
@@ -185,10 +196,13 @@ class IHangarSpace(object):
     onSpaceChanged = None
     onNotifyCursorOver3dScene = None
     onSpaceChangedByAction = None
-    onObjectsSelectionEnabled = None
 
     @property
     def space(self):
+        raise NotImplementedError
+
+    @property
+    def spaceID(self):
         raise NotImplementedError
 
     @property
@@ -268,6 +282,9 @@ class IHangarSpace(object):
         raise NotImplementedError
 
     def updateAnchorsParams(self, *args):
+        raise NotImplementedError
+
+    def resetLastUpdatedVehicle(self):
         raise NotImplementedError
 
 

@@ -2,7 +2,7 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/time_utils.py
-import calendar, datetime, re, time, BigWorld
+import re, calendar, datetime, time, BigWorld
 from debug_utils import LOG_CURRENT_EXCEPTION
 from helpers.i18n import makeString as _ms
 from soft_exception import SoftException
@@ -10,7 +10,6 @@ ONE_SECOND = 1
 DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
 MINUTES_IN_HOUR = 60
-ONE_SECOND = 1
 ONE_MINUTE = 60
 MS_IN_SECOND = 1000
 QUARTER = 15
@@ -54,13 +53,6 @@ class _TimeCorrector(object):
 
 
 _g_instance = _TimeCorrector()
-
-def getTodayStartingTimeUTC():
-    serverRegionalSettings = BigWorld.player().serverSettings['regional_settings']
-    resetTimeUTC = serverRegionalSettings.get('starting_time_of_a_new_day', 0)
-    resetHourUTC = resetTimeUTC / ONE_HOUR
-    return getTimeTodayForUTC(hour=resetHourUTC)
-
 
 def setTimeCorrection(serverUTCTime):
     _g_instance._evalTimeCorrection(serverUTCTime)

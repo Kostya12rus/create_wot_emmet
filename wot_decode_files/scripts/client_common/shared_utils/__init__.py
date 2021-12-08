@@ -2,14 +2,16 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/shared_utils/__init__.py
-import collections, weakref, itertools, types, logging
+import collections, weakref, itertools, types, logging, typing
 from functools import partial
 import BigWorld
 from adisp import async
-from debug_utils import LOG_ERROR
 _logger = logging.getLogger(__name__)
-ScalarTypes = (
- types.IntType, types.LongType, types.FloatType,
+if typing.TYPE_CHECKING:
+    from typing import Callable, Iterable, List, Optional, Tuple, TypeVar, Union
+    T = TypeVar('T')
+    R = TypeVar('R')
+ScalarTypes = (types.IntType, types.LongType, types.FloatType,
  types.BooleanType) + types.StringTypes
 IntegralTypes = (types.IntType, types.LongType)
 
@@ -83,6 +85,12 @@ def collapseIntervals(sequence):
             result.append(prevElement)
 
     return result
+
+
+def getSafeFromCollection(lst, ndx, default=None):
+    if 0 <= ndx < len(lst):
+        return lst[ndx]
+    return default
 
 
 def allEqual(sequence, accessor=None):
@@ -220,9 +228,9 @@ class AlwaysValidObject(object):
         self.__name = name
 
     def __getattr__(self, item):
-        if item not in self.__dict__:
-            self.__dict__[item] = AlwaysValidObject(self._makeName(self.__name, item))
-        return self.__dict__[item]
+        if item in self.__dict__:
+            return self.__dict__[item]
+        return AlwaysValidObject(self._makeName(self.__name, item))
 
     def __call__(self, *args, **kwargs):
         return AlwaysValidObject()
@@ -268,3 +276,7 @@ def nextTick(func):
 def awaitNextFrame(callback):
     BigWorld.callback(0.0, partial(callback, None))
     return
+
+
+def inPercents(fraction, digitsToRound=1):
+    return round(fraction * 100, digitsToRound)

@@ -124,7 +124,7 @@ class DetachedTurret(BigWorld.Entity, ScriptGameObject):
             return
         if self.__vehicleStickers:
             return
-        self.__vehicleStickers = VehicleStickers(self.__vehDescr, vehicle.publicInfo['marksOnGun'], vehicleId=vehicle.id)
+        self.__vehicleStickers = VehicleStickers(self.__vehDescr, vehicle.publicInfo['marksOnGun'])
         self.__vehicleStickers.alpha = vehicles.g_cache.commonConfig['miscParams']['damageStickerAlpha']
         self.__vehicleStickers.attach(self.model, True, False, True)
 
@@ -265,7 +265,7 @@ class _TurretDetachmentEffects(Component):
             return
         else:
             stages, effectsList, _ = result
-            self.__pullEffectListPlayer = EffectsListPlayer(effectsList, stages, debugParent=self)
+            self.__pullEffectListPlayer = EffectsListPlayer(effectsList, stages)
             self.__pullEffectListPlayer.play(self.__turretModel, SpecialKeyPointNames.START)
             self.__pullEffectListPlayer.effectMaterialIdx = effectMaterialIdx
             return
@@ -274,7 +274,7 @@ class _TurretDetachmentEffects(Component):
         self.__stopStateEffects()
         effectName = _TurretDetachmentEffects.__EFFECT_NAMES[self.__state]
         stages, effectsList, _ = self.__detachmentEffectsDesc[effectName]
-        self.__stateEffectListPlayer = EffectsListPlayer(effectsList, stages, debugParent=self)
+        self.__stateEffectListPlayer = EffectsListPlayer(effectsList, stages)
         self.__stateEffectListPlayer.play(self.__turretModel, startKeyPoint)
 
     def __normalizeEnergy(self, energy):

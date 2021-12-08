@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/common/settings/gamma_wizard.py
 import BigWorld
+from gui.Scaleform.daapi.view.common.settings.mixins import LayerVisibilityMixin
 from gui.Scaleform.daapi.view.meta.GammaWizardViewMeta import GammaWizardViewMeta
 from gui.Scaleform.locale.SETTINGS import SETTINGS
 from gui.shared import EVENT_BUS_SCOPE
@@ -10,7 +11,7 @@ from gui.shared.events import GameEvent
 from gui.shared.formatters import text_styles
 from gui.shared.utils.functions import makeTooltip
 
-class GammaWizardView(GammaWizardViewMeta):
+class GammaWizardView(LayerVisibilityMixin, GammaWizardViewMeta):
     MIN_VALUE = 0
     MAX_VALUE = 1
     DEFAULT_VALUE = 0.5

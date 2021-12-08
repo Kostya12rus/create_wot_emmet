@@ -8,20 +8,21 @@ from items.components import component_constants
 
 class HangarConfig(object):
     __slots__ = [
-     'cfg', 'vStartAngles', 'vStartPos', 'camDistConstPlatoon', 'camStartDistPlatoon', 'camStartAngles',
-     'camStartAnglesPlatoon', 'camStartTargetPos', 'camStartDist', 'camDistConstr',
-     'camMinDistVehicleHullLengthK', 'camPitchConstr', 'camYawConstr', 'camSens', 'camDistSens',
-     'camPivotPos', 'camFluency', 'emblemsAlphaDamaged', 'emblemsAlphaUndamaged', 'shadowLightDir',
-     'shadowModelName', 'shadowForwardYOffset', 'shadowDeferredYOffset', 'shadowDefaultTextureName',
-     'shadowEmptyTextureName', 'camCapsuleScale', 'camCapsuleGunScale', 'camIdlePitchConstr',
-     'camIdleDistConstr', 'camIdleYawPeriod', 'camIdlePitchPeriod', 'camIdleDistPeriod',
-     'camIdleEasingInTime', 'camParallaxDistance', 'camParallaxAngles', 'camParallaxSmoothing',
-     'vehicleGunPitch', 'vehicleTurretYaw']
+     'cfg', 'vStartAngles', 'vStartPos', 'camDistConstrPlatoon', 'camStartDistPlatoon',
+     'camPitchConstrPlatoon', 'camStartAngles', 'camStartAnglesPlatoon', 'camStartTargetPos',
+     'camStartDist', 'camDistConstr', 'camMinDistVehicleHullLengthK', 'camPitchConstr', 'camYawConstr',
+     'camSens', 'camDistSens', 'camPivotPos', 'camFluency', 'emblemsAlphaDamaged', 'emblemsAlphaUndamaged',
+     'shadowLightDir', 'shadowModelName', 'shadowForwardYOffset', 'shadowDeferredYOffset',
+     'shadowDefaultTextureName', 'shadowEmptyTextureName', 'camCapsuleScale', 'camCapsuleGunScale',
+     'camIdlePitchConstr', 'camIdleDistConstr', 'camIdleYawPeriod', 'camIdlePitchPeriod',
+     'camIdleDistPeriod', 'camIdleEasingInTime', 'camParallaxDistance', 'camParallaxAngles',
+     'camParallaxSmoothing', 'vehicleGunPitch', 'vehicleTurretYaw']
 
     def __init__(self):
         self.cfg = {}
-        self.camDistConstPlatoon = Vector2()
+        self.camDistConstrPlatoon = Vector2()
         self.camStartDistPlatoon = component_constants.ZERO_FLOAT
+        self.camPitchConstrPlatoon = Vector2()
         self.camStartAngles = Vector2()
         self.camStartAnglesPlatoon = Vector2()
         self.vStartAngles = Vector3()
@@ -85,9 +86,10 @@ class HangarConfig(object):
         self.camStartAngles = self.loadConfigValue('cam_start_angles', xml, xml.readVector2, defaultCfg)
         self.camStartAnglesPlatoon = self.loadConfigValue('cam_start_angles_platoon', xml, xml.readVector2, {'cam_start_angles_platoon': self.camStartAngles})
         self.camDistConstr = self.loadConfigValue('cam_dist_constr', xml, xml.readVector2, defaultCfg)
-        self.camDistConstPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
+        self.camDistConstrPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
         self.camMinDistVehicleHullLengthK = self.loadConfigValue('cam_min_dist_vehicle_hull_length_k', xml, xml.readFloat, defaultCfg)
         self.camPitchConstr = self.loadConfigValue('cam_pitch_constr', xml, xml.readVector2, defaultCfg)
+        self.camPitchConstrPlatoon = self.loadConfigValue('cam_pitch_constr_platoon', xml, xml.readVector2, {'cam_pitch_constr_platoon': self.camPitchConstr})
         self.camYawConstr = self.loadConfigValue('cam_yaw_constr', xml, xml.readVector2, defaultCfg)
         self.camSens = self.loadConfigValue('cam_sens', xml, xml.readFloat, defaultCfg)
         self.camDistSens = self.loadConfigValue('cam_dist_sens', xml, xml.readFloat, defaultCfg)
@@ -141,7 +143,7 @@ class HangarConfig(object):
         self.camStartDist = self.loadConfigValue('cam_start_dist', xml, xml.readFloat, self)
         self.camStartDistPlatoon = self.loadConfigValue('cam_start_dist_platoon', xml, xml.readFloat, {'cam_start_dist_platoon': self.camStartDist})
         self.camDistConstr = self.loadConfigValue('cam_dist_constr', xml, xml.readVector2, self)
-        self.camDistConstPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
+        self.camDistConstrPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
         self.camStartAngles = self.loadConfigValue('cam_start_angles', xml, xml.readVector2, self)
         self.camStartAnglesPlatoon = self.loadConfigValue('cam_start_angles_platoon', xml, xml.readVector2, {'cam_start_angles_platoon': self.camStartAngles})
         self.camPivotPos = self.loadConfigValue('cam_pivot_pos', xml, xml.readVector3, self)
@@ -161,7 +163,7 @@ class HangarConfig(object):
         self.camStartDist = self.loadConfigValue('cam_start_dist', xml, xml.readFloat, self)
         self.camStartDistPlatoon = self.loadConfigValue('cam_start_dist_platoon', xml, xml.readFloat, {'cam_start_dist_platoon': self.camStartDist})
         self.camDistConstr = self.loadConfigValue('cam_dist_constr', xml, xml.readVector2, self)
-        self.camDistConstPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
+        self.camDistConstrPlatoon = self.loadConfigValue('cam_dist_constr_platoon', xml, xml.readVector2, {'cam_dist_constr_platoon': self.camDistConstr})
         self.camStartAngles = self.loadConfigValue('cam_start_angles', xml, xml.readVector2, self)
         self.camStartAnglesPlatoon = self.loadConfigValue('cam_start_angles_platoon', xml, xml.readVector2, {'cam_start_angles_platoon': self.camStartAngles})
         self.camPivotPos = self.loadConfigValue('cam_pivot_pos', xml, xml.readVector3, self)

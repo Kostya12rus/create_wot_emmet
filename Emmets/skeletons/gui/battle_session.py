@@ -175,13 +175,6 @@ class IDynamicControllersLocator(object):
     def gameNotifications(self):
         raise NotImplementedError
 
-    @property
-    def battleGoals(self):
-        raise NotImplementedError
-
-    def vehiclesPositionCtrl(self):
-        return NotImplementedError
-
 
 class ISquadInvitationsHandler(object):
     __slots__ = ()
@@ -675,9 +668,6 @@ class IBattleSessionProvider(object):
     def setVehicleHealth(self, isPlayerVehicle, vehicleID, newHealth, attackerID, attackReasonID):
         raise NotImplementedError
 
-    def setVehicleMaxHealth(self, isPlayerVehicle, vehicleID, newHealth):
-        raise NotImplementedError
-
     def repairPointAction(self, repairPointIndex, action, nextActionTime):
         raise NotImplementedError
 
@@ -697,4 +687,10 @@ class IBattleSessionProvider(object):
         raise NotImplementedError
 
     def handleContexChatCommand(self, key):
+        raise NotImplementedError
+
+    def updateVehicleEffects(self):
+        raise NotImplementedError
+
+    def updateObservedVehicleData(self, vID, extraData):
         raise NotImplementedError

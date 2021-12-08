@@ -487,8 +487,6 @@ class BaseHangarParamContext(ToolTipContext):
         self.showTitleValue = showTitleValue
 
     def getComparator(self):
-        if g_currentPreviewVehicle.isPresent() and g_currentPreviewVehicle.item.isOnlyForEventBattles:
-            return params_helper.idealCrewComparator(g_currentPreviewVehicle.item)
         return params_helper.idealCrewComparator(g_currentVehicle.item)
 
     def buildItem(self, *args, **kwargs):
@@ -577,8 +575,6 @@ class HangarContext(ToolTipContext):
         return
 
     def getVehicle(self):
-        if g_currentPreviewVehicle.isPresent() and g_currentPreviewVehicle.item.isOnlyForEventBattles:
-            return g_currentPreviewVehicle.item
         return g_currentVehicle.item
 
     def buildItem(self, intCD, slotIdx=0, historicalBattleID=-1, vehicle=None):

@@ -244,6 +244,10 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
         return self.getCacheValue('piggyBank', {})
 
     @property
+    def entitlements(self):
+        return self.getCacheValue('entitlements', {})
+
+    @property
     def dummySessionStats(self):
         return self.getCacheValue('dummySessionStats', {})
 

@@ -2,13 +2,15 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/DialogsInterface.py
+import BigWorld, WGC
+from adisp import process
 from constants import ACCOUNT_KICK_REASONS
 from gui.Scaleform.Waiting import Waiting
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.shared import events, g_eventBus, EVENT_BUS_SCOPE
 from gui.shared.utils import decorators
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
-from gui.Scaleform.daapi.view.dialogs import I18nInfoDialogMeta, I18nConfirmDialogMeta, DisconnectMeta, CheckBoxDialogMeta
+from gui.Scaleform.daapi.view.dialogs import I18nInfoDialogMeta, I18nConfirmDialogMeta, DisconnectMeta, CheckBoxDialogMeta, DemoAccountBootcampFailureMeta, DIALOG_BUTTON_ID
 
 class _DialogCallbackWrapper(object):
 
@@ -29,13 +31,6 @@ def showDialog(meta, callback):
 
 
 @decorators.async
-def showEventMessageDialog(data, callback):
-    ctx = {'data': data, 
-       'callback': _DialogCallbackWrapper(callback)}
-    g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.EVENT_MESSAGE_WINDOW), ctx=ctx), EVENT_BUS_SCOPE.LOBBY)
-
-
-@decorators.async
 def showBCConfirmationDialog(meta, callback):
     effectData = {'messages': [
                   {'messagePreset': 'BCMessageGreenUI', 
@@ -53,6 +48,15 @@ def showBCConfirmationDialog(meta, callback):
 @decorators.async
 def showI18nInfoDialog(i18nKey, callback, meta=None):
     showDialog(I18nInfoDialogMeta(i18nKey, meta=meta), callback)
+
+
+@decorators.async
+@process
+def showDemoAccountBootcampFailureDialog(i18nKey, meta=None):
+    result = yield showDialog(DemoAccountBootcampFailureMeta(i18nKey, meta=meta))
+    if result == DIALOG_BUTTON_ID.HYPERLINK:
+        WGC.requestCompleteAccount()
+    BigWorld.quit()
 
 
 @decorators.async
@@ -77,5 +81,8 @@ def showDisconnect(reason=None, kickReasonType=ACCOUNT_KICK_REASONS.UNKNOWN, exp
         global __ifDisconnectDialogShown
         __ifDisconnectDialogShown = False
 
-    __ifDisconnectDialogShown = True
-    showDialog(DisconnectMeta(reason, kickReasonType, expiryTime), callback)
+    if kickReasonType == ACCOUNT_KICK_REASONS.DEMO_ACCOUNT_BOOTCAMP_FAILURE:
+        showDemoAccountBootcampFailureDialog(reason)
+    else:
+        __ifDisconnectDialogShown = True
+        showDialog(DisconnectMeta(reason, kickReasonType, expiryTime), callback)

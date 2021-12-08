@@ -6,7 +6,6 @@ import logging, typing
 from gui.shared.utils import getPlayerDatabaseID
 from helpers import getClientVersion
 _logger = logging.getLogger(__name__)
-_CLIENT_VERSION = None
 
 def createFeatureKey(feature, group):
     return feature
@@ -21,7 +20,4 @@ def getPlayerID():
 
 
 def getClientBuildVersion():
-    global _CLIENT_VERSION
-    if _CLIENT_VERSION is None:
-        _CLIENT_VERSION = getClientVersion()
-    return _CLIENT_VERSION
+    return getClientVersion(force=False)

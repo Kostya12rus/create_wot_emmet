@@ -2,12 +2,12 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/services_config.py
-import logging, festivity
+import logging
 __all__ = ('getClientServicesConfig', )
 _logger = logging.getLogger(__name__)
 
 def getClientServicesConfig(manager):
-    import account_helpers, connection_mgr, MapActivities, dyn_objects_cache, gui, gameplay, helpers, uilogging
+    import account_helpers, connection_mgr, MapActivities, dyn_objects_cache, gui, gameplay, helpers, uilogging, festivity
     from vehicle_systems.appearance_cache import AppearanceCache
     from skeletons.connection_mgr import IConnectionManager
     from skeletons.map_activities import IMapActivities

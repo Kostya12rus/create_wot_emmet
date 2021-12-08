@@ -15,7 +15,7 @@ from gui.battle_control.battle_constants import BATTLE_CTRL_ID
 
 class ViewPointsController(IViewPointsController):
     __slots__ = ('__points', '__arenaDP', '__currentViewPointID', '__currentVehicleID',
-                 '__normalSortKey', '__squadManSortKey', '__arenaVisitor')
+                 '__normalSortKey', '__squadManSortKey')
 
     def __init__(self, setup):
         super(ViewPointsController, self).__init__()
@@ -23,7 +23,6 @@ class ViewPointsController(IViewPointsController):
         self.__arenaDP = weakref.proxy(setup.arenaDP)
         self.__currentViewPointID = None
         self.__currentVehicleID = None
-        self.__arenaVisitor = None
         self.__normalSortKey = VehicleInfoSortKey
         self.__squadManSortKey = SquadmanVehicleInfoSortKey
         return
@@ -32,7 +31,6 @@ class ViewPointsController(IViewPointsController):
         return BATTLE_CTRL_ID.VIEW_POINTS
 
     def startControl(self, battleCtx, arenaVisitor):
-        self.__arenaVisitor = arenaVisitor
         self.__points = arenaVisitor.getArenaViewPoints()
         self.__defineSortKeys(arenaVisitor)
 

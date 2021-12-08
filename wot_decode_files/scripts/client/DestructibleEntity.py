@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/DestructibleEntity.py
 import BigWorld, destructible_entities, Math
+from entity_constants import HighlightColors
 from debug_utils import LOG_ERROR
 from DestructibleStickers import DestructibleStickers
 from Vehicle import SegmentCollisionResultExt
@@ -200,7 +201,7 @@ class DestructibleEntity(BigWorld.Entity):
     def drawEdge(self, forceSimpleEdge=False):
         if not self.model or not self.model.visible:
             return
-        colorMode = 2 if self.isPlayerTeam else 1
+        colorMode = HighlightColors.GREEN if self.isPlayerTeam else HighlightColors.RED
         BigWorld.wgAddEdgeDetectEntity(self, colorMode, 0, False, False)
 
     def removeEdge(self, forceSimpleEdge=False):
@@ -268,7 +269,7 @@ class DestructibleEntityState(ScriptGameObject):
             for componentIdx, component in enumerate(self.__stateProperties.components.itervalues()):
                 self.__visualModel.setPartProperties(componentIdx, int(component.destructible) << PART_PROPERTIES.HIGHLIGHTABLE)
                 link = self.__visualModel.getPartGeometryLink(componentIdx)
-                self.__damageStickers[componentIdx] = DestructibleStickers(link, self.__visualModel.node('root'), self.__entityId)
+                self.__damageStickers[componentIdx] = DestructibleStickers(link, self.__visualModel.node('root'))
 
             nodeName = next((comp.guiNode for comp in self.__stateProperties.components.itervalues() if comp.guiNode is not None), None)
             if nodeName is not None:
@@ -332,7 +333,7 @@ class DestructibleEntityState(ScriptGameObject):
             BigWorld.player().addModel(fakeModel)
             tmpMatrix = Math.Matrix(self.__visualModel.matrix)
             fakeModel.position = tmpMatrix.translation
-            self.__effectsPlayer = EffectsListPlayer(effects.effectsList, effects.keyPoints, debugParent=self)
+            self.__effectsPlayer = EffectsListPlayer(effects.effectsList, effects.keyPoints)
             self.__effectsPlayer.play(fakeModel, None)
             return
 

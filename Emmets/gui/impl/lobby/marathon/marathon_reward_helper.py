@@ -3,11 +3,11 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/marathon/marathon_reward_helper.py
 from collections import namedtuple
-import re
 from gui.impl.gen import R
+from gui.impl.pub.notification_commands import WindowNotificationCommand
 from gui.shared.gui_items import Vehicle
 from helpers import dependency, int2roman
-from skeletons.gui.impl import IGuiLoader
+from skeletons.gui.impl import IGuiLoader, INotificationWindowController
 from skeletons.gui.shared import IItemsCache
 SpecialRewardData = namedtuple('SpecialRewardData', ('sourceName', 'congratsSourceId',
                                                      'vehicleName', 'vehicleLvl',
@@ -29,7 +29,8 @@ def loadedViewPredicate(layoutID):
     return lambda view: view.layoutID == layoutID
 
 
-def showMarathonReward(vehicleCD, videoShownKey):
+@dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
+def showMarathonReward(vehicleCD, videoShownKey, notificationMgr=None):
     from gui.impl.lobby.marathon.marathon_reward_view import MarathonRewardViewWindow
     uiLoader = dependency.instance(IGuiLoader)
     itemsCache = dependency.instance(IItemsCache)
@@ -44,24 +45,5 @@ def showMarathonReward(vehicleCD, videoShownKey):
             if uiLoader.windowsManager.findViews(loadedViewPredicate(viewID)):
                 return
             window = MarathonRewardViewWindow(specialRewardData)
-            window.load()
+            notificationMgr.append(WindowNotificationCommand(window))
     return
-
-
-def getRewardImage(path):
-    if path is None:
-        return ''
-    else:
-        return path.replace('../', 'img://gui/')
-
-
-def getRewardLabel(label):
-    if label is None:
-        return ''
-    else:
-        return re.sub('\\D', '', label)
-
-
-def getRewardOverlayType(overlayType):
-    label = overlayType['big'] if overlayType else ''
-    return label.replace('Big', '')
