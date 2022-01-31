@@ -297,7 +297,8 @@ class Source(object):
            'peripheryIDs': {int(p) for p in onlyForPeripheriesList.split()} if onlyForPeripheriesList else set(), 
            'runFlags': runFlags, 
            'showPostBattleStat': questSection.readBool('showPostBattleStat', False), 
-           'saveBonusHistory': questSection.readBool('saveBonusHistory', False)}
+           'saveBonusHistory': questSection.readBool('saveBonusHistory', False), 
+           'sendBonusHistory': questSection.readBool('sendBonusHistory', False)}
         if eventType == EVENT_TYPE.MOTIVE_QUEST:
             extraSubsectionsNames = ('advice', 'requirements', 'congratulation')
             for subsectionName in extraSubsectionsNames:
@@ -484,7 +485,7 @@ class Source(object):
          'customizations', 'vehicleChoice', 'crewSkin', 'blueprint', 'blueprintAny', 'enhancement',
          'eventCoin', 'bpcoin', 'entitlement', 'rankedDailyBattles', 'rankedBonusBattles',
          'dogTagComponent', 'battlePassPoints', 'currency', CurrentNYConstants.TOY_FRAGMENTS,
-         CurrentNYConstants.FILLERS, CurrentNYConstants.TOY_BONUS, CurrentNYConstants.ANY_OF}
+         CurrentNYConstants.FILLERS, CurrentNYConstants.TOY_BONUS, CurrentNYConstants.ANY_OF, 'charm'}
         if eventType in (EVENT_TYPE.BATTLE_QUEST, EVENT_TYPE.PERSONAL_QUEST, EVENT_TYPE.NT_QUEST):
             bonusTypes.update(('xp', 'tankmenXP', 'xpFactor', 'creditsFactor', 'freeXPFactor',
                                'tankmenXPFactor'))

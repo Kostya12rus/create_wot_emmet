@@ -11,7 +11,8 @@ from messenger.m_constants import SCH_CLIENT_MSG_TYPE
 _AUTO_BOXES_SUB_FORMATTERS = (
  auto_boxes_subformatters.EventBoxesFormatter(),
  auto_boxes_subformatters.NYPostEventBoxesFormatter(),
- auto_boxes_subformatters.NYGiftSystemSurpriseFormatter())
+ auto_boxes_subformatters.NYGiftSystemSurpriseFormatter(),
+ auto_boxes_subformatters.LunarNYEnvelopeAutoOpenFormatter())
 _TOKEN_QUEST_SUB_FORMATTERS = (
  token_quest_subformatters.LootBoxTokenQuestFormatter(),
  token_quest_subformatters.RecruitQuestsFormatter(),
@@ -22,6 +23,7 @@ _TOKEN_QUEST_SUB_FORMATTERS = (
  token_quest_subformatters.PersonalMissionsTokenQuestsFormatter(),
  token_quest_subformatters.BattlePassDefaultAwardsFormatter(),
  token_quest_subformatters.WotPlusDirectivesFormatter(),
+ token_quest_subformatters.LunarNYProgressionFormatter(),
  token_quest_subformatters.NewYearCollectionRewardFormatter(),
  token_quest_subformatters.NewYearCollectionMegaRewardFormatter(),
  token_quest_subformatters.NewYearLevelUpRewardFormatter(),
@@ -29,7 +31,8 @@ _TOKEN_QUEST_SUB_FORMATTERS = (
  token_quest_subformatters.NewYearCelebrityQuestRewardFormatter(),
  token_quest_subformatters.NewYearCelebrityMarathonRewardFormatter(),
  token_quest_subformatters.NewYearGiftSystemSubProgressRewardFormatter(),
- token_quest_subformatters.NewYearGiftSystemProgressionRewardFormatter())
+ token_quest_subformatters.NewYearGiftSystemProgressionRewardFormatter(),
+ token_quest_subformatters.WOAnnouncementFormatter())
 _PERSONAL_MISSIONS_SUB_FORMATTERS = (
  token_quest_subformatters.PersonalMissionsFormatter(),)
 SERVER_FORMATTERS = {_SM_TYPE.serverReboot.index(): _sc.ServerRebootFormatter(), 
@@ -107,7 +110,8 @@ SERVER_FORMATTERS = {_SM_TYPE.serverReboot.index(): _sc.ServerRebootFormatter(),
    _SM_TYPE.passiveXPIncompatibleCrew.index(): _wotPlusFormatters.SimpleFormatter('PassiveXPIncompatibleCrewMessage'), 
    _SM_TYPE.wotPlusRentEnd.index(): _wotPlusFormatters.RentEnd(), 
    _SM_TYPE.wotPlusNoRentSelected.index(): _wotPlusFormatters.SimpleFormatter('WotPlusRentNoRentSelectedMessage'), 
-   _SM_TYPE.giftSystemMessage.index(): GiftSystemMessagesProxy()}
+   _SM_TYPE.giftSystemMessage.index(): GiftSystemMessagesProxy(), 
+   _SM_TYPE.giftSystemReturnGift.index(): _sc.LunarReturnEnvelopeFormatter()}
 CLIENT_FORMATTERS = {SCH_CLIENT_MSG_TYPE.SYS_MSG_TYPE: _sc.ClientSysMessageFormatter(), 
    SCH_CLIENT_MSG_TYPE.PREMIUM_ACCOUNT_EXPIRY_MSG: _sc.PremiumAccountExpiryFormatter(), 
    SCH_CLIENT_MSG_TYPE.AOGAS_NOTIFY_TYPE: _sc.AOGASNotifyFormatter(), 
@@ -129,4 +133,5 @@ CLIENT_FORMATTERS = {SCH_CLIENT_MSG_TYPE.SYS_MSG_TYPE: _sc.ClientSysMessageForma
    SCH_CLIENT_MSG_TYPE.WOTPLUS_FREEDIRECTIVES_ENABLED: _wotPlusFormatters.SimpleFormatter('FreeDirectivesEnabledMessage'), 
    SCH_CLIENT_MSG_TYPE.WOTPLUS_FREEDIRECTIVES_DISABLED: _wotPlusFormatters.SimpleFormatter('FreeDirectivesDisabledMessage'), 
    SCH_CLIENT_MSG_TYPE.NEW_NY_LOOT_BOXES: _sc.NewNYLootBoxesFormatter(), 
+   SCH_CLIENT_MSG_TYPE.WO_NOTIFICATION: _sc.WinterOfferFormatter(), 
    SCH_CLIENT_MSG_TYPE.NY_EVENT_BUTTON_MESSAGE: _sc.NewNYEventFormatter()}

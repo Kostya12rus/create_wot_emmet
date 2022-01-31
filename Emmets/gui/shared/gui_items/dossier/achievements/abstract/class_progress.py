@@ -46,6 +46,9 @@ class ClassProgressAchievement(SimpleProgressAchievement):
             return i18n.makeString(notificationKey)
         return ''
 
+    def getIconName(self):
+        return '%s%d' % (self._name, self._value or self.MIN_LVL)
+
     def _getUserNameCtx(self):
         return {'rank': i18n.makeString('#achievements:achievement/rank%d' % (self._value or self.MIN_LVL))}
 
@@ -72,6 +75,3 @@ class ClassProgressAchievement(SimpleProgressAchievement):
 
     def _readCurrentProgressValue(self, dossier):
         return 0
-
-    def _getIconName(self):
-        return '%s%d' % (self._name, self._value or self.MIN_LVL)

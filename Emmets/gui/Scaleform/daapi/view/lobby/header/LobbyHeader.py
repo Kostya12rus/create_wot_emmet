@@ -464,7 +464,7 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
         self.__viewLifecycleWatcher.start(self.app.containerManager, [_RankedBattlesWelcomeViewLifecycleHandler(self)])
         if self.bootcampController.isInBootcamp():
             self.as_disableFightButtonS(self.__isFightBtnDisabled)
-        self.__updateNYVisibility(self.__currentScreen)
+        self.__updateNYVisibility()
         self._onPopulateEnd()
 
     def _invalidate(self, *args, **kwargs):
@@ -1004,8 +1004,8 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
             self.as_doDeselectHeaderButtonS(self.__currentScreen)
             self.__currentScreen = None
         if not pyEntity.isDisposed() and pyEntity.layer is WindowLayer.TOP_SUB_VIEW:
-            self.__updateNYVisibility(pyEntity.alias)
             self.__addedTopSubViews.append(pyEntity)
+            self.__updateNYVisibility(pyEntity.alias)
             pyEntity.onDispose += self.__onViewDisposed
         return
 
@@ -1013,9 +1013,11 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
         pyEntity.onDispose -= self.__onViewDisposed
         self.__addedTopSubViews.remove(pyEntity)
         if not self.__addedTopSubViews:
-            self.__updateNYVisibility(self.__currentScreen)
+            self.__updateNYVisibility()
 
-    def __updateNYVisibility(self, alias):
+    def __updateNYVisibility(self, alias=None):
+        if alias is None:
+            alias = self.__addedTopSubViews[(-1)].alias if self.__addedTopSubViews else self.__currentScreen
         isShowMainMenuGlow = False
         isShowBattleBtnGlow = False
         nyWidgetVisible = False
@@ -1027,6 +1029,7 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
                 nyWidgetVisible = True
             isShowMainMenuGlow = alias == self.TABS.HANGAR
         self.as_updateNYVisibilityS(isShowBattleBtnGlow, isShowMainMenuGlow, nyWidgetVisible)
+        return
 
     def __getContainer(self, layer):
         if self.app is not None and self.app.containerManager is not None:
@@ -1293,7 +1296,7 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
         self._updateHangarMenuData()
 
     def __onHangarSpaceCreated(self):
-        self.__updateNYVisibility(self.__currentScreen)
+        self.__updateNYVisibility()
         if self.bootcampController.isInBootcamp():
             self.as_disableFightButtonS(self.__isFightBtnDisabled)
 
@@ -1305,7 +1308,7 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
 
     def __onToggleVisibilityMenu(self, event):
         state = event.ctx['state']
-        nextViewAlias = event.ctx.get('alias', self.__currentScreen)
+        nextViewAlias = event.ctx.get('alias')
         self.__menuVisibilityHelper.updateStates(state)
         activeState = self.__menuVisibilityHelper.getActiveState()
         self.as_toggleVisibilityMenuS(activeState)
@@ -1763,7 +1766,7 @@ class LobbyHeader(LobbyHeaderMeta, ClanEmblemsHelper, IGlobalListener):
         return
 
     def __festivityStateChanged(self):
-        self.__updateNYVisibility(self.__currentScreen)
+        self.__updateNYVisibility()
 
     def __onShowTooltip(self, tooltip, *_):
         if tooltip == self.__SELECTOR_TOOLTIP_TYPE:

@@ -754,6 +754,12 @@ def _migrateTo83(core, data, initialized):
             clear[clearKey] = clear.get(clearKey, 0) | newYearFilter
 
 
+def _migrateTo84(core, data, initialized):
+    onceOnlyHintsData = data['onceOnlyHints2']
+    onceOnlyHintsData[OnceOnlyHints.LUNAR_NY_DROPDOWN_HINT] = False
+    onceOnlyHintsData[OnceOnlyHints.LUNAR_NY_CONGRATULATION_HINT] = False
+
+
 _versions = (
  (
   1, _initializeDefaultSettings, True, False),
@@ -918,7 +924,9 @@ _versions = (
  (
   82, _migrateTo82, False, False),
  (
-  83, _migrateTo83, False, False))
+  83, _migrateTo83, False, False),
+ (
+  84, _migrateTo84, False, False))
 
 @async
 @process
