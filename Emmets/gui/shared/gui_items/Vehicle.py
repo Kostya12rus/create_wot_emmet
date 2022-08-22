@@ -2,54 +2,56 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/Vehicle.py
-import math, random, typing, logging
-from itertools import izip
-from operator import itemgetter
+import logging, math, random
 from collections import namedtuple
 from copy import deepcopy
+from itertools import izip
+from operator import itemgetter
+import typing, BigWorld
 from backports.functools_lru_cache import lru_cache
-import BigWorld, constants
-from gui import GUI_SETTINGS
-from collector_vehicle import CollectorVehicleConsts
+import constants
 from AccountCommands import LOCK_REASON, VEHICLE_SETTINGS_FLAG, VEHICLE_EXTRA_SETTING_FLAG
 from PerksParametersController import PerksParametersController
+from collector_vehicle import CollectorVehicleConsts
 from constants import WIN_XP_FACTOR_MODE, RentType
-from gui.impl import backport
-from gui.impl.gen import R
-from items.customizations import createNationalEmblemComponents
-from rent_common import parseRentID
+from gui import GUI_SETTINGS
 from gui import makeHtmlString
 from gui.Scaleform.genConsts.STORE_CONSTANTS import STORE_CONSTANTS
 from gui.Scaleform.locale.ITEM_TYPES import ITEM_TYPES
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.RES_SHOP_EXT import RES_SHOP_EXT
+from gui.impl import backport
+from gui.impl.gen import R
+from gui.impl.gen_utils import INVALID_RES_ID
 from gui.prb_control import prb_getters, prbDispatcherProperty
 from gui.prb_control.settings import PREBATTLE_SETTING_NAME
 from gui.shared.economics import calcRentPackages, getActionPrc, calcVehicleRestorePrice
 from gui.shared.formatters import text_styles
 from gui.shared.gui_items import CLAN_LOCK, GUI_ITEM_TYPE, getItemIconName, GUI_ITEM_ECONOMY_CODE, checkForTags
-from gui.shared.gui_items.customization.slots import ProjectionDecalSlot, BaseCustomizationSlot, EmblemSlot
-from vehicle_outfit.outfit import Area, REGIONS_BY_SLOT_TYPE, ANCHOR_TYPE_TO_SLOT_TYPE_MAP
-from gui.shared.gui_items.vehicle_equipment import VehicleEquipment, SUPPORT_EXT_DATA_FEATURES
-from gui.shared.gui_items.gui_item import HasStrCD
-from gui.shared.gui_items.fitting_item import FittingItem, RentalInfoProvider
 from gui.shared.gui_items.Tankman import Tankman, BROTHERHOOD_SKILL_NAME
-from gui.shared.money import MONEY_UNDEFINED, Currency, Money
+from gui.shared.gui_items.customization.slots import ProjectionDecalSlot, BaseCustomizationSlot, EmblemSlot
+from gui.shared.gui_items.fitting_item import FittingItem, RentalInfoProvider
+from gui.shared.gui_items.gui_item import HasStrCD
 from gui.shared.gui_items.gui_item_economics import ItemPrice, ItemPrices, ITEM_PRICE_EMPTY
+from gui.shared.gui_items.vehicle_equipment import VehicleEquipment, SUPPORT_EXT_DATA_FEATURES
+from gui.shared.money import MONEY_UNDEFINED, Currency, Money
 from gui.shared.utils import makeSearchableString
 from helpers import i18n, time_utils, dependency, func_utils
 from items import vehicles, tankmen, customizations, getTypeInfoByName, getTypeOfCompactDescr, filterIntCDsByItemType
-from items.vehicles import getItemByCompactDescr, getVehicleType
 from items.components.c11n_constants import SeasonType, CustomizationType, HIDDEN_CAMOUFLAGE_ID, ApplyArea, CUSTOM_STYLE_POOL_ID, ItemTags, EMPTY_ITEM_ID
+from items.customizations import createNationalEmblemComponents
+from items.vehicles import getItemByCompactDescr, getVehicleType
+from nation_change.nation_change_helpers import hasNationGroup, iterVehTypeCDsInNationGroup
+from post_progression_common import TankSetupGroupsId
+from rent_common import parseRentID
 from shared_utils import findFirst, CONST_CONTAINER
+from skeletons.gui.customization import ICustomizationService
 from skeletons.gui.game_control import IIGRController, IRentalsController, IVehiclePostProgressionController
+from skeletons.gui.game_control import ITradeInController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
-from skeletons.gui.customization import ICustomizationService
-from nation_change.nation_change_helpers import hasNationGroup, iterVehTypeCDsInNationGroup
-from post_progression_common import TankSetupGroupsId
-from skeletons.new_year import INewYearController
+from vehicle_outfit.outfit import Area, REGIONS_BY_SLOT_TYPE, ANCHOR_TYPE_TO_SLOT_TYPE_MAP
 if typing.TYPE_CHECKING:
     from skeletons.gui.shared import IItemsRequester
     from items.components.c11n_components import StyleItem
@@ -200,8 +202,7 @@ class Vehicle(FittingItem):
                  '_crewIndices', '_slotsIds', '_crew', '_lastCrew', '_hasModulesToSelect',
                  '_outfitComponents', '_isStyleInstalled', '_slotsAnchors', '_unlockedBy',
                  '_maxRentDuration', '_minRentDuration', '_slotsAnchorsById', '_hasNationGroup',
-                 '_extraSettings', '_perksController', '_personalTradeInAvailableSale',
-                 '_personalTradeInAvailableBuy', '_groupIDs', '_postProgression')
+                 '_extraSettings', '_perksController', '_groupIDs', '_postProgression')
 
     class VEHICLE_STATE(object):
         DAMAGED = 'damaged'
@@ -271,7 +272,7 @@ class Vehicle(FittingItem):
     itemsCache = dependency.descriptor(IItemsCache)
     __customizationService = dependency.descriptor(ICustomizationService)
     __postProgressionCtrl = dependency.descriptor(IVehiclePostProgressionController)
-    nyController = dependency.descriptor(INewYearController)
+    tradeInCtrl = dependency.descriptor(ITradeInController)
 
     def __init__(self, strCompactDescr=None, inventoryID=-1, typeCompDescr=None, proxy=None, extData=None, invData=None):
         self.__postProgressionCtrl.processVehExtData(getVehicleType(typeCompDescr or strCompactDescr), extData)
@@ -294,12 +295,6 @@ class Vehicle(FittingItem):
         self._isDisabledForBuy = False
         self._isSelected = False
         self._restorePrice = None
-        self._tradeInAvailable = False
-        self._tradeOffAvailable = False
-        self._tradeOffPriceFactor = 0
-        self._tradeOffPrice = MONEY_UNDEFINED
-        self._personalTradeInAvailableSale = False
-        self._personalTradeInAvailableBuy = False
         self._groupIDs = set()
         self._rotationGroupNum = 0
         self._rotationBattlesLeft = 0
@@ -317,14 +312,10 @@ class Vehicle(FittingItem):
             self._searchableUserName = makeSearchableString(self.userName)
         invData = invData or dict()
         postProgressionFeatures = None
-        tradeInData = None
-        personalTradeIn = None
         if proxy is not None and proxy.inventory.isSynced() and proxy.stats.isSynced() and proxy.shop.isSynced() and proxy.vehicleRotation.isSynced() and proxy.recycleBin.isSynced():
-            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, self._inventoryID)
+            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, inventoryID)
             if invDataTmp is not None:
                 invData = invDataTmp
-            tradeInData = proxy.shop.tradeIn
-            personalTradeIn = proxy.shop.personalTradeIn
             self._xp = proxy.stats.vehiclesXPs.get(self.intCD, self._xp)
             if proxy.shop.winXPFactorMode == WIN_XP_FACTOR_MODE.ALWAYS or self.intCD not in proxy.stats.multipliedVehicles and not self.isOnlyForEventBattles:
                 self._dailyXPFactor = proxy.shop.dailyXPFactor
@@ -367,31 +358,6 @@ class Vehicle(FittingItem):
         sellPrice = self._calcSellPrice(proxy)
         defaultSellPrice = self._calcDefaultSellPrice(proxy)
         self._sellPrices = ItemPrices(itemPrice=ItemPrice(price=sellPrice, defPrice=defaultSellPrice), itemAltPrice=ITEM_PRICE_EMPTY)
-        if tradeInData is not None and tradeInData.isEnabled and self.isPremium and not self.isPremiumIGR:
-            self._tradeOffPriceFactor = tradeInData.sellPriceFactor
-            canTrade = self.intCD not in tradeInData.forbiddenVehicles and self.level in tradeInData.allowedVehicleLevels
-            self._tradeInAvailable = canTrade and not self.isHidden and self.isUnlocked and not self.isRestorePossible() and not self.isRented
-            self._tradeOffAvailable = canTrade and self.isPurchased
-            if self.canTradeOff:
-                self._tradeOffPrice = Money(gold=int(math.ceil(self.tradeOffPriceFactor * self.buyPrices.itemPrice.defPrice.gold)))
-                if self._tradeOffPrice.gold < tradeInData.minAcceptableSellPrice:
-                    self._tradeOffAvailable = False
-        if personalTradeIn is not None:
-            groupIDs = (groupIDs for groupIDs in personalTradeIn['conversionRules'].iterkeys())
-            saleVehicleIntCDs = []
-            buyVehicleIntCDs = []
-            for saleGroupID, buyGroupID in groupIDs:
-                saleVehicleIntCDs.extend(personalTradeIn['vehicleGroups'][saleGroupID])
-                buyVehicleIntCDs.extend(personalTradeIn['vehicleGroups'][buyGroupID])
-
-            canPersonalTradeSell = self.intCD in saleVehicleIntCDs
-            canPersonalTradeBuy = self.intCD in buyVehicleIntCDs
-            self._personalTradeInAvailableSale = canPersonalTradeSell and self.isHidden and self.isUnlocked and not self.isRestorePossible() and not self.isRented
-            self._personalTradeInAvailableBuy = canPersonalTradeBuy and self.isHidden and self.isUnlocked and not self.isRestorePossible() and not self.isRented
-            for groupId, vehs in personalTradeIn['vehicleGroups'].iteritems():
-                if self.intCD in vehs:
-                    self._groupIDs.add(groupId)
-
         self._equipment = VehicleEquipment(proxy, vehDescr, invData, postProgressionFeatures)
         defaultCrew = [
          None] * len(vehDescr.type.crewRoles)
@@ -597,10 +563,12 @@ class Vehicle(FittingItem):
     def createAppliedOutfits(self, proxy):
         styleOutfitData = proxy.inventory.getOutfitData(self.intCD, SeasonType.ALL)
         styleProgressionLevel = 0
+        styleSerialNumber = ''
         if styleOutfitData is not None:
             self._isStyleInstalled = True
             styledOutfitComponent = customizations.parseCompDescr(styleOutfitData)
             styleProgressionLevel = styledOutfitComponent.styleProgressionLevel
+            styleSerialNumber = styledOutfitComponent.serial_number
             styleIntCD = vehicles.makeIntCompactDescrByID('customizationItem', CustomizationType.STYLE, styledOutfitComponent.styleId)
             style = vehicles.getItemByCompactDescr(styleIntCD)
         else:
@@ -612,14 +580,14 @@ class Vehicle(FittingItem):
             else:
                 isCustomOutfitInstalled = any(proxy.inventory.getOutfitData(self.intCD, s) for s in SeasonType.SEASONS)
                 self._isStyleInstalled = not isCustomOutfitInstalled
-        self._outfitComponents = {season:self._getOutfitComponent(proxy, style, styleProgressionLevel, season) for season in SeasonType.SEASONS}
+        self._outfitComponents = {season:self._getOutfitComponent(proxy, style, styleProgressionLevel, styleSerialNumber, season) for season in SeasonType.SEASONS}
         return
 
-    def _getOutfitComponent(self, proxy, style, styleProgressionLevel, season):
-        if style is not None and season != SeasonType.EVENT:
-            return self.__getStyledOutfitComponent(proxy, style, styleProgressionLevel, season)
+    def _getOutfitComponent(self, proxy, style, styleProgressionLevel, styleSerialNumber, season):
+        if style is not None:
+            return self.__getStyledOutfitComponent(proxy, style, styleProgressionLevel, styleSerialNumber, season)
         else:
-            if self._isStyleInstalled and season != SeasonType.EVENT:
+            if self._isStyleInstalled:
                 return self.__getEmptyOutfitComponent()
             return self.__getCustomOutfitComponent(proxy, season)
 
@@ -631,6 +599,25 @@ class Vehicle(FittingItem):
             result.append(cls.itemsFactory.createOptionalDevice(optDevDescr.compactDescr, proxy) if optDevDescr is not None else None)
 
         return result
+
+    @property
+    def icon(self):
+        unicName = getIconResourceName(self.name)
+        resID = R.images.gui.maps.icons.dyn(self.itemTypeName).dyn(unicName)()
+        if resID == INVALID_RES_ID:
+            return super(Vehicle, self).icon
+        return backport.image(resID)
+
+    def getExtraIconInfo(self, _=None):
+        return
+
+    @property
+    def iconSmall(self):
+        unicName = getIconResourceName(self.name)
+        resID = R.images.gui.maps.icons.dyn(self.itemTypeName).small.dyn(unicName)()
+        if resID == INVALID_RES_ID:
+            return super(Vehicle, self).iconSmall
+        return backport.image(resID)
 
     @property
     def iconContour(self):
@@ -647,10 +634,6 @@ class Vehicle(FittingItem):
     def getShopIcon(self, size=STORE_CONSTANTS.ICON_SIZE_MEDIUM):
         name = getNationLessName(self.name)
         return RES_SHOP_EXT.getVehicleIcon(size, name)
-
-    def getSnapshotIcon(self):
-        name = getIconResourceName(getNationLessName(self.name))
-        return RES_ICONS.getSnapshotIcon(name)
 
     @property
     def invID(self):
@@ -723,31 +706,41 @@ class Vehicle(FittingItem):
 
     @property
     def isTradeInAvailable(self):
-        return self._tradeInAvailable
+        availableToBuy = False
+        if self.tradeInCtrl.isEnabled():
+            availableToBuy = self.intCD in self.tradeInCtrl.getAllPossibleVehiclesToBuy() and self.isUnlocked and not self.isRestorePossible() and not self.isRented
+        return availableToBuy
 
     @property
     def canTradeIn(self):
-        return self._tradeInAvailable and not self.isInInventory
-
-    @property
-    def canPersonalTradeInBuy(self):
-        return self._personalTradeInAvailableBuy and not self.isInInventory
+        return self.isTradeInAvailable and not self.isInInventory and not self.isDisabledForBuy
 
     @property
     def isTradeOffAvailable(self):
-        return self._tradeOffAvailable
+        availableToSell = False
+        if self.tradeInCtrl.isEnabled():
+            availableToSell = self.intCD in self.tradeInCtrl.getAllPossibleVehiclesToSell() and self.isPurchased
+        return availableToSell
 
     @property
     def canTradeOff(self):
-        return self._tradeOffAvailable and not self.canNotBeSold
+        return self.isTradeOffAvailable and not self.canNotBeSold
 
     @property
-    def isReadyPersonalTradeInSale(self):
-        return self.canPersonalTradeInSale and self.getState()[0] not in self.TRADE_OFF_NOT_READY_STATES
+    def discountPercentage(self):
+        buyPrice = self.tradeInBuyPrice.gold or 0
+        price = self.buyPrices.itemPrice.defPrice.gold or buyPrice or 1
+        return math.floor(100 * (1 - buyPrice / float(price)))
 
     @property
-    def canPersonalTradeInSale(self):
-        return self._personalTradeInAvailableSale and not self.canNotBeSold
+    def isFreeExchange(self):
+        if not self.tradeInCtrl.isEnabled():
+            return False
+        else:
+            tradeInInfo = self.tradeInCtrl.getConfig().getTradeInInfoByVehicleToSell(self.intCD)
+            if tradeInInfo is None:
+                return False
+            return tradeInInfo.conversionRule.freeExchange
 
     @property
     def groupIDs(self):
@@ -755,11 +748,20 @@ class Vehicle(FittingItem):
 
     @property
     def tradeOffPriceFactor(self):
-        return self._tradeOffPriceFactor
+        if not self.tradeInCtrl.isEnabled():
+            return 0
+        return self.tradeInCtrl.getConfig().getSellPriceFactorFor(self.intCD)
 
     @property
     def tradeOffPrice(self):
-        return self._tradeOffPrice
+        if self.buyPrices.itemPrice.defPrice.gold is None:
+            return MONEY_UNDEFINED
+        else:
+            return Money(gold=int(math.ceil(self.tradeOffPriceFactor * self.buyPrices.itemPrice.defPrice.gold)))
+
+    @property
+    def tradeInBuyPrice(self):
+        return self.tradeInCtrl.getTradeInPrice(self).price
 
     @property
     def rotationGroupNum(self):
@@ -1046,20 +1048,20 @@ class Vehicle(FittingItem):
         return not self.descriptor.isWeightConsistent()
 
     @property
-    def hasShells(self):
-        return sum(s.count for s in self.shells.installed.getItems()) > 0
-
-    @property
     def hasCrew(self):
         return findFirst(lambda x: x[1] is not None, self.crew) is not None
 
     @property
+    def hasShells(self):
+        return self.shells.setupLayouts.isAmmoFull(minAmmo=1)
+
+    @property
     def hasConsumables(self):
-        return findFirst(None, self.consumables.installed) is not None
+        return bool(self.consumables.setupLayouts.getUniqueItems())
 
     @property
     def hasOptionalDevices(self):
-        return findFirst(None, self.optDevices.installed) is not None
+        return bool(self.optDevices.setupLayouts.getUniqueItems())
 
     @property
     def modelState(self):
@@ -1920,7 +1922,7 @@ class Vehicle(FittingItem):
         else:
             return self.__getEmptyOutfitComponent()
 
-    def __getStyledOutfitComponent(self, proxy, style, styleProgressionLevel, season):
+    def __getStyledOutfitComponent(self, proxy, style, styleProgressionLevel, styleSerialNumber, season):
         component = deepcopy(style.outfits.get(season))
         if style.progression:
             if not style.isProgressionRewindEnabled:
@@ -1934,6 +1936,8 @@ class Vehicle(FittingItem):
                     component.styleProgressionLevel = componentProgression
             else:
                 component.styleProgressionLevel = styleProgressionLevel
+        if style.isWithSerialNumber:
+            component.serial_number = styleSerialNumber
         if ItemTags.ADD_NATIONAL_EMBLEM in style.tags:
             emblems = createNationalEmblemComponents(self._descriptor)
             component.decals.extend(emblems)
@@ -1987,7 +1991,12 @@ def getLevelIconPath(vehLevel):
 
 
 def getIconPath(vehicleName):
-    return '../maps/icons/vehicle/%s' % getItemIconName(vehicleName)
+    unicName = getIconResourceName(vehicleName)
+    resID = R.images.gui.maps.icons.vehicle.dyn(unicName)()
+    if resID != -1:
+        return backport.image(resID)
+    else:
+        return
 
 
 def getNationLessName(vehicleName):
@@ -2001,15 +2010,6 @@ def getIconShopPath(vehicleName, size=STORE_CONSTANTS.ICON_SIZE_MEDIUM):
         return func_utils.makeFlashPath(path)
     else:
         return '../maps/shop/vehicles/%s/empty_tank.png' % size
-
-
-def getShopIconResource(vehicleName, size=STORE_CONSTANTS.ICON_SIZE_MEDIUM):
-    rName = getNationLessName(vehicleName=vehicleName)
-    image = R.images.gui.maps.shop.vehicles.dyn(('c_{}').format(size)).dyn(rName)
-    if image.isValid():
-        return image()
-    else:
-        return
 
 
 def getIconResource(vehicleName):
@@ -2026,11 +2026,19 @@ def getIconResourceName(vehicleName):
 
 
 def getContourIconPath(vehicleName):
-    return '../maps/icons/vehicle/contour/%s' % getItemIconName(vehicleName)
+    unicName = getIconResourceName(vehicleName)
+    resID = R.images.gui.maps.icons.vehicle.contour.dyn(unicName)()
+    if resID == INVALID_RES_ID:
+        resID = R.images.gui.maps.icons.vehicle.contour.noImage()
+    return backport.image(resID)
 
 
 def getSmallIconPath(vehicleName):
-    return '../maps/icons/vehicle/small/%s' % getItemIconName(vehicleName)
+    unicName = getIconResourceName(vehicleName)
+    resID = R.images.gui.maps.icons.vehicle.small.dyn(unicName)()
+    if resID == INVALID_RES_ID:
+        resID = R.images.gui.maps.icons.vehicle.small.noImage()
+    return backport.image(resID)
 
 
 def getUniqueIconPath(vehicleName, withLightning=False):

@@ -5,6 +5,7 @@
 from collections import namedtuple
 import typing, constants, gui, nations
 from CurrentVehicle import g_currentVehicle, g_currentPreviewVehicle
+from arena_bonus_type_caps import ARENA_BONUS_TYPE_CAPS
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import getFragmentType
 from constants import ARENA_BONUS_TYPE, ARENA_GUI_TYPE
@@ -32,6 +33,7 @@ from rent_common import RENT_TYPE_TO_DURATION
 from shared_utils import findFirst, first
 from skeletons.gui.game_control import IRankedBattlesController, IBattlePassController
 from skeletons.gui.goodies import IGoodiesCache
+from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.offers import IOffersDataProvider
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
@@ -52,7 +54,8 @@ class StatsConfiguration(object):
     __slots__ = ('vehicle', 'sellPrice', 'buyPrice', 'unlockPrice', 'inventoryCount',
                  'vehiclesCount', 'node', 'xp', 'dailyXP', 'minRentPrice', 'restorePrice',
                  'rentals', 'slotIdx', 'futureRentals', 'isAwardWindow', 'showBonus',
-                 'showRankedBonusBattle', 'showCompatibles', 'withSlots', 'isStaticInfoOnly')
+                 'showRankedBonusBattle', 'showCompatibles', 'withSlots', 'isStaticInfoOnly',
+                 'showEarnCrystals')
 
     def __init__(self):
         self.vehicle = None
@@ -75,13 +78,14 @@ class StatsConfiguration(object):
         self.showCompatibles = False
         self.withSlots = False
         self.isStaticInfoOnly = False
+        self.showEarnCrystals = True
         return
 
 
 class StatusConfiguration(object):
     __slots__ = ('vehicle', 'slotIdx', 'eqs', 'checkBuying', 'node', 'isAwardWindow',
                  'isResearchPage', 'checkNotSuitable', 'showCustomStates', 'useWhiteBg',
-                 'withSlots', 'isCompare', 'eqSetupIDx')
+                 'withSlots', 'isCompare', 'eqSetupIDx', 'battleRoyale')
 
     def __init__(self):
         self.vehicle = None
@@ -97,6 +101,7 @@ class StatusConfiguration(object):
         self.withSlots = False
         self.isCompare = False
         self.eqSetupIDx = None
+        self.battleRoyale = None
         return
 
 
@@ -429,6 +434,17 @@ class CarouselContext(InventoryContext):
         return self.itemsCache.items.getItemByCD(int(intCD))
 
 
+class FunRandomCarouselContext(CarouselContext):
+    __lobbyContext = dependency.descriptor(ILobbyContext)
+
+    def getStatsConfiguration(self, item):
+        value = super(FunRandomCarouselContext, self).getStatsConfiguration(item)
+        config = self.__lobbyContext.getServerSettings().getCrystalRewardConfig()
+        value.showEarnCrystals = config.isCrystalEarnPossible(ARENA_BONUS_TYPE.FUN_RANDOM)
+        value.dailyXP = ARENA_BONUS_TYPE_CAPS.checkAny(ARENA_BONUS_TYPE.FUN_RANDOM, ARENA_BONUS_TYPE_CAPS.DAILY_MULTIPLIED_XP)
+        return value
+
+
 class PotapovQuestsChainContext(ToolTipContext):
 
     def __init__(self, fieldsToExclude=None):
@@ -685,6 +701,9 @@ class VehCmpConfigurationContext(HangarContext):
         value = super(VehCmpConfigurationContext, self).getStatsConfiguration(item)
         value.buyPrice = True
         return value
+
+    def buildItem(self, intCD, slotIdx=0, historicalBattleID=-1, vehicle=None):
+        return super(VehCmpConfigurationContext, self).buildItem(intCD, slotIdx, historicalBattleID, None)
 
 
 class VehCmpConfigurationSlotContext(VehCmpConfigurationContext):
@@ -1085,16 +1104,6 @@ class BattleResultMarkOfMasteryContext(BattleResultContext):
         return item
 
 
-class LunarNYProgressionContext(BattleResultContext):
-
-    def buildItem(self, block, name, value=0, **kwargs):
-        factory = factories.getAchievementFactory((block, name))
-        if factory is not None:
-            return factory.create(value=value)
-        else:
-            return
-
-
 class VehicleEliteBonusContext(ToolTipContext):
 
     def __init__(self, fieldsToExclude=None):
@@ -1132,9 +1141,13 @@ class FortificationContext(ToolTipContext):
 
 
 class ReserveContext(ToolTipContext):
+    itemsCache = dependency.descriptor(IItemsCache)
 
     def __init__(self, fieldsToExclude=None):
         super(ReserveContext, self).__init__(TOOLTIP_COMPONENT.RESERVE, fieldsToExclude)
+
+    def buildItem(self, intCD):
+        return self.itemsCache.items.getItemByCD(int(intCD))
 
 
 class ClanProfileFortBuildingContext(ToolTipContext):
@@ -1150,10 +1163,10 @@ class ContactContext(ToolTipContext):
 
 
 class BattleConsumableContext(FortificationContext):
-    itemsCache = dependency.descriptor(IItemsCache)
+    __itemsCache = dependency.descriptor(IItemsCache)
 
     def buildItem(self, intCD):
-        return self.itemsCache.items.getItemByCD(int(intCD))
+        return self.__itemsCache.items.getItemByCD(int(intCD))
 
 
 class HangarTutorialContext(ToolTipContext):

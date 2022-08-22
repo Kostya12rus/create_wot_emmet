@@ -2,9 +2,7 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/gui_utils.py
-import BigWorld, GUI, Math
-from helpers import dependency
-from skeletons.account_helpers.settings_core import ISettingsCore
+import GUI, Math
 
 def setAnchor(component, hor, vert):
     component.horizontalAnchor = hor
@@ -36,12 +34,5 @@ def buildTexMapping(texCoords, texSize, fullTexSize):
       maximum[0] / fullTexSize[0], texCoords[1] / fullTexSize[1]))
 
 
-def getMousePosition():
-    mousePos = GUI.mcursor().position
-    clipX = (mousePos.x + 1) / 2
-    clipY = (1 - mousePos.y) / 2
-    scale = dependency.instance(ISettingsCore).interfaceScale.get()
-    mouseX = clipX * BigWorld.screenWidth() / scale
-    mouseY = clipY * BigWorld.screenHeight() / scale
-    return (
-     mouseX, mouseY)
+def hexARGBToRGBAFloatColor(hexColor):
+    return Math.Vector4((hexColor >> 16 & 255) * (1.0 / 255.0), (hexColor >> 8 & 255) * (1.0 / 255.0), (hexColor & 255) * (1.0 / 255.0), (hexColor >> 24 & 255) * (1.0 / 255.0))

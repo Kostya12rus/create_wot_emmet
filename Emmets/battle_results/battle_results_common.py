@@ -4,7 +4,7 @@
 # Embedded file name: scripts/common/battle_results/battle_results_common.py
 from battle_results_constants import BATTLE_RESULT_ENTRY_TYPE as ENTRY_TYPE
 from constants import FLAG_ACTION
-from DictPackers import DictPacker, SimpleDictPacker, DeltaPacker, ValueReplayPacker, roundToInt
+from DictPackers import DictPacker, MergeDictPacker, SimpleDictPacker, DeltaPacker, ValueReplayPacker, roundToInt
 from items.vehicles import VEHICLE_DEVICE_TYPE_NAMES, VEHICLE_TANKMAN_TYPE_NAMES
 from items.badges_common import BadgesCommon
 BATTLE_RESULTS = [
@@ -48,6 +48,8 @@ BATTLE_RESULTS = [
   'damageDealt', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
  (
   'sniperDamageDealt', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
+ (
+  'artilleryFortEquipDamageDealt', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
  (
   'equipmentDamageDealt', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
  (
@@ -130,6 +132,8 @@ BATTLE_RESULTS = [
   'destructiblesDamageDealt', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
  (
   'destructiblesHits', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
+ (
+  'destructibleDeaths', list, [], None, 'extend', ENTRY_TYPE.VEHICLE_ALL),
  (
   'numDefended', int, 0, None, 'sum', ENTRY_TYPE.VEHICLE_ALL),
  (
@@ -285,7 +289,7 @@ BATTLE_RESULTS = [
  (
   'eventBpcoinList', list, [], None, 'skip', ENTRY_TYPE.VEHICLE_SELF),
  (
-  'eventCreditsFactor1000List', list, [], None, 'skip', ENTRY_TYPE.VEHICLE_SELF),
+  'eventCreditsFactor100List', list, [], None, 'skip', ENTRY_TYPE.VEHICLE_SELF),
  (
   'eventXPFactor100List', list, [], None, 'skip', ENTRY_TYPE.VEHICLE_SELF),
  (
@@ -706,4 +710,8 @@ BATTLE_RESULTS = [
  (
   'startAmmo', list, [], None, 'skip', ENTRY_TYPE.SERVER),
  (
-  'initialVehicleAmmo', list, [], None, 'skip', ENTRY_TYPE.SERVER)]
+  'initialVehicleAmmo', list, [], None, 'skip', ENTRY_TYPE.SERVER),
+ (
+  'replayURL', str, '', None, 'skip', ENTRY_TYPE.ACCOUNT_SELF),
+ (
+  'currencies', dict, {}, MergeDictPacker(), 'joinByEachPacker', ENTRY_TYPE.VEHICLE_SELF)]

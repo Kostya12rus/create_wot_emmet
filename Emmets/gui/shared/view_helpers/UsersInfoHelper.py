@@ -42,7 +42,7 @@ class UsersInfoHelper(object):
         cls._rqCtrl.fini()
 
     def onUserNamesReceived(self, names):
-        self.onNamesReceived(names)
+        self.onNamesReceived()
 
     def onUserRatingsReceived(self, ratings):
         pass
@@ -65,11 +65,11 @@ class UsersInfoHelper(object):
             self.users.addUser(user)
         return user
 
-    def getUserName(self, userID, scope=UserEntityScope.LOBBY, withEmptyName=False):
+    def getUserName(self, userID, scope=UserEntityScope.LOBBY):
         user = self.getContact(userID, scope=scope)
         if not user.hasValidName():
             self._invalid['names'].add(userID)
-            if self.proto.isConnected() or withEmptyName:
+            if self.proto.isConnected():
                 return ''
         return user.getName()
 

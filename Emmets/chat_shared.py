@@ -1539,8 +1539,7 @@ SYS_MESSAGE_TYPE = Enumeration('systemMessageType', [
  'royaleQuests',
  'premiumChanged',
  'customizationProgressionChanged',
- 'battlePassStyleChoiceAvailable',
- 'battlePassStyleChosen',
+ 'battlePassStyleRecieved',
  'battlePassSeasonEnd',
  'wotPlusUnlocked',
  'wotPlusRenewed',
@@ -1551,7 +1550,17 @@ SYS_MESSAGE_TYPE = Enumeration('systemMessageType', [
  'wotPlusRentEnd',
  'wotPlusNoRentSelected',
  'giftSystemMessage',
- 'giftSystemReturnGift'])
+ 'telecomMergeResults',
+ 'battlePassUseNonChapterPoints',
+ 'epicSeasonEnd',
+ 'epicLevelUp',
+ 'recertificationResetUsed',
+ 'recertificationReset',
+ 'recertificationAvailability',
+ 'recertificationFinancial',
+ 'resourceWellOperation',
+ 'resourceWellReward',
+ 'resourceWellNoVehicles'])
 SYS_MESSAGE_IMPORTANCE = Enumeration('systemMessageImportance', [
  'normal',
  'high'])

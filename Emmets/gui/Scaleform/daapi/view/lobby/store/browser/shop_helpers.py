@@ -61,8 +61,8 @@ def getBuyVehiclesUrl():
     return _getUrl('buyVehiclesUrl')
 
 
-def getVehicleUrl():
-    return _getUrl('buyVehicle')
+def getBuyProductUrl():
+    return _getUrl('buyProduct')
 
 
 def getBonsUrl():
@@ -85,16 +85,8 @@ def getTradeInVehiclesUrl():
     return _getUrl('tradeIn')
 
 
-def getPersonalTradeInVehiclesUrl():
-    return _getUrl('trade_in_personal')
-
-
 def getTradeOffOverlayUrl():
     return _getUrl('tradeOffOverlay')
-
-
-def getPersonalTradeOffOverlayUrl():
-    return _getUrl('personalTradeOffOverlay')
 
 
 def getPremiumVehiclesUrl():
@@ -107,6 +99,10 @@ def getBuyBattlePassUrl():
 
 def getBattlePassCoinProductsUrl():
     return _getUrl('bpcoinProducts')
+
+
+def getBattlePassPointsProductsUrl():
+    return _getUrl('bpProducts')
 
 
 def getBuyCollectibleVehiclesUrl():
@@ -138,10 +134,10 @@ def getBuyRenewableSubscriptionUrl():
     return _getUrl('buyRenewableSubscription')
 
 
+def getIntegratedAuctionUrl():
+    return _getUrl('integratedAuction')
+
+
 def getClientControlledCloseCtx():
     return {'browserParams': makeBrowserParams(isCloseBtnVisible=True), 
        'forcedSkipEscape': True}
-
-
-def getEnvelopesUrl():
-    return _getUrl('envelopes')

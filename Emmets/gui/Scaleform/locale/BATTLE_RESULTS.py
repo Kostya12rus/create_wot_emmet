@@ -125,6 +125,7 @@ class BATTLE_RESULTS(object):
     COMMON_VEHICLESTATE_DEAD5 = '#battle_results:common/vehicleState/dead5'
     COMMON_VEHICLESTATE_DEAD6 = '#battle_results:common/vehicleState/dead6'
     COMMON_VEHICLESTATE_DEAD7 = '#battle_results:common/vehicleState/dead7'
+    COMMON_VEHICLESTATE_DEAD27 = '#battle_results:common/vehicleState/dead27'
     COMMON_VEHICLESTATE_PREMATURELEAVE = '#battle_results:common/vehicleState/prematureLeave'
     COMMON_DETAILS_NOPREMTITLE = '#battle_results:common/details/noPremTitle'
     COMMON_DETAILS_PREMTITLE = '#battle_results:common/details/premTitle'
@@ -221,6 +222,7 @@ class BATTLE_RESULTS(object):
     TEAM_STATS_LABELS_SNIPERDAMAGEDEALT = '#battle_results:team/stats/labels_sniperDamageDealt'
     TEAM_STATS_LABELS_DESTRUCTIBLESDAMAGEDEALT = '#battle_results:team/stats/labels_destructiblesDamageDealt'
     TEAM_STATS_LABELS_EQUIPMENTDAMAGEDEALT = '#battle_results:team/stats/labels_equipmentDamageDealt'
+    TEAM_STATS_LABELS_ARTILLERYFORTEQUIPDAMAGEDEALT = '#battle_results:team/stats/labels_artilleryFortEquipDamageDealt'
     TEAM_STATS_LABELS_DAMAGEDEALTRATIO = '#battle_results:team/stats/labels_damageDealtRatio'
     TEAM_STATS_LABELS_DIRECTHITSRECEIVED = '#battle_results:team/stats/labels_directHitsReceived'
     TEAM_STATS_LABELS_PIERCINGSRECEIVED = '#battle_results:team/stats/labels_piercingsReceived'
@@ -280,11 +282,8 @@ class BATTLE_RESULTS(object):
     DETAILS_CALCULATIONS_BASE = '#battle_results:details/calculations/base'
     DETAILS_CALCULATIONS_XPRECORD = '#battle_results:details/calculations/xpRecord'
     DETAILS_CALCULATIONS_SQUADBONUS = '#battle_results:details/calculations/squadBonus'
-    DETAILS_CALCULATIONS_NEWYEAR = '#battle_results:details/calculations/newYear'
-    DETAILS_CALCULATIONS_VEHICLEBRANCH = '#battle_results:details/calculations/vehicleBranch'
     DETAILS_CALCULATIONS_NOPENALTY = '#battle_results:details/calculations/noPenalty'
     DETAILS_CALCULATIONS_EVENT = '#battle_results:details/calculations/event'
-    DETAILS_CALCULATIONS_LUNARNY = '#battle_results:details/calculations/lunarNY'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_DESERTER = '#battle_results:details/calculations/fairPlayViolation/deserter'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EPIC_DESERTER = '#battle_results:details/calculations/fairPlayViolation/epic_deserter'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_AFK = '#battle_results:details/calculations/fairPlayViolation/afk'
@@ -350,6 +349,7 @@ class BATTLE_RESULTS(object):
     CUSTOMIZATIONPROGRESS_DESCR = '#battle_results:customizationProgress/descr'
     CUSTOMIZATIONPROGRESS_AWARD_RECEIVED = '#battle_results:customizationProgress/award/received'
     CUSTOMIZATIONPROGRESS_AWARD_NEWLEVEL = '#battle_results:customizationProgress/award/newLevel'
+    REPLAYBTNLABEL = '#battle_results:replayBtnLabel'
     DETAILS_TIME_LBL_ENUM = (
      DETAILS_TIME_LBL_OBJECTIVESREACHED,
      DETAILS_TIME_LBL_OBJECTIVESDESTROYED,
@@ -367,11 +367,8 @@ class BATTLE_RESULTS(object):
      DETAILS_CALCULATIONS_BASE,
      DETAILS_CALCULATIONS_XPRECORD,
      DETAILS_CALCULATIONS_SQUADBONUS,
-     DETAILS_CALCULATIONS_NEWYEAR,
-     DETAILS_CALCULATIONS_VEHICLEBRANCH,
      DETAILS_CALCULATIONS_NOPENALTY,
      DETAILS_CALCULATIONS_EVENT,
-     DETAILS_CALCULATIONS_LUNARNY,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_DESERTER,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EPIC_DESERTER,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_AFK,
@@ -415,6 +412,7 @@ class BATTLE_RESULTS(object):
      TEAM_STATS_LABELS_SNIPERDAMAGEDEALT,
      TEAM_STATS_LABELS_DESTRUCTIBLESDAMAGEDEALT,
      TEAM_STATS_LABELS_EQUIPMENTDAMAGEDEALT,
+     TEAM_STATS_LABELS_ARTILLERYFORTEQUIPDAMAGEDEALT,
      TEAM_STATS_LABELS_DAMAGEDEALTRATIO,
      TEAM_STATS_LABELS_DIRECTHITSRECEIVED,
      TEAM_STATS_LABELS_PIERCINGSRECEIVED,
@@ -458,7 +456,8 @@ class BATTLE_RESULTS(object):
      COMMON_VEHICLESTATE_DEAD4,
      COMMON_VEHICLESTATE_DEAD5,
      COMMON_VEHICLESTATE_DEAD6,
-     COMMON_VEHICLESTATE_DEAD7)
+     COMMON_VEHICLESTATE_DEAD7,
+     COMMON_VEHICLESTATE_DEAD27)
 
     @classmethod
     def getDetailsTimeLbl(cls, statName):

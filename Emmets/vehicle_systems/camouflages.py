@@ -27,6 +27,7 @@ from gui.shared.gui_items.customization.c11n_items import Customization
 import math_utils
 from helpers import newFakeModel
 from soft_exception import SoftException
+from CurrentVehicle import g_currentVehicle
 from skeletons.gui.shared.gui_items import IGuiItemsFactory
 if typing.TYPE_CHECKING:
     from items.components.shared_components import ProjectionDecalSlotDescription
@@ -102,7 +103,7 @@ def updateFashions(appearance):
         if outfit and outfit.style and outfit.style.isProgression:
             changeStyleProgression(style=outfit.style, appearance=appearance, level=outfit.progressionLevel)
         if IS_EDITOR:
-            if outfit and outfit.style and outfit.style.modelsSet != appearance.currentModelsSet:
+            if outfit.style is not None and outfit.style.modelsSet != appearance.currentModelsSet:
                 setMaterialsVisibility(appearance, appearance.availableMaterials, False)
         appearance.c11nComponent = appearance.createComponent(Vehicular.C11nComponent, fashions, appearance.compoundModel, outfitData)
         return
@@ -143,6 +144,8 @@ def getOutfitComponent(outfitCD, vehicleDescriptor=None, seasonType=None):
                     outfit = getStyleProgressionOutfit(outfit, outfitComponent.styleProgressionLevel, seasonType)
                     baseOutfitComponent = outfit.pack()
                 baseOutfitComponent.styleProgressionLevel = outfitComponent.styleProgressionLevel
+            if styleDescr.isWithSerialNumber:
+                baseOutfitComponent.serial_number = outfitComponent.serial_number
             if vehicleDescriptor and ItemTags.ADD_NATIONAL_EMBLEM in styleDescr.tags:
                 emblems = createNationalEmblemComponents(vehicleDescriptor)
                 baseOutfitComponent.decals.extend(emblems)
@@ -184,7 +187,13 @@ def prepareBattleOutfit(outfitCD, vehicleDescriptor, vehicleId):
     outfitComponent = getOutfitComponent(outfitCD, vehicleDescriptor)
     outfit = Outfit(component=outfitComponent, vehicleCD=vehicleCD)
     player = BigWorld.player()
-    forceHistorical = player.playerVehicleID != vehicleId and player.customizationDisplayType < outfit.customizationDisplayType()
+    if player is not None and hasattr(player, 'customizationDisplayType'):
+        localPlayerWantsHistoricallyAccurate = player.customizationDisplayType < outfit.customizationDisplayType()
+        isLocalVehicle = player.playerVehicleID != vehicleId
+    else:
+        localPlayerWantsHistoricallyAccurate = False
+        isLocalVehicle = False
+    forceHistorical = isLocalVehicle and localPlayerWantsHistoricallyAccurate
     if outfit.style and (outfit.style.isProgression or IS_EDITOR):
         progressionOutfit = getStyleProgressionOutfit(outfit, toLevel=outfit.progressionLevel)
         if progressionOutfit is not None:
@@ -195,11 +204,27 @@ def prepareBattleOutfit(outfitCD, vehicleDescriptor, vehicleId):
         return outfit
 
 
+def getCurrentLevelForRewindStyle(outfit):
+    itemsCache = dependency.instance(IItemsCache)
+    inventory = itemsCache.items.inventory
+    intCD = makeIntCompactDescrByID('customizationItem', CustomizationType.STYLE, outfit.style.id)
+    vehDesc = g_currentVehicle.item.descriptor
+    progressData = inventory.getC11nProgressionData(intCD, vehDesc.type.compactDescr)
+    if progressData is not None:
+        return progressData.currentLevel
+    else:
+        return 1
+
+
 def getStyleProgressionOutfit(outfit, toLevel=0, season=None):
     styleProgression = outfit.style.styleProgressions
     allLevels = styleProgression.keys()
     if not season:
         season = _currentMapSeason()
+    style = outfit.style
+    if toLevel == 0 and style.isProgressionRewindEnabled:
+        _logger.info('Get style progression level for the rewind style with id=%d', style.id)
+        toLevel = getCurrentLevelForRewindStyle(outfit)
     if allLevels and toLevel not in allLevels:
         _logger.error('Get style progression outfit: incorrect level given: %d', toLevel)
         toLevel = 1
@@ -637,7 +662,7 @@ def _matchTaggedProjectionDecalsToSlots(projectionDecalsMultiSlot, slotsByTagMap
     return True
 
 
-def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMap):
+def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMap, updateSlotId=True):
     slots = {}
     slotsByTags = deepcopy(slotsByTagMap)
     for decal in decals:
@@ -650,7 +675,8 @@ def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMa
     slotsList = slots.values()
     if _checkSlotsOrder(slots.values(), appliedDecals):
         for component, slotParams in slots.iteritems():
-            component.slotId = slotParams.slotId
+            if updateSlotId:
+                component.slotId = slotParams.slotId
             _checkAndMirrorProjectionDecal(component, slotParams)
 
         return slotsList
@@ -753,6 +779,29 @@ def __vehicleSlotsByType(vehDesc, slotType):
                 yield slot
 
     return
+
+
+if IS_EDITOR:
+
+    def createVehPartSlotMap(vehDesc):
+        slotsByIdMap = {}
+        for partName in TankPartNames.ALL:
+            partDesc = getattr(vehDesc, partName, None)
+            if partDesc is None:
+                continue
+            for slot in partDesc.slotsAnchors:
+                slotsByIdMap[slot.slotId] = (
+                 partDesc, slot)
+
+            for slot in partDesc.emblemSlots:
+                slotsByIdMap[slot.slotId] = (
+                 partDesc, slot)
+
+        return slotsByIdMap
+
+
+    def createVehSlotsMaps(vehDesc):
+        return __createVehSlotsMaps(vehDesc)
 
 
 def __createVehSlotsMaps(vehDesc):

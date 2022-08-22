@@ -2,22 +2,20 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/formatters.py
-import logging, re, types
+import re, types
 from collections import namedtuple
-import typing, ArenaType
+import logging, ArenaType
 from constants import ARENA_BONUS_TYPE, GAMEPLAY_NAMES_WITH_DISABLED_QUESTS
 from gui import makeHtmlString
-from gui.Scaleform.genConsts.QUEST_AWARD_BLOCK_ALIASES import QUEST_AWARD_BLOCK_ALIASES
 from gui.Scaleform.locale.QUESTS import QUESTS
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.settings import ICONS_SIZES
 from gui.impl import backport
-from gui.shared.formatters import icons as gui_icons, text_styles
+from gui.Scaleform.genConsts.QUEST_AWARD_BLOCK_ALIASES import QUEST_AWARD_BLOCK_ALIASES
+from gui.shared.formatters import text_styles, icons as gui_icons
 from gui.shared.money import Currency
 from helpers import i18n
 from shared_utils import CONST_CONTAINER
-if typing.TYPE_CHECKING:
-    from gui.server_events.cond_formatters import FormattableField
 COMPLEX_TOKEN = 'complex_token'
 COMPLEX_TOKEN_TEMPLATE = 'img:(?P<styleID>.+):(?P<webID>.+)'
 TokenComplex = namedtuple('TokenComplex', 'isDisplayable styleID webID')
@@ -280,18 +278,6 @@ def packSimpleBonusesBlock(bonusesList, endlineSymbol='', complexTooltip=''):
     return UiElement(data)
 
 
-def packSingleLineBonusesBlock(bonusesList, endlineSymbol='', complexTooltip='', specialTooltip='', specialTooltipArgs=None):
-    data = {'linkage': 'QuestSingleLineTextAwardBlockUI', 
-       'items': bonusesList, 
-       'separator': ', ', 
-       'ellipsis': '..', 
-       'endline': endlineSymbol, 
-       'complexTooltip': complexTooltip, 
-       'specialTooltip': specialTooltip, 
-       'specialTooltipArgs': specialTooltipArgs or ()}
-    return UiElement(data)
-
-
 def packNewStyleBonusesBlock(bonusesList, endlineSymbol=''):
     data = {'linkage': QUEST_AWARD_BLOCK_ALIASES.QUEST_BIG_ICON_AWARD_BLOCK, 
        'items': bonusesList, 
@@ -332,7 +318,7 @@ def packProgressData(rendererLinkage, progressList):
     return ProgressData(rendererLinkage, progressList)
 
 
-PreFormattedCondition = namedtuple('PreFormattedCondition', 'titleData, descrData, iconKey, current, total, earned, progressData, conditionData,progressType, sortKey, progressID')
+PreFormattedCondition = namedtuple('PreForamttedCondition', 'titleData, descrData, iconKey, current, total, earned, progressData, conditionData,progressType, sortKey, progressID')
 
 def packMissionIconCondition(titleData, progressType, descrData, iconKey, current=None, total=None, earned=None, progressData=None, conditionData=None, sortKey='', progressID=None):
     return PreFormattedCondition(titleData, descrData, iconKey, current, total, earned, progressData, conditionData, progressType, sortKey, progressID)

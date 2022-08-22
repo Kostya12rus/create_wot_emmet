@@ -27,8 +27,7 @@ local_pak_decode_path = pathlib.Path("wot_decode_files")
 if local_pak_decode_path.is_dir():
     dir_del_time = time.time()
     while local_pak_decode_path.is_dir():
-        subprocess.call(f'RMDIR /S /Q "{local_pak_decode_path}"', shell=True, stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+        subprocess.call(f'RMDIR /S /Q "{local_pak_decode_path}"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         time.sleep(0.1)
     print('{:.5f}s'.format(time.time() - dir_del_time), 'удалена старая папка скриптов')
 local_pak_decode_path.mkdir()
@@ -65,8 +64,7 @@ emmet_dir.mkdir()
 
 copy_time = time.time()
 subprocess.call(fr'XCOPY "{client_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q', shell=True)
-subprocess.call(fr'XCOPY "{client_common_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q',
-                shell=True)
+subprocess.call(fr'XCOPY "{client_common_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q', shell=True)
 subprocess.call(fr'XCOPY "{common_dir.absolute()}\*.*" "{emmet_dir.absolute()}\*.*" /H /Y /C /R /S /Q', shell=True)
 print('{:.5f}s'.format(time.time() - copy_time), 'emmet создан')
 print('{:.5f}s'.format(time.time() - time_start), 'затрачено времени')

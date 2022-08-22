@@ -1,0 +1,43 @@
+# uncompyle6 version 3.8.0
+# Python bytecode 2.7 (62211)
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# Embedded file name: scripts/client/gui/Scaleform/genConsts/ICON_TEXT_FRAMES.py
+
+
+class ICON_TEXT_FRAMES(object):
+    EMPTY = 'empty'
+    CREDITS = 'credits'
+    GOLD = 'gold'
+    CREDITS_BIG = 'creditsBig'
+    GOLD_BIG = 'goldBig'
+    GOLD_DISCOUNT = 'goldDiscount'
+    XP = 'xp'
+    ELITE_XP = 'eliteXp'
+    ELITE = 'elite'
+    ARROW_DOWN = 'arrowDown'
+    ARROW_UP = 'arrowUp'
+    ARROW_DOWN_DISABLED = 'arrowDownDisabled'
+    ELITE_TANK_XP = 'elite_tank_xp'
+    FREE_XP = 'freeXp'
+    CRYSTAL = 'crystal'
+    EVENT_COIN = 'eventCoin'
+    BPCOIN = 'bpcoin'
+    TANK_DAILYXPFACTOR = 'tank_dailyXPFactor'
+    TANK_UNLOCK_PRICE = 'tank_unlock_price'
+    DOUBLE_XP_FACTOR = 'doubleXPFactor'
+    ACTION_XP_FACTOR = 'actionXPFactor'
+    VCOIN = 'vcoin'
+    CLASS1 = 'class1'
+    CLASS2 = 'class2'
+    CLASS3 = 'class3'
+    CLASS4 = 'class4'
+    XP_PRICE = 'xp_price'
+    DEFRES = 'defRes'
+    RENTALS = 'rentals'
+    REWARD_SHEET = 'sheets'
+    ALERT = 'alert'
+    TRADE = 'trade'
+    ATTENTION = 'attention'
+    LOCK = 'lock'
+    RANKED_POINTS = 'rankedPoints'
+    BONUS_BATTLE = 'bonusBattle'

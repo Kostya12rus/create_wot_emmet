@@ -2,23 +2,21 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/bonus_readers.py
-import calendar, time
-from functools import partial
+import time
 from typing import Union, TYPE_CHECKING
 import blueprints, dossiers2
 from dynamic_currencies import g_dynamicCurrenciesData
-import items
+import items, calendar
 from account_shared import validateCustomizationItem
 from battle_pass_common import NON_VEH_CD
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import isUniversalFragment
-from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS
 from dossiers2.custom.cache import getCache
 from invoices_helpers import checkAccountDossierOperation
-from items import vehicles, tankmen, utils, lunar_ny, new_year, collectibles
+from items import vehicles, tankmen, utils
 from items.components.c11n_constants import SeasonType
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
-from items.components.ny_constants import YEARS_INFO, TOY_TYPE_IDS_BY_NAME, CurrentNYConstants, YEARS
+from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS
 from soft_exception import SoftException
 if TYPE_CHECKING:
     from ResMgr import DataSection
@@ -489,11 +487,15 @@ def __readBonus_vehicleCustomizations(bonus, _name, section):
        'id': section.readInt('styleId', -1)}
     if section.has_key('customCompensation'):
         __readBonus_customCompensation(custData, None, section['customCompensation'])
+    if section.has_key('serialNumberSequence'):
+        custData['serialNumberSequence'] = section.readString('serialNumberSequence')
     isValid, item = validateCustomizationItem(custData)
     if not isValid:
         raise SoftException(item)
     bonus['customization'] = {'styleId': custData['id'], 
        'customCompensation': custData['customCompensation']}
+    if 'serialNumberSequence' in custData:
+        bonus['customization']['serialNumberSequence'] = custData['serialNumberSequence']
     return
 
 
@@ -613,6 +615,8 @@ def __readBonus_customizations(bonus, _name, section, eventType, checkLimit):
             custData['boundToCurrentVehicle'] = True
         if subsection.has_key('customCompensation'):
             __readBonus_customCompensation(custData, None, subsection['customCompensation'])
+        if subsection.has_key('serialNumberSequence'):
+            custData['serialNumberSequence'] = subsection.readString('serialNumberSequence', '')
         isValid, item = validateCustomizationItem(custData)
         if not isValid:
             raise SoftException(item)
@@ -806,50 +810,6 @@ def __readMetaSection(bonus, _name, section, eventType, checkLimit):
         return
 
 
-def __readBonus_nyToy(bonus, _name, section, eventType, year, checkLimit):
-    if section.has_key('id'):
-        tid = section['id'].asInt
-        if year == YEARS_INFO.CURRENT_YEAR:
-            cache = new_year.g_cache.toys
-        else:
-            cache = collectibles.g_cache[YEARS.getYearStrFromYearNum(year)].toys
-        if tid not in cache:
-            raise SoftException(('Unknown NY{} toyID: {}').format(year, tid))
-        count = section['count'].asInt if section.has_key('count') else 0
-        pureCount = section['pureCount'].asInt if section.has_key('pureCount') else count
-        if pureCount > count:
-            raise SoftException('Pure count should be less or equal than count', pureCount, count)
-        toysCollectionKey = YEARS_INFO.getCollectionKeyForYear(year)
-        nyToys = bonus.setdefault(toysCollectionKey, {})
-        nyToys[tid] = {'count': count, 'pureCount': pureCount}
-
-
-def __readBonus_nyToyFragments(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.TOY_FRAGMENTS] = bonus.get(CurrentNYConstants.TOY_FRAGMENTS, 0) + count
-
-
-def __readBonus_nyAnyOf(bonus, _name, section, eventType, checkLimit):
-    if section.has_key('setting'):
-        settingID = YEARS_INFO.CURRENT_SETTING_IDS_BY_NAME[section.readString('setting')]
-    else:
-        settingID = -1
-    if section.has_key('type'):
-        typeID = TOY_TYPE_IDS_BY_NAME[section.readString('type')]
-    else:
-        typeID = -1
-    if section.has_key('rank'):
-        rank = section['rank'].asInt
-    else:
-        rank = -1
-    bonus.setdefault(CurrentNYConstants.ANY_OF, []).append((typeID, settingID, rank))
-
-
-def __readBonus_nyFillers(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.FILLERS] = bonus.get(CurrentNYConstants.FILLERS, 0) + count
-
-
 def __readBonus_optionalData(config, bonusReaders, section, eventType):
     limitIDs, bonus = __readBonusSubSection(config, bonusReaders, section, eventType)
     probabilityStageCount = config.get('probabilityStageCount', 1)
@@ -878,6 +838,8 @@ def __readBonus_optionalData(config, bonusReaders, section, eventType):
         properties['compensation'] = section['compensation'].asBool
     if section.has_key('shouldCompensated'):
         properties['shouldCompensated'] = section['shouldCompensated'].asBool
+    if section.has_key('priority'):
+        properties['priority'] = section['priority'].asInt
     if IS_DEVELOPMENT:
         if section.has_key('name'):
             properties['name'] = section['name'].asString
@@ -903,7 +865,7 @@ def __readBonus_optional(config, bonusReaders, bonus, section, eventType):
     if config.get('useBonusProbability', False) and bonusProbability is None:
         raise SoftException("Missing bonusProbability attribute in 'optional'")
     properties = subBonus.get('properties', {})
-    for property in ('compensation', 'shouldCompensated'):
+    for property in ('compensation', 'shouldCompensated', 'priority'):
         if properties.get(property, None) is not None:
             raise SoftException(("Property '{}' not allowed for standalone 'optional'").format(property))
 
@@ -1006,16 +968,6 @@ def __readBonus_battlePassPoints(bonus, _name, section, eventType, checkLimit):
     bonus['battlePassPoints'] = {'vehicles': {NON_VEH_CD: count}}
 
 
-def __readBonus_Charm(bonus, _name, section, eventType, checkLimit):
-    id = section['id'].asInt
-    cache = lunar_ny.g_cache.charms
-    if id not in cache:
-        raise SoftException(('Unknown charm ID: {}').format(id))
-    count = section['count'].asInt if section.has_key('count') else 0
-    charms = bonus.setdefault('charms', {})
-    charms[id] = {'count': count}
-
-
 def __readBonus_group(config, bonusReaders, bonus, section, eventType):
     limitIDs, subBonus = __readBonusSubSection(config, bonusReaders, section, eventType)
     bonus.setdefault('groups', []).append(subBonus)
@@ -1073,21 +1025,12 @@ __BONUS_READERS = {'meta': __readMetaSection,
    'vehicleChoice': __readBonus_vehicleChoice, 
    'blueprint': __readBonus_blueprint, 
    'blueprintAny': __readBonus_blueprintAny, 
-   'charm': __readBonus_Charm, 
-   'currency': __readBonus_currency, 
-   'ny18Toy': partial(__readBonus_nyToy, year=YEARS.YEAR18), 
-   'ny19Toy': partial(__readBonus_nyToy, year=YEARS.YEAR19), 
-   'ny20Toy': partial(__readBonus_nyToy, year=YEARS.YEAR20), 
-   'ny21Toy': partial(__readBonus_nyToy, year=YEARS.YEAR21), 
-   CurrentNYConstants.TOY_BONUS: partial(__readBonus_nyToy, year=YEARS_INFO.CURRENT_YEAR), 
-   CurrentNYConstants.TOY_FRAGMENTS: __readBonus_nyToyFragments, 
-   CurrentNYConstants.ANY_OF: __readBonus_nyAnyOf, 
-   CurrentNYConstants.FILLERS: __readBonus_nyFillers}
+   'currency': __readBonus_currency}
 __PROBABILITY_READERS = {'optional': __readBonus_optional, 
    'oneof': __readBonus_oneof, 
    'group': __readBonus_group}
 _RESERVED_NAMES = frozenset(['config', 'properties', 'limitID', 'probability', 'compensation', 'name',
- 'shouldCompensated', 'probabilityStageDependence', 'bonusProbability'])
+ 'shouldCompensated', 'probabilityStageDependence', 'bonusProbability', 'priority'])
 SUPPORTED_BONUSES = frozenset(__BONUS_READERS.iterkeys())
 __SORTED_BONUSES = sorted(SUPPORTED_BONUSES)
 SUPPORTED_BONUSES_IDS = dict((n, i) for i, n in enumerate(__SORTED_BONUSES))
@@ -1137,6 +1080,10 @@ def __readBonusConfig(section):
         elif name == 'useBonusProbability':
             config.setdefault('useBonusProbability', False)
             config['useBonusProbability'] = data.asBool
+        elif name == 'showBonusInfo':
+            config['showBonusInfo'] = data.asBool
+        elif name == 'showProbabilitiesInfo':
+            config['showProbabilitiesInfo'] = data.asBool
         else:
             raise SoftException(('Unknown config section: {}').format(name))
 
@@ -1167,7 +1114,7 @@ def __readBonusSubSection(config, bonusReaders, section, eventType=None, checkLi
             if limitIDs:
                 resultLimitIDs.update(limitIDs)
         elif name in bonusReaders:
-            bonusReaders[name](bonus, name, subSection, eventType, checkLimit=checkLimit)
+            bonusReaders[name](bonus, name, subSection, eventType, checkLimit)
         elif name in _RESERVED_NAMES:
             pass
         else:

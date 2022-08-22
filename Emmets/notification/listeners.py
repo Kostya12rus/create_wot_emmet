@@ -2,20 +2,19 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/notification/listeners.py
-import typing, collections, weakref, logging
-from collections import defaultdict, namedtuple
-import BigWorld
+import collections, json, logging, time, typing, weakref
+from collections import defaultdict
+from functools import partial
 from PlayerEvents import g_playerEvents
-from constants import ARENA_BONUS_TYPE, MAPS_TRAINING_ENABLED_KEY
 from account_helpers import AccountSettings
-from account_helpers.AccountSettings import PROGRESSIVE_REWARD_VISITED
+from account_helpers.AccountSettings import PROGRESSIVE_REWARD_VISITED, IS_BATTLE_PASS_EXTRA_STARTED, RESOURCE_WELL_START_SHOWN, RESOURCE_WELL_END_SHOWN, INTEGRATED_AUCTION_NOTIFICATIONS, CN_LOOT_BOXES_INTRO_WAS_SHOWN, CN_LOOT_BOXES_FINISH_SHOWN
 from adisp import process
 from async import async, await
+from battle_pass_common import FinalReward
 from chat_shared import SYS_MESSAGE_TYPE
-from constants import AUTO_MAINTENANCE_RESULT, PremiumConfigs, DAILY_QUESTS_CONFIG, DOG_TAGS_CONFIG
 from collector_vehicle import CollectorVehicleConsts
+from constants import ARENA_BONUS_TYPE, AUTO_MAINTENANCE_RESULT, DAILY_QUESTS_CONFIG, DOG_TAGS_CONFIG, MAPS_TRAINING_ENABLED_KEY, PremiumConfigs, SwitchState
 from debug_utils import LOG_DEBUG, LOG_ERROR
-from gifts.gifts_common import GiftEventID, GiftEventState
 from gui import SystemMessages
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.Scaleform.locale.CLANS import CLANS
@@ -24,48 +23,49 @@ from gui.battle_pass.battle_pass_helpers import getStyleInfoForChapter
 from gui.clans.clan_account_profile import SYNC_KEYS
 from gui.clans.clan_helpers import ClanListener, isInClanEnterCooldown
 from gui.clans.settings import CLAN_APPLICATION_STATES
-from gui.gift_system.constants import HubUpdateReason
-from gui.gift_system.mixins import GiftEventHubWatcher
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.impl.lobby.premacc.premacc_helpers import PiggyBankConstants, getDeltaTimeHelper
+from gui.integrated_auction.constants import AUCTION_START_EVENT_TYPE, AUCTION_FINISH_EVENT_TYPE, AUCTION_STAGE_START_SEEN, AUCTION_FINISH_STAGE_SEEN
+from gui.periodic_battles.models import PeriodType
 from gui.platform.base.statuses.constants import StatusTypes
 from gui.prb_control import prbInvitesProperty
 from gui.prb_control.entities.listener import IGlobalListener
 from gui.server_events.recruit_helper import getAllRecruitsInfo
-from gui.shared import g_eventBus, events
-from gui.shared.formatters import time_formatters, text_styles
-from gui.shared.gui_items.loot_box import NewYearLootBoxes
+from gui.shared import events, g_eventBus
+from gui.shared.formatters import text_styles, time_formatters
 from gui.shared.notifications import NotificationPriorityLevel
 from gui.shared.utils import showInvitationInWindowsBar
+from gui.shared.utils.scheduled_notifications import SimpleNotifier
 from gui.shared.view_helpers.UsersInfoHelper import UsersInfoHelper
 from gui.wgcg.clan.contexts import GetClanInfoCtx
-from gui.wgnc import g_wgncProvider, g_wgncEvents, wgnc_settings
+from gui.wgnc import g_wgncEvents, g_wgncProvider, wgnc_settings
 from gui.wgnc.settings import WGNC_DATA_PROXY_TYPE
-from helpers import time_utils, i18n, dependency
-from lunar_ny import ILunarNYController
-from lunar_ny.lunar_ny_constants import ENVELOPE_ENTITLEMENT_COUNTER
-from helpers.server_settings import serverSettingsChangeListener
-from ids_generators import SequenceIDGenerator
-from lootboxes_common import makeLootboxTokenID
-from messenger.m_constants import PROTO_TYPE, USER_ACTION_ID, SCH_CLIENT_MSG_TYPE
+from gui.wot_anniversary.wot_anniversary_helpers import WotAnniversaryEventState
+from helpers import dependency, i18n, time_utils
+from helpers.events_handler import EventsHandler
+from helpers.time_utils import getTimestampByStrDate
+from messenger import MessengerEntry
+from messenger.formatters import TimeFormatter
+from messenger.m_constants import PROTO_TYPE, SCH_CLIENT_MSG_TYPE, USER_ACTION_ID
 from messenger.proto import proto_getter
 from messenger.proto.events import g_messengerEvents
 from messenger.proto.xmpp.xmpp_constants import XMPP_ITEM_TYPE
-from messenger.formatters import TimeFormatter
 from notification import tutorial_helper
-from notification.decorators import MessageDecorator, PrbInviteDecorator, C11nMessageDecorator, FriendshipRequestDecorator, WGNCPopUpDecorator, ClanAppsDecorator, ClanInvitesDecorator, ClanAppActionDecorator, ClanInvitesActionDecorator, ClanSingleAppDecorator, ClanSingleInviteDecorator, ProgressiveRewardDecorator, MissingEventsDecorator, RecruitReminderMessageDecorator, EmailConfirmationReminderMessageDecorator, LockButtonMessageDecorator, LunarNYEnvelopesDecorator, LunarNYNewReceivedEnvelopesDecorator, LunarNYNewReceivedEnvelopesSimpleDecorator, GiftSystemOperationsFactory, NyLootBoxesReceivedDecorator, NySpecialBoxesEntryDecorator, PsaCoinReminderMessageDecorator, NyCelebrityRewardDecorator, NyMessageButtonDecorator, WinterOfferDecorator
-from notification.settings import NOTIFICATION_TYPE, NOTIFICATION_BUTTON_STATE
-from skeletons.gui.game_control import IBootcampController, IGameSessionController, IBattlePassController, IEventsNotificationsController, ISteamCompletionController, ISeniorityAwardsController
+from notification.decorators import BattlePassLockButtonDecorator, BattlePassSwitchChapterReminderDecorator, C11nMessageDecorator, ClanAppActionDecorator, ClanAppsDecorator, ClanInvitesActionDecorator, ClanInvitesDecorator, ClanSingleAppDecorator, ClanSingleInviteDecorator, EmailConfirmationReminderMessageDecorator, FriendshipRequestDecorator, FunRandomButtonDecorator, LockButtonMessageDecorator, MapboxButtonDecorator, MessageDecorator, MissingEventsDecorator, PrbInviteDecorator, ProgressiveRewardDecorator, PsaCoinReminderMessageDecorator, RecruitReminderMessageDecorator, ResourceWellLockButtonDecorator, ResourceWellStartDecorator, WGNCPopUpDecorator, ChinaLootBoxesDecorator, IntegratedAuctionStageStartDecorator, IntegratedAuctionStageFinishDecorator
+from notification.settings import NOTIFICATION_BUTTON_STATE, NOTIFICATION_TYPE
+from shared_utils import first
+from skeletons.gui.game_control import IBattlePassController, IBootcampController, ICNLootBoxesController, IEventsNotificationsController, IFunRandomController, IGameSessionController, IResourceWellController, ISeniorityAwardsController, ISteamCompletionController, IWotAnniversaryController
+from skeletons.gui.goodies import IGoodiesCache
 from skeletons.gui.impl import INotificationWindowController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.login_manager import ILoginManager
 from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
-from shared_utils import first, findFirst
-from gui.Scaleform.managers.UtilsManager import SECONDS_IN_MINUTE
+from tutorial.control.game_vars import getVehicleByIntCD
 if typing.TYPE_CHECKING:
+    from typing import Any, Dict, List, Optional, Type
     from notification.NotificationsModel import NotificationsModel
     from gui.platform.wgnp.steam_account.statuses import SteamAccEmailStatus
 _logger = logging.getLogger(__name__)
@@ -77,6 +77,8 @@ class _FeatureState(object):
 
 _FUNCTION = 'function'
 SERVER_CMD_BP_GAMEMODE_ENABBLED = 'cmd_bp_gamemode_enabled'
+SERVER_CMD_BP_EXTRA_FINISH = 'cmd_bp_extra_finish'
+SERVER_CMD_BP_EXTRA_WILL_END_SOON = 'cmd_bp_extra_will_end_soon'
 
 class _StateExtractor(object):
     __lobbyContext = dependency.descriptor(ILobbyContext)
@@ -271,14 +273,13 @@ class ServiceChannelListener(_NotificationListener):
                 return C11nMessageDecorator
             if messageType == SYS_MESSAGE_TYPE.personalMissionFailed.index():
                 return LockButtonMessageDecorator
-            if messageSubtype == SCH_CLIENT_MSG_TYPE.NEW_NY_LOOT_BOXES:
-                return NyLootBoxesReceivedDecorator
-            if messageSubtype == SCH_CLIENT_MSG_TYPE.NY_CELEBRITY_REWARD:
-                return NyCelebrityRewardDecorator
-            if messageSubtype == SCH_CLIENT_MSG_TYPE.NY_EVENT_BUTTON_MESSAGE:
-                return NyMessageButtonDecorator
-            if messageSubtype == SCH_CLIENT_MSG_TYPE.WO_NOTIFICATION:
-                return WinterOfferDecorator
+            if messageType == SYS_MESSAGE_TYPE.battlePassReward.index():
+                return BattlePassLockButtonDecorator
+            if messageSubtype in (
+             SCH_CLIENT_MSG_TYPE.MAPBOX_PROGRESSION_REWARD, SCH_CLIENT_MSG_TYPE.MAPBOX_SURVEY_AVAILABLE):
+                return MapboxButtonDecorator
+            if messageType == SYS_MESSAGE_TYPE.resourceWellNoVehicles.index():
+                return ResourceWellLockButtonDecorator
         return MessageDecorator
 
 
@@ -316,6 +317,8 @@ class PrbInvitesListener(_NotificationListener, IGlobalListener):
         if result and prbInvites:
             prbInvites.onInvitesListInited += self.__onInviteListInited
             prbInvites.onReceivedInviteListModified += self.__onInviteListModified
+            g_clientUpdateManager.addCallbacks({'inventory.1': self.__onInventoryUpdated})
+            g_clientUpdateManager.addCallbacks({'stats.unlocks': self.__onInventoryUpdated})
             if prbInvites.isInited():
                 self.__addInvites()
         return result
@@ -327,6 +330,7 @@ class PrbInvitesListener(_NotificationListener, IGlobalListener):
         if prbInvites:
             prbInvites.onInvitesListInited -= self.__onInviteListInited
             prbInvites.onReceivedInviteListModified -= self.__onInviteListModified
+            g_clientUpdateManager.removeObjectCallbacks(self)
 
     def onPrbEntitySwitched(self):
         self.__updateInvites()
@@ -368,6 +372,9 @@ class PrbInvitesListener(_NotificationListener, IGlobalListener):
                     model.updateNotification(NOTIFICATION_TYPE.INVITE, inviteID, invite, True)
 
             return
+
+    def __onInventoryUpdated(self, *_):
+        self.__updateInvites()
 
     def __addInvites(self):
         model = self._model()
@@ -1050,14 +1057,14 @@ class BattlePassListener(_NotificationListener):
         self.__arenaBonusTypesHandlers = {ARENA_BONUS_TYPE.RANKED: self.__pushEnableChangeRanked, 
            ARENA_BONUS_TYPE.BATTLE_ROYALE_SOLO: self.__pushBattleRoyaleEnableChange, 
            ARENA_BONUS_TYPE.EPIC_BATTLE: self.__pushEpicBattleModeChanged}
-        self.__battlePassController.onSeasonStateChange += self.__onSeasonStateChange
+        self.__battlePassController.onSeasonStateChanged += self.__onSeasonStateChange
         self.__battlePassController.onBattlePassSettingsChange += self.__onBattlePassSettingsChange
         self.__notificationCtrl.onEventNotificationsChanged += self.__onEventNotification
         self.__initArenaBonusTypeEnabledStates()
         return True
 
     def stop(self):
-        self.__battlePassController.onSeasonStateChange -= self.__onSeasonStateChange
+        self.__battlePassController.onSeasonStateChanged -= self.__onSeasonStateChange
         self.__battlePassController.onBattlePassSettingsChange -= self.__onBattlePassSettingsChange
         self.__notificationCtrl.onEventNotificationsChanged -= self.__onEventNotification
         self.__arenaBonusTypesHandlers = None
@@ -1069,24 +1076,62 @@ class BattlePassListener(_NotificationListener):
             return
         for eventNotification in added:
             msgType = eventNotification.eventType
-            if msgType != SERVER_CMD_BP_GAMEMODE_ENABBLED:
-                continue
-            arenaBonusType = eventNotification.data
-            header = backport.text(R.strings.system_messages.battlePass.gameModeEnabled.header(), seasonNum=self.__battlePassController.getSeasonNum())
-            textRes = R.strings.system_messages.battlePass.gameModeEnabled.body.num(arenaBonusType)
-            if not textRes.exists():
-                _logger.warning('There is no text for given arenaBonusType: %d', arenaBonusType)
-                return
-            text = backport.text(textRes())
-            SystemMessages.pushMessage(text=text, type=SystemMessages.SM_TYPE.BattlePassGameModeEnabled, messageData={'header': header})
+            if msgType == SERVER_CMD_BP_GAMEMODE_ENABBLED:
+                self.__notifyGamemodeEnabled(eventNotification)
+            elif msgType == SERVER_CMD_BP_EXTRA_FINISH:
+                self.__notifyFinishExtra(eventNotification.data)
+            elif msgType == SERVER_CMD_BP_EXTRA_WILL_END_SOON:
+                self.__notifyExtraWillEndSoon(eventNotification.data)
 
     def __onBattlePassSettingsChange(self, newMode, oldMode):
         self.__checkAndNotify(oldMode, newMode)
         if self.__battlePassController.isEnabled() and newMode == oldMode:
             self.__checkAndNotifyOtherBattleTypes()
+        if self.__battlePassController.hasExtra() and not AccountSettings.getSettings(IS_BATTLE_PASS_EXTRA_STARTED) and self.__battlePassController.isActive():
+            AccountSettings.setSettings(IS_BATTLE_PASS_EXTRA_STARTED, True)
+            chapterID = self.__battlePassController.getExtraChapterID()
+            if chapterID:
+                self.__notifyStartExtra(chapterID)
 
     def __onSeasonStateChange(self):
         self.__checkAndNotify()
+
+    def __notifyGamemodeEnabled(self, eventNotification):
+        arenaBonusType = eventNotification.data
+        header = backport.text(R.strings.system_messages.battlePass.gameModeEnabled.header(), seasonNum=self.__battlePassController.getSeasonNum())
+        textRes = R.strings.system_messages.battlePass.gameModeEnabled.body.num(arenaBonusType)
+        if not textRes.exists():
+            _logger.warning('There is no text for given arenaBonusType: %d', arenaBonusType)
+            return
+        text = backport.text(textRes())
+        SystemMessages.pushMessage(text=text, type=SystemMessages.SM_TYPE.BattlePassGameModeEnabled, messageData={'header': header})
+
+    def __notifyStartExtra(self, chapterID):
+        header = backport.text(R.strings.system_messages.battlePass.extraStarted.header())
+        chapterName = backport.text(R.strings.battle_pass.chapter.dyn(self.__battlePassController.getRewardType(chapterID).value).fullName.num(chapterID)())
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.battlePass.extraStarted.body(), name=chapterName), priority=NotificationPriorityLevel.HIGH, type=SM_TYPE.BattlePassExtraStart, messageData={'header': header})
+
+    def __notifyFinishExtra(self, chapterID):
+        chapterID = int(chapterID)
+        textRes = backport.text(R.strings.battle_pass.chapter.dyn(self.__battlePassController.getRewardType(chapterID).value).fullName.num(chapterID)())
+        if not textRes.exists():
+            _logger.warning('There is no text for given chapterID: %d', chapterID)
+            return
+        chapterName = backport.text(textRes())
+        header = backport.text(R.strings.system_messages.battlePass.extraFinish.header(), name=chapterName)
+        text = backport.text(R.strings.system_messages.battlePass.extraFinish.body(), name=chapterName)
+        SystemMessages.pushMessage(text=text, type=SM_TYPE.BattlePassExtraFinish, messageData={'header': header})
+
+    def __notifyExtraWillEndSoon(self, chapterID):
+        chapterID = int(chapterID)
+        textRes = backport.text(R.strings.battle_pass.chapter.dyn(self.__battlePassController.getRewardType(chapterID).value).fullName.num(chapterID)())
+        if not textRes.exists() or not self.__battlePassController.isChapterExists(chapterID):
+            _logger.warning('There is no text or config for given chapterID: %d', chapterID)
+            return
+        chapterName = backport.text(textRes())
+        header = backport.text(R.strings.system_messages.battlePass.extraWillEndSoon.header(), name=chapterName)
+        text = backport.text(R.strings.system_messages.battlePass.extraWillEndSoon.body(), name=chapterName)
+        SystemMessages.pushMessage(text=text, type=SM_TYPE.BattlePassExtraWillEndSoon, messageData={'header': header})
 
     def __checkAndNotifyOtherBattleTypes(self):
         supportedTypes = self.__battlePassController.getSupportedArenaBonusTypes()
@@ -1118,17 +1163,22 @@ class BattlePassListener(_NotificationListener):
         SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.battlePass.switch_pause.body()), type=SystemMessages.SM_TYPE.ErrorSimple, priority=NotificationPriorityLevel.HIGH)
 
     def __pushFinished(self):
-        styleCD, styleLevel = getStyleInfoForChapter(self.__battlePassController.getCurrentChapter())
-        style = self.__itemsCache.items.getItemByCD(styleCD) if styleCD is not None else None
-        if style is not None and style.getMaxProgressionLevel() != styleLevel:
-            text = backport.text(R.strings.system_messages.battlePass.switch_disable.body.incompleteStyle(), styleName=style.userName)
-        else:
-            text = backport.text(R.strings.system_messages.battlePass.switch_disable.body())
-        SystemMessages.pushMessage(text=text, priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.BattlePassInfo, messageData={'header': backport.text(R.strings.system_messages.battlePass.switch_disable.title(), seasonNum=self.__battlePassController.getSeasonNum())})
-        return
+        styles = []
+        for chapterID in self.__battlePassController.getChapterIDs():
+            if self.__battlePassController.getRewardType(chapterID) == FinalReward.STYLE:
+                styleCD, styleLevel = getStyleInfoForChapter(chapterID)
+                style = self.__itemsCache.items.getItemByCD(styleCD)
+                if style.fullInventoryCount() and styleLevel != style.getMaxProgressionLevel():
+                    styles.append(backport.text(R.strings.system_messages.battlePass.switch_disable.incompleteStyle(), styleName=style.userName))
+
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.battlePass.switch_disable.body()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.BattlePassInfo, messageData={'header': backport.text(R.strings.system_messages.battlePass.switch_disable.title(), seasonNum=self.__battlePassController.getSeasonNum()), 
+           'additionalText': ('\n').join(styles)})
 
     def __pushStarted(self):
-        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.battlePass.switch_started.body()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.BattlePassInfo, messageData={'header': backport.text(R.strings.system_messages.battlePass.switch_started.title(), seasonNum=self.__battlePassController.getSeasonNum())})
+        rewardTypes = set(self.__battlePassController.getRewardType(chapterID) for chapterID in self.__battlePassController.getChapterIDs())
+        for rewardType in rewardTypes:
+            SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.battlePass.switch_started.dyn(rewardType.value).body()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.BattlePassInfo, messageData={'header': backport.text(R.strings.system_messages.battlePass.switch_started.dyn(rewardType.value).title(), seasonNum=self.__battlePassController.getSeasonNum()), 
+               'additionalText': ''})
 
     def __pushEnabled(self):
         expiryTime = self.__battlePassController.getSeasonFinishTime()
@@ -1168,6 +1218,57 @@ class BattlePassListener(_NotificationListener):
         SystemMessages.pushMessage(text=msg, type=msgType)
 
 
+class BattlePassSwitchChapterReminder(_NotificationListener):
+    __battlePassController = dependency.descriptor(IBattlePassController)
+    __ENTITY_ID = 0
+
+    def start(self, model):
+        result = super(BattlePassSwitchChapterReminder, self).start(model)
+        if result:
+            self.__addListeners()
+            self.__tryNotify()
+        return result
+
+    def stop(self):
+        self.__removeListeners()
+        super(BattlePassSwitchChapterReminder, self).stop()
+
+    def __addListeners(self):
+        self.__battlePassController.onChapterChanged += self.__tryNotify
+        self.__battlePassController.onBattlePassSettingsChange += self.__tryNotify
+        self.__battlePassController.onPointsUpdated += self.__tryNotify
+
+    def __removeListeners(self):
+        self.__battlePassController.onChapterChanged -= self.__tryNotify
+        self.__battlePassController.onBattlePassSettingsChange -= self.__tryNotify
+        self.__battlePassController.onPointsUpdated -= self.__tryNotify
+
+    def __tryNotify(self, *_):
+        if self.__battlePassController.hasActiveChapter() or self.__battlePassController.isCompleted() or self.__battlePassController.isDisabled():
+            self.__removeNotification()
+        else:
+            notification = BattlePassSwitchChapterReminderDecorator(self.__ENTITY_ID, self.__makeMessage())
+            self.__addNotification(notification)
+
+    def __addNotification(self, notification):
+        model = self._model()
+        if model:
+            prevNotification = model.getNotification(NOTIFICATION_TYPE.BATTLE_PASS_SWITCH_CHAPTER_REMINDER, notification.getID())
+            if prevNotification is None:
+                model.addNotification(notification)
+            else:
+                model.updateNotification(notification.getType(), notification.getID(), notification.getEntity(), True)
+        return
+
+    def __removeNotification(self):
+        model = self._model()
+        if model:
+            model.removeNotification(NOTIFICATION_TYPE.BATTLE_PASS_SWITCH_CHAPTER_REMINDER, self.__ENTITY_ID)
+
+    def __makeMessage(self):
+        return backport.text(R.strings.system_messages.battlePass.switchChapter.reminder())
+
+
 class UpgradeTrophyDeviceListener(_NotificationListener):
     __slots__ = ('__enabled', )
     __lobbyContext = dependency.descriptor(ILobbyContext)
@@ -1196,42 +1297,119 @@ class UpgradeTrophyDeviceListener(_NotificationListener):
                 SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.upgradeTrophyDevice.switch_off.body()), type=SystemMessages.SM_TYPE.ErrorSimple, priority=NotificationPriorityLevel.MEDIUM)
 
 
-class ChoosingDeviceslListener(_NotificationListener):
+class RecertificationFormStateListener(_NotificationListener):
+    __slots__ = ('_state', )
+    __goodiesCache = dependency.descriptor(IGoodiesCache)
+    __lobbyContext = dependency.descriptor(ILobbyContext)
+
+    def __init__(self):
+        super(RecertificationFormStateListener, self).__init__()
+        self._state = None
+        return
 
     def start(self, model):
-        result = super(ChoosingDeviceslListener, self).start(model)
-        if result:
-            g_eventBus.addListener(events.ChoosingDevicesEvent.DEVICE_ADDED, self.__onDeviceAdded)
-            g_eventBus.addListener(events.ChoosingDevicesEvent.DEVICE_REMOVED, self.__onDeviceRemoved)
-        return result
+        super(RecertificationFormStateListener, self).start(model)
+        self._state = self._getState()
+        self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChange
+        return True
 
     def stop(self):
-        super(ChoosingDeviceslListener, self).stop()
-        g_eventBus.removeListener(events.ChoosingDevicesEvent.DEVICE_ADDED, self.__onDeviceAdded)
-        g_eventBus.removeListener(events.ChoosingDevicesEvent.DEVICE_REMOVED, self.__onDeviceRemoved)
+        self.__lobbyContext.getServerSettings().onServerSettingsChange -= self.__onServerSettingsChange
+        super(RecertificationFormStateListener, self).stop()
 
-    def __onDeviceAdded(self, event):
-        model = self._model()
-        newNotification = event.ctx.get('notifacation')
-        if newNotification is None:
+    def _getState(self):
+        if not self.__goodiesCache.getRecertificationForm(currency='gold').enabled:
+            return SwitchState.DISABLED.value
+        return self.__lobbyContext.getServerSettings().recertificationFormState()
+
+    def __onServerSettingsChange(self, diff):
+        newSwitchState = diff.get('recertificationFormState')
+        if newSwitchState is None:
             return
         else:
-            if model:
-                prevNotifacation = model.getNotification(NOTIFICATION_TYPE.CHOOSING_DEVICES, newNotification.getID())
-                if prevNotifacation is None:
-                    model.addNotification(newNotification)
-                else:
-                    savedData = newNotification.getSavedData()
-                    prevSavedData = prevNotifacation.getSavedData()
-                    if prevSavedData.get('count') != savedData.get('count'):
-                        model.updateNotification(NOTIFICATION_TYPE.CHOOSING_DEVICES, newNotification.getID(), newNotification.getEntity(), False)
+            newState = self._getState()
+            if self._state == newState:
+                return
+            if self._state != SwitchState.DISABLED.value and newState != SwitchState.DISABLED.value:
+                action = {'sentTime': time.time(), 'data': {'type': SYS_MESSAGE_TYPE.recertificationAvailability.index(), 
+                            'data': {'state': newState}}}
+                MessengerEntry.g_instance.protos.BW.serviceChannel.onReceivePersonalSysMessage(action)
+            self._state = newState
             return
 
-    def __onDeviceRemoved(self, event):
-        entityID = event.ctx.get('entityID')
+
+class ChinaLootBoxListener(_NotificationListener, EventsHandler):
+    __slots__ = ('__isActive', '__isIntroWasShown')
+    __cnLootBoxes = dependency.descriptor(ICNLootBoxesController)
+    __START_ENTITY_ID = 0
+
+    def __init__(self):
+        super(ChinaLootBoxListener, self).__init__()
+        self.__isActive = False
+        self.__isIntroWasShown = False
+
+    def start(self, model):
+        super(ChinaLootBoxListener, self).start(model)
+        self._subscribe()
+        self.__isActive = self.__cnLootBoxes.isActive()
+        self.__isIntroWasShown = self.__cnLootBoxes.isIntroWasShown()
+        return True
+
+    def stop(self):
+        self._unsubscribe()
+        super(ChinaLootBoxListener, self).stop()
+
+    def _getEvents(self):
+        return (
+         (
+          self.__cnLootBoxes.onIntroShownChanged, self.__onIntroShownChanged),
+         (
+          self.__cnLootBoxes.onStatusChange, self.__onStatusChange),
+         (
+          self.__cnLootBoxes.onBoxInfoUpdated, self.__onStatusChange),
+         (
+          self.__cnLootBoxes.onAvailabilityChange, self.__onAvailabilityChange))
+
+    def __onIntroShownChanged(self, wasShown):
+        if self.__cnLootBoxes.isActive() and not self.__isIntroWasShown and wasShown:
+            self.__pushStarted()
+            self.__isIntroWasShown = wasShown
+
+    def __onStatusChange(self):
+        isActive = self.__cnLootBoxes.isActive()
+        welcomeWasShown = AccountSettings.getSettings(CN_LOOT_BOXES_INTRO_WAS_SHOWN)
+        wasFinishNotificationShown = AccountSettings.getNotifications(CN_LOOT_BOXES_FINISH_SHOWN)
+        if welcomeWasShown and not isActive and not wasFinishNotificationShown:
+            self.__pushFinished(self.__cnLootBoxes.getBoxesCount())
+        self.__isActive = isActive
+
+    def __onAvailabilityChange(self, previous, current):
+        if previous is not None and previous != current and self.__isActive:
+            if current:
+                self.__pushLootBoxesEnabled()
+            else:
+                self.__pushLootBoxesDisabled()
+        return
+
+    def __pushStarted(self):
         model = self._model()
-        if model:
-            model.removeNotification(NOTIFICATION_TYPE.CHOOSING_DEVICES, entityID)
+        if model is not None:
+            messageData = {'title': backport.text(R.strings.cn_loot_boxes.notification.eventStart.title()), 'text': backport.text(R.strings.cn_loot_boxes.notification.eventStart.text())}
+            model.addNotification(ChinaLootBoxesDecorator(message=messageData, entityID=self.__START_ENTITY_ID, model=model))
+        return
+
+    @staticmethod
+    def __pushFinished(boxesCount):
+        SystemMessages.pushMessage(text=backport.text(R.strings.cn_loot_boxes.notification.eventFinish.text()) if boxesCount > 0 else '', priority=NotificationPriorityLevel.MEDIUM, type=SystemMessages.SM_TYPE.ChinaLootBoxFinish, messageData={'title': backport.text(R.strings.cn_loot_boxes.notification.eventFinish.title())})
+        AccountSettings.setNotifications(CN_LOOT_BOXES_FINISH_SHOWN, True)
+
+    @staticmethod
+    def __pushLootBoxesEnabled():
+        SystemMessages.pushMessage(text=backport.text(R.strings.cn_loot_boxes.notification.lootBoxesIsEnabled.text()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.ChinaLootBoxEnabled, messageData={'title': backport.text(R.strings.cn_loot_boxes.notification.lootBoxesIsEnabled.title())})
+
+    @staticmethod
+    def __pushLootBoxesDisabled():
+        SystemMessages.pushMessage(text=backport.text(R.strings.cn_loot_boxes.notification.lootBoxesIsDisabled.text()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.ChinaLootBoxDisabled, messageData={'title': backport.text(R.strings.cn_loot_boxes.notification.lootBoxesIsDisabled.title())})
 
 
 class RecruitReminderlListener(_NotificationListener):
@@ -1266,9 +1444,9 @@ class RecruitReminderlListener(_NotificationListener):
         if recruitsCount <= 0:
             self.__onRecruitRemoved()
         else:
-            time = first(recruits).getExpiryTime()
+            expiryTime = first(recruits).getExpiryTime()
             rMessage = R.strings.messenger.serviceChannelMessages
-            if time:
+            if expiryTime:
                 message = rMessage.recruitReminder.text()
             else:
                 message = rMessage.recruitReminderTermless.text()
@@ -1277,7 +1455,7 @@ class RecruitReminderlListener(_NotificationListener):
             lc = self.__loginManager.getPreference('loginCount')
             if lc == self._INCREASE_LIMIT_LOGIN:
                 msgPrLevel = NotificationPriorityLevel.MEDIUM
-            notification = RecruitReminderMessageDecorator(self.MSG_ID, backport.text(message, count=recruitsCount, date=time), savedData, msgPrLevel)
+            notification = RecruitReminderMessageDecorator(self.MSG_ID, backport.text(message, count=recruitsCount, date=expiryTime), savedData, msgPrLevel)
             self.__onRecruitAdded(notification)
 
     def __onRecruitAdded(self, newNotification):
@@ -1366,267 +1544,6 @@ class VehiclePostProgressionUnlockListener(_NotificationListener):
         return
 
 
-class LunarNYListener(_NotificationListener):
-    __lunarNYController = dependency.descriptor(ILunarNYController)
-
-    def __init__(self):
-        super(LunarNYListener, self).__init__()
-        self.__entityID = 0
-        self.__lunarIsEnabled = False
-
-    def start(self, model):
-        result = super(LunarNYListener, self).start(model)
-        self.__lunarNYController.giftSystem.onGiftSystemSettingsUpdated += self.__invalidateEntryPoint
-        self.__lunarNYController.receivedEnvelopes.onReceivedEnvelopesUpdated += self.__invalidateEntryPoint
-        self.__lunarNYController.onStatusChange += self.__onLunarNYStatusChange
-        self.__invalidateEntryPoint()
-        self.__lunarIsEnabled = self.__lunarNYController.isEnabled()
-        g_clientUpdateManager.addCallback('cache.entitlements', self.__onEntitlementsUpdate)
-        return result
-
-    def stop(self):
-        super(LunarNYListener, self).stop()
-        self.__lunarNYController.onStatusChange -= self.__onLunarNYStatusChange
-        self.__lunarNYController.receivedEnvelopes.onReceivedEnvelopesUpdated -= self.__invalidateEntryPoint
-        self.__lunarNYController.giftSystem.onGiftSystemSettingsUpdated -= self.__invalidateEntryPoint
-        g_clientUpdateManager.removeCallback('cache.entitlements', self.__onEntitlementsUpdate)
-
-    def __invalidateEntryPoint(self, *_):
-        model = self._model()
-        if model is None:
-            return
-        else:
-            currentCount = self.__lunarNYController.receivedEnvelopes.getReceivedEnvelopesCount()
-            isGiftSystemActive = self.__lunarNYController.isGiftSystemEventActive()
-            prevNotification = model.getNotification(NOTIFICATION_TYPE.LUNAR_NY_ENVELOPES_RECEIVED, self.__entityID)
-            if not isGiftSystemActive or not currentCount:
-                if prevNotification is not None:
-                    model.removeNotification(NOTIFICATION_TYPE.LUNAR_NY_ENVELOPES_RECEIVED, self.__entityID)
-                return
-            previousBoxesCount = prevNotification.getCount() if prevNotification is not None else 0
-            if previousBoxesCount == currentCount:
-                return
-            if prevNotification is not None:
-                prevNotification.setCount(currentCount)
-                model.updateNotification(prevNotification.getType(), self.__entityID, prevNotification.getEntity(), True)
-            else:
-                newNotification = LunarNYEnvelopesDecorator(self.__entityID, currentCount, model)
-                model.addNotification(newNotification)
-            return
-
-    def __onLunarNYStatusChange(self):
-        self.__invalidateEntryPoint()
-        self.__checkLunarEnableStatus()
-
-    def __checkLunarEnableStatus(self):
-        currentLunarIsEnabled = self.__lunarNYController.isEnabled()
-        startTime, endTime = self.__lunarNYController.getEventActiveTime()
-        currentTime = time_utils.getCurrentTimestamp()
-        if self.__lunarIsEnabled != currentLunarIsEnabled and startTime < currentTime < endTime:
-            self.__lunarIsEnabled = currentLunarIsEnabled
-            msgRes = R.strings.lunar_ny.systemMessage.enableChanged
-            msgRes = msgRes.isEnabled() if self.__lunarIsEnabled else msgRes.isDisabled()
-            SystemMessages.pushMessage(backport.text(msgRes), SM_TYPE.Warning)
-
-    def __onEntitlementsUpdate(self, diff):
-        if ENVELOPE_ENTITLEMENT_COUNTER in diff:
-            maxCount = self.__lunarNYController.getEnvelopePurchasesLimit()
-            if self.__lunarNYController.giftSystem.getAmountOfPurchasedEnvelopes() >= maxCount:
-                msgKey = R.strings.lunar_ny.systemMessage.shop.maxEnvelopes
-                startServerDay = time_utils.getServerUTCTime() - time_utils.getServerTimeCurrentDay()
-                SystemMessages.pushMessage(backport.text(msgKey.body(), maxCount=maxCount, time=backport.getShortTimeFormat(startServerDay)), type=SM_TYPE.InformationHeader, priority=NotificationPriorityLevel.HIGH, messageData={'header': backport.text(msgKey.header())})
-
-
-class LunarNYNewEnvelopesListener(_NotificationListener):
-    __lunarNYController = dependency.descriptor(ILunarNYController)
-
-    def __init__(self):
-        super(LunarNYNewEnvelopesListener, self).__init__()
-        self.__entityID = 0
-        self.__userInfoHelper = UsersInfoHelper()
-
-    def start(self, model):
-        result = super(LunarNYNewEnvelopesListener, self).start(model)
-        self.__lunarNYController.receivedEnvelopes.onNewEnvelopesReceived += self.__onNewEnvelopesReceived
-        self.__lunarNYController.onStatusChange += self.__invalidateNotification
-        self.__userInfoHelper.onNamesReceived += self.__onNamesReceived
-        return result
-
-    def stop(self):
-        super(LunarNYNewEnvelopesListener, self).stop()
-        self.__userInfoHelper.onNamesReceived -= self.__onNamesReceived
-        self.__lunarNYController.onStatusChange -= self.__invalidateNotification
-        self.__lunarNYController.receivedEnvelopes.onNewEnvelopesReceived -= self.__onNewEnvelopesReceived
-
-    def __invalidateNotification(self):
-        model = self._model()
-        if model is None:
-            return
-        else:
-            prevNotification = model.getNotification(NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED, self.__entityID)
-            if not self.__lunarNYController.isActive() and prevNotification is not None:
-                model.removeNotification(NOTIFICATION_TYPE.LUNAR_NY_ENVELOPES_RECEIVED, self.__entityID)
-            return
-
-    def __onNewEnvelopesReceived(self, senderIDs, count, giftIDs):
-        model = self._model()
-        if model is None or not self.__lunarNYController.isActive():
-            return
-        prevNotification = model.getNotification(NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED, self.__entityID)
-        if len(senderIDs) == 1 and first(senderIDs) > 0:
-            userName = self.__userInfoHelper.getUserName(first(senderIDs), withEmptyName=True)
-            if not userName and self.__userInfoHelper.proto.isConnected():
-                self.__userInfoHelper.syncUsersInfo()
-        else:
-            userName = ''
-        if prevNotification is None:
-            newNotification = LunarNYNewReceivedEnvelopesDecorator(self.__entityID, count, senderIDs, userName, giftIDs, model)
-            model.addNotification(newNotification)
-        else:
-            prevNotification.setExtData(count, senderIDs, userName, giftIDs)
-            model.updateNotification(prevNotification.getType(), self.__entityID, prevNotification.getEntity(), True)
-        return
-
-    def __onNamesReceived(self, names):
-        model = self._model()
-        if model is None:
-            return
-        else:
-            prevNotification = model.getNotification(NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED, self.__entityID)
-            if prevNotification is not None and prevNotification.isOneSender():
-                prevNotification.setNames(names)
-                model.updateNotification(prevNotification.getType(), self.__entityID, prevNotification.getEntity(), True)
-            return
-
-
-NewEnvelopesData = namedtuple('NewEnvelopesData', ['time', 'envelopesCount', 'senderIDs'])
-
-class EnvelopesSimpleNotificationListener(_NotificationListener):
-    __lunarNYController = dependency.descriptor(ILunarNYController)
-    __COUNT_SIMPLE_NOTIFICATIONS_IN_MINUTE = 10
-
-    def __init__(self):
-        super(EnvelopesSimpleNotificationListener, self).__init__()
-        self.__lastSimpleID = 0
-        self.__userInfoHelper = UsersInfoHelper()
-        self.__envelopesData = []
-        self.__simpleNotificationsIsGrouped = False
-
-    def start(self, model):
-        result = super(EnvelopesSimpleNotificationListener, self).start(model)
-        self.__lunarNYController.receivedEnvelopes.onNewEnvelopesReceived += self.__onNewEnvelopesReceived
-        self.__userInfoHelper.onNamesReceived += self.__onNamesReceived
-        return result
-
-    def stop(self):
-        super(EnvelopesSimpleNotificationListener, self).stop()
-        self.__userInfoHelper.onNamesReceived -= self.__onNamesReceived
-        self.__lunarNYController.receivedEnvelopes.onNewEnvelopesReceived -= self.__onNewEnvelopesReceived
-        self.__envelopesData = []
-        self.__lastSimpleID = 0
-        self.__simpleNotificationsIsGrouped = False
-
-    def __groupEnvelopesData(self, count):
-        startIdx = self.__lastSimpleID - count
-        senderIDs = []
-        envelopesCount = 0
-        for idx in range(startIdx, startIdx + count):
-            curData = self.__envelopesData[idx]
-            envelopesCount += curData.envelopesCount
-            senderIDs.extend(curData.senderIDs)
-
-        self.__envelopesData = self.__envelopesData[0:startIdx]
-        self.__envelopesData.append(NewEnvelopesData(BigWorld.serverTime(), count, senderIDs))
-
-    def __updateGroupedEnvelopesData(self, time, envelopesCount, senderIDs):
-        data = self.__envelopesData.pop()
-        data.senderIDs.extend(senderIDs)
-        self.__envelopesData.append(NewEnvelopesData(time, envelopesCount, data.senderIDs))
-
-    def __onNewEnvelopesReceived(self, senderIDs, count, giftIDs):
-        model = self._model()
-        if model is None or not self.__lunarNYController.isActive():
-            return
-        if len(senderIDs) == 1 and first(senderIDs) > 0:
-            userName = self.__userInfoHelper.getUserName(first(senderIDs), withEmptyName=True)
-            if not userName and self.__userInfoHelper.proto.isConnected():
-                self.__userInfoHelper.syncUsersInfo()
-        else:
-            userName = ''
-        self.__handleSimpleNotification(model, userName, senderIDs, count, giftIDs)
-        return
-
-    def __handleSimpleNotification(self, model, userName, senderIDs, count, giftIDs):
-        if self.__simpleNotificationsIsGrouped and self.__lastEnvelopeIsFast():
-            self.__updateGroupedEnvelopesData(BigWorld.serverTime(), count, senderIDs)
-            self.__updateSimpleGroupedNotification(model, count, giftIDs)
-        else:
-            self.__envelopesData.append(NewEnvelopesData(BigWorld.serverTime(), count, senderIDs))
-            self.__simpleNotificationsIsGrouped = False
-            self.__lastSimpleID += 1
-            if self.__isNeedGroupSimpleNotifications():
-                self.__simpleNotificationsIsGrouped = True
-                self.__groupEnvelopesData(self.__COUNT_SIMPLE_NOTIFICATIONS_IN_MINUTE)
-                self.__removePrevNotGroupedNotifications(model)
-                giftsCount = self.__envelopesData[(-1)].envelopesCount
-                newNotification = LunarNYNewReceivedEnvelopesSimpleDecorator(self.__lastSimpleID, giftsCount, giftIDs=giftIDs, model=model)
-            else:
-                newNotification = LunarNYNewReceivedEnvelopesSimpleDecorator(self.__lastSimpleID, count, userName, giftIDs=giftIDs, model=model)
-            model.addNotification(newNotification)
-
-    def __lastEnvelopeIsFast(self):
-        result = False
-        if self.__envelopesData:
-            lastEnvelopeDelay = BigWorld.serverTime() - self.__envelopesData[(-1)].time
-            result = lastEnvelopeDelay <= SECONDS_IN_MINUTE
-        return result
-
-    def __removePrevNotGroupedNotifications(self, model):
-        startId = self.__lastSimpleID - self.__COUNT_SIMPLE_NOTIFICATIONS_IN_MINUTE
-        for notificationID in range(startId, startId + self.__COUNT_SIMPLE_NOTIFICATIONS_IN_MINUTE):
-            model.removeNotification(NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE, notificationID)
-
-        self.__lastSimpleID = startId
-
-    def __updateSimpleGroupedNotification(self, model, count, giftIDs):
-        nType = NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE
-        prevNotification = model.getNotification(nType, self.__lastSimpleID)
-        if prevNotification:
-            giftIDs.update(prevNotification.getGiftIDs())
-            count += prevNotification.getDataCount()
-        model.removeNotification(nType, self.__lastSimpleID)
-        newNotification = LunarNYNewReceivedEnvelopesSimpleDecorator(self.__lastSimpleID, count, '', giftIDs=giftIDs, model=model)
-        model.addNotification(newNotification)
-
-    def __isNeedGroupSimpleNotifications(self):
-        idx = len(self.__envelopesData) - self.__COUNT_SIMPLE_NOTIFICATIONS_IN_MINUTE
-        if idx >= 0:
-            lastNotificationTime = self.__envelopesData[idx].time
-            if BigWorld.serverTime() - lastNotificationTime < SECONDS_IN_MINUTE:
-                return True
-        return False
-
-    def __onNamesReceived(self, names):
-        model = self._model()
-        if model is None:
-            return
-        else:
-            self.__updateSimpleNotificationUserName(model, names)
-            return
-
-    def __updateSimpleNotificationUserName(self, model, names):
-        nType = NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE
-        for idx in range(1, self.__lastSimpleID + 1):
-            notification = model.getNotification(nType, idx)
-            if notification is not None and notification.getDataCount() == 1 and not notification.hasSenderName():
-                name = names.get(first(self.__envelopesData[(idx - 1)].senderIDs))
-                if name:
-                    notification.setSenderName(name)
-                    model.updateNotification(notification.getType(), self.__lastSimpleID, notification.getEntity(), True)
-
-        return
-
-
 class PsaCoinReminderListener(_NotificationListener):
     __bootCampController = dependency.descriptor(IBootcampController)
     __saCtrl = dependency.descriptor(ISeniorityAwardsController)
@@ -1676,174 +1593,295 @@ class PsaCoinReminderListener(_NotificationListener):
             model.removeNotification(NOTIFICATION_TYPE.PSACOIN_REMINDER, self.MSG_ID)
 
 
-class LootBoxConfigListener(_NotificationListener):
-    __itemsCache = dependency.descriptor(IItemsCache)
-    __lobbyContext = dependency.descriptor(ILobbyContext)
+class ResourceWellListener(_NotificationListener):
+    __RESOURCE_WELL_MESSAGES = R.strings.messenger.serviceChannelMessages.resourceWell
+    __START_ENTITY_ID = 0
+    __resourceWell = dependency.descriptor(IResourceWellController)
 
     def __init__(self):
-        super(LootBoxConfigListener, self).__init__()
-        self.__isAnyDisabled = False
+        super(ResourceWellListener, self).__init__()
+        self.__isActive = False
+        self.__isPaused = False
+        self.__isFinished = False
 
     def start(self, model):
-        result = super(LootBoxConfigListener, self).start(model)
-        self.__processSettings()
-        self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChange
+        result = super(ResourceWellListener, self).start(model)
+        if result:
+            self.__resourceWell.onEventUpdated += self.__onEventUpdated
+            self.__tryNotify()
         return result
 
     def stop(self):
-        self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChange
-        super(LootBoxConfigListener, self).stop()
+        self.__resourceWell.onEventUpdated -= self.__onEventUpdated
+        super(ResourceWellListener, self).stop()
 
-    def __onServerSettingsChange(self, _):
-        self.__processSettings(True)
+    def __onEventUpdated(self):
+        self.__tryNotify()
 
-    def __processSettings(self, isNeedNotification=False):
-        isAnyDisabled = False
-        hasAny = False
-        for lootBox in self.__itemsCache.items.tokens.getLootBoxes().itervalues():
-            if lootBox.getType() in NewYearLootBoxes.ALL():
-                hasAny = True
-                if not self.__lobbyContext.getServerSettings().isLootBoxEnabled(lootBox.getID()):
-                    isAnyDisabled = True
-                    break
+    def __tryNotify(self):
+        isActive = self.__resourceWell.isActive()
+        isPaused = self.__resourceWell.isPaused()
+        isFinished = self.__resourceWell.isFinished()
+        if isActive and not self.__isActive and not AccountSettings.getNotifications(RESOURCE_WELL_START_SHOWN):
+            self.__pushStarted()
+        elif isPaused and not self.__isPaused:
+            self.__pushPaused()
+        elif self.__isPaused and isActive:
+            self.__pushEnabled()
+        elif isFinished and not self.__isFinished and AccountSettings.getNotifications(RESOURCE_WELL_START_SHOWN) and not AccountSettings.getNotifications(RESOURCE_WELL_END_SHOWN):
+            self.__pushFinished()
+        self.__isActive = isActive
+        self.__isPaused = isPaused
+        self.__isFinished = isFinished
 
-        isAnyDisabled = isAnyDisabled or not hasAny
-        if isAnyDisabled != self.__isAnyDisabled and isNeedNotification:
-            if isAnyDisabled:
-                rKey = R.strings.ny.notification.lootBox.suspend
-                SystemMessages.pushMessage(priority=NotificationPriorityLevel.MEDIUM, text=backport.text(rKey.body()), type=SystemMessages.SM_TYPE.ErrorHeader, messageData={'header': backport.text(rKey.header())})
-        self.__isAnyDisabled = isAnyDisabled
+    def __pushStarted(self):
+        model = self._model()
+        if model is not None:
+            vehicle = text_styles.crystal(getVehicleByIntCD(self.__resourceWell.getRewardVehicle()).shortUserName)
+            text = backport.text(self.__RESOURCE_WELL_MESSAGES.start.text(), vehicle=text_styles.crystal(vehicle))
+            title = backport.text(self.__RESOURCE_WELL_MESSAGES.start.title())
+            messageData = {'title': title, 'text': text}
+            model.addNotification(ResourceWellStartDecorator(message=messageData, entityID=self.__START_ENTITY_ID, model=model))
+            AccountSettings.setNotifications(RESOURCE_WELL_START_SHOWN, True)
+        return
+
+    def __pushFinished(self):
+        text = backport.text(self.__RESOURCE_WELL_MESSAGES.end.text())
+        title = backport.text(self.__RESOURCE_WELL_MESSAGES.end.title())
+        SystemMessages.pushMessage(text=text, type=SM_TYPE.ResourceWellEnd, messageData={'title': title})
+        AccountSettings.setNotifications(RESOURCE_WELL_END_SHOWN, True)
+
+    def __pushPaused(self):
+        text = backport.text(self.__RESOURCE_WELL_MESSAGES.pause.text())
+        SystemMessages.pushMessage(text=text, type=SM_TYPE.ErrorSimple, priority=NotificationPriorityLevel.HIGH)
+
+    def __pushEnabled(self):
+        text = backport.text(self.__RESOURCE_WELL_MESSAGES.enabled.text())
+        SystemMessages.pushMessage(text=text, type=SM_TYPE.Warning, priority=NotificationPriorityLevel.HIGH)
 
 
-class GiftSystemOperationsListener(_NotificationListener, UsersInfoHelper):
-    __NOTIFICATION_TYPE = NOTIFICATION_TYPE.GIFT_SYSTEM_OPERATION
+class FunRandomEventsListener(_NotificationListener, IGlobalListener):
+    __funRandomCtrl = dependency.descriptor(IFunRandomController)
+    __STR_PATH = R.strings.fun_random.message
 
     def __init__(self):
-        super(GiftSystemOperationsListener, self).__init__()
-        self.__idGenerator = SequenceIDGenerator()
-        self.__userNamePendingNotifications = defaultdict(set)
-
-    def start(self, model):
-        result = super(GiftSystemOperationsListener, self).start(model)
-        g_eventBus.addListener(events.GiftSystemOperationEvent.GIFT_SENT, self.__onGiftSent)
-        g_eventBus.addListener(events.GiftSystemOperationEvent.GIFT_OPENED, self.__onGiftOpened)
-        return result
-
-    def stop(self):
-        self.__userNamePendingNotifications.clear()
-        g_eventBus.removeListener(events.GiftSystemOperationEvent.GIFT_SENT, self.__onGiftSent)
-        g_eventBus.removeListener(events.GiftSystemOperationEvent.GIFT_OPENED, self.__onGiftOpened)
-        super(GiftSystemOperationsListener, self).stop()
-
-    def onUserNamesReceived(self, names):
-        model = self._model()
-        if not model:
-            return
-        for userDBID, userName in names.iteritems():
-            if userDBID not in self.__userNamePendingNotifications:
-                continue
-            for entityID in self.__userNamePendingNotifications[userDBID]:
-                operationDecorator = model.getNotification(self.__NOTIFICATION_TYPE, entityID)
-                if not operationDecorator:
-                    continue
-                operationDecorator.setUserInfo(userName)
-                model.updateNotification(self.__NOTIFICATION_TYPE, entityID, operationDecorator.getEntity(), False)
-
-            self.__userNamePendingNotifications[userDBID] = set()
-
-    def __onGiftOpened(self, event):
-        self.__addOperationNofication(GiftSystemOperationsFactory.createGiftOpenedDecorator, event.ctx)
-
-    def __onGiftSent(self, event):
-        self.__addOperationNofication(GiftSystemOperationsFactory.createGiftSentDecorator, event.ctx)
-
-    def __addOperationNofication(self, factory, ctx):
-        model = self._model()
-        if not model:
-            return
-        notification = factory(self.__idGenerator.next(), model, ctx)
-        userName = self.getUserName(notification.getUserID())
-        if userName:
-            notification.initUserInfo(userName, self.getUserClanAbbrev(notification.getUserID()))
-        else:
-            self.__userNamePendingNotifications[notification.getUserID()].add(notification.getID())
-            self.syncUsersInfo()
-        if notification:
-            model.addNotification(notification)
-
-
-class NySpecialBoxesEntryListener(_NotificationListener, GiftEventHubWatcher):
-    _GIFT_EVENT_ID = GiftEventID.NY_HOLIDAYS
-    __itemsCache = dependency.descriptor(IItemsCache)
-    __lobbyContext = dependency.descriptor(ILobbyContext)
-
-    def __init__(self):
-        super(NySpecialBoxesEntryListener, self).__init__()
-        self.__giftEventState = None
-        self.__specialBoxToken = ''
-        self.__entityID = 0
+        super(FunRandomEventsListener, self).__init__()
+        self.__periodInfo = None
+        self.__isAvailable = None
+        self.__messageIDs = []
         return
 
     def start(self, model):
-        result = super(NySpecialBoxesEntryListener, self).start(model)
-        g_clientUpdateManager.addCallbacks({'tokens': self.__onTokensUpdate})
-        self.catchGiftEventHub()
-        self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingChanged
-        self.__giftEventState = self.getGiftEventState()
-        self.__catchSpecialLootbox()
+        super(FunRandomEventsListener, self).start(model)
+        self.__periodInfo = self.__funRandomCtrl.getPeriodInfo()
+        self.__isAvailable = self.__funRandomCtrl.isAvailable()
+        self.__funRandomCtrl.onGameModeStatusUpdated += self.__onStatusUpdated
+        g_clientUpdateManager.addCallbacks({'inventory.1': self.__onItemsUpdated})
+        g_clientUpdateManager.addCallbacks({'stats.unlocks': self.__onItemsUpdated})
+        self.startGlobalListening()
+        return True
+
+    def stop(self):
+        self.__messageIDs = []
+        self.__periodInfo = None
+        self.__funRandomCtrl.onGameModeStatusUpdated -= self.__onStatusUpdated
+        g_clientUpdateManager.removeObjectCallbacks(self)
+        self.stopGlobalListening()
+        super(FunRandomEventsListener, self).stop()
+        return
+
+    def onPrbEntitySwitched(self):
+        self.__updateMessages()
+
+    def __onStatusUpdated(self, _):
+        isAvailable = self.__funRandomCtrl.isAvailable()
+        currentSeason = self.__funRandomCtrl.getCurrentSeason()
+        if currentSeason is not None and isAvailable != self.__isAvailable:
+            self.__pushSwitcherMessage(isAvailable)
+            self.__isAvailable = isAvailable
+        periodInfo = self.__funRandomCtrl.getPeriodInfo()
+        if self.__periodInfo.periodType != periodInfo.periodType:
+            self.__pushStatusEventMessage(currentSeason)
+            self.__periodInfo = periodInfo
+        self.__updateMessages()
+        return
+
+    def __onItemsUpdated(self, *_):
+        self.__updateMessages()
+
+    def __isEventStarted(self, currentSeason):
+        return currentSeason is not None and self.__periodInfo.periodType == PeriodType.BEFORE_SEASON
+
+    def __isEventFinished(self, currentSeason):
+        return currentSeason is None and self.__funRandomCtrl.getNextSeason() is None
+
+    def __pushStatusEventMessage(self, currentSeason):
+        if self.__isEventStarted(currentSeason):
+            model = self._model()
+            if model:
+                startTime = currentSeason.getStartDate()
+                model.addNotification(FunRandomButtonDecorator(startTime))
+                self.__messageIDs.append(startTime)
+        elif self.__isEventFinished(currentSeason):
+            SystemMessages.pushMessage(text=backport.text(self.__STR_PATH.endEvent.text()), type=SM_TYPE.Information, priority=NotificationPriorityLevel.MEDIUM)
+
+    def __pushSwitcherMessage(self, isAvailable):
+        if isAvailable:
+            SystemMessages.pushMessage(text=backport.text(self.__STR_PATH.switch_on.text()), type=SM_TYPE.InformationHeader, priority=NotificationPriorityLevel.HIGH, messageData={'header': backport.text(self.__STR_PATH.switch.title())})
+        else:
+            SystemMessages.pushMessage(text=backport.text(self.__STR_PATH.switch_off.text()), type=SM_TYPE.WarningHeader, priority=NotificationPriorityLevel.HIGH, messageData={'header': backport.text(self.__STR_PATH.switch.title())})
+
+    def __updateMessages(self):
+        model = self._model()
+        if model is None or not self.__messageIDs:
+            return
+        for entityID in self.__messageIDs:
+            notification = FunRandomButtonDecorator(entityID)
+            model.updateNotification(NOTIFICATION_TYPE.MESSAGE, entityID, notification.getEntity(), isStateChanged=False)
+
+        return
+
+
+class WotAnniversaryListener(_NotificationListener):
+    __wotAnniversaryCtrl = dependency.descriptor(IWotAnniversaryController)
+
+    def start(self, model):
+        result = super(WotAnniversaryListener, self).start(model)
+        if result:
+            self.__wotAnniversaryCtrl.onEventStateChanged += self.__notifyEventStateChanged
+            self.__wotAnniversaryCtrl.onEventWillEndSoon += self.__notifyEventWillEndSoon
         return result
 
     def stop(self):
-        super(NySpecialBoxesEntryListener, self).stop()
-        g_clientUpdateManager.removeObjectCallbacks(self)
-        self.__lobbyContext.getServerSettings().onServerSettingsChange -= self.__onServerSettingChanged
-        self.releaseGiftEventHub()
+        self.__wotAnniversaryCtrl.onEventStateChanged -= self.__notifyEventStateChanged
+        self.__wotAnniversaryCtrl.onEventWillEndSoon -= self.__notifyEventWillEndSoon
+        super(WotAnniversaryListener, self).stop()
 
-    def _onGiftHubUpdate(self, reason, _=None):
-        if reason != HubUpdateReason.SETTINGS:
-            return
-        giftEventState = self.getGiftEventState()
-        if self.__giftEventState != giftEventState:
-            self.__giftEventState = giftEventState
-            self.__invalidateEntryPoint()
+    def __notifyEventStateChanged(self, state):
+        if state == WotAnniversaryEventState.PAUSE:
+            self.__pushPause()
+        elif state == WotAnniversaryEventState.ENABLED:
+            self.__pushEnabled()
+        elif state == WotAnniversaryEventState.FINISHED:
+            self.__pushFinished()
 
-    @serverSettingsChangeListener('lootBoxes_config', 'isLootBoxesEnabled')
-    def __onServerSettingChanged(self, _):
-        self.__catchSpecialLootbox()
+    def __notifyEventWillEndSoon(self):
+        self.__pushEventWillEndSoon()
 
-    def __onTokensUpdate(self, diff):
-        if not self.__specialBoxToken:
-            self.__catchSpecialLootbox()
-        elif self.__specialBoxToken in diff:
-            self.__invalidateEntryPoint()
+    def __pushPause(self):
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.wotAnniversary.switch_pause.body()), type=SystemMessages.SM_TYPE.Warning, priority=NotificationPriorityLevel.HIGH)
 
-    def __catchSpecialLootbox(self):
-        lootBoxes = self.__itemsCache.items.tokens.getLootBoxes()
-        specialLootBox = findFirst(lambda box: box.getType() == NewYearLootBoxes.SPECIAL, lootBoxes.itervalues())
-        self.__specialBoxToken = makeLootboxTokenID(specialLootBox.getID()) if specialLootBox else ''
-        self.__invalidateEntryPoint()
+    def __pushEnabled(self):
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.wotAnniversary.switch_enabled.body()), type=SystemMessages.SM_TYPE.Information, priority=NotificationPriorityLevel.HIGH)
 
-    def __invalidateEntryPoint(self):
+    def __pushFinished(self):
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.wotAnniversary.switch_disable.body()), type=SystemMessages.SM_TYPE.Information, priority=NotificationPriorityLevel.MEDIUM)
+
+    def __pushEventWillEndSoon(self):
+        SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.wotAnniversary.eventWillEndSoon.body()), type=SystemMessages.SM_TYPE.WarningHeader, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': backport.text(R.strings.system_messages.wotAnniversary.eventWillEndSoon.header())})
+
+
+class IntegratedAuctionListener(_NotificationListener):
+    __slots__ = ('__startNotifiers', '__finishNotifiers')
+    __eventNotifications = dependency.descriptor(IEventsNotificationsController)
+    __EVENT_TYPE_TO_SETTING = {AUCTION_START_EVENT_TYPE: AUCTION_STAGE_START_SEEN, 
+       AUCTION_FINISH_EVENT_TYPE: AUCTION_FINISH_STAGE_SEEN}
+    __EVENT_TYPE_TO_DECORATOR = {AUCTION_START_EVENT_TYPE: IntegratedAuctionStageStartDecorator, 
+       AUCTION_FINISH_EVENT_TYPE: IntegratedAuctionStageFinishDecorator}
+    __TIME_TO_SHOW_SOON = 2
+
+    def __init__(self):
+        self.__startNotifiers = {}
+        self.__finishNotifiers = {}
+        super(IntegratedAuctionListener, self).__init__()
+
+    def start(self, model):
+        result = super(IntegratedAuctionListener, self).start(model)
+        if result:
+            self.__eventNotifications.onEventNotificationsChanged += self.__onEventNotification
+            self.__tryNotify(self.__eventNotifications.getEventsNotifications())
+        return True
+
+    def stop(self):
+        self.__clearNotifiers()
+        self.__eventNotifications.onEventNotificationsChanged -= self.__onEventNotification
+        super(IntegratedAuctionListener, self).stop()
+
+    def __clearNotifiers(self):
+        for notifier in self.__startNotifiers.itervalues():
+            notifier.stopNotification()
+            notifier.clear()
+
+        self.__startNotifiers.clear()
+        for notifier in self.__finishNotifiers.itervalues():
+            notifier.stopNotification()
+            notifier.clear()
+
+        self.__finishNotifiers.clear()
+
+    def __onEventNotification(self, added, _):
+        self.__tryNotify(added)
+
+    def __tryNotify(self, notifications):
+        for notification in notifications:
+            if notification.eventType in (AUCTION_START_EVENT_TYPE, AUCTION_FINISH_EVENT_TYPE):
+                notificationData = json.loads(notification.data)
+                self.__addNotification(notificationData, notification.eventType)
+
+    def __addNotification(self, data, eventType):
         model = self._model()
         if model is None:
             return
-        else:
-            currentCount = self.__itemsCache.items.tokens.getTokenCount(self.__specialBoxToken)
-            if self.__giftEventState == GiftEventState.DISABLED or not self.__specialBoxToken or not currentCount:
-                model.removeNotification(NOTIFICATION_TYPE.NEW_YEAR_SPECIAL_LOOTBOXES, self.__entityID)
-                return
-            prevNotification = model.getNotification(NOTIFICATION_TYPE.NEW_YEAR_SPECIAL_LOOTBOXES, self.__entityID)
-            previousEventState = prevNotification.getGiftEventState() if prevNotification is not None else None
-            previousBoxesCount = prevNotification.getCount() if prevNotification is not None else 0
-            if previousBoxesCount == currentCount and previousEventState == self.__giftEventState:
-                return
-            if prevNotification is not None:
-                prevNotification.setExternalInfo(currentCount, self.__giftEventState)
-                model.updateNotification(prevNotification.getType(), self.__entityID, prevNotification.getEntity(), True)
-            else:
-                newNotification = NySpecialBoxesEntryDecorator(self.__entityID, currentCount, self.__giftEventState, model)
-                model.addNotification(newNotification)
-            return
+        settings = AccountSettings.getNotifications(INTEGRATED_AUCTION_NOTIFICATIONS)
+        settingName = self.__EVENT_TYPE_TO_SETTING[eventType]
+        notificationID = str(data['id'])
+        if notificationID not in settings[settingName]:
+            startDate = getTimestampByStrDate(str(data['startDate']))
+            endDate = getTimestampByStrDate(str(data['endDate']))
+            if startDate <= time_utils.getServerUTCTime() < endDate and self.__isNotificationNeeded(eventType):
+                decorator = self.__EVENT_TYPE_TO_DECORATOR.get(eventType)
+                if callable(decorator):
+                    model.addNotification(decorator(entityID=int(notificationID)))
+                    self.__setNotificationShown(settings, settingName, notificationID)
+                    self.__removeNotifier(notificationID, eventType)
+            elif startDate > time_utils.getServerUTCTime():
+                self.__addNotifier(notificationID, eventType, startDate)
+        return
+
+    def __addNotifier(self, notificationID, eventType, startDate):
+        notifiers = self.__startNotifiers if eventType == AUCTION_START_EVENT_TYPE else self.__finishNotifiers
+        if notificationID not in notifiers:
+            notifiers[notificationID] = SimpleNotifier(partial(self.__getTimeToStart, startDate), self.__onNotifierUpdate)
+            notifiers[notificationID].startNotification()
+
+    def __removeNotifier(self, notificationID, eventType):
+        notifiers = self.__startNotifiers if eventType == AUCTION_START_EVENT_TYPE else self.__finishNotifiers
+        if notificationID in notifiers:
+            notifiers[notificationID].stopNotification()
+            notifiers[notificationID].clear()
+            notifiers.pop(notificationID)
+
+    def __onNotifierUpdate(self):
+        self.__tryNotify(self.__eventNotifications.getEventsNotifications())
+
+    def __getTimeToStart(self, startDate):
+        return startDate - time_utils.getServerUTCTime()
+
+    def __setNotificationShown(self, settings, settingName, notificationID):
+        settings[settingName].add(notificationID)
+        AccountSettings.setNotifications(INTEGRATED_AUCTION_NOTIFICATIONS, settings)
+
+    def __isFinishNotificationActive(self):
+        for notification in self.__eventNotifications.getEventsNotifications():
+            if notification.eventType == AUCTION_FINISH_EVENT_TYPE:
+                data = json.loads(notification.data)
+                if self.__getTimeToStart(getTimestampByStrDate(str(data['startDate']))) <= self.__TIME_TO_SHOW_SOON:
+                    return True
+
+        return False
+
+    def __isNotificationNeeded(self, eventType):
+        return eventType == AUCTION_START_EVENT_TYPE and not self.__isFinishNotificationActive() or eventType == AUCTION_FINISH_EVENT_TYPE
 
 
 class NotificationsListeners(_NotificationListener):
@@ -1862,17 +1900,17 @@ class NotificationsListeners(_NotificationListener):
          TankPremiumListener(),
          BattlePassListener(),
          UpgradeTrophyDeviceListener(),
-         ChoosingDeviceslListener(),
+         RecertificationFormStateListener(),
          RecruitReminderlListener(),
          EmailConfirmationReminderListener(),
          VehiclePostProgressionUnlockListener(),
          PsaCoinReminderListener(),
-         LootBoxConfigListener(),
-         GiftSystemOperationsListener(),
-         NySpecialBoxesEntryListener(),
-         LunarNYListener(),
-         LunarNYNewEnvelopesListener(),
-         EnvelopesSimpleNotificationListener())
+         BattlePassSwitchChapterReminder(),
+         ResourceWellListener(),
+         FunRandomEventsListener(),
+         ChinaLootBoxListener(),
+         WotAnniversaryListener(),
+         IntegratedAuctionListener())
 
     def start(self, model):
         for listener in self.__listeners:

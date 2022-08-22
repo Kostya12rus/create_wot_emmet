@@ -99,9 +99,14 @@ class GatewayDataAccessor(base.BaseDataAccessor):
 
         return wrapper
 
-    def login(self, callback, account_id, spa_token):
-        auth = b64encode((':').join([str(account_id), str(spa_token)]))
-        extra_headers = {'AUTHORIZATION': 'Basic %s' % auth}
+    def login(self, callback, account_id, spa_token, jwt):
+        if jwt:
+            auth_type = 'JWT'
+            auth_data = spa_token
+        else:
+            auth_type = 'Basic'
+            auth_data = b64encode((':').join([str(account_id), str(spa_token)]))
+        extra_headers = {'AUTHORIZATION': '%s %s' % (auth_type, auth_data)}
 
         def inner_callback(data, status_code, response_code, headers):
             if status_code in SUCCESS_STATUSES:
@@ -441,9 +446,10 @@ class GatewayDataAccessor(base.BaseDataAccessor):
         return self._request_data(callback, url, get_data={}, converters={'periphery_id': int, 
            'unit_server_id': int}, method='PATCH', post_data=post_data)
 
-    def set_equipment_commander(self, callback, periphery_id, unit_server_id, target_account_id, fields=None):
+    def set_equipment_commander(self, callback, periphery_id, unit_server_id, target_account_id, role, fields=None):
         url = ('/wgsh/periphery/{periphery_id}/units/{unit_server_id}/equipment_commander/').format(periphery_id=periphery_id, unit_server_id=unit_server_id)
-        post_data = {'equipment_commander_id': target_account_id}
+        post_data = {'equipment_commander_id': target_account_id, 
+           'role': role}
         return self._request_data(callback, url, get_data={}, converters={'periphery_id': int, 
            'unit_server_id': int}, method='POST', post_data=post_data)
 
@@ -589,9 +595,9 @@ class GatewayDataAccessor(base.BaseDataAccessor):
         url = '/mapbox'
         return self._request_data(callback, url, method='POST', post_data={'itemID': itemID})
 
-    def complete_survey(self, callback, mapName):
+    def complete_survey(self, callback, surveyData):
         url = '/mapbox/surveys/complete'
-        return self._request_data(callback, url, method='POST', post_data={'name': mapName})
+        return self._request_data(callback, url, method='POST', post_data=surveyData)
 
     def request_authorized_survey_url(self, callback, mapURL):
         return self._request_data(callback, mapURL, method='GET')
@@ -607,11 +613,12 @@ class GatewayDataAccessor(base.BaseDataAccessor):
         post_data.update(meta_info)
         return self._request_data(callback, url, method='POST', post_data=post_data)
 
-    def post_secret_santa_gift(self, callback, entitlement_code, meta_info):
-        url = '/giftsystem/gift/secret_santa'
-        post_data = {'entitlement_code': entitlement_code}
-        post_data.update(meta_info)
-        return self._request_data(callback, url, method='POST', post_data=post_data)
+    def get_inventory_entitlements(self, callback, entitlement_codes):
+        url = '/shop/inventory_entitlements/'
+        if entitlement_codes:
+            urlencoded_string = urllib.urlencode([ ('entitlement_codes', code) for code in entitlement_codes ])
+            url = ('{}?{}').format(url, urlencoded_string)
+        return self._request_data(callback, url, method='GET')
 
     def _get_formatted_language_code(self):
         return self.client_lang.replace('_', '-')

@@ -3,11 +3,11 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/optional_bonuses.py
 import copy, random, time
-from typing import Optional, Dict
+from collections import defaultdict
+from typing import Dict, Optional
 from account_shared import getCustomizationItem
-from items.components.ny_constants import CurrentNYConstants, PREV_NY_TOYS_COLLECTIONS, YEARS_INFO
-from soft_exception import SoftException
 from battle_pass_common import NON_VEH_CD
+from soft_exception import SoftException
 
 def _packTrack(track):
     result = []
@@ -52,16 +52,12 @@ def __mergeItems(total, key, value, isLeaf=False, count=1, *args):
         items[itemCompDescr] = items.get(itemCompDescr, 0) + count * itemCount
 
 
-def __mergeMeta(total, key, value, isLeaf=False, count=1, *args):
-    total[key] = value
-
-
 def __mergeList(total, key, value, count):
     items = total.setdefault(key, [])
     items.extend((value if isinstance(value, list) else [value]) * count)
 
 
-def __mergeVehicles(total, key, value, isLeaf, count=1, *args):
+def __mergeVehicles(total, key, value, isLeaf, count, *args):
     __mergeList(total, key, value, count)
 
 
@@ -175,31 +171,17 @@ def __mergeDogTag(total, key, value, isLeaf=False, count=1, *args):
 def __mergeBattlePassPoints(total, key, value, isLeaf=False, count=1, *args):
     defaultBattlePassPoints = {'vehicles': {NON_VEH_CD: 0}}
     seasonID = value.get('seasonID')
+    chapterID = value.get('chapterID')
     if seasonID:
         defaultBattlePassPoints['seasonID'] = seasonID
+    if chapterID:
+        defaultBattlePassPoints['chapterID'] = chapterID
     battlePass = total.setdefault(key, defaultBattlePassPoints)
     battlePass['vehicles'][NON_VEH_CD] += value.get('vehicles', {}).get(NON_VEH_CD, 0) * count
 
 
-def __mergeCharms(total, key, value, isLeaf=False, count=1, *args):
-    result = total.setdefault(key, {})
-    for charmID, charmData in value.iteritems():
-        charmMerged = result.setdefault(charmID, {})
-        charmMerged['count'] = charmMerged.get('count', 0) + count * charmData.get('count', 0)
-
-
-def __mergeNYToys(total, key, value, isLeaf=False, count=1, *args):
-    result = total.setdefault(key, {})
-    for toyID, toysCount in value.iteritems():
-        toyData = result.setdefault(toyID, {})
-        toyData['count'] = toyData.get('count', 0) + count * toysCount.get('count', 0)
-        toyData['pureCount'] = toyData.get('pureCount', 0) + count * toysCount.get('pureCount', 0)
-        toyData['newCount'] = toyData.get('newCount', 0) or toysCount.get('newCount', 0)
-
-
-def __mergeNYAnyOf(total, key, value, isLeaf=False, count=1, *args):
-    result = total.setdefault(key, [])
-    result.extend(value if isinstance(value, list) else [value])
+def __mergeMeta(total, key, value, isLeaf=False, count=1, *args):
+    total[key] = value
 
 
 BONUS_MERGERS = {'credits': __mergeValue, 
@@ -238,17 +220,10 @@ BONUS_MERGERS = {'credits': __mergeValue,
    'rankedBonusBattles': __mergeValue, 
    'dogTagComponents': __mergeDogTag, 
    'battlePassPoints': __mergeBattlePassPoints, 
-   'meta': __mergeMeta, 
-   'charms': __mergeCharms, 
-   CurrentNYConstants.TOYS: __mergeNYToys, 
-   CurrentNYConstants.TOY_FRAGMENTS: __mergeValue, 
-   CurrentNYConstants.ANY_OF: __mergeNYAnyOf, 
-   CurrentNYConstants.FILLERS: __mergeValue}
-BONUS_MERGERS.update({k:__mergeNYToys for k in PREV_NY_TOYS_COLLECTIONS})
+   'meta': __mergeMeta}
 ITEM_INVENTORY_CHECKERS = {'vehicles': lambda account, key: account._inventory.getVehicleInvID(key) != 0 and not account._rent.isVehicleRented(account._inventory.getVehicleInvID(key)), 
    'customizations': lambda account, key: account._customizations20.getItems((key,), 0)[key] > 0, 
-   'tokens': lambda account, key: account._quests.hasToken(key), 
-   CurrentNYConstants.TOYS: lambda account, key: account._newYear.isToyPresentInCollection(key, YEARS_INFO.CURRENT_YEAR_STR)}
+   'tokens': lambda account, key: account._quests.hasToken(key)}
 
 class BonusItemsCache(object):
 
@@ -383,7 +358,7 @@ class BonusNodeAcceptor(object):
 
     def updateBonusCache(self, bonusNode):
         cache = self.__bonusCache
-        for itemType in ('vehicles', 'tokens', CurrentNYConstants.TOYS):
+        for itemType in ('vehicles', 'tokens'):
             if itemType in bonusNode:
                 for itemID in bonusNode[itemType].iterkeys():
                     cache.onItemAccepted(itemType, itemID)
@@ -395,7 +370,7 @@ class BonusNodeAcceptor(object):
 
     def isBonusExists(self, bonusNode):
         cache = self.__bonusCache
-        for itemType in ('vehicles', 'tokens', CurrentNYConstants.TOYS):
+        for itemType in ('vehicles', 'tokens'):
             if itemType in bonusNode:
                 for itemID in bonusNode[itemType].iterkeys():
                     if cache.isItemExists(itemType, itemID):
@@ -506,13 +481,13 @@ class NodeVisitor(object):
         self._mergersArgs = args
 
     def onOneOf(self, storage, values):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def onAllOf(self, storage, values):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def onGroup(self, storage, values):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def onMergeValue(self, storage, name, value, isLeaf):
         self._mergers[name](storage, name, value, isLeaf, *self._mergersArgs)
@@ -581,14 +556,14 @@ class ProbabilityVisitor(NodeVisitor):
         limitIDs, bonusNodes = values
         acceptor = self.__nodeAcceptor
         shouldVisitNodes = acceptor.getNodesForVisit(limitIDs)
-        probablitiesStage = acceptor.getCurrentProbabilityStage()
+        probabilitiesStage = acceptor.getCurrentProbabilityStage()
         useBonusProbability = acceptor.getUseBonusProbability()
         if shouldVisitNodes:
             check = lambda _, nodeLimitIDs: nodeLimitIDs and nodeLimitIDs.intersection(shouldVisitNodes)
         else:
             check = lambda probability, _: probability > rand
         for i, (probabilities, bonusProbability, nodeLimitIDs, bonusValue) in enumerate(bonusNodes):
-            probability = probabilities[probablitiesStage]
+            probability = probabilities[probabilitiesStage]
             if check(bonusProbability if useBonusProbability else probability, nodeLimitIDs):
                 selectedIdx = i
                 selectedValue = bonusValue
@@ -598,13 +573,13 @@ class ProbabilityVisitor(NodeVisitor):
 
         isAcceptable = acceptor.isAcceptable
         if not isAcceptable(selectedValue):
-            availableBonusNodes = []
-            sumOfAvailableProbabilities = 0
-            sumOfPreviousProbabilities = 0
+            probSum, nodes = range(2)
+            availableBonuses = defaultdict(lambda : {probSum: 0, nodes: []})
+            sumOfPreviousProbabilities = 0.0
             previousOwnProbability = 0.0
             canUsePrevInsteadOfZeroProbability = False
             for index, (probabilities, bonusProbability, _, bonusValue) in enumerate(bonusNodes):
-                ownProbability = bonusProbability if useBonusProbability else probabilities[probablitiesStage]
+                ownProbability = bonusProbability if useBonusProbability else probabilities[probabilitiesStage]
                 if ownProbability != 0.0:
                     ownProbability, sumOfPreviousProbabilities = ownProbability - sumOfPreviousProbabilities, ownProbability
                 if ownProbability != 0.0:
@@ -615,30 +590,36 @@ class ProbabilityVisitor(NodeVisitor):
                     probability = previousOwnProbability
                 else:
                     continue
-                if index != selectedIdx and bonusValue.get('properties', {}).get('compensation', False) and isAcceptable(bonusValue):
-                    sumOfAvailableProbabilities += probability
-                    availableBonusNodes.append((index, probability, bonusValue))
+                bonusValueProps = bonusValue.get('properties', {})
+                isSameIndex = index == selectedIdx
+                isCompensation = bonusValueProps.get('compensation', False)
+                if not isSameIndex and isCompensation and isAcceptable(bonusValue):
+                    priority = bonusValueProps.get('priority', 0)
+                    availableBonuses[priority][probSum] += probability
+                    availableBonuses[priority][nodes].append((index, probability, bonusValue))
                     canUsePrevInsteadOfZeroProbability = False
 
-            if not availableBonusNodes:
+            highPriority = min(availableBonuses) if availableBonuses else 0
+            preferred = availableBonuses[highPriority]
+            if not preferred[nodes]:
                 shouldCompensated = selectedValue.get('properties', {}).get('shouldCompensated', False)
                 if not isAcceptable(selectedValue, False) or shouldCompensated:
                     for i in xrange(len(bonusNodes)):
                         self.__trackChoice(False)
 
                     return
-            elif len(availableBonusNodes) == 1:
-                selectedIdx, _, selectedValue = availableBonusNodes[0]
+            elif len(preferred[nodes]) == 1:
+                selectedIdx, _, selectedValue = availableBonuses[highPriority][nodes][0]
             else:
-                randomValue = random.random() * sumOfAvailableProbabilities
+                randomValue = random.random() * preferred[probSum]
                 sumOfPreviousProbabilities = 0
-                for bonusNode in availableBonusNodes:
+                for bonusNode in preferred[nodes]:
                     sumOfPreviousProbabilities += bonusNode[1]
-                    if randomValue < sumOfPreviousProbabilities:
+                    if randomValue <= sumOfPreviousProbabilities:
                         selectedIdx, _, selectedValue = bonusNode
                         break
                 else:
-                    raise SoftException(('Unreachable code, oneof probability bug, random value: {}, available bonus nodes: {}').format(randomValue, availableBonusNodes))
+                    raise SoftException(('Unreachable code, oneof probability bug, random value: {}, available bonus nodes: {}').format(randomValue, preferred[nodes]))
 
         for i in xrange(selectedIdx):
             self.__trackChoice(False)
@@ -684,26 +665,29 @@ class StripVisitor(NodeVisitor):
         def copyMerger(storage, name, value, isLeaf):
             storage[name] = value
 
-    def __init__(self):
+    def __init__(self, needProbabilitiesInfo=False):
+        self.__needProbabilitiesInfo = needProbabilitiesInfo
         super(StripVisitor, self).__init__(self.ValuesMerger(), tuple())
 
     def onOneOf(self, storage, values):
         strippedValues = []
         _, values = values
+        needProbabilitiesInfo = self.__needProbabilitiesInfo
         for probability, bonusProbability, refGlobalID, bonusValue in values:
             stippedValue = {}
             self._walkSubsection(stippedValue, bonusValue)
-            strippedValues.append(([-1], -1, None, stippedValue))
+            strippedValues.append(([probability if needProbabilitiesInfo else -1], -1, None, stippedValue))
 
         storage['oneof'] = (None, strippedValues)
         return
 
     def onAllOf(self, storage, values):
         strippedValues = []
+        needProbabilitiesInfo = self.__needProbabilitiesInfo
         for probability, bonusProbability, refGlobalID, bonusValue in values:
             stippedValue = {}
             self._walkSubsection(stippedValue, bonusValue)
-            strippedValues.append(([-1], -1, None, stippedValue))
+            strippedValues.append(([probability if needProbabilitiesInfo else -1], -1, None, stippedValue))
 
         storage['allof'] = strippedValues
         return

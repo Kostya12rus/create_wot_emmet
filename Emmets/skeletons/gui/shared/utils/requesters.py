@@ -4,12 +4,15 @@
 # Embedded file name: scripts/client/skeletons/gui/shared/utils/requesters.py
 import typing
 if typing.TYPE_CHECKING:
+    from typing import Dict, Generator, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
     from collections import OrderedDict
-    from gui.shared.money import Money
+    from gui.shared.gui_items.dossier.achievements.abstract import RegularAchievement
+    from gui.shared.gui_items.gui_item_economics import ItemPrice
+    from gui.shared.money import Money, DynamicMoney
+    from gui.shared.utils.requesters import InventoryRequester
     from gui.veh_post_progression.models.ext_money import ExtendedMoney
     from post_progression_common import VehicleState
     from items.vehicles import VehicleType
-    from gui.gift_system.wrappers import GiftStorageData
 
 class IRequester(object):
 
@@ -94,6 +97,9 @@ class IInventoryRequester(IRequester):
         raise NotImplementedError
 
     def getItems(self, itemTypeIdx, dataIdx=None):
+        raise NotImplementedError
+
+    def getC11nSerialNumber(self, itemCD):
         raise NotImplementedError
 
     def getFreeSlots(self, vehiclesSlots):
@@ -355,6 +361,10 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def isSsrPlayEnabled(self):
+        raise NotImplementedError
+
+    @property
     def tutorialsCompleted(self):
         raise NotImplementedError
 
@@ -376,6 +386,9 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     def getMoneyExt(self, vehCD):
+        raise NotImplementedError
+
+    def getDynamicMoney(self):
         raise NotImplementedError
 
     def getWeeklyVehicleCrystals(self, vehCD):
@@ -597,6 +610,10 @@ class IShopCommonStats(object):
     def demountKits(self):
         raise NotImplementedError
 
+    @property
+    def recertificationForms(self):
+        raise NotImplementedError
+
     def getPremiumPacketCost(self, days):
         raise NotImplementedError
 
@@ -619,10 +636,6 @@ class IShopCommonStats(object):
         raise NotImplementedError
 
     def getEmblemCost(self, days=0):
-        raise NotImplementedError
-
-    @property
-    def tradeIn(self):
         raise NotImplementedError
 
 
@@ -808,6 +821,13 @@ class IBattleRoyaleRequester(IRequester):
     def topCount(self):
         raise NotImplementedError
 
+    @property
+    def testDriveExpired(self):
+        raise NotImplementedError
+
+    def getStats(self, arenaBonusType, playerDatabaseID=None):
+        raise NotImplementedError
+
 
 class IBadgesRequester(IRequester):
 
@@ -928,9 +948,6 @@ class ITokensRequester(IRequester):
         raise NotImplementedError
 
     def getAttemptsAfterGuaranteedRewards(self, box):
-        raise NotImplementedError
-
-    def getLootBoxesStats(self):
         raise NotImplementedError
 
     def getLootBoxes(self):
@@ -1088,23 +1105,68 @@ class IOffersRequester(IRequester):
         raise NotImplementedError
 
 
+class IBattlePassRequester(IRequester):
+
+    def getSeasonID(self):
+        raise NotImplementedError
+
+    def getState(self):
+        raise NotImplementedError
+
+    def getActiveChapterID(self):
+        raise NotImplementedError
+
+    def getPointsForVehicle(self, vehicleID, default=0):
+        raise NotImplementedError
+
+    def getPackedStats(self):
+        raise NotImplementedError
+
+    def getChapterStats(self):
+        raise NotImplementedError
+
+    def getCurrentLevelByChapterID(self, chapterID):
+        raise NotImplementedError
+
+    def getPointsByChapterID(self, chapterID):
+        raise NotImplementedError
+
+    def getNonChapterPoints(self):
+        raise NotImplementedError
+
+
 class IGiftSystemRequester(IRequester):
 
     @property
     def isHistoryReady(self):
         raise NotImplementedError
 
-    def getGiftFromStorage(self, giftTypeID, offset=0, limit=0):
+
+class IGameRestrictionsRequester(IRequester):
+
+    @property
+    def session(self):
         raise NotImplementedError
 
-    def getGiftStorageGroupedCount(self, giftTypeID):
+    @property
+    def hasSessionLimit(self):
         raise NotImplementedError
 
-    def getGiftStorageDataCount(self, giftTypeID):
+    def getKickAt(self):
         raise NotImplementedError
 
-    def findGiftBySenderID(self, giftTypeID, receiverID):
+    @property
+    def settings(self):
         raise NotImplementedError
 
-    def sortGiftStorage(self, giftTypeID):
+
+class IResourceWellRequester(IRequester):
+
+    def getCurrentPoints(self):
+        raise NotImplementedError
+
+    def getBalance(self):
+        raise NotImplementedError
+
+    def getReward(self):
         raise NotImplementedError

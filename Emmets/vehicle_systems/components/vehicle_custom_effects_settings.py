@@ -3,9 +3,11 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/components/vehicle_custom_effects_settings.py
 import CGF, Vehicular
-from CustomEffectManager import CustomEffectManager
 from cgf_script.component_meta_class import CGFComponent, ComponentProperty, CGFMetaTypes
 from cgf_script.managers_registrator import onAddedQuery, autoregister
+from constants import IS_CGF_DUMP
+if not IS_CGF_DUMP:
+    from CustomEffectManager import CustomEffectManager
 
 class VehicleCustomEffectsSettings(CGFComponent):
     category = 'Vehicle'

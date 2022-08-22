@@ -230,8 +230,8 @@ class WgshAccessor(BaseAccessor):
     def give_leadership(self, callback, periphery_id, unit_server_id, target_account_id, fields=None):
         return self._data_source.give_leadership(callback, periphery_id, unit_server_id, target_account_id, fields=fields)
 
-    def set_equipment_commander(self, callback, periphery_id, unit_server_id, target_account_id, fields=None):
-        return self._data_source.set_equipment_commander(callback, periphery_id, unit_server_id, target_account_id, fields=fields)
+    def set_equipment_commander(self, callback, periphery_id, unit_server_id, target_account_id, role, fields=None):
+        return self._data_source.set_equipment_commander(callback, periphery_id, unit_server_id, target_account_id, role, fields=fields)
 
     def leave_room(self, callback, periphery_id, unit_server_id, fields=None):
         return self._data_source.leave_room(callback, periphery_id, unit_server_id, fields=fields)
@@ -350,8 +350,8 @@ class MapboxAccessor(BaseAccessor):
     def select_mapbox_crewbook(self, callback, itemID):
         return self._data_source.select_mapbox_crewbook(callback, itemID)
 
-    def complete_survey(self, callback, mapName):
-        return self._data_source.complete_survey(callback, mapName)
+    def complete_survey(self, callback, surveyData):
+        return self._data_source.complete_survey(callback, surveyData)
 
     def request_authorized_survey_url(self, callback, mapURL):
         return self._data_source.request_authorized_survey_url(callback, mapURL)
@@ -365,8 +365,11 @@ class GiftSystemAccessor(BaseAccessor):
     def post_gift_system_gift(self, callback, entitlementCode, receiverID, metaInfo):
         return self._data_source.post_gift_system_gift(callback, entitlementCode, receiverID, metaInfo)
 
-    def post_secret_santa_gift(self, callback, entitlementCode, metaInfo):
-        return self._data_source.post_secret_santa_gift(callback, entitlementCode, metaInfo)
+
+class AgateAccessor(BaseAccessor):
+
+    def get_inventory_entitlements(self, callback, entitlement_codes):
+        return self._data_source.get_inventory_entitlements(callback, entitlement_codes)
 
 
 class Requester(object):
@@ -389,6 +392,7 @@ class Requester(object):
     craftmachine = RequestDescriptor(CrafmachineAccessor)
     mapbox = RequestDescriptor(MapboxAccessor)
     gifts = RequestDescriptor(GiftSystemAccessor)
+    agate = RequestDescriptor(AgateAccessor)
 
     @classmethod
     def create_requester(cls, url_fetcher, config, client_lang=None, user_agent=None):
@@ -399,8 +403,8 @@ class Requester(object):
         self.data_source = data_source
 
     @bigworld_wrapped
-    def login(self, callback, account_id, token):
-        self.data_source.login(callback, account_id, token)
+    def login(self, callback, account_id, token, jwt):
+        self.data_source.login(callback, account_id, token, jwt)
 
     @bigworld_wrapped
     def logout(self, callback):

@@ -2,32 +2,32 @@
 # Python bytecode 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/requesters/ItemsRequester.py
+import operator
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict, namedtuple
-import typing, operator, constants, dossiers2, nations
+import typing, BigWorld, async as future_async, constants, dossiers2, nations
 from account_shared import LayoutIterator
 from adisp import async, process
+from battle_pass_common import BATTLE_PASS_PDATA_KEY
 from constants import CustomizationInvData, SkinInvData
-from debug_utils import LOG_WARNING, LOG_DEBUG, LOG_ERROR
+from debug_utils import LOG_DEBUG, LOG_WARNING
 from goodies.goodie_constants import GOODIE_STATE
 from gui.shared.gui_items import GUI_ITEM_TYPE, GUI_ITEM_TYPE_NAMES, ItemsCollection, getVehicleSuitablesByType
-from gui.shared.utils.requesters import vehicle_items_getter
 from gui.shared.gui_items.gui_item_economics import ITEM_PRICE_EMPTY
-from gui.shared.utils.requesters.battle_pass_requester import BattlePassRequester
+from gui.shared.utils.requesters import vehicle_items_getter
 from helpers import dependency
-from items import vehicles, tankmen, getTypeOfCompactDescr, makeIntCompactDescrByID
-from items.components.c11n_constants import SeasonType, CustomizationDisplayType
+from items import getTypeOfCompactDescr, makeIntCompactDescrByID, tankmen, vehicles
+from items.components.c11n_constants import CustomizationDisplayType, SeasonType
 from items.components.crew_skins_constants import CrewSkinType
-from skeletons.gui.shared import IItemsRequester, IItemsCache
-from skeletons.gui.shared.gui_items import IGuiItemsFactory
-from skeletons.gui.game_control import IVehiclePostProgressionController
-from nation_change.nation_change_helpers import iterVehiclesWithNationGroupInOrder, iterVehTypeCDsInNationGroup, isMainInNationGroupSafe
+from nation_change.nation_change_helpers import isMainInNationGroupSafe, iterVehTypeCDsInNationGroup, iterVehiclesWithNationGroupInOrder
 from shared_utils.account_helpers.diff_utils import synchronizeDicts
+from skeletons.gui.game_control import IVehiclePostProgressionController
+from skeletons.gui.shared import IItemsCache, IItemsRequester
+from skeletons.gui.shared.gui_items import IGuiItemsFactory
 if typing.TYPE_CHECKING:
     import skeletons.gui.shared.utils.requesters as requesters
     from gui.veh_post_progression.models.progression import PostProgressionItem
     from items.vehicles import VehicleType
-    from lunar_ny.lunar_ny_requester import ILunarNYRequester
 DO_LOG_BROKEN_SYNC = False
 
 def getDiffID(itemdID):
@@ -241,7 +241,6 @@ class REQ_CRITERIA(object):
         ACTIVE_OR_MAIN_IN_NATION_GROUP = RequestCriteria(PredicateCondition(lambda item: item.activeInNationGroup if item.isInInventory else isMainInNationGroupSafe(item.intCD)))
         FAVORITE = RequestCriteria(PredicateCondition(lambda item: item.isFavorite))
         PREMIUM = RequestCriteria(PredicateCondition(lambda item: item.isPremium))
-        SPECIAL = RequestCriteria(PredicateCondition(lambda item: item.isSpecial))
         READY = RequestCriteria(PredicateCondition(lambda item: item.isReadyToFight))
         OBSERVER = RequestCriteria(PredicateCondition(lambda item: item.isObserver))
         EARN_CRYSTALS = RequestCriteria(PredicateCondition(lambda item: item.isEarnCrystals))
@@ -283,15 +282,12 @@ class REQ_CRITERIA(object):
         CAN_TRADE_OFF = RequestCriteria(PredicateCondition(lambda item: item.canTradeOff))
         CAN_SELL = RequestCriteria(PredicateCondition(lambda item: item.canSell))
         CAN_NOT_BE_SOLD = RequestCriteria(PredicateCondition(lambda item: item.canNotBeSold))
-        CAN_PERSONAL_TRADE_IN_SALE = RequestCriteria(PredicateCondition(lambda item: item.canPersonalTradeInSale))
-        CAN_PERSONAL_TRADE_IN_BUY = RequestCriteria(PredicateCondition(lambda item: item.canPersonalTradeInBuy))
         IS_IN_BATTLE = RequestCriteria(PredicateCondition(lambda item: item.isInBattle))
-        IS_IN_UNIT = RequestCriteria(PredicateCondition(lambda item: item.isInUnit))
         SECRET = RequestCriteria(PredicateCondition(lambda item: item.isSecret))
         NAME_VEHICLE = staticmethod(lambda nameVehicle: RequestCriteria(PredicateCondition(lambda item: nameVehicle in item.searchableUserName)))
         NAME_VEHICLE_WITH_SHORT = staticmethod(lambda nameVehicle: RequestCriteria(PredicateCondition(lambda item: nameVehicle in item.searchableShortUserName or nameVehicle in item.searchableUserName)))
         DISCOUNT_RENT_OR_BUY = RequestCriteria(PredicateCondition(lambda item: (item.buyPrices.itemPrice.isActionPrice() or item.getRentPackageActionPrc() != 0) and not item.isRestoreAvailable()))
-        HAS_TAGS = staticmethod(lambda tags: RequestCriteria(PredicateCondition(lambda item: not item.tags.isdisjoint(tags))))
+        HAS_TAGS = staticmethod(lambda tags: RequestCriteria(PredicateCondition(lambda item: item.tags.issuperset(tags))))
         FOR_ITEM = staticmethod(lambda style: RequestCriteria(PredicateCondition(style.mayInstall)))
 
     class TANKMAN(object):
@@ -317,6 +313,10 @@ class REQ_CRITERIA(object):
         DURATION = staticmethod(lambda durationTimes: RequestCriteria(PredicateCondition(lambda item: item.effectTime in durationTimes)))
 
     class DEMOUNT_KIT(object):
+        IS_ENABLED = RequestCriteria(PredicateCondition(lambda item: item.enabled))
+        IN_ACCOUNT = RequestCriteria(InventoryPredicateCondition(lambda item: item.count > 0))
+
+    class RECERTIFICATION_FORM(object):
         IS_ENABLED = RequestCriteria(PredicateCondition(lambda item: item.enabled))
         IN_ACCOUNT = RequestCriteria(InventoryPredicateCondition(lambda item: item.count > 0))
 
@@ -363,7 +363,7 @@ class REQ_CRITERIA(object):
         ONLY_IN_GROUP = staticmethod(lambda group: RequestCriteria(PredicateCondition(lambda item: item.groupUserName == group)))
         DISCLOSABLE = staticmethod(lambda vehicle: RequestCriteria(PredicateCondition(lambda item: item.fullInventoryCount(vehicle.intCD) or not item.isHidden)))
         IS_INSTALLED_ON_VEHICLE = staticmethod(lambda vehicle: RequestCriteria(PredicateCondition(lambda item: item.installedCount(vehicle.intCD) > 0)))
-        HAS_TAGS = staticmethod(lambda tags: RequestCriteria(PredicateCondition(lambda item: not item.tags.isdisjoint(tags))))
+        HAS_TAGS = staticmethod(lambda tags: RequestCriteria(PredicateCondition(lambda item: item.tags.issuperset(tags))))
         FULL_INVENTORY = RequestCriteria(PredicateCondition(lambda item: item.fullInventoryCount() > 0))
         ON_ACCOUNT = RequestCriteria(PredicateCondition(lambda item: item.fullCount() > 0))
 
@@ -375,9 +375,10 @@ class RESEARCH_CRITERIA(object):
 class ItemsRequester(IItemsRequester):
     itemsFactory = dependency.descriptor(IGuiItemsFactory)
     __vehPostProgressionCtrl = dependency.descriptor(IVehiclePostProgressionController)
-    _AccountItem = namedtuple('_AccountItem', ['dossier', 'clanInfo', 'seasons', 'ranked', 'dogTag'])
+    _AccountItem = namedtuple('_AccountItem', ['dossier', 'clanInfo', 'seasons', 'ranked',
+     'dogTag', 'battleRoyaleStats'])
 
-    def __init__(self, inventory, stats, dossiers, goodies, shop, recycleBin, vehicleRotation, ranked, battleRoyale, badges, epicMetaGame, tokens, festivityRequester, blueprints=None, sessionStatsRequester=None, anonymizerRequester=None, giftSystemRequester=None, lunarNY=None):
+    def __init__(self, inventory, stats, dossiers, goodies, shop, recycleBin, vehicleRotation, ranked, battleRoyale, badges, epicMetaGame, tokens, festivityRequester, blueprints=None, sessionStatsRequester=None, anonymizerRequester=None, battlePassRequester=None, giftSystemRequester=None, gameRestrictionsRequester=None, resourceWellRequester=None):
         self.__inventory = inventory
         self.__stats = stats
         self.__dossiers = dossiers
@@ -394,9 +395,10 @@ class ItemsRequester(IItemsRequester):
         self.__tokens = tokens
         self.__sessionStats = sessionStatsRequester
         self.__anonymizer = anonymizerRequester
-        self.__battlePass = BattlePassRequester()
+        self.__battlePass = battlePassRequester
         self.__giftSystem = giftSystemRequester
-        self.__lunarNY = lunarNY
+        self.__gameRestrictions = gameRestrictionsRequester
+        self.__resourceWell = resourceWellRequester
         self.__itemsCache = defaultdict(dict)
         self.__brokenSyncAlreadyLoggedTypes = set()
         self.__fittingItemRequesters = {
@@ -476,8 +478,12 @@ class ItemsRequester(IItemsRequester):
         return self.__giftSystem
 
     @property
-    def lunarNY(self):
-        return self.__lunarNY
+    def gameRestrictions(self):
+        return self.__gameRestrictions
+
+    @property
+    def resourceWell(self):
+        return self.__resourceWell
 
     @async
     @process
@@ -531,116 +537,108 @@ class ItemsRequester(IItemsRequester):
         Waiting.show('download/giftSystem')
         yield self.__giftSystem.request()
         Waiting.hide('download/giftSystem')
-        if self.__lunarNY is not None:
-            Waiting.show('download/lunarNY')
-            yield self.__lunarNY.request()
-            Waiting.hide('download/lunarNY')
+        Waiting.show('download/gameRestrictions')
+        yield self.__gameRestrictions.request()
+        Waiting.hide('download/gameRestrictions')
+        Waiting.show('download/resourceWell')
+        yield self.__resourceWell.request()
+        Waiting.hide('download/resourceWell')
         self.__brokenSyncAlreadyLoggedTypes.clear()
         callback(self)
-        return
 
     def isSynced--- This code section failed: ---
 
- L. 897         0  LOAD_FAST             0  'self'
+ L. 908         0  LOAD_FAST             0  'self'
                 3  LOAD_ATTR             0  '__blueprints'
                 6  LOAD_CONST               None
                 9  COMPARE_OP            9  is-not
-               12  POP_JUMP_IF_FALSE   208  'to 208'
+               12  POP_JUMP_IF_FALSE   223  'to 223'
                15  LOAD_FAST             0  'self'
                18  LOAD_ATTR             2  '__stats'
                21  LOAD_ATTR             3  'isSynced'
                24  CALL_FUNCTION_0       0  None
-               27  JUMP_IF_FALSE_OR_POP   245  'to 245'
+               27  JUMP_IF_FALSE_OR_POP   226  'to 226'
                30  LOAD_FAST             0  'self'
                33  LOAD_ATTR             4  '__inventory'
                36  LOAD_ATTR             3  'isSynced'
                39  CALL_FUNCTION_0       0  None
-               42  JUMP_IF_FALSE_OR_POP   245  'to 245'
+               42  JUMP_IF_FALSE_OR_POP   226  'to 226'
                45  LOAD_FAST             0  'self'
                48  LOAD_ATTR             5  '__recycleBin'
                51  LOAD_ATTR             3  'isSynced'
                54  CALL_FUNCTION_0       0  None
-               57  JUMP_IF_FALSE_OR_POP   245  'to 245'
+               57  JUMP_IF_FALSE_OR_POP   226  'to 226'
                60  LOAD_FAST             0  'self'
                63  LOAD_ATTR             6  '__shop'
                66  LOAD_ATTR             3  'isSynced'
                69  CALL_FUNCTION_0       0  None
-               72  JUMP_IF_FALSE_OR_POP   245  'to 245'
+               72  JUMP_IF_FALSE_OR_POP   226  'to 226'
                75  LOAD_FAST             0  'self'
                78  LOAD_ATTR             7  '__dossiers'
                81  LOAD_ATTR             3  'isSynced'
                84  CALL_FUNCTION_0       0  None
-               87  JUMP_IF_FALSE_OR_POP   245  'to 245'
+               87  JUMP_IF_FALSE_OR_POP   226  'to 226'
                90  LOAD_FAST             0  'self'
                93  LOAD_ATTR             8  '__giftSystem'
                96  LOAD_ATTR             3  'isSynced'
                99  CALL_FUNCTION_0       0  None
-              102  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              102  JUMP_IF_FALSE_OR_POP   226  'to 226'
               105  LOAD_FAST             0  'self'
               108  LOAD_ATTR             9  '__goodies'
               111  LOAD_ATTR             3  'isSynced'
               114  CALL_FUNCTION_0       0  None
-              117  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              117  JUMP_IF_FALSE_OR_POP   226  'to 226'
               120  LOAD_FAST             0  'self'
               123  LOAD_ATTR            10  '__vehicleRotation'
               126  LOAD_ATTR             3  'isSynced'
               129  CALL_FUNCTION_0       0  None
-              132  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              132  JUMP_IF_FALSE_OR_POP   226  'to 226'
               135  LOAD_FAST             0  'self'
               138  LOAD_ATTR            11  'ranked'
               141  LOAD_ATTR             3  'isSynced'
               144  CALL_FUNCTION_0       0  None
-              147  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              147  JUMP_IF_FALSE_OR_POP   226  'to 226'
               150  LOAD_FAST             0  'self'
               153  LOAD_ATTR            12  '__anonymizer'
               156  LOAD_ATTR             3  'isSynced'
               159  CALL_FUNCTION_0       0  None
-              162  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              162  JUMP_IF_FALSE_OR_POP   226  'to 226'
               165  LOAD_FAST             0  'self'
               168  LOAD_ATTR            13  'epicMetaGame'
               171  LOAD_ATTR             3  'isSynced'
               174  CALL_FUNCTION_0       0  None
-              177  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              177  JUMP_IF_FALSE_OR_POP   226  'to 226'
               180  LOAD_FAST             0  'self'
               183  LOAD_ATTR            14  '__battleRoyale'
               186  LOAD_ATTR             3  'isSynced'
               189  CALL_FUNCTION_0       0  None
-              192  JUMP_IF_FALSE_OR_POP   245  'to 245'
+              192  JUMP_IF_FALSE_OR_POP   226  'to 226'
               195  LOAD_FAST             0  'self'
-              198  LOAD_ATTR             0  '__blueprints'
+              198  LOAD_ATTR            15  '__gameRestrictions'
               201  LOAD_ATTR             3  'isSynced'
               204  CALL_FUNCTION_0       0  None
-              207  RETURN_END_IF    
-            208_0  COME_FROM           192  '192'
-            208_1  COME_FROM           177  '177'
-            208_2  COME_FROM           162  '162'
-            208_3  COME_FROM           147  '147'
-            208_4  COME_FROM           132  '132'
-            208_5  COME_FROM           117  '117'
-            208_6  COME_FROM           102  '102'
-            208_7  COME_FROM            87  '87'
-            208_8  COME_FROM            72  '72'
-            208_9  COME_FROM            57  '57'
-           208_10  COME_FROM            42  '42'
-           208_11  COME_FROM            27  '27'
-           208_12  COME_FROM            12  '12'
-
- L. 898       208  LOAD_FAST             0  'self'
-              211  LOAD_ATTR            15  '__lunarNY'
-              214  LOAD_CONST               None
-              217  COMPARE_OP            9  is-not
-              220  POP_JUMP_IF_FALSE   242  'to 242'
+              207  JUMP_IF_FALSE_OR_POP   226  'to 226'
+              210  LOAD_FAST             0  'self'
+              213  LOAD_ATTR             0  '__blueprints'
+              216  LOAD_ATTR             3  'isSynced'
+              219  CALL_FUNCTION_0       0  None
+              222  RETURN_END_IF    
+            223_0  COME_FROM           207  '207'
+            223_1  COME_FROM           192  '192'
+            223_2  COME_FROM           177  '177'
+            223_3  COME_FROM           162  '162'
+            223_4  COME_FROM           147  '147'
+            223_5  COME_FROM           132  '132'
+            223_6  COME_FROM           117  '117'
+            223_7  COME_FROM           102  '102'
+            223_8  COME_FROM            87  '87'
+            223_9  COME_FROM            72  '72'
+           223_10  COME_FROM            57  '57'
+           223_11  COME_FROM            42  '42'
+           223_12  COME_FROM            27  '27'
+           223_13  COME_FROM            12  '12'
               223  LOAD_GLOBAL          16  'False'
-              226  JUMP_IF_FALSE_OR_POP   245  'to 245'
-              229  LOAD_FAST             0  'self'
-              232  LOAD_ATTR            15  '__lunarNY'
-              235  LOAD_ATTR             3  'isSynced'
-              238  CALL_FUNCTION_0       0  None
-              241  RETURN_END_IF    
-            242_0  COME_FROM           226  '226'
-            242_1  COME_FROM           220  '220'
-              242  LOAD_GLOBAL          17  'True'
-              245  RETURN_VALUE     
+              226  RETURN_VALUE     
 
 Parse error at or near `None' instruction at offset -1
 
@@ -653,8 +651,9 @@ Parse error at or near `None' instruction at offset -1
         seasons = yield dr.getRated7x7Seasons()
         ranked = yield dr.getRankedInfo()
         dogTag = yield dr.getDogTag()
+        battleRoyaleStats = yield dr.getBattleRoyaleStats()
         container = self.__itemsCache[GUI_ITEM_TYPE.ACCOUNT_DOSSIER]
-        container[databaseID] = self._AccountItem(userAccDossier, clanInfo, seasons, ranked, dogTag)
+        container[databaseID] = self._AccountItem(userAccDossier, clanInfo, seasons, ranked, dogTag, battleRoyaleStats)
         callback((userAccDossier, clanInfo, dr.isHidden))
 
     def unloadUserDossier(self, databaseID):
@@ -698,9 +697,7 @@ Parse error at or near `None' instruction at offset -1
         self.__festivity.clear()
         self.__anonymizer.clear()
         self.__giftSystem.clear()
-        if self.__lunarNY is not None:
-            self.__lunarNY.clear()
-        return
+        self.__gameRestrictions.clear()
 
     def onDisconnected(self):
         self.__tokens.onDisconnected()
@@ -814,7 +811,8 @@ Parse error at or near `None' instruction at offset -1
                             invalidate[GUI_ITEM_TYPE.OUTFIT].add((vehicleIntCD, season))
 
                     storageKeys = (CustomizationInvData.ITEMS, CustomizationInvData.NOVELTY_DATA,
-                     CustomizationInvData.DRESSED, CustomizationInvData.PROGRESSION)
+                     CustomizationInvData.DRESSED, CustomizationInvData.PROGRESSION,
+                     CustomizationInvData.SERIAL_NUMBERS)
                     for storageKey in storageKeys:
                         for cType, items in itemsDiff.get(storageKey, {}).iteritems():
                             for idx in items.iterkeys():
@@ -835,11 +833,13 @@ Parse error at or near `None' instruction at offset -1
                     else:
                         invalidate[GUI_ITEM_TYPE.VEHICLE].add(itemID)
 
-            if ('battlePass', '_r') in diff or 'battlePass' in diff:
-                if ('battlePass', '_r') in diff:
-                    invalidate['battlePass'] = diff[('battlePass', '_r')]
-                if 'battlePass' in diff:
-                    synchronizeDicts(diff['battlePass'], invalidate.setdefault('battlePass', {}))
+            if (
+             BATTLE_PASS_PDATA_KEY, '_r') in diff or BATTLE_PASS_PDATA_KEY in diff:
+                if (
+                 BATTLE_PASS_PDATA_KEY, '_r') in diff:
+                    invalidate[BATTLE_PASS_PDATA_KEY] = diff[(BATTLE_PASS_PDATA_KEY, '_r')]
+                if BATTLE_PASS_PDATA_KEY in diff:
+                    synchronizeDicts(diff[BATTLE_PASS_PDATA_KEY], invalidate.setdefault(BATTLE_PASS_PDATA_KEY, {}))
             if 'goodies' in diff:
                 vehicleDiscounts = self.__shop.getVehicleDiscountDescriptions()
                 for goodieID in diff['goodies'].iterkeys():
@@ -933,6 +933,34 @@ Parse error at or near `None' instruction at offset -1
                         result[intCD] = item
 
         return result
+
+    @future_async.async
+    def getItemsAsync(self, itemTypeID=None, criteria=REQ_CRITERIA.EMPTY, nationID=None, onlyWithPrices=True, callback=None):
+        result = ItemsCollection()
+        if not isinstance(itemTypeID, tuple):
+            itemTypeID = (
+             itemTypeID,)
+
+        def asyncGetItems():
+            for typeID in itemTypeID:
+                itemGetter = self.getItemByCD
+                protector = criteria.getIntCDProtector()
+                if protector is not None and protector.isUnlinked():
+                    callback(result)
+                for intCD in vehicle_items_getter.getItemsIterator(self.__shop.getItemsData(), nationID, typeID, onlyWithPrices):
+                    if BigWorld.player() is None:
+                        return
+                    if protector is not None and protector.isTriggered(intCD):
+                        continue
+                    item = itemGetter(intCD)
+                    if criteria(item):
+                        result[intCD] = item
+                    yield item
+
+            return
+
+        yield future_async.await(future_async.distributeLoopOverTicks(asyncGetItems(), minPerTick=10, maxPerTick=100, logID='getItemsAsync', tickLength=0.0))
+        callback(result)
 
     def getTankmen(self, criteria=REQ_CRITERIA.TANKMAN.ACTIVE):
         result = ItemsCollection()
@@ -1064,6 +1092,21 @@ Parse error at or near `None' instruction at offset -1
                 LOG_WARNING('Trying to get empty user dogTag', databaseID)
                 return
             return dogTag
+
+    def getBattleRoyaleStats(self, arenaType, databaseID=None, vehicleIntCD=None):
+        if databaseID is None:
+            stats = self.battleRoyale.getStats(arenaType)
+        else:
+            container = self.__itemsCache[GUI_ITEM_TYPE.ACCOUNT_DOSSIER]
+            battleRoyaleStats = container.get(int(databaseID)).battleRoyaleStats
+            if battleRoyaleStats is None:
+                LOG_WARNING('Trying to get empty user battleRoyaleStats', databaseID)
+                return {}
+            stats = battleRoyaleStats.get(arenaType, {})
+        if vehicleIntCD:
+            return stats.get(vehicleIntCD, {})
+        else:
+            return stats
 
     def getVehPostProgression(self, vehIntCD, vehType=None):
         return self.__makeItem(GUI_ITEM_TYPE.VEH_POST_PROGRESSION, uid=vehIntCD, vehIntCD=vehIntCD, state=self.__inventory.getVehPostProgression(vehIntCD), vehType=vehType)
@@ -1198,4 +1241,4 @@ Parse error at or near `None' instruction at offset -1
          self.__stats, self.__inventory, self.__recycleBin, self.__shop, self.__dossiers,
          self.__goodies, self.__vehicleRotation, self.ranked, self.__battleRoyale)
         unsyncedList = [ r.__class__.__name__ for r in [ r for r in requesters if not r.isSynced() ] ]
-        LOG_ERROR('Trying to create fitting item when requesters are not fully synced:', unsyncedList, stack=True)
+        LOG_WARNING(('Trying to create fitting item type {} when requesters are not fully synced: {}').format(itemTypeID, unsyncedList), stack=True)

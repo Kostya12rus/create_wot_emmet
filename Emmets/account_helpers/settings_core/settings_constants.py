@@ -140,6 +140,7 @@ class GAME(CONST_CONTAINER):
     LOGIN_SERVER_SELECTION = 'loginServerSelection'
     UNIT_FILTER = 'unitFilter'
     SWITCH_SETUPS_IN_LOADING = 'switchEquipment'
+    SCROLL_SMOOTHING = 'scrollSmoothing'
 
 
 class TUTORIAL(CONST_CONTAINER):
@@ -210,6 +211,7 @@ class AIM(CONST_CONTAINER):
     ARCADE = 'arcade'
     SNIPER = 'sniper'
     SPG = 'spg'
+    CONTOUR = 'contour'
 
 
 class SPGAim(CONST_CONTAINER):
@@ -218,7 +220,12 @@ class SPGAim(CONST_CONTAINER):
     SPG_STRATEGIC_CAM_MODE = 'spgStrategicCamMode'
     AUTO_CHANGE_AIM_MODE = 'autoChangeAimMode'
     AIM_ENTRANCE_MODE = 'aimEntranceMode'
-    SCROLL_SMOOTHING_ENABLED = 'scrollSmoothingEnabled'
+
+
+class CONTOUR(CONST_CONTAINER):
+    ENHANCED_CONTOUR = 'contour'
+    CONTOUR_PENETRABLE_ZONE = 'contourPenetrableZone'
+    CONTOUR_IMPENETRABLE_ZONE = 'contourImpenetrableZone'
 
 
 class SPGAimEntranceModeOptions(CONST_CONTAINER):
@@ -318,11 +325,10 @@ class GuiSettingsBehavior(CONST_CONTAINER):
     RANKED_WELCOME_VIEW_SHOWED = 'isRankedWelcomeViewShowed'
     RANKED_WELCOME_VIEW_STARTED = 'isRankedWelcomeViewStarted'
     EPIC_RANDOM_CHECKBOX_CLICKED = 'isEpicRandomCheckboxClicked'
-    TECHTREE_INTRO_BLUEPRINTS_RECEIVED = 'techTreeIntroBlueprintsReceived'
-    TECHTREE_INTRO_SHOWED = 'techTreeIntroShowed'
     DISPLAY_PLATOON_MEMBER_CLICKED = 'isDisplayPlatoonMembersClicked'
     VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW = 'vehPostProgressionUnlockMsgNeedShow'
     BIRTHDAY_CALENDAR_INTRO_SHOWED = 'birthdayCalendarIntroShowed'
+    RESOURCE_WELL_INTRO_SHOWN = 'resourceWellIntroShown'
 
 
 class OnceOnlyHints(CONST_CONTAINER):
@@ -381,9 +387,8 @@ class OnceOnlyHints(CONST_CONTAINER):
     COMPARE_SPECIALIZATION_BUTTON_HINT = 'CompareSpecializationButtonHint'
     TRADE_IN_VEHICLE_POST_PROGRESSION_ENTRY_POINT_HINT = 'TradeInVehiclePreviewPostProgressionButtonHint'
     PERSONAL_TRADE_IN_VEHICLE_POST_PROGRESSION_ENTRY_POINT_HINT = 'PersonalTradeInVehiclePreviewPostProgressionButtonHint'
-    NY_GIFT_SYSTEM_FRIEND_SELECT_HINT = 'NyGiftSystemFriendSelectHint'
-    LUNAR_NY_DROPDOWN_HINT = 'LunarNYDropdownHint'
-    LUNAR_NY_CONGRATULATION_HINT = 'LunarNYCongratulationHint'
+    APPLY_ABILITIES_TO_TYPE_CHECKBOX_HINT = 'ApplyAbilitiesToTypeCheckboxHint'
+    SHOW_ABILITIES_BUTTON_HINT = 'ShowAbilitiesButtonHint'
 
 
 class SESSION_STATS(CONST_CONTAINER):
@@ -475,13 +480,11 @@ class SESSION_STATS(CONST_CONTAINER):
 class BattlePassStorageKeys(CONST_CONTAINER):
     INTRO_SHOWN = 'introShown'
     INTRO_VIDEO_SHOWN = 'introVideoShown'
-    BUY_BUTTON_HINT_IS_SHOWN = 'buyButtonHintIsShown'
     BUY_ANIMATION_WAS_SHOWN = 'buyAnimationWasShown'
     FLAGS_VERSION = 'flagsVersion'
-    TROPHY_NOTIFICATION_SHOWN = 'trophyNotificationShown'
-    NEW_DEVICE_NOTIFICATION_SHOWN = 'newDeviceNotificationShown'
     DAILY_QUESTS_INTRO_SHOWN = 'dailyQuestsIntroShown'
-    MASK_CHOSEN_DEVICES = 15
+    EXTRA_CHAPTER_INTRO_SHOWN = 'extraChapterIntroShown'
+    EXTRA_CHAPTER_VIDEO_SHOWN = 'extraChapterVideoShown'
 
 
 class BattleCommStorageKeys(CONST_CONTAINER):
@@ -500,25 +503,6 @@ class ScorePanelStorageKeys(CONST_CONTAINER):
     ENABLE_TIER_GROUPING = 'enableTierGrouping'
 
 
-class NYLootBoxesStorageKeys(CONST_CONTAINER):
-    NEW_COUNT = 'newCount'
-    DELIVERED_COUNT = 'deliveredCount'
-
-
-class NewYearStorageKeys(CONST_CONTAINER):
-    HAS_TOYS_HINT_SHOWN = 'hasToysHintShown'
-    NY_VEHICLES_PROGRESS_ENTRY = 'nyVehiclesProgressEntry'
-    NY_VEHICLES_POST_EVENT_ENTRY = 'nyVehiclesPostEventEntry'
-    NY_VEHICLES_LEVEL_UP_ENTRY = 'nyVehiclesLevelUpEntry'
-    NY_STATISTICS_HINT_SHOWN = 'nyLootboxStatisticsHintShown'
-    GLADE_INTRO_VISITED = 'gladeIntroVisited'
-    GIFT_SYSTEM_INTRO_VISITED = 'giftSystemIntroVisited'
-    DECORATIONS_POPOVER_VIEWED = 'decorationsPopoverViewed'
-    DECORATIONS_POPOVER_BROKEN = 'decorationsPopoverBroken'
-    CELEBRITY_CHALLENGE_VISITED = 'celebrityChallengeVisited'
-    CELEBRITY_WELCOME_VIEWED = 'celebrityChallengeWelcomeViewed'
-    LOOT_BOX_VIDEO_OFF = 'lootBoxVideoOff'
-    BOOL_FLAGS = (
-     HAS_TOYS_HINT_SHOWN, NY_VEHICLES_PROGRESS_ENTRY, NY_VEHICLES_POST_EVENT_ENTRY, NY_STATISTICS_HINT_SHOWN,
-     GLADE_INTRO_VISITED, GIFT_SYSTEM_INTRO_VISITED, DECORATIONS_POPOVER_VIEWED, DECORATIONS_POPOVER_BROKEN,
-     CELEBRITY_CHALLENGE_VISITED, CELEBRITY_WELCOME_VIEWED, LOOT_BOX_VIDEO_OFF)
+class WotAnniversaryStorageKeys(CONST_CONTAINER):
+    WOT_ANNIVERSARY_INTRO_SHOWED = 'wotAnniversaryIntroShowed'
+    WOT_ANNIVERSARY_WELCOME_SHOWED = 'wotAnniversaryWelcomeShowed'

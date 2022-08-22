@@ -15,7 +15,6 @@ from dossiers2.custom.dependencies import RANKED_STATS_DEPENDENCIES
 from dossiers2.custom.dependencies import A30X30_STATS_DEPENDENCIES
 from dossiers2.custom.dependencies import EPIC_BATTLE_STATS_DEPENDENCIES
 from dossiers2.custom.dependencies import STEAM_ACHIEVEMENT_DEPENDENCIES
-from dossiers2.custom.dependencies import PLAYER_BADGES_DEPENDENCIES
 from battle_statistics_layouts import *
 TOTAL_BLOCK_LAYOUT = [
  'creationTime', 'lastBattleTime', 'battleLifeTime', 'treesCut', 'mileage']
@@ -151,7 +150,9 @@ _ACHIEVEMENTS15X15_BLOCK_LAYOUT = [
  'rankedStayingPower', 'collectorVehicleStrg', 'TenYearsCountdownStageMedal',
  'wtHunterWins', 'wtBossWins', 'wtSpecBossDefeat', 'RP2018sergeantCounter',
  'wtxHunterWins', 'wtxBossWins', 'wtxSpecBossDefeat',
- 'whiteTiger2012', 'lunarNY2022Progression']
+ 'whiteTiger2012', 'lunarNY2022Progression',
+ 'oowTankmanWins', 'oowStrategistWins', 'oowCompetetiveWin',
+ 'mapboxUniversal', 'wclTournamentParticipant', 'wclParticipant']
 _achievements15x15PopUps = [
  'warrior', 'invader', 'sniper', 'defender', 'steelwall', 'supporter',
  'scout', 'medalKay', 'medalCarius', 'medalKnispel', 'medalPoppel', 'medalAbrams',
@@ -193,7 +194,9 @@ _achievements15x15PopUps = [
  'collectorVehicle8', 'collectorVehicle9', 'collectorVehicle10', 'collectorVehicle11',
  'collectorVehicle12', 'collectorVehicle13', 'collectorVehicle14',
  'TenYearsCountdownStageMedal', 'wtHunterWins', 'wtBossWins', 'wtSpecBossDefeat',
- 'wtxHunterWins', 'wtxBossWins', 'wtxSpecBossDefeat', 'lunarNY2022Progression']
+ 'wtxHunterWins', 'wtxBossWins', 'wtxSpecBossDefeat', 'lunarNY2022Progression',
+ 'oowTankmanWins', 'oowStrategistWins', 'oowCompetetiveWin', 'mapboxUniversal',
+ 'wclTournamentParticipant', 'wclParticipant']
 _achievements15x15BlockBuilder = StaticSizeBlockBuilder('achievements', _ACHIEVEMENTS15X15_BLOCK_LAYOUT, ACHIEVEMENT15X15_DEPENDENCIES, _achievements15x15PopUps)
 _STEAM_BLOCK_LAYOUT = [
  'steamBattleCredits', 'steamLittleSavingsMedal', 'steamMintedCoinMedal', 'steamKingMidasMedal',
@@ -307,8 +310,10 @@ _SINGLE_ACHIEVEMENTS_VALUES = [
  'february21', 'BattlePassCommonPr_4', 'march21', 'april21', 'gagarin21', 'may21',
  'june21', 'BattlePassCommonPr_5', 'mapboxSeason1', 'mapboxSeason2', 'mapboxSeason3',
  'july21', 'august21', 'BattlePassCommonPr_6', 'september21', 'october21',
- 'hw2021Medal1', 'hw2021Medal2', 'november21', '11YearsOfService', 'NY22_AtmsphrLevel',
- 'NY22_CelebChallenge', 'december21']
+ 'hw2021Medal1', 'hw2021Medal2', 'november21', '11YearsOfService',
+ 'NY22_AtmsphrLevel', 'NY22_CelebChallenge', 'december21', 'BattlePassCommonPr_7',
+ 'oowCBTParticipant', 'june22', 'BattlePassCommonPr_8', 'BattlePassCommonPr_8ru',
+ 'BattlePassCommonPr_8quest', 'july22', 'august22']
 _singleAchievementsPopUps = [
  'titleSniper', 'invincible', 'diehard', 'handOfDeath',
  'armorPiercer', 'battleCitizen', 'WFC2014', 'tacticalBreakthrough', 'aimer',
@@ -348,7 +353,9 @@ _singleAchievementsPopUps = [
  'mapboxSeason1', 'mapboxSeason2', 'mapboxSeason3', 'july21', 'august21',
  'BattlePassCommonPr_6', 'september21', 'october21', 'hw2021Medal1', 'hw2021Medal2',
  'november21', '11YearsOfService', 'NY22_AtmsphrLevel', 'NY22_CelebChallenge',
- 'december21']
+ 'december21', 'BattlePassCommonPr_7', 'oowCBTParticipant', 'june22',
+ 'BattlePassCommonPr_8', 'BattlePassCommonPr_8ru', 'BattlePassCommonPr_8quest', 'july22',
+ 'august22']
 _singleAchievementsBlockBuilder = BinarySetDossierBlockBuilder('singleAchievements', _SINGLE_ACHIEVEMENTS_VALUES, SINGLE_ACHIEVEMENTS_DEPENDENCIES, _singleAchievementsPopUps)
 FORT_ACHIEVEMENTS_BLOCK_LAYOUT = [
  'conqueror', 'fireAndSword', 'crusher', 'counterblow', 'kampfer', 'soldierOfFortune']
@@ -361,7 +368,7 @@ _clanAchievementsPopUps = ['medalRotmistrov']
 _clanAchievementsBlockBuilder = StaticSizeBlockBuilder('clanAchievements', CLAN_ACHIEVEMENTS_BLOCK_LAYOUT, {}, _clanAchievementsPopUps)
 RANKED_BADGES_BLOCK_LAYOUT = [
  '1', '2', '3', '4', '5', '6', '7', '8', '9']
-_playerBadgesBlockBuilder = DictBlockBuilder('playerBadges', 'I', 'I', PLAYER_BADGES_DEPENDENCIES)
+_playerBadgesBlockBuilder = DictBlockBuilder('playerBadges', 'I', 'I', {})
 _rankedSeasonsBlockBuilder = DictBlockBuilder('rankedSeasons', 'II', 'BHHHH', {})
 _rareAchievementsBlockBuilder = ListBlockBuilder('rareAchievements', 'I', {})
 UNIQUE_ACHIEVEMENT_VALUES = [
