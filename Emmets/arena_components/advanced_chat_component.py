@@ -7,14 +7,14 @@ from collections import OrderedDict, defaultdict, namedtuple
 from functools import partial
 from enum import Enum
 import BigWorld
-from ..PlayerEvents import g_playerEvents
-from ..account_helpers.settings_core.settings_constants import BattleCommStorageKeys
+from PlayerEvents import g_playerEvents
+from account_helpers.settings_core.settings_constants import BattleCommStorageKeys
 from arena_component_system.client_arena_component_system import ClientArenaComponent
 from battleground.location_point_manager import g_locationPointManager
 from chat_commands_consts import ReplyState, _COMMAND_NAME_TRANSFORM_MARKER_TYPE, BATTLE_CHAT_COMMAND_NAMES, _DEFAULT_ACTIVE_COMMAND_TIME, _DEFAULT_SPG_AREA_COMMAND_TIME, MarkerType, ONE_SHOT_COMMANDS_TO_REPLIES, COMMAND_RESPONDING_MAPPING
-from ..constants import ARENA_BONUS_TYPE
-from ..gui.battle_control import avatar_getter
-from ..gui.battle_control.battle_constants import VEHICLE_VIEW_STATE
+from constants import ARENA_BONUS_TYPE
+from gui.battle_control import avatar_getter
+from gui.battle_control.battle_constants import VEHICLE_VIEW_STATE
 from helpers import dependency, i18n, CallbackDelayer
 from messenger import MessengerEntry
 from messenger.m_constants import MESSENGER_COMMAND_TYPE, USER_ACTION_ID
