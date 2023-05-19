@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/settings_constants.py
 from shared_utils import CONST_CONTAINER
 VERSION = 'VERSION'
@@ -143,21 +143,6 @@ class GAME(CONST_CONTAINER):
     SCROLL_SMOOTHING = 'scrollSmoothing'
 
 
-class TUTORIAL(CONST_CONTAINER):
-    CUSTOMIZATION = 'customization'
-    PERSONAL_CASE = 'personalCase'
-    TECHNICAL_MAINTENANCE = 'technicalMaintenance'
-    RESEARCH = 'research'
-    RESEARCH_TREE = 'researchTree'
-    MEDKIT_INSTALLED = 'medKitInstalled'
-    REPAIRKIT_INSTALLED = 'repairKitInstalled'
-    FIRE_EXTINGUISHER_INSTALLED = 'fireExtinguisherInstalled'
-    MEDKIT_USED = 'medKitUsed'
-    REPAIRKIT_USED = 'repairKitUsed'
-    FIRE_EXTINGUISHER_USED = 'fireExtinguisherUsed'
-    WAS_QUESTS_TUTORIAL_STARTED = 'wasQuestsTutorialStarted'
-
-
 class SOUND(CONST_CONTAINER):
     GAME_EVENT_AMBIENT = 'specialAmbientVolume'
     GAME_EVENT_EFFECTS = 'specialEffectsVolume'
@@ -242,6 +227,11 @@ class MARKERS(CONST_CONTAINER):
     ALLY = 'ally'
     ENEMY = 'enemy'
     DEAD = 'dead'
+
+
+class MARKER_SETTINGS(CONST_CONTAINER):
+    MARKER_BASE_VEHICLE_DIST = 'markerBaseVehicleDist'
+    MARKER_ALT_VEHICLE_DIST = 'markerAltVehicleDist'
 
 
 class FEEDBACK(CONST_CONTAINER):
@@ -329,6 +319,8 @@ class GuiSettingsBehavior(CONST_CONTAINER):
     VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW = 'vehPostProgressionUnlockMsgNeedShow'
     BIRTHDAY_CALENDAR_INTRO_SHOWED = 'birthdayCalendarIntroShowed'
     RESOURCE_WELL_INTRO_SHOWN = 'resourceWellIntroShown'
+    COMP7_INTRO_SHOWN = 'isComp7IntroShown'
+    CREW_22_WELCOME_SHOWN = 'crew22WelcomeShown'
 
 
 class OnceOnlyHints(CONST_CONTAINER):
@@ -360,7 +352,6 @@ class OnceOnlyHints(CONST_CONTAINER):
     ACCOUNT_BUTTON_HINT = 'AccountButtonHint'
     SESSION_STATS_OPEN_BTN_HINT = 'SessionStatsOpenBtnHint'
     SESSION_STATS_SETTINGS_BTN_HINT = 'SessionStatsSettingsBtnHint'
-    CRYSTAL_BTN_HINT = 'CrystalsBtnHint'
     BATTLE_SESSION_UP_BUTTON_TOURNAMENT_HINT = 'BattleSessionUpButtonTournamentHint'
     CREW_OPERATION_BTN_HINT = 'CrewOperationBtnHint'
     SOUND_BUTTONEX_HINT = 'SoundButtonExHint'
@@ -368,11 +359,14 @@ class OnceOnlyHints(CONST_CONTAINER):
     AMMUNITION_PANEL_HINT = 'AmmunitionPanelHintZoneHint'
     PLATOON_BTN_HINT = 'PlatoonBtnHint'
     AMMUNITION_FILTER_HINT = 'FilterHintZoneHint'
+    MODERNIZED_SETUP_TAB_HINT = 'ModernizedSetupTabHint'
     OPT_DEV_DRAG_AND_DROP_HINT = 'OptDevDragAndDropHint'
     HANGAR_MANUAL_HINT = 'HangarManualHint'
     DOGTAG_HANGAR_HINT = 'DogTagHangarHint'
     DOGTAG_PROFILE_HINT = 'DogTagProfileHint'
     WOTPLUS_HANGAR_HINT = 'WotPlusHangarHint'
+    PERSONAL_RESERVES_HANGAR_HINT = 'PersonalReservesHangarHint'
+    PERSONAL_RESERVES_ACTIVATION_HINT = 'PersonalReservesActivationHint'
     WOTPLUS_PROFILE_HINT = 'WotPlusProfileHint'
     MODE_SELECTOR_WIDGETS_BTN_HINT = 'ModeSelectorWidgetsBtnHint'
     MAPS_TRAINING_NEWBIE_HINT = 'MapsTrainingNewbieHint'
@@ -389,6 +383,8 @@ class OnceOnlyHints(CONST_CONTAINER):
     PERSONAL_TRADE_IN_VEHICLE_POST_PROGRESSION_ENTRY_POINT_HINT = 'PersonalTradeInVehiclePreviewPostProgressionButtonHint'
     APPLY_ABILITIES_TO_TYPE_CHECKBOX_HINT = 'ApplyAbilitiesToTypeCheckboxHint'
     SHOW_ABILITIES_BUTTON_HINT = 'ShowAbilitiesButtonHint'
+    BATTLE_MATTERS_FIGHT_BUTTON_HINT = 'BattleMattersFightButtonHint'
+    BATTLE_MATTERS_ENTRY_POINT_BUTTON_HINT = 'BattleMattersEntryPointHint'
 
 
 class SESSION_STATS(CONST_CONTAINER):
@@ -501,8 +497,3 @@ class ScorePanelStorageKeys(CONST_CONTAINER):
     SHOW_HP_VALUES = 'showHPValues'
     SHOW_HP_DIFFERENCE = 'showHPDifference'
     ENABLE_TIER_GROUPING = 'enableTierGrouping'
-
-
-class WotAnniversaryStorageKeys(CONST_CONTAINER):
-    WOT_ANNIVERSARY_INTRO_SHOWED = 'wotAnniversaryIntroShowed'
-    WOT_ANNIVERSARY_WELCOME_SHOWED = 'wotAnniversaryWelcomeShowed'

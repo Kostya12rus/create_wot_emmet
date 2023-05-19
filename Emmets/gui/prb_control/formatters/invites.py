@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/formatters/invites.py
 import logging
-from constants import PREBATTLE_TYPE_NAMES, PREBATTLE_TYPE
+from constants import PREBATTLE_TYPE_NAMES, PREBATTLE_TYPE, QUEUE_TYPE
 from constants import QUEUE_TYPE_NAMES
 from gui import makeHtmlString
 from gui.impl import backport
@@ -11,10 +11,12 @@ from gui.impl.gen import R
 from gui.prb_control.formatters import getPrebattleFullDescription, getPrebattleStartTimeString
 from gui.prb_control import prbDispatcherProperty, prbAutoInvitesProperty, prbInvitesProperty
 from gui.prb_control.settings import PRB_INVITE_STATE
+from gui.shared.system_factory import collectPrbInviteHtmlFormatter, registerPrbInvitesHtmlFormatter
 from helpers import dependency
 from helpers.html import escape as htmlEscape
 from messenger.ext import passCensor
 from shared_utils import CONST_CONTAINER
+from skeletons.gui.game_control import IWinbackController
 from skeletons.gui.lobby_context import ILobbyContext
 _logger = logging.getLogger(__name__)
 QUEUE_LEAVE_PREFIX = 'QUEUE_'
@@ -30,16 +32,16 @@ class _PrbInvitePart(CONST_CONTAINER):
     STATE = 'inviteState'
 
 
-_PRB_INVITE_PART_KEYS = {_PrbInvitePart.TITLE_CREATOR_NAME: 'name', 
-   _PrbInvitePart.TITLE: 'sender', 
-   _PrbInvitePart.WARNING: 'warning', 
-   _PrbInvitePart.COMMENT: 'comment', 
-   _PrbInvitePart.NOTE: 'note', 
-   _PrbInvitePart.STATE: 'state'}
+_PRB_INVITE_PART_KEYS = {_PrbInvitePart.TITLE_CREATOR_NAME: ('name', ), 
+   _PrbInvitePart.TITLE: ('title', 'sender'), 
+   _PrbInvitePart.WARNING: ('warning', ), 
+   _PrbInvitePart.COMMENT: ('comment', ), 
+   _PrbInvitePart.NOTE: ('note', ), 
+   _PrbInvitePart.STATE: ('state', )}
 
-def _formatInvite(inviteType, value, maySkipValue=False, **kwargs):
-    if value or maySkipValue:
-        return makeHtmlString(path='html_templates:lobby/prebattle', key=inviteType, ctx={_PRB_INVITE_PART_KEYS[inviteType]: value}, **kwargs)
+def _formatInvite(inviteType, values, maySkipValue=False, **kwargs):
+    if all(values) or maySkipValue:
+        return makeHtmlString(path='html_templates:lobby/prebattle', key=inviteType, ctx={k: v for k, v in zip(_PRB_INVITE_PART_KEYS[inviteType], values)}, **kwargs)
     return ''
 
 
@@ -94,8 +96,8 @@ def getAcceptNotAllowedText(prbType, peripheryID, isInviteActive=True, isAlready
     return text
 
 
-@dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
-def getLeaveOrChangeText(funcState, invitePrbType, peripheryID, lobbyContext=None):
+@dependency.replace_none_kwargs(lobbyContext=ILobbyContext, winbackController=IWinbackController)
+def getLeaveOrChangeText(funcState, invitePrbType, peripheryID, lobbyContext=None, winbackController=None):
     isAnotherPeriphery = lobbyContext is not None and lobbyContext.isAnotherPeriphery(peripheryID)
     text = ''
     if funcState.doLeaveToAcceptInvite(invitePrbType):
@@ -106,11 +108,24 @@ def getLeaveOrChangeText(funcState, invitePrbType, peripheryID, lobbyContext=Non
         else:
             _logger.error('Can not resolve name of entity. %s', funcState)
             return text
+        isInWinback = funcState.isInPreQueue(QUEUE_TYPE.WINBACK)
+        isPermanentlyWinbackLeave = winbackController is not None and winbackController.isModeAvailable() and invitePrbType == PREBATTLE_TYPE.SQUAD
         if isAnotherPeriphery:
-            text = backport.text(_R_INVITES.note.change_and_leave.dyn(entityName)(), host=lobbyContext.getPeripheryName(peripheryID) or '')
+            if not isInWinback or not isPermanentlyWinbackLeave:
+                text = backport.text(_R_INVITES.note.change_and_leave.dyn(entityName)(), host=lobbyContext.getPeripheryName(peripheryID) or '')
+            if isPermanentlyWinbackLeave:
+                if text:
+                    text = ('').join((text, '\n\n'))
+                permanentlyLeaveText = backport.text(_R_INVITES.note.change_and_leave_permanently.QUEUE_WINBACK(), host=lobbyContext.getPeripheryName(peripheryID) or '')
+                text = ('').join((text, permanentlyLeaveText))
             text = (' ').join((text, backport.text(_R_INVITES.note.serverSelectionIsRemembered())))
         else:
-            text = backport.text(_R_INVITES.note.leave.dyn(entityName)())
+            if not isInWinback or not isPermanentlyWinbackLeave:
+                text = backport.text(_R_INVITES.note.leave.dyn(entityName)())
+            if isPermanentlyWinbackLeave:
+                if text:
+                    text = ('').join((text, '\n\n'))
+                text = ('').join((text, backport.text(_R_INVITES.note.leave_permanently.QUEUE_WINBACK())))
     elif isAnotherPeriphery:
         text = backport.text(_R_INVITES.note.server_change(), host=lobbyContext.getPeripheryName(peripheryID) or '')
         text = (' ').join((text, backport.text(_R_INVITES.note.serverSelectionIsRemembered())))
@@ -140,33 +155,35 @@ class PrbInviteHtmlTextFormatter(InviteFormatter):
     def prbInvites(self):
         return
 
+    def canAcceptInvite(self, invite):
+        return self.prbInvites.canAcceptInvite(invite)
+
     def getIconName(self, invite):
         return ('{0:>s}InviteIcon').format(getPrbName(invite.type, True))
 
     def getTitle(self, invite):
-        name = invite.senderFullName
-        creatorName = _formatInvite(_PrbInvitePart.TITLE_CREATOR_NAME, name)
-        return _formatInvite(_PrbInvitePart.TITLE, creatorName, True, sourceKey=getPrbName(invite.type))
+        creatorName = _formatInvite(_PrbInvitePart.TITLE_CREATOR_NAME, (invite.senderFullName,))
+        return _formatInvite(_PrbInvitePart.TITLE, (self._getTitle(invite), creatorName), True)
 
     def getWarning(self, invite):
         warning = backport.text(_R_INVITES.warning.dyn(invite.warning)())
-        return _formatInvite(_PrbInvitePart.WARNING, warning)
+        return _formatInvite(_PrbInvitePart.WARNING, (warning,))
 
     def getComment(self, invite):
         comment = passCensor(invite.comment)
         comment = backport.text(_R_INVITES.comment(), comment=htmlEscape(comment)) if comment else ''
-        return _formatInvite(_PrbInvitePart.COMMENT, comment)
+        return _formatInvite(_PrbInvitePart.COMMENT, (comment,))
 
     def getNote(self, invite):
-        if self.prbInvites.canAcceptInvite(invite):
+        if self.canAcceptInvite(invite):
             note = getLeaveOrChangeText(self.prbDispatcher.getFunctionalState(), invite.type, invite.peripheryID) if self.prbDispatcher else ''
         else:
             note = getAcceptNotAllowedText(invite.type, invite.peripheryID, invite.isActive(), invite.alreadyJoined)
-        return _formatInvite(_PrbInvitePart.NOTE, note)
+        return _formatInvite(_PrbInvitePart.NOTE, (note,))
 
     def getState(self, invite):
         state = backport.text(_R_INVITES.state.dyn(getPrbInviteStateName(invite.getState()))())
-        return _formatInvite(_PrbInvitePart.STATE, state)
+        return _formatInvite(_PrbInvitePart.STATE, (state,))
 
     def getText(self, invite):
         result = []
@@ -187,18 +204,18 @@ class PrbInviteHtmlTextFormatter(InviteFormatter):
             result.append(text)
         return ('').join(result)
 
+    def updateTooltips(self, invite, canAccept, message):
+        return message
+
+    def _getTitle(self, invite):
+        return backport.text(R.strings.invites.invites.text.dyn(getPrbName(invite.type))())
+
 
 class PrbExternalBattleInviteHtmlTextFormatter(PrbInviteHtmlTextFormatter):
 
     def getComment(self, invite):
         comment = passCensor(invite.comment)
-        return _formatInvite(_PrbInvitePart.COMMENT, htmlEscape(comment))
-
-
-def getPrbInviteHtmlFormatter(invite):
-    if invite.type in PREBATTLE_TYPE.EXTERNAL_PREBATTLES:
-        return PrbExternalBattleInviteHtmlTextFormatter()
-    return PrbInviteHtmlTextFormatter()
+        return _formatInvite(_PrbInvitePart.COMMENT, (htmlEscape(comment),))
 
 
 class PrbInviteTitleFormatter(InviteFormatter):
@@ -228,7 +245,7 @@ class AutoInviteTextFormatter(InviteFormatter):
 
     def getText(self, invite):
         startTimeStr = ('{} {}').format(backport.text(R.strings.prebattle.title.battleSession.startTime()), getPrebattleStartTimeString(invite.startTime))
-        return ('{}, {}').format(unicode(getPrebattleFullDescription(invite.description), 'utf-8'), unicode(startTimeStr, 'utf-8'))
+        return ('{}, {}').format(getPrebattleFullDescription(invite.description), startTimeStr)
 
 
 class _PrbInviteInfo(object):
@@ -265,3 +282,10 @@ class PrbAutoInviteInfo(_PrbInviteInfo):
            'isAcceptVisible': True, 
            'isDeclineVisible': False}
         return result
+
+
+registerPrbInvitesHtmlFormatter(PREBATTLE_TYPE.EXTERNAL_PREBATTLES, PrbExternalBattleInviteHtmlTextFormatter)
+
+def getPrbInviteHtmlFormatter(invite):
+    formatter = collectPrbInviteHtmlFormatter(invite.type)
+    return formatter or PrbInviteHtmlTextFormatter()

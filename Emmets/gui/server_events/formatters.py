@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/formatters.py
 import re, types
 from collections import namedtuple
@@ -25,7 +25,7 @@ def getLinkedActionID(groupID, actions):
     delimiter = ':'
     if groupID and delimiter in groupID:
         splittedGroup = groupID.split(delimiter)
-        splitID = splittedGroup[(-1)]
+        splitID = splittedGroup[-1]
         if splittedGroup and splitID in actions:
             return splitID
     return
@@ -278,6 +278,17 @@ def packSimpleBonusesBlock(bonusesList, endlineSymbol='', complexTooltip=''):
     return UiElement(data)
 
 
+def packLongBonusesBlock(bonusesList, endlineSymbol='', complexTooltip='', linesLimit=-1):
+    data = {'linkage': 'LongQuestTextAwardBlockUI', 
+       'items': bonusesList, 
+       'separator': ',\n', 
+       'ellipsis': '..', 
+       'endline': endlineSymbol, 
+       'linesLimit': linesLimit, 
+       'complexTooltip': complexTooltip}
+    return UiElement(data)
+
+
 def packNewStyleBonusesBlock(bonusesList, endlineSymbol=''):
     data = {'linkage': QUEST_AWARD_BLOCK_ALIASES.QUEST_BIG_ICON_AWARD_BLOCK, 
        'items': bonusesList, 
@@ -344,8 +355,6 @@ def packMissionFormationElement(formationName, width=32, height=32, vSpace=-11):
 def getUniqueBonusTypes(bonusTypes):
     uniqueTypes = set()
     for bonusType in bonusTypes:
-        if bonusType in (ARENA_BONUS_TYPE.SANDBOX, ARENA_BONUS_TYPE.RATED_SANDBOX):
-            bonusType = ARENA_BONUS_TYPE.RATED_SANDBOX
         if bonusType in ARENA_BONUS_TYPE.TOURNAMENT_RANGE:
             bonusType = ARENA_BONUS_TYPE.TOURNAMENT
         if bonusType in (ARENA_BONUS_TYPE.EPIC_RANDOM_TRAINING, ARENA_BONUS_TYPE.EPIC_BATTLE_TRAINING):
@@ -383,7 +392,7 @@ def getMapName(arenaTypeID):
         return
     else:
         arenaType = ArenaType.g_cache[arenaTypeID]
-        if arenaType.gameplayName != 'ctf':
+        if arenaType.gameplayName not in ('ctf', 'maps_training'):
             label = None
             if arenaType.gameplayName not in GAMEPLAY_NAMES_WITH_DISABLED_QUESTS:
                 label = '%s (%s)' % (arenaType.name, i18n.makeString('#arenas:type/%s/name' % arenaType.gameplayName))
@@ -453,7 +462,6 @@ def titleComplexRelationFormat(value, relation, titleKey=None):
 
 
 def titleComplexRelationFormatPlain(value, relation, titleKey=None):
-    _logger.error('Information loss: We are loosing information about the image.')
     return titleRelationFormatPlain(value, relation, RELATIONS_SCHEME.DEFAULT, titleKey)
 
 

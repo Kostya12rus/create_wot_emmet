@@ -1,20 +1,20 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/formatters/auto_boxes_subformatters.py
 import typing, BigWorld
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from dossiers2.ui.achievements import BADGES_BLOCK
 from gui.impl import backport
 from gui.impl.gen import R
-from gui.server_events.bonuses import getLunarMergedBonusesFromDicts
+from gui.server_events.bonuses import getMergedBonusesFromDicts
 from gui.shared.gui_items.dossier import getAchievementFactory
-from gui.shared.gui_items.loot_box import NewYearLootBoxes, EventLootBoxes, ALL_LUNAR_NY_LOOT_BOX_TYPES
+from gui.shared.gui_items.loot_box import ALL_LUNAR_NY_LOOT_BOX_TYPES, EventLootBoxes, WTLootBoxes, NewYearLootBoxes
 from gui.shared.notifications import NotificationGroup
 from helpers import dependency
 from messenger import g_settings
-from messenger.formatters.service_channel import WaitItemsSyncFormatter, ServiceChannelFormatter, BattlePassQuestAchievesFormatter, QuestAchievesFormatter
-from messenger.formatters.service_channel_helpers import MessageData, getRewardsForBoxes
+from messenger.formatters.service_channel import LootBoxAchievesFormatter, QuestAchievesFormatter, ServiceChannelFormatter, WaitItemsSyncFormatter
+from messenger.formatters.service_channel_helpers import MessageData, getCustomizationItemData, getRewardsForBoxes
 from skeletons.gui.shared import IItemsCache
 
 class IAutoLootBoxSubFormatter(object):
@@ -49,23 +49,21 @@ class AsyncAutoLootBoxSubFormatter(WaitItemsSyncFormatter, AutoLootBoxSubFormatt
 
     def __init__(self):
         super(AsyncAutoLootBoxSubFormatter, self).__init__()
-        self._achievesFormatter = BattlePassQuestAchievesFormatter()
+        self._achievesFormatter = LootBoxAchievesFormatter()
 
 
 class SyncAutoLootBoxSubFormatter(ServiceChannelFormatter, AutoLootBoxSubFormatter):
 
     def __init__(self):
         super(SyncAutoLootBoxSubFormatter, self).__init__()
-        self._achievesFormatter = BattlePassQuestAchievesFormatter()
+        self._achievesFormatter = LootBoxAchievesFormatter()
 
 
 class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
     __itemsCache = dependency.descriptor(IItemsCache)
-    __MESSAGE_TEMPLATE = 'EventLootBoxesAutoOpenMessage'
-    __R_LOOT_BOXES = R.strings.messenger.serviceChannelMessages.lootBoxesAutoOpen.event
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -73,9 +71,9 @@ class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
             rewards = getRewardsForBoxes(message, openedBoxesIDs)
             fmtBoxes = self.__getFormattedBoxes(message, openedBoxesIDs)
             fmt = self._achievesFormatter.formatQuestAchieves(rewards, asBattleFormatter=False, processTokens=False)
-            ctx = {'boxes': fmtBoxes, 'rewards': backport.text(self.__R_LOOT_BOXES.rewards(), rewards=fmt)}
-            formatted = g_settings.msgTemplates.format(self.__MESSAGE_TEMPLATE, ctx=ctx)
-            settings = self._getGuiSettings(message, self.__MESSAGE_TEMPLATE)
+            ctx = {'boxes': fmtBoxes, 'rewards': backport.text(self._getTextResPath().rewards(), rewards=fmt)}
+            formatted = g_settings.msgTemplates.format(self._getMessageTemplate(), ctx=ctx)
+            settings = self._getGuiSettings(message, self._getMessageTemplate())
             callback([MessageData(formatted, settings)])
         else:
             callback([MessageData(None, None)])
@@ -83,15 +81,38 @@ class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
 
     @classmethod
     def _isBoxOfThisGroup(cls, boxID):
-        return cls._isBoxOfRequiredTypes(boxID, EventLootBoxes.ALL())
+        return cls._isBoxOfRequiredTypes(boxID, WTLootBoxes.ALL())
+
+    @staticmethod
+    def _getMessageTemplate():
+        return 'EventLootBoxesAutoOpenMessage'
+
+    @staticmethod
+    def _getTextResPath():
+        return R.strings.messenger.serviceChannelMessages.lootBoxesAutoOpen.event
 
     def __getFormattedBoxes(self, message, openedBoxesIDs):
         boxes = []
         for boxID in openedBoxesIDs:
             box = self.__itemsCache.items.tokens.getLootBoxByID(boxID)
-            boxes.append(backport.text(self.__R_LOOT_BOXES.counter(), boxName=box.getUserName(), count=message.data[boxID]['count']))
+            boxes.append(backport.text(self._getTextResPath().counter(), boxName=box.getUserName(), count=message.data[boxID]['count']))
 
         return (', ').join(boxes)
+
+
+class EventLootBoxesFormatter(EventBoxesFormatter):
+
+    @classmethod
+    def _isBoxOfThisGroup(cls, boxID):
+        return cls._isBoxOfRequiredTypes(boxID, EventLootBoxes.ALL())
+
+    @staticmethod
+    def _getMessageTemplate():
+        return 'EventLootBoxesAutoOpenMessage'
+
+    @staticmethod
+    def _getTextResPath():
+        return R.strings.lootboxes.notification.lootBoxesAutoOpen
 
 
 class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
@@ -99,8 +120,8 @@ class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
     __REWARDS_TEMPLATE = 'LootBoxRewardsSysMessage'
     __REQUIERED_BOX_TYPES = {NewYearLootBoxes.COMMON, NewYearLootBoxes.PREMIUM, NewYearLootBoxes.SPECIAL}
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -117,9 +138,10 @@ class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
         return cls._isBoxOfRequiredTypes(boxID, cls.__REQUIERED_BOX_TYPES)
 
     def __getMainMessage(self, message, openedBoxesIDs):
-        oldStyleCount = {bID:message.data[bID]['count'] for bID in openedBoxesIDs}
+        count = backport.text(R.strings.messenger.serviceChannelMessages.lootBoxesAutoOpen.counter(), count=sum(message.data[boxId]['count'] for boxId in openedBoxesIDs))
+        oldStyleCount = {bID: message.data[bID]['count'] for bID in openedBoxesIDs}
         rewards = getRewardsForBoxes(message, openedBoxesIDs)
-        formatted = g_settings.msgTemplates.format(self.__MESSAGE_TEMPLATE, ctx={}, data={'savedData': {'rewards': rewards, 'boxIDs': oldStyleCount}})
+        formatted = g_settings.msgTemplates.format(self.__MESSAGE_TEMPLATE, ctx={'count': count}, data={'savedData': {'rewards': rewards, 'boxIDs': oldStyleCount}})
         settings = self._getGuiSettings(message, self.__MESSAGE_TEMPLATE)
         settings.groupID = NotificationGroup.OFFER
         settings.showAt = BigWorld.time()
@@ -138,8 +160,8 @@ class NYGiftSystemSurpriseFormatter(AsyncAutoLootBoxSubFormatter):
     __MESSAGE_TEMPLATE = 'NYSpecialLootBoxesAutoOpenMessage'
     __REQUIERED_BOX_TYPES = {NewYearLootBoxes.SPECIAL_AUTO}
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -161,13 +183,14 @@ class NYGiftSystemSurpriseFormatter(AsyncAutoLootBoxSubFormatter):
 
 class LunarNYEnvelopeAutoOpenFormatter(AsyncAutoLootBoxSubFormatter):
     __MESSAGE_TEMPLATE = 'LunarBoxesAutoOpenMessage'
+    _DECAL_TYPE_NAME = 'projection_decal'
 
     def __init__(self):
         super(LunarNYEnvelopeAutoOpenFormatter, self).__init__()
         self._achievesFormatter = QuestAchievesFormatter()
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -189,10 +212,15 @@ class LunarNYEnvelopeAutoOpenFormatter(AsyncAutoLootBoxSubFormatter):
     @classmethod
     def formatAchieves(cls, rewards, formatter):
         result = []
-        items = getLunarMergedBonusesFromDicts((rewards,))
-        formatedItems = formatter.formatQuestAchieves(items, False)
+        items = getMergedBonusesFromDicts((rewards,))
+        formatedItems = formatter.formatQuestAchieves(items, False, processCustomizations=False)
         if formatedItems:
             result.append(formatedItems)
+        if 'customizations' in rewards:
+            customizations = rewards.get('customizations')
+            decalsStr = cls.__makeDecalsString(customizations)
+            if decalsStr:
+                result.append(decalsStr)
         achievementsNames = cls.__extractAchievements(items)
         if achievementsNames:
             result.append(cls.__makeAchieve('dossiersAccruedInvoiceReceived', dossiers=(', ').join(achievementsNames)))
@@ -221,3 +249,22 @@ class LunarNYEnvelopeAutoOpenFormatter(AsyncAutoLootBoxSubFormatter):
                             result.add(a.getUserName())
 
         return result
+
+    @classmethod
+    def __makeDecalsString(cls, customizations):
+        decals = []
+        for customization in customizations:
+            custType = customization.get('custType', None)
+            custValue = customization.get('value', 0)
+            if custType == cls._DECAL_TYPE_NAME and custValue > 0:
+                _, itemUserName = getCustomizationItemData(customization['id'], custType)
+                decals.append(itemUserName)
+
+        if len(decals) > 1:
+            decalsTitle = backport.text(R.strings.messenger.serviceChannelMessages.lunarBoxesAutoOpen.many.projection_decal())
+            return decalsTitle + (' ').join(decals)
+        else:
+            if decals:
+                decalsTitle = backport.text(R.strings.messenger.serviceChannelMessages.lunarBoxesAutoOpen.projection_decal())
+                return ('').join((decalsTitle, decals[0]))
+            return ''

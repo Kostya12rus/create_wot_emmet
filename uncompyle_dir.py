@@ -1,51 +1,33 @@
 import os
+import pathlib
 import subprocess
-from threading import Thread
-
+from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 
 def __decompile_file(file, new_file):
-    subprocess.call(f'uncompyle6 -o {new_file} {file}', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        subprocess.call(["uncompyle6", "-o", new_file, file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+    except subprocess.TimeoutExpired:
+        pass
 
 
-def decompile_dir(dir_wot_pak, count_thread=10):
-    total = 0
-    for dir_path, _, filenames in os.walk(dir_wot_pak):
-        for filename in filenames:
-            if filename.find('.pyc') > -1:
-                total += 1
-    all_thread = []
-    progress = tqdm(os.walk(dir_wot_pak), f"Декодирование файлов", total=total, unit='файлов')
-    for dir_path, _, filenames in progress.iterable:
-        for filename in filenames:
-            while True:
-                for thread in all_thread.copy():
-                    if not thread.is_alive():
-                        all_thread.pop(all_thread.index(thread))
-                if len(all_thread) < count_thread:
-                    break
-            if filename.find('.pyc') > -1:
-                file_path = os.path.join(dir_path, filename)
-                original_filename = filename.split('.')[0]
-                original_filepath = dir_path + '/' + original_filename + '.py'
-                thread = Thread(target=__decompile_file, args=(file_path, original_filepath,), daemon=True)
-                thread.start()
-                all_thread.append(thread)
-                progress.update()
-    progress.close()
+def decompile_dir(dir_wot_pak: pathlib.Path, count_thread=10):
+    pyc_files = [os.path.join(dir_path, filename) for dir_path, _, filenames in os.walk(dir_wot_pak) for filename in filenames if filename.endswith('.pyc')]
+    progress = tqdm(desc='Декомпиляция файлов', total=len(pyc_files), unit='файлов')
+    def thread_done_callback(future):
+        progress.update()
+    with ThreadPoolExecutor(max_workers=count_thread) as executor:
+        for pyc_file in pyc_files:
+            original_filepath = pyc_file[:-1]
+            future = executor.submit(__decompile_file, pyc_file, original_filepath)
+            future.add_done_callback(thread_done_callback)
 
 
-def remove_pyc_file(dir_wot_pak):
-    total = 0
-    for dir_path, _, filenames in os.walk(dir_wot_pak):
-        for filename in filenames:
-            if filename.find('.pyc') > -1:
-                total += 1
-    progress = tqdm(os.walk(dir_wot_pak), f"Удаление файлов .pyc", total=total, unit='файлов')
-    for dir_path, _, filenames in progress.iterable:
-        for filename in filenames:
-            if filename.find('.pyc') > -1:
-                os.remove(os.path.join(dir_path, filename))
-                progress.update()
+def remove_pyc_file(dir_wot_pak: pathlib.Path):
+    pyc_files = [os.path.join(dir_path, filename) for dir_path, _, filenames in os.walk(dir_wot_pak) for filename in filenames if filename.endswith('.pyc')]
+    progress = tqdm(pyc_files, f"Удаление файлов .pyc", total=len(pyc_files), unit='файлов')
+    for filenames in progress.iterable:
+        os.remove(filenames)
+        progress.update()
     progress.close()

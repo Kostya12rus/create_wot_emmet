@@ -1,23 +1,22 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/HeroTank.py
 import math, random
 from typing import TYPE_CHECKING
-import ResMgr, BigWorld
+import BigWorld
 from ClientSelectableCameraVehicle import ClientSelectableCameraVehicle
 from CurrentVehicle import g_currentPreviewVehicle
 from gui.hangar_vehicle_appearance import HangarVehicleAppearance
 from gui.shared import events, EVENT_BUS_SCOPE, g_eventBus
 from gui.shared.gui_items import GUI_ITEM_TYPE
-from helpers import dependency, newFakeModel
+from helpers import dependency
 from items.components.c11n_constants import SeasonType
 from skeletons.gui.customization import ICustomizationService
 from skeletons.gui.game_control import IHeroTankController
 from skeletons.gui.shared.utils import IHangarSpace
 from vehicle_systems.tankStructure import ModelStates
 from items import vehicles
-from helpers.EffectsList import EffectsListPlayer, effectsFromSection
 from constants import IS_DEVELOPMENT
 if TYPE_CHECKING:
     from vehicle_outfit.outfit import Outfit as TOutfit
@@ -52,13 +51,10 @@ class _HeroTankAppearance(HangarVehicleAppearance):
 class HeroTank(ClientSelectableCameraVehicle):
     _heroTankCtrl = dependency.descriptor(IHeroTankController)
     _hangarSpace = dependency.descriptor(IHangarSpace)
-    _HERO_PURCHASED = 'on_purchased'
-    _HERO_SWITCH = 'on_switch'
 
     def __init__(self):
         self.__heroTankCD = None
-        self.__effects = {}
-        self.__fakeEffectModel = None
+        self.__isHidden = False
         ClientSelectableCameraVehicle.__init__(self)
         return
 
@@ -67,52 +63,26 @@ class HeroTank(ClientSelectableCameraVehicle):
         self._hangarSpace.onHeroTankReady += self._updateHeroTank
         self._heroTankCtrl.onUpdated += self._updateHeroTank
         self._heroTankCtrl.onInteractive += self._updateInteractive
-        self._heroTankCtrl.onHeroTankChanged += self._onHeroTankChanged
-        self._heroTankCtrl.onHeroTankBought += self._drawTankBoughtEffect
-        g_currentPreviewVehicle.onSelected += self._updateHeroTank
-
-    def prerequisites(self):
-        self.__readHeroEffects()
-        return super(HeroTank, self).prerequisites()
+        self._heroTankCtrl.onHidden += self.__onHidden
 
     def onLeaveWorld(self):
+        self._heroTankCtrl.onHidden -= self.__onHidden
         self._hangarSpace.onHeroTankReady -= self._updateHeroTank
         self._heroTankCtrl.onUpdated -= self._updateHeroTank
         self._heroTankCtrl.onInteractive -= self._updateInteractive
-        self._heroTankCtrl.onHeroTankChanged -= self._onHeroTankChanged
-        self._heroTankCtrl.onHeroTankBought -= self._drawTankBoughtEffect
-        g_currentPreviewVehicle.onSelected -= self._updateHeroTank
-        for effect in self.__effects.values():
-            if effect.isStarted:
-                effect.stop()
-
-        self.__effects = None
-        if self.__fakeEffectModel is not None:
-            BigWorld.delModel(self.__fakeEffectModel)
-        self.__fakeEffectModel = None
         super(HeroTank, self).onLeaveWorld()
-        return
 
     def removeModelFromScene(self):
         if self.isVehicleLoaded:
             self._onVehicleDestroy()
             BigWorld.destroyEntity(self.id)
 
-    def setEnable(self, enabled):
-        super(HeroTank, self).setEnable(enabled)
-        self.__notifyAboutMarkerUpdateRequired()
-
     def recreateVehicle(self, typeDescriptor=None, state=ModelStates.UNDAMAGED, callback=None, outfit=None):
-        if self.__isInPreview():
+        if self.__isInPreview() or self.__isHidden:
             return
         if self.__heroTankCD and not self.__isInPreview():
             self.typeDescriptor = HeroTank.__getVehicleDescriptorByIntCD(self.__heroTankCD)
         super(HeroTank, self).recreateVehicle(typeDescriptor, state, callback, outfit)
-
-    def onDeselect(self, newSelectedObject):
-        super(HeroTank, self).onDeselect(newSelectedObject)
-        if newSelectedObject and newSelectedObject == self._hangarSpace.space.getVehicleEntity():
-            newSelectedObject.onSelect()
 
     def _createAppearance(self):
         vehicleTurretYaw = math.radians(self.vehicleTurretYaw)
@@ -123,15 +93,12 @@ class HeroTank(ClientSelectableCameraVehicle):
         if g_currentPreviewVehicle.item is not None:
             if g_currentPreviewVehicle.item.intCD == self.__heroTankCD:
                 return
-        self._heroTankCtrl.getRandomTankCD()
-        return
-
-    def _onHeroTankChanged(self):
-        self.__heroTankCD = self._heroTankCtrl.getCurrentTankCD()
+        self.__heroTankCD = self._heroTankCtrl.getRandomTankCD()
         if self.__heroTankCD:
             self.recreateVehicle()
         else:
             self.removeModelFromScene()
+        return
 
     def _updateInteractive(self, interactive):
         if self.enabled != interactive:
@@ -139,62 +106,13 @@ class HeroTank(ClientSelectableCameraVehicle):
             self._onVehicleDestroy()
             self.recreateVehicle()
 
-    def _drawTankSwitchedEffect(self):
-        self.__playEffect(self._HERO_SWITCH)
-        self._heroTankCtrl.setEffectPlayedTime()
-
-    def _drawTankBoughtEffect(self):
-        self.__playEffect(self._HERO_PURCHASED)
-
     def _onVehicleLoaded(self):
         super(HeroTank, self)._onVehicleLoaded()
-        self.__notifyAboutLoadingDone()
+        if self.enabled:
+            g_eventBus.handleEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.ON_HERO_TANK_LOADED, ctx={'entity': self}), scope=EVENT_BUS_SCOPE.LOBBY)
 
     def _onVehicleDestroy(self):
-        self.__dispatch(events.HangarVehicleEvent.ON_HERO_TANK_DESTROY)
-
-    def __notifyAboutLoadingDone(self):
-        if self.enabled:
-            self.__dispatch(events.HangarVehicleEvent.ON_HERO_TANK_LOADED)
-
-    def __notifyAboutMarkerUpdateRequired(self):
-        if self.enabled:
-            self.__dispatch(events.HangarVehicleEvent.ON_HERO_TANK_LABEL_UPDATE_REQUIRED)
-
-    def __dispatch(self, eventType):
-        g_eventBus.handleEvent(events.HangarVehicleEvent(eventType, ctx={'entity': self}), scope=EVENT_BUS_SCOPE.LOBBY)
-
-    def __readHeroEffects(self):
-        if not self.effectsXmlPath:
-            return
-        else:
-            rootSection = ResMgr.openSection(self.effectsXmlPath)
-            if rootSection is None:
-                return
-            effectsSection = rootSection['effects']
-            if effectsSection is None:
-                return
-            for effectValues in effectsSection.values():
-                name = effectValues.name
-                effect = effectsFromSection(effectValues)
-                player = EffectsListPlayer(effect.effectsList, effect.keyPoints)
-                self.__effects[name] = player
-
-            return
-
-    def __playEffect(self, effectName):
-        effect = self.__effects.get(effectName, None)
-        if effect is None:
-            return
-        else:
-            if self.__fakeEffectModel is None:
-                self.__fakeEffectModel = newFakeModel()
-                self.__fakeEffectModel.position = self.position
-                BigWorld.addModel(self.__fakeEffectModel)
-            if effect.isStarted:
-                effect.stop()
-            effect.play(self.__fakeEffectModel)
-            return
+        g_eventBus.handleEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.ON_HERO_TANK_DESTROY, ctx={'entity': self}), scope=EVENT_BUS_SCOPE.LOBBY)
 
     @staticmethod
     def __getVehicleDescriptorByIntCD(vehicleIntCD):
@@ -204,6 +122,14 @@ class HeroTank(ClientSelectableCameraVehicle):
     @staticmethod
     def __isInPreview():
         return g_currentPreviewVehicle.item and g_currentPreviewVehicle.isHeroTank
+
+    def __onHidden(self, isHidden):
+        if self.__isHidden != isHidden:
+            self.__isHidden = isHidden
+            if self.__isHidden and not self.__isInPreview():
+                self.removeVehicle()
+            elif not self.__isHidden and self._heroTankCtrl.getRandomTankCD():
+                self.recreateVehicle()
 
 
 def debugReloadHero(heroName):

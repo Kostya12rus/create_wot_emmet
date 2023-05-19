@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/meta/HangarMeta.py
 from gui.Scaleform.framework.entities.View import View
 
@@ -8,9 +8,6 @@ class HangarMeta(View):
 
     def onEscape(self):
         self._printOverrideError('onEscape')
-
-    def onCloseBtnClick(self):
-        self._printOverrideError('onCloseBtnClick')
 
     def showHelpLayout(self):
         self._printOverrideError('showHelpLayout')
@@ -39,6 +36,10 @@ class HangarMeta(View):
     def as_setControlsVisibleS(self, value):
         if self._isDAAPIInited():
             return self.flashObject.as_setControlsVisible(value)
+
+    def as_setComp7ModifiersVisibleS(self, value):
+        if self._isDAAPIInited():
+            return self.flashObject.as_setComp7ModifiersVisible(value)
 
     def as_setVisibleS(self, value):
         if self._isDAAPIInited():
@@ -88,14 +89,6 @@ class HangarMeta(View):
         if self._isDAAPIInited():
             return self.flashObject.as_setNotificationEnabled(value)
 
-    def as_setEnvelopesVisibleS(self, value):
-        if self._isDAAPIInited():
-            return self.flashObject.as_setEnvelopesVisible(value)
-
-    def as_setLootboxesVisibleS(self, value):
-        if self._isDAAPIInited():
-            return self.flashObject.as_setLootboxesVisible(value)
-
     def as_createDQWidgetS(self):
         if self._isDAAPIInited():
             return self.flashObject.as_createDQWidget()
@@ -119,3 +112,7 @@ class HangarMeta(View):
     def as_setDQWidgetLayoutS(self, lyout):
         if self._isDAAPIInited():
             return self.flashObject.as_setDQWidgetLayout(lyout)
+
+    def as_updateCarouselEventEntryStateS(self, isVisible):
+        if self._isDAAPIInited():
+            return self.flashObject.as_updateCarouselEventEntryState(isVisible)

@@ -1,7 +1,8 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/formatters/__init__.py
+from __future__ import unicode_literals
 import time
 from datetime import datetime
 from gui.impl import backport
@@ -12,13 +13,13 @@ from helpers.time_utils import makeLocalServerTime
 DETACHMENT_IS_NOT_SET = -1
 
 def makePrebattleWaitingID(requestName):
-    return ('{0:>s}/{1:>s}').format(prb_getters.getPrebattleTypeName().lower(), requestName)
+    return (b'{0:>s}/{1:>s}').format(prb_getters.getPrebattleTypeName().lower(), requestName)
 
 
 def getPrebattleLocalizedString(string, led=None, escapeHtml=False):
-    result = ''
+    result = b''
     if led:
-        result = i18n.encodeUtf8(led.get(string, ''))
+        result = led.get(string, b'')
         if escapeHtml:
             html.escape(result)
     return result
@@ -27,41 +28,41 @@ def getPrebattleLocalizedString(string, led=None, escapeHtml=False):
 def getPrebattleEventName(extraData=None, escapeHtml=False):
     led = prb_getters.getPrebattleLocalizedData(extraData)
     if led:
-        return getPrebattleLocalizedString('event_name', led, escapeHtml)
-    return ''
+        return getPrebattleLocalizedString(b'event_name', led, escapeHtml)
+    return b''
 
 
 def getPrebattleSessionName(extraData=None, escapeHtml=False):
     led = prb_getters.getPrebattleLocalizedData(extraData)
     if led:
-        return getPrebattleLocalizedString('session_name', led, escapeHtml)
-    return ''
+        return getPrebattleLocalizedString(b'session_name', led, escapeHtml)
+    return b''
 
 
 def getPrebattleDescription(extraData=None, escapeHtml=False):
     led = prb_getters.getPrebattleLocalizedData(extraData)
     if led:
-        return getPrebattleLocalizedString('desc', led, escapeHtml)
-    return ''
+        return getPrebattleLocalizedString(b'desc', led, escapeHtml)
+    return b''
 
 
 def getPrebattleFullDescription(extraData=None, escapeHtml=False):
     led = prb_getters.getPrebattleLocalizedData(extraData)
-    description = ''
+    description = b''
     if led:
-        eventName = getPrebattleLocalizedString('event_name', led, escapeHtml)
-        sessionName = getPrebattleLocalizedString('session_name', led, escapeHtml)
-        description = ('{0:>s}: {1:>s}').format(eventName, sessionName)
+        eventName = getPrebattleLocalizedString(b'event_name', led, escapeHtml)
+        sessionName = getPrebattleLocalizedString(b'session_name', led, escapeHtml)
+        description = (b'{0:>s}: {1:>s}').format(eventName, sessionName)
     return description
 
 
 def getPrebattleOpponents(extraData, escapeHtml=False):
-    first = ''
-    second = ''
-    if 'opponents' in extraData:
-        opponents = extraData['opponents']
-        first = i18n.encodeUtf8(opponents.get('1', {}).get('name', ''))
-        second = i18n.encodeUtf8(opponents.get('2', {}).get('name', ''))
+    first = b''
+    second = b''
+    if b'opponents' in extraData:
+        opponents = extraData[b'opponents']
+        first = opponents.get(b'1', {}).get(b'name', b'')
+        second = opponents.get(b'2', {}).get(b'name', b'')
         if escapeHtml:
             first = html.escape(first)
             second = html.escape(second)
@@ -71,24 +72,24 @@ def getPrebattleOpponents(extraData, escapeHtml=False):
 
 def getPrebattleOpponentsString(extraData, escapeHtml=False):
     first, second = getPrebattleOpponents(extraData, escapeHtml=escapeHtml)
-    result = ''
+    result = b''
     if first and second:
-        result = i18n.makeString('#menu:opponents', firstOpponent=first, secondOpponent=second)
-    elif 'type' in extraData:
-        result = extraData['type']
+        result = i18n.makeString(b'#menu:opponents', firstOpponent=first, secondOpponent=second)
+    elif b'type' in extraData:
+        result = extraData[b'type']
     return result
 
 
 def getPrebattleStartTimeString(startTime):
     startTimeString = backport.getLongTimeFormat(startTime)
     if startTime - time.time() > 86400:
-        startTimeString = ('{0:>s} {1:>s}').format(backport.getLongDateFormat(startTime), startTimeString)
+        startTimeString = (b'{0:>s} {1:>s}').format(backport.getLongDateFormat(startTime), startTimeString)
     return startTimeString
 
 
 def getBattleSessionStartTimeString(startTime):
     startTimeString = getPrebattleStartTimeString(startTime)
-    return ('{} {}').format(backport.text(R.strings.prebattle.title.battleSession.startTime()), startTimeString)
+    return (b'{} {}').format(backport.text(R.strings.prebattle.title.battleSession.startTime()), startTimeString)
 
 
 def getStartTimeLeft(startTime):
@@ -101,11 +102,11 @@ def getStartTimeLeft(startTime):
 
 def getBattleSessionDetachment(extraData, clanDBID):
     detachment = DETACHMENT_IS_NOT_SET
-    vehicleLvl = extraData.get('front_level', 0)
+    vehicleLvl = extraData.get(b'front_level', 0)
     teamIndex = 0
-    for opponentIndex, opponentData in extraData.get('opponents', {}).items():
-        if opponentData.get('id') == clanDBID:
-            prebattleDetachmentId = opponentData.get('detachment')
+    for opponentIndex, opponentData in extraData.get(b'opponents', {}).items():
+        if opponentData.get(b'id') == clanDBID:
+            prebattleDetachmentId = opponentData.get(b'detachment')
             detachment = prebattleDetachmentId if prebattleDetachmentId is not None else DETACHMENT_IS_NOT_SET
             teamIndex = int(opponentIndex)
 

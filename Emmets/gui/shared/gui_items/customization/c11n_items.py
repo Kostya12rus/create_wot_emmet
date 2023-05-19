@@ -1,11 +1,12 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/customization/c11n_items.py
 import logging, os, urllib
 from copy import deepcopy
 import typing, Math, ResMgr
 from CurrentVehicle import g_currentVehicle
+from gui.customization.shared import EDITABLE_STYLE_APPLY_TO_ALL_AREAS_TYPES, getAvailableRegions
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.VEHICLE_CUSTOMIZATION import VEHICLE_CUSTOMIZATION
 from gui.impl import backport
@@ -18,7 +19,7 @@ from gui.shared.image_helper import getTextureLinkByID
 from gui.shared.money import Money
 from gui.shared.utils.functions import getImageResourceFromPath
 from helpers import dependency
-from items import makeIntCompactDescrByID
+from items import makeIntCompactDescrByID, vehicles
 from items.components import c11n_components as cc
 from items.components.c11n_components import EditingStyleReason
 from items.components.c11n_constants import CustomizationType, EDITING_STYLE_REASONS, ImageOptions, ItemTags, ProjectionDecalFormTags, SeasonType, UNBOUND_VEH_KEY
@@ -29,6 +30,8 @@ from skeletons.gui.customization import ICustomizationService
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
 from vehicle_outfit.outfit import Outfit
+from vehicle_outfit.containers import emptyComponent
+from vehicle_outfit.outfit import Area
 if typing.TYPE_CHECKING:
     from typing import Dict, List, Optional, Set, Tuple
     from items.components.c11n_components import ProgressForCustomization
@@ -104,18 +107,20 @@ class SpecialEvents(object):
     NY20 = 'NY2020_style'
     NY21 = 'NY2021_style'
     NY22 = 'NY2022_style'
+    NY23 = 'NY2023_style'
     FOOTBALL18 = 'football2018'
     WINTER_HUNT = 'winter_hunt'
     KURSK_BATTLE = 'Kursk_battle'
     HALLOWEEN = 'Halloween'
     ALL = (
-     NY, NY18, NY19, NY20, NY21, NY22, FOOTBALL18, WINTER_HUNT, KURSK_BATTLE, HALLOWEEN)
+     NY, NY18, NY19, NY20, NY21, NY22, NY23, FOOTBALL18, WINTER_HUNT, KURSK_BATTLE, HALLOWEEN)
     ICONS = {NY: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        NY18: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        NY19: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        NY20: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        NY21: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        NY22: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
+       NY23: backport.image(R.images.gui.maps.icons.customization.style_info.newYear()), 
        FOOTBALL18: backport.image(R.images.gui.maps.icons.customization.style_info.football()), 
        WINTER_HUNT: backport.image(R.images.gui.maps.icons.customization.style_info.marathon()), 
        KURSK_BATTLE: backport.image(R.images.gui.maps.icons.customization.style_info.marathon()), 
@@ -126,6 +131,7 @@ class SpecialEvents(object):
        NY20: backport.text(R.strings.vehicle_customization.styleInfo.event.ny20()), 
        NY21: backport.text(R.strings.vehicle_customization.styleInfo.event.ny21()), 
        NY22: backport.text(R.strings.vehicle_customization.styleInfo.event.ny22()), 
+       NY23: backport.text(R.strings.vehicle_customization.styleInfo.event.ny23()), 
        FOOTBALL18: backport.text(R.strings.vehicle_customization.styleInfo.event.football18()), 
        WINTER_HUNT: backport.text(R.strings.vehicle_customization.styleInfo.event.winter_hunt()), 
        KURSK_BATTLE: backport.text(R.strings.vehicle_customization.styleInfo.event.kursk_battle()), 
@@ -222,7 +228,8 @@ class ConcealmentBonus(object):
 class Customization(FittingItem):
     __slots__ = ('_boundVehicles', '_bonus', '_installedVehicles', '__noveltyData',
                  '__progressingData', '__installedCount', '__boundInventoryCount',
-                 '__fullInventoryCount', '__fullCount')
+                 '__fullInventoryCount', '__fullCount', '__questProgressInfo')
+    _service = dependency.descriptor(ICustomizationService)
     eventsCache = dependency.descriptor(IEventsCache)
 
     def __init__(self, intCompactDescr, proxy=None):
@@ -237,6 +244,7 @@ class Customization(FittingItem):
         self.__boundInventoryCount = None
         self.__fullInventoryCount = None
         self.__fullCount = None
+        self.__questProgressInfo = None
         if proxy is not None and proxy.inventory.isSynced():
             installedVehicles = proxy.inventory.getC11nItemAppliedVehicles(self.intCD)
             invCount = proxy.inventory.getItems(GUI_ITEM_TYPE.CUSTOMIZATION, self.intCD)
@@ -427,10 +435,42 @@ class Customization(FittingItem):
     def isProgressionRewindEnabled(self):
         return ItemTags.PROGRESSION_REWIND_ENABLED in self.tags
 
+    @property
+    def isQuestsProgression(self):
+        return self.descriptor.isQuestsProgression
+
+    def getQuestsProgressionInfo(self):
+        if not self.isQuestsProgression:
+            return ('', -1)
+        else:
+            if self.__questProgressInfo is not None:
+                return self.__questProgressInfo
+            customizationCache = vehicles.g_cache.customization20()
+            if self.intCD in customizationCache.itemToQuestProgressionStyle:
+                styleDescr = customizationCache.itemToQuestProgressionStyle[self.intCD]
+                qProg = styleDescr.questsProgression
+                for token in sorted(qProg.getGroupTokens()):
+                    groupItems = filter(bool, qProg.getItemsForGroup(token))
+                    hasOtherItemsInChain = False
+                    for level, itemsForLevel in enumerate(groupItems, 1):
+                        itemsIdsForType = itemsForLevel.get(self.descriptor.itemType, ())
+                        if self.id in itemsIdsForType:
+                            if len(groupItems) == level and not hasOtherItemsInChain:
+                                level = -1
+                            self.__questProgressInfo = (
+                             token, level)
+                            return (
+                             token, level)
+                        hasOtherItemsInChain = hasOtherItemsInChain or bool(itemsIdsForType)
+
+                _logger.error('Wrong itemToQuestProgressionStyle info for compCD "%s" ', self.intCD)
+            self.__questProgressInfo = ('', -1)
+            return ('', -1)
+
     def getIconApplied(self, component):
         return self.icon
 
-    def getInstalledVehicles(self, vehicles=None):
+    def getInstalledVehicles(self, vehicles_=None):
         return set(self._installedVehicles)
 
     def getBoundVehicles(self):
@@ -467,10 +507,46 @@ class Customization(FittingItem):
     def isWide(self):
         return False
 
-    def isUnlocked(self):
+    def isUnlockedByToken(self):
         if self.requiredToken:
-            return bool(self.eventsCache.questsProgress.getTokenCount(self.requiredToken))
+            tokenCount = self.eventsCache.questsProgress.getTokenCount(self.requiredToken)
+            return tokenCount >= self.descriptor.requiredTokenCount
         return True
+
+    def isQuestInProgress(self):
+        if not (self.requiredToken and self.isQuestsProgression and not self.isUnlockedByToken()):
+            return False
+        else:
+            quests = self._getQuestsForToken()
+            if quests is None:
+                return False
+            quest = first(quests)
+            tokenCount = self.eventsCache.questsProgress.getTokenCount(self.requiredToken)
+            if not (quest and quest.isAvailable() and self.descriptor.requiredTokenCount == tokenCount + 1):
+                return False
+            return True
+
+    def getUnlockingQuests(self):
+        if self.requiredToken:
+            return self._getQuestsForToken()
+        else:
+            return
+
+    def isUnlockingExpired(self):
+        if not self.requiredToken:
+            return False
+        quests = self.getUnlockingQuests()
+        if not quests:
+            return True
+        for quest in quests:
+            questAvailability = quest.isAvailable()
+            if not questAvailability.isValid and questAvailability.reason != 'requirements':
+                return True
+
+        return False
+
+    def _getQuestsForToken(self):
+        return self._service.getQuestsForProgressionItem(self.intCD)
 
     def isRare(self):
         return self.descriptor.isRare()
@@ -926,6 +1002,10 @@ class Attachment(Customization):
         return self.descriptor.modelName
 
     @property
+    def hangarModelName(self):
+        return self.descriptor.hangarModelName
+
+    @property
     def sequenceId(self):
         return self.descriptor.sequenceId
 
@@ -939,9 +1019,8 @@ class Attachment(Customization):
 
 
 class Style(Customization):
-    __slots__ = ('_changableTypes', '_service', '_itemsCache', '__outfits', '__dependenciesByIntCD',
+    __slots__ = ('_changableTypes', '_itemsCache', '__outfits', '__dependenciesByIntCD',
                  '__serialNumber')
-    _service = dependency.descriptor(ICustomizationService)
     _itemsCache = dependency.descriptor(IItemsCache)
 
     def __init__(self, intCompactDescr, proxy=None):
@@ -1029,6 +1108,26 @@ class Style(Customization):
     def serialNumber(self):
         return self.__serialNumber
 
+    def getAlteredOutfit(self, itemType, itemID, vehicleCD):
+        item = self.getAlternateItem(itemType, itemID)
+        outfit = self.getOutfit(first(self.seasons), vehicleCD=vehicleCD)
+        slotId = EDITABLE_STYLE_APPLY_TO_ALL_AREAS_TYPES[item.itemTypeID]
+        component = emptyComponent(item.itemTypeID)
+        for areaId in Area.TANK_PARTS:
+            regionsIndexes = getAvailableRegions(areaId, slotId.slotType)
+            for regionIdx in regionsIndexes:
+                multiSlot = outfit.getContainer(areaId).slotFor(slotId.slotType)
+                multiSlot.set(item.intCD, idx=regionIdx, component=component)
+
+        return outfit
+
+    def getAlternateItem(self, itemType, itemID):
+        itemsOfType = self.descriptor.alternateItems.get(itemType)
+        if itemsOfType is not None and itemID in itemsOfType:
+            return self._service.getItemByCD(makeIntCompactDescrByID('customizationItem', itemType, itemID))
+        else:
+            return
+
     def getDescription(self):
         return self.longDescriptionSpecial or self.fullDescription or self.shortDescriptionSpecial or self.shortDescription
 
@@ -1104,7 +1203,7 @@ class Style(Customization):
                 if self.descriptor.isItemInstallable(item.descriptor):
                     return EditingStyleReason(EDITING_STYLE_REASONS.IS_EDITABLE)
 
-            return EditingStyleReason(EDITING_STYLE_REASONS.NOT_HAVE_ANY_PROGRESIIVE_DECALS)
+            return EditingStyleReason(EDITING_STYLE_REASONS.NOT_HAVE_ANY_PROGRESSIVE_DECALS)
 
     def isProgressionRequiredCanBeEdited(self, vehicleIntCD):
         return self.isProgressionRequired and self.canBeEditedForVehicle(vehicleIntCD)
@@ -1167,4 +1266,5 @@ class Style(Customization):
                 _logger.error('Merging outfits of different styles is not allowed. ID1: %s ID2: %s', component.styleId, diffComponent.styleId)
             else:
                 component = component.applyDiff(diffComponent)
+        component = self.descriptor.addPartsToOutfit(season, component, vehicleCD)
         return self.itemsFactory.createOutfit(component=component, vehicleCD=vehicleCD)

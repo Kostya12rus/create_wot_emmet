@@ -1,15 +1,15 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/prb_windows/BattleSessionWindow.py
-import functools, BigWorld
+import functools, logging, BigWorld
 from account_helpers.AccountSettings import CLAN_PREBATTLE_SORTING_KEY
 from gui.impl import backport
 from gui.impl.gen import R
 from shared_utils import safeCancelCallback
 import constants, nations
 from account_helpers import getAccountDatabaseID, getPlayerID, AccountSettings
-from adisp import process
+from adisp import adisp_process
 from constants import PREBATTLE_MAX_OBSERVERS_IN_TEAM, OBSERVERS_BONUS_TYPES, PREBATTLE_ERRORS, PREBATTLE_TYPE
 from gui import SystemMessages
 from gui import makeHtmlString
@@ -25,6 +25,7 @@ from gui.shared.utils import functions
 from helpers import time_utils, i18n, dependency
 from skeletons.gui.web import IWebController
 _R_SORT = R.strings.prebattle.labels.sort
+_logger = logging.getLogger(__name__)
 
 class BattleSessionWindow(BattleSessionWindowMeta):
     __webCtrl = dependency.descriptor(IWebController)
@@ -68,7 +69,15 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         if team1State.isInQueue():
             self._closeSendInvitesWindow()
 
+    def isPlayerReady(self):
+        return self._isInLegacyPreBattle() and super(BattleSessionWindow, self).isPlayerReady()
+
+    def isLeaveBtnEnabled(self):
+        return self._isInLegacyPreBattle() and super(BattleSessionWindow, self).isLeaveBtnEnabled()
+
     def isReadyBtnEnabled(self):
+        if not self._isInLegacyPreBattle():
+            return False
         result = super(BattleSessionWindow, self).isReadyBtnEnabled()
         if self.__isTurnamentBattle:
             result = result and self.__isCurrentPlayerInAssigned()
@@ -128,7 +137,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
 
     def __checkObserversCondition(self):
         observerCount = 0
-        accounts = self.prbEntity.getRosters()[(self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED)]
+        accounts = self.prbEntity.getRosters()[self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED]
         for account in accounts:
             if account.isVehicleSpecified():
                 vehicle = account.getVehicle()
@@ -145,7 +154,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
 
     def __checkPlayersCondition(self):
         playerCount = 0
-        accounts = self.prbEntity.getRosters()[(self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED)]
+        accounts = self.prbEntity.getRosters()[self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED]
         for account in accounts:
             if account.isVehicleSpecified():
                 vehicle = account.getVehicle()
@@ -155,7 +164,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         return playerCount >= self.__getPlayersMaxCount()
 
     def __getUnassignedPlayerByAccID(self, accID):
-        accounts = self.prbEntity.getRosters()[(self._getPlayerTeam() | PREBATTLE_ROSTER.UNASSIGNED)]
+        accounts = self.prbEntity.getRosters()[self._getPlayerTeam() | PREBATTLE_ROSTER.UNASSIGNED]
         for account in accounts:
             if account.accID == accID:
                 return account
@@ -163,7 +172,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         return
 
     def __isCurrentPlayerInAssigned(self):
-        dbIDs = [ playerInfo.dbID for playerInfo in self.prbEntity.getRosters()[(self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED)]
+        dbIDs = [ playerInfo.dbID for playerInfo in self.prbEntity.getRosters()[self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED]
                 ]
         return getAccountDatabaseID() in dbIDs
 
@@ -189,7 +198,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
             self.__doRequestToAssignMember(pID)
             return
 
-    @process
+    @adisp_process
     def requestToReady(self, value):
         if value:
             waitingID = 'prebattle/player_ready'
@@ -202,7 +211,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         else:
             self._showActionErrorMessage(ctx.getLastErrorString())
 
-    @process
+    @adisp_process
     def __doRequestToAssignMember(self, pID):
         ctx = AssignLegacyCtx(pID, self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED, 'prebattle/assign')
         result = yield self.prbDispatcher.sendPrbRequest(ctx)
@@ -215,25 +224,28 @@ class BattleSessionWindow(BattleSessionWindowMeta):
             return
         self.__doRequestToUnassignMember(pID)
 
-    @process
+    @adisp_process
     def __doRequestToUnassignMember(self, pID):
         yield self.prbDispatcher.sendPrbRequest(AssignLegacyCtx(pID, self._getPlayerTeam() | PREBATTLE_ROSTER.UNASSIGNED, 'prebattle/assign'))
 
-    @process
+    @adisp_process
     def requestToKickPlayer(self, pID):
         yield self.prbDispatcher.sendPrbRequest(KickPlayerCtx(pID, 'prebattle/kick'))
 
     def _populate(self):
         super(BattleSessionWindow, self)._populate()
-        rosters = self.prbEntity.getRosters()
-        teamLimits = self.prbEntity.getTeamLimits()
-        self.__setSorting()
-        self.__syncStartTime()
-        self._setRosterList(rosters)
-        self.__updateCommonRequirements(teamLimits, rosters)
-        self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName, self.__detachment, self.__vehicleLvl, self.__teamIndex)
-        self.__updateLimits(teamLimits, rosters)
-        self.__showAttackDirection()
+        if self._isInLegacyPreBattle():
+            rosters = self.prbEntity.getRosters()
+            teamLimits = self.prbEntity.getTeamLimits()
+            self.__setSorting()
+            self.__syncStartTime()
+            self._setRosterList(rosters)
+            self.__updateCommonRequirements(teamLimits, rosters)
+            self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName, self.__detachment, self.__vehicleLvl, self.__teamIndex)
+            self.__updateLimits(teamLimits, rosters)
+            self.__showAttackDirection()
+        else:
+            _logger.debug('Battle session view loaded, but prebattle already destroyed')
 
     def _dispose(self):
         self.__team = None
@@ -250,8 +262,8 @@ class BattleSessionWindow(BattleSessionWindowMeta):
     def _setRosterList(self, rosters):
         playerTeam = self._getPlayerTeam()
         _, assignedComparator, unassignedComparator = self.__SORTINGS_AND_COMPARATORS[self.__currentSorting]
-        self.as_setRosterListS(playerTeam, True, self._makeAccountsData(rosters[(playerTeam | PREBATTLE_ROSTER.ASSIGNED)], assignedComparator))
-        self.as_setRosterListS(playerTeam, False, self._makeAccountsData(rosters[(playerTeam | PREBATTLE_ROSTER.UNASSIGNED)], unassignedComparator))
+        self.as_setRosterListS(playerTeam, True, self._makeAccountsData(rosters[playerTeam | PREBATTLE_ROSTER.ASSIGNED], assignedComparator))
+        self.as_setRosterListS(playerTeam, False, self._makeAccountsData(rosters[playerTeam | PREBATTLE_ROSTER.UNASSIGNED], unassignedComparator))
 
     def _makeAccountsData(self, accounts, playerComparatorType=PREBATTLE_PLAYERS_COMPARATORS.REGULAR):
         roster = super(BattleSessionWindow, self)._makeAccountsData(accounts, playerComparatorType)
@@ -342,7 +354,7 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         self.as_setCommonLimitsS(teamLevelStr, playersMaxCount)
         key = 'specBattlePlayersZero' if playersCount == 0 else 'specBattlePlayersCount'
         self.as_setPlayersCountTextS(makeHtmlString('html_templates:lobby/prebattle', key, {'membersCount': playersCount, 'maxMembersCount': playersMaxCount}))
-        playerTeam = len(self._makeAccountsData(rosters[(self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED)]))
+        playerTeam = len(self._makeAccountsData(rosters[self._getPlayerTeam() | PREBATTLE_ROSTER.ASSIGNED]))
         playersStyleFunc = text_styles.main if playerTeam < playersMaxCount else text_styles.error
         playersCountStr = playersStyleFunc('%d/%d' % (playerTeam, playersMaxCount))
         self.as_setTotalPlayersCountS(playersCountStr)

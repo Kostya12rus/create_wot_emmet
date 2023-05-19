@@ -1,25 +1,25 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/bonus_readers.py
-import calendar, time
-from functools import partial
+import time
 from typing import Union, TYPE_CHECKING
 import blueprints, dossiers2
 from dynamic_currencies import g_dynamicCurrenciesData
-import items
+import items, calendar
 from account_shared import validateCustomizationItem
 from battle_pass_common import NON_VEH_CD
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import isUniversalFragment
-from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS
+from dossiers2.custom.account_layout import ACCOUNT_DOSSIER_DICT_BLOCKS
 from dossiers2.custom.cache import getCache
 from invoices_helpers import checkAccountDossierOperation
-from items import vehicles, tankmen, utils, lunar_ny, new_year, collectibles
+from items import vehicles, tankmen, utils
 from items.components.c11n_constants import SeasonType
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
-from items.components.ny_constants import YEARS_INFO, TOY_TYPE_IDS_BY_NAME, CurrentNYConstants, YEARS
+from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS, ENTITLEMENT_OPS, DailyQuestsLevels
 from soft_exception import SoftException
+from customization_quests_common import validateCustomizationQuestToken
 if TYPE_CHECKING:
     from ResMgr import DataSection
 __all__ = [
@@ -77,7 +77,7 @@ class IntHolder(int):
     rate = 1
 
     def __new__(cls, value, **kwargs):
-        return super(IntHolder, cls).__new__(cls, value, **{k:v for k, v in kwargs.iteritems() if k in ('base', ) if k in ('base', )})
+        return super(IntHolder, cls).__new__(cls, value, **{k: v for k, v in kwargs.iteritems() if k in ('base', )})
 
     def __init__(self, value, **kwargs):
         super(IntHolder, self).__init__()
@@ -464,11 +464,17 @@ def __readBonus_vehicle(bonus, _name, section, eventType, checkLimit):
         __readBonus_vehicleCustomizations(extra, None, section['customization'])
     if section.has_key('customCompensation'):
         __readBonus_customCompensation(extra, None, section['customCompensation'])
+    if section.has_key('customCompensationDetails'):
+        __readBonus_customCompensationDetails(extra, None, section['customCompensationDetails'])
     if section.has_key('outfits'):
         __readBonus_outfits(extra, None, section['outfits'])
     if section.has_key('ammo'):
         ammo = section['ammo'].asString
         extra['ammo'] = [ int(item) for item in ammo.split(' ') ]
+    if section.has_key('unlock'):
+        extra['unlock'] = True
+    if section.has_key('unlockModules'):
+        extra['unlockModules'] = True
     vehicleBonuses = bonus.setdefault('vehicles', {})
     vehKey = vehCompDescr if vehCompDescr else vehTypeCompDescr
     if vehKey in vehicleBonuses:
@@ -483,17 +489,27 @@ def __readBonus_customCompensation(bonus, _name, section):
     bonus['customCompensation'] = (credits, gold)
 
 
+def __readBonus_customCompensationDetails(bonus, _name, section):
+    bonus['customCompensationDetails'] = {}
+    if section.has_key('noCrew'):
+        bonus['customCompensationDetails']['noCrew'] = True
+
+
 def __readBonus_vehicleCustomizations(bonus, _name, section):
     custData = {'value': 1, 
        'custType': 'style', 
        'id': section.readInt('styleId', -1)}
     if section.has_key('customCompensation'):
         __readBonus_customCompensation(custData, None, section['customCompensation'])
+    if section.has_key('serialNumberSequence'):
+        custData['serialNumberSequence'] = section.readString('serialNumberSequence')
     isValid, item = validateCustomizationItem(custData)
     if not isValid:
         raise SoftException(item)
     bonus['customization'] = {'styleId': custData['id'], 
        'customCompensation': custData['customCompensation']}
+    if 'serialNumberSequence' in custData:
+        bonus['customization']['serialNumberSequence'] = custData['serialNumberSequence']
     return
 
 
@@ -613,6 +629,8 @@ def __readBonus_customizations(bonus, _name, section, eventType, checkLimit):
             custData['boundToCurrentVehicle'] = True
         if subsection.has_key('customCompensation'):
             __readBonus_customCompensation(custData, None, subsection['customCompensation'])
+        if subsection.has_key('serialNumberSequence'):
+            custData['serialNumberSequence'] = subsection.readString('serialNumberSequence', '')
         isValid, item = validateCustomizationItem(custData)
         if not isValid:
             raise SoftException(item)
@@ -648,6 +666,9 @@ def __readBonus_tokens(bonus, _name, section, eventType, checkLimit):
     token['count'] = 1
     if section.has_key('count'):
         token['count'] = section['count'].asInt
+    res = validateCustomizationQuestToken(id, token)
+    if not res[0]:
+        raise SoftException(res[1])
     if checkLimit and token['count'] > INVOICE_LIMITS.TOKENS_MAX:
         raise SoftException('Invalid count of tankman token with id %s with amount %d when limit is %d.' % (
          id, token['count'], INVOICE_LIMITS.TOKENS_MAX))
@@ -684,17 +705,40 @@ def __readBonus_enhancement(bonus, _name, section, eventType, checkLimit):
 
 
 def __readBonus_entitlement(bonus, _name, section, eventType, checkLimit):
-    id = section['id'].asString
-    entitlement = bonus.setdefault('entitlements', {})[id] = {}
+    entID, entData = _readEntitlementSection(section, checkLimit)
+    bonus.setdefault('entitlements', {})[entID] = entData
+
+
+def __readBonus_entitlementList(bonus, _name, section, eventType, checkLimit):
+    entItems = bonus.setdefault('entitlementList', {}).setdefault('items', [])
+    for name, itemSection in section.items():
+        if name != 'item':
+            raise SoftException('Not expected element', name)
+        entID, entData = _readEntitlementSection(itemSection, checkLimit, readOp=True)
+        if entData['count'] <= 0:
+            raise SoftException('Not positive count for entitlement with operation', entID, entData)
+        entData['id'] = entID
+        entItems.append(entData)
+
+
+def _readEntitlementSection(section, checkLimit, readOp=False):
+    entitlement = {}
+    entID = section['id'].asString
     if section.has_key('count'):
         entitlement['count'] = section['count'].asInt
     else:
         entitlement['count'] = 1
+    if readOp:
+        entitlement['op'] = operation = section.readString('operation', '')
+        if operation not in ENTITLEMENT_OPS.ALL:
+            raise SoftException('Invalid op for entitlement:', entID, operation, ENTITLEMENT_OPS.ALL)
     if checkLimit and entitlement['count'] > INVOICE_LIMITS.ENTITLEMENTS_MAX:
         raise SoftException('Invalid count of entitlement id %s with amount %d when limit is %d.' % (
-         id, entitlement['count'], INVOICE_LIMITS.ENTITLEMENTS_MAX))
+         entID, entitlement['count'], INVOICE_LIMITS.ENTITLEMENTS_MAX))
     if section.has_key('expires'):
-        entitlement['expires'] = readUTC(section, 'expires')
+        entitlement['expires'] = expires = {}
+        __readBonus_expires(id, expires, section)
+    return (entID, entitlement)
 
 
 def __readBonus_currency(bonus, _name, section, eventType, checkLimit):
@@ -735,6 +779,12 @@ def __readBonus_dossier(bonus, _name, section, eventType, checkLimit):
     if section.has_key('dossierType'):
         dossierType = section['dossierType'].asInt
     if dossierType == DOSSIER_TYPE.ACCOUNT:
+        if blockName in ACCOUNT_DOSSIER_DICT_BLOCKS:
+            try:
+                record = int(record)
+            except ValueError:
+                pass
+
         isValid, message = checkAccountDossierOperation(dossierType, blockName, record, operation)
         if not isValid:
             raise SoftException('Invalid dossier bonus %s: %s' % (blockName + ':' + record, message))
@@ -786,6 +836,8 @@ def __readBonus_vehicleChoice(bonus, _name, section, eventType, checkLimit):
             if 1 <= int(level) <= 10:
                 extra.setdefault('levels', set()).add(int(level))
 
+    if section.has_key('crewLvl'):
+        extra['crewLvl'] = section['crewLvl'].asInt
     bonus['demandedVehicles'] = extra
 
 
@@ -800,54 +852,10 @@ def __readMetaSection(bonus, _name, section, eventType, checkLimit):
             else:
                 meta['actions'] = actions = {}
                 for action, params in sub.items():
-                    actions[action.strip()] = {k.strip():v.readString('', '').strip() for k, v in params.items()}
+                    actions[action.strip()] = {k.strip(): v.readString('', '').strip() for k, v in params.items()}
 
         bonus['meta'] = meta
         return
-
-
-def __readBonus_nyToy(bonus, _name, section, eventType, year, checkLimit):
-    if section.has_key('id'):
-        tid = section['id'].asInt
-        if year == YEARS_INFO.CURRENT_YEAR:
-            cache = new_year.g_cache.toys
-        else:
-            cache = collectibles.g_cache[YEARS.getYearStrFromYearNum(year)].toys
-        if tid not in cache:
-            raise SoftException(('Unknown NY{} toyID: {}').format(year, tid))
-        count = section['count'].asInt if section.has_key('count') else 0
-        pureCount = section['pureCount'].asInt if section.has_key('pureCount') else count
-        if pureCount > count:
-            raise SoftException('Pure count should be less or equal than count', pureCount, count)
-        toysCollectionKey = YEARS_INFO.getCollectionKeyForYear(year)
-        nyToys = bonus.setdefault(toysCollectionKey, {})
-        nyToys[tid] = {'count': count, 'pureCount': pureCount}
-
-
-def __readBonus_nyToyFragments(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.TOY_FRAGMENTS] = bonus.get(CurrentNYConstants.TOY_FRAGMENTS, 0) + count
-
-
-def __readBonus_nyAnyOf(bonus, _name, section, eventType, checkLimit):
-    if section.has_key('setting'):
-        settingID = YEARS_INFO.CURRENT_SETTING_IDS_BY_NAME[section.readString('setting')]
-    else:
-        settingID = -1
-    if section.has_key('type'):
-        typeID = TOY_TYPE_IDS_BY_NAME[section.readString('type')]
-    else:
-        typeID = -1
-    if section.has_key('rank'):
-        rank = section['rank'].asInt
-    else:
-        rank = -1
-    bonus.setdefault(CurrentNYConstants.ANY_OF, []).append((typeID, settingID, rank))
-
-
-def __readBonus_nyFillers(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.FILLERS] = bonus.get(CurrentNYConstants.FILLERS, 0) + count
 
 
 def __readBonus_optionalData(config, bonusReaders, section, eventType):
@@ -863,8 +871,8 @@ def __readBonus_optionalData(config, bonusReaders, section, eventType):
             if not 0 <= probability <= 100:
                 raise SoftException(('Probability is out of range: {}').format(probability))
 
-        probabilitiesList = map(lambda probability: probability / 100.0, probabilities)
-        probabilitiesList.extend([probabilitiesList[(-1)]] * (probabilityStageCount - probabilitiesLen))
+        probabilitiesList = map((lambda probability: probability / 100.0), probabilities)
+        probabilitiesList.extend([probabilitiesList[-1]] * (probabilityStageCount - probabilitiesLen))
     bonusProbability = None
     if section.has_key('bonusProbability'):
         if not config.get('useBonusProbability', False):
@@ -982,20 +990,19 @@ def __readBonus_oneof(config, bonusReaders, bonus, section, eventType):
 def __readBonus_dogTag(bonus, _name, section, eventType, checkLimit):
     componentId = section['id'].asInt
     data = {'id': componentId}
-    value = section.readFloat('value', None)
-    grade = section.readInt('grade', None)
-    unlock = section.readBool('unlock', None)
-    needRecalculate = section.readBool('needRecalculate', None)
-    if value is not None:
+    value = section.readFloat('value', 0.0)
+    grade = section.readInt('grade', 0)
+    unlock = section.readBool('unlock', False)
+    needRecalculate = section.readBool('needRecalculate', False)
+    if value is not 0.0:
         data['value'] = value
-    if grade is not None:
+    if grade is not 0:
         data['grade'] = grade
-    if unlock is not None:
+    if unlock is not False:
         data['unlock'] = unlock
-    if needRecalculate is not None:
+    if needRecalculate is not False:
         data['needRecalculate'] = needRecalculate
     bonus.setdefault('dogTagComponents', []).append(data)
-    return
 
 
 def __readBonus_battlePassPoints(bonus, _name, section, eventType, checkLimit):
@@ -1006,14 +1013,25 @@ def __readBonus_battlePassPoints(bonus, _name, section, eventType, checkLimit):
     bonus['battlePassPoints'] = {'vehicles': {NON_VEH_CD: count}}
 
 
-def __readBonus_Charm(bonus, _name, section, eventType, checkLimit):
-    id = section['id'].asInt
-    cache = lunar_ny.g_cache.charms
-    if id not in cache:
-        raise SoftException(('Unknown charm ID: {}').format(id))
-    count = section['count'].asInt if section.has_key('count') else 0
-    charms = bonus.setdefault('charms', {})
-    charms[id] = {'count': count}
+def __readBonus_dailyQuestReroll(bonus, name, section, eventType, checkLimit):
+    data = section.asString
+    levels = set(data.strip().split())
+    if set(levels).intersection(DailyQuestsLevels.DAILY) != levels:
+        raise SoftException(('Invalid daily quest level {}').format(levels))
+    bonus[name] = levels
+
+
+def __readBonus_noviceReset(bonus, name, section, eventType, checkLimit):
+    bonus[name] = True
+
+
+def __readBonus_freePremiumCrew(bonus, _name, section, eventType, checkLimit):
+    vehLevel = section['vehLevel'].asInt
+    count = section.readInt('count', 1)
+    if 'freePremiumCrew' in bonus and vehLevel in bonus['freePremiumCrew']:
+        raise SoftException('Duplicate free premium crew vehLevel', vehLevel)
+    freePremiumCrewBonus = bonus.setdefault('freePremiumCrew', {})
+    freePremiumCrewBonus[vehLevel] = count
 
 
 def __readBonus_group(config, bonusReaders, bonus, section, eventType):
@@ -1038,6 +1056,7 @@ __BONUS_READERS = {'meta': __readMetaSection,
    'crystal': bonusReaderLimitDecorator(INVOICE_LIMITS.CRYSTAL_MAX, __readBonus_int), 
    'eventCoin': bonusReaderLimitDecorator(INVOICE_LIMITS.EVENT_COIN_MAX, __readBonus_int), 
    'bpcoin': bonusReaderLimitDecorator(INVOICE_LIMITS.BPCOIN_MAX, __readBonus_int), 
+   'equipCoin': bonusReaderLimitDecorator(INVOICE_LIMITS.EQUIP_COIN_MAX, __readBonus_int), 
    'freeXP': bonusReaderLimitDecorator(INVOICE_LIMITS.FREEXP_MAX, __readBonus_int), 
    'slots': bonusReaderLimitDecorator(INVOICE_LIMITS.SLOTS_MAX, __readBonus_int), 
    'berths': bonusReaderLimitDecorator(INVOICE_LIMITS.BERTHS_MAX, __readBonus_int), 
@@ -1066,32 +1085,28 @@ __BONUS_READERS = {'meta': __readMetaSection,
    'customizations': __readBonus_customizations, 
    'crewSkin': __readBonus_crewSkin, 
    'entitlement': __readBonus_entitlement, 
+   'entitlementList': __readBonus_entitlementList, 
    'rankedDailyBattles': bonusReaderLimitDecorator(INVOICE_LIMITS.RANKED_DAILY_BATTLES_MAX, __readBonus_int), 
    'rankedBonusBattles': bonusReaderLimitDecorator(INVOICE_LIMITS.RANKED_BONUS_BATTLES_MAX, __readBonus_int), 
    'dogTagComponent': __readBonus_dogTag, 
    'battlePassPoints': __readBonus_battlePassPoints, 
+   'dailyQuestReroll': __readBonus_dailyQuestReroll, 
+   'noviceReset': __readBonus_noviceReset, 
    'vehicleChoice': __readBonus_vehicleChoice, 
    'blueprint': __readBonus_blueprint, 
    'blueprintAny': __readBonus_blueprintAny, 
-   'charm': __readBonus_Charm, 
    'currency': __readBonus_currency, 
-   'ny18Toy': partial(__readBonus_nyToy, year=YEARS.YEAR18), 
-   'ny19Toy': partial(__readBonus_nyToy, year=YEARS.YEAR19), 
-   'ny20Toy': partial(__readBonus_nyToy, year=YEARS.YEAR20), 
-   'ny21Toy': partial(__readBonus_nyToy, year=YEARS.YEAR21), 
-   CurrentNYConstants.TOY_BONUS: partial(__readBonus_nyToy, year=YEARS_INFO.CURRENT_YEAR), 
-   CurrentNYConstants.TOY_FRAGMENTS: __readBonus_nyToyFragments, 
-   CurrentNYConstants.ANY_OF: __readBonus_nyAnyOf, 
-   CurrentNYConstants.FILLERS: __readBonus_nyFillers}
+   'freePremiumCrew': __readBonus_freePremiumCrew}
 __PROBABILITY_READERS = {'optional': __readBonus_optional, 
    'oneof': __readBonus_oneof, 
    'group': __readBonus_group}
-_RESERVED_NAMES = frozenset(['config', 'properties', 'limitID', 'probability', 'compensation', 'name',
- 'shouldCompensated', 'probabilityStageDependence', 'bonusProbability'])
+_RESERVED_NAMES = frozenset(['config', 'properties', 'limitID', 'probability', 'compensation', 'name', 
+ 'shouldCompensated', 
+ 'probabilityStageDependence', 'bonusProbability'])
 SUPPORTED_BONUSES = frozenset(__BONUS_READERS.iterkeys())
 __SORTED_BONUSES = sorted(SUPPORTED_BONUSES)
 SUPPORTED_BONUSES_IDS = dict((n, i) for i, n in enumerate(__SORTED_BONUSES))
-SUPPORTED_BONUSES_NAMES = {i:n for i, n in enumerate(__SORTED_BONUSES)}
+SUPPORTED_BONUSES_NAMES = {i: n for i, n in enumerate(__SORTED_BONUSES)}
 
 def __readBonusLimit(section):
     properties = {}
@@ -1137,6 +1152,10 @@ def __readBonusConfig(section):
         elif name == 'useBonusProbability':
             config.setdefault('useBonusProbability', False)
             config['useBonusProbability'] = data.asBool
+        elif name == 'showBonusInfo':
+            config['showBonusInfo'] = data.asBool
+        elif name == 'showProbabilitiesInfo':
+            config['showProbabilitiesInfo'] = data.asBool
         else:
             raise SoftException(('Unknown config section: {}').format(name))
 
@@ -1167,7 +1186,7 @@ def __readBonusSubSection(config, bonusReaders, section, eventType=None, checkLi
             if limitIDs:
                 resultLimitIDs.update(limitIDs)
         elif name in bonusReaders:
-            bonusReaders[name](bonus, name, subSection, eventType, checkLimit=checkLimit)
+            bonusReaders[name](bonus, name, subSection, eventType, checkLimit)
         elif name in _RESERVED_NAMES:
             pass
         else:

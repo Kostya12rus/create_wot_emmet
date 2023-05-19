@@ -1,15 +1,15 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/formatters/auto_boxes_subformatters.py
 import typing, BigWorld
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from dossiers2.ui.achievements import BADGES_BLOCK
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.server_events.bonuses import getMergedBonusesFromDicts
 from gui.shared.gui_items.dossier import getAchievementFactory
-from gui.shared.gui_items.loot_box import ALL_LUNAR_NY_LOOT_BOX_TYPES, ChinaLootBoxes, EventLootBoxes, NewYearLootBoxes
+from gui.shared.gui_items.loot_box import ALL_LUNAR_NY_LOOT_BOX_TYPES, EventLootBoxes, WTLootBoxes, NewYearLootBoxes
 from gui.shared.notifications import NotificationGroup
 from helpers import dependency
 from messenger import g_settings
@@ -62,8 +62,8 @@ class SyncAutoLootBoxSubFormatter(ServiceChannelFormatter, AutoLootBoxSubFormatt
 class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
     __itemsCache = dependency.descriptor(IItemsCache)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -81,7 +81,7 @@ class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
 
     @classmethod
     def _isBoxOfThisGroup(cls, boxID):
-        return cls._isBoxOfRequiredTypes(boxID, EventLootBoxes.ALL())
+        return cls._isBoxOfRequiredTypes(boxID, WTLootBoxes.ALL())
 
     @staticmethod
     def _getMessageTemplate():
@@ -100,19 +100,19 @@ class EventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
         return (', ').join(boxes)
 
 
-class CNLootBoxesFormatter(EventBoxesFormatter):
+class EventLootBoxesFormatter(EventBoxesFormatter):
 
     @classmethod
     def _isBoxOfThisGroup(cls, boxID):
-        return cls._isBoxOfRequiredTypes(boxID, ChinaLootBoxes.ALL())
+        return cls._isBoxOfRequiredTypes(boxID, EventLootBoxes.ALL())
 
     @staticmethod
     def _getMessageTemplate():
-        return 'ChinaLootBoxesAutoOpenMessage'
+        return 'EventLootBoxesAutoOpenMessage'
 
     @staticmethod
     def _getTextResPath():
-        return R.strings.cn_loot_boxes.notification.lootBoxesAutoOpen
+        return R.strings.lootboxes.notification.lootBoxesAutoOpen
 
 
 class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
@@ -120,8 +120,8 @@ class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
     __REWARDS_TEMPLATE = 'LootBoxRewardsSysMessage'
     __REQUIERED_BOX_TYPES = {NewYearLootBoxes.COMMON, NewYearLootBoxes.PREMIUM, NewYearLootBoxes.SPECIAL}
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -139,7 +139,7 @@ class NYPostEventBoxesFormatter(AsyncAutoLootBoxSubFormatter):
 
     def __getMainMessage(self, message, openedBoxesIDs):
         count = backport.text(R.strings.messenger.serviceChannelMessages.lootBoxesAutoOpen.counter(), count=sum(message.data[boxId]['count'] for boxId in openedBoxesIDs))
-        oldStyleCount = {bID:message.data[bID]['count'] for bID in openedBoxesIDs}
+        oldStyleCount = {bID: message.data[bID]['count'] for bID in openedBoxesIDs}
         rewards = getRewardsForBoxes(message, openedBoxesIDs)
         formatted = g_settings.msgTemplates.format(self.__MESSAGE_TEMPLATE, ctx={'count': count}, data={'savedData': {'rewards': rewards, 'boxIDs': oldStyleCount}})
         settings = self._getGuiSettings(message, self.__MESSAGE_TEMPLATE)
@@ -160,8 +160,8 @@ class NYGiftSystemSurpriseFormatter(AsyncAutoLootBoxSubFormatter):
     __MESSAGE_TEMPLATE = 'NYSpecialLootBoxesAutoOpenMessage'
     __REQUIERED_BOX_TYPES = {NewYearLootBoxes.SPECIAL_AUTO}
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:
@@ -189,8 +189,8 @@ class LunarNYEnvelopeAutoOpenFormatter(AsyncAutoLootBoxSubFormatter):
         super(LunarNYEnvelopeAutoOpenFormatter, self).__init__()
         self._achievesFormatter = QuestAchievesFormatter()
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def format(self, message, callback):
         isSynced = yield self._waitForSyncItems()
         if isSynced:

@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/items_kit_helper.py
 import itertools, typing
 from collections import Container, namedtuple
@@ -79,6 +79,7 @@ _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE,
    ItemPackType.GOODIE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_CREW_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_FREE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
+   ItemPackType.GOODIE_FREE_AND_CREW_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_FRONTLINE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.VEHICLE: TOOLTIPS_CONSTANTS.AWARD_VEHICLE, 
    ItemPackType.VEHICLE_MEDIUM: TOOLTIPS_CONSTANTS.AWARD_VEHICLE, 
@@ -124,7 +125,8 @@ _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE,
    ItemPackType.OFFER_BROCHURE: TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP, 
    ItemPackType.OFFER_BATTLE_BOOSTER: TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP, 
    ItemPackType.BLUEPRINT_NATIONAL_ANY: TOOLTIPS_CONSTANTS.BLUEPRINT_RANDOM_NATIONAL_INFO, 
-   ItemPackType.DEMOUNT_KITS: TOOLTIPS_CONSTANTS.AWARD_DEMOUNT_KIT}
+   ItemPackType.DEMOUNT_KITS: TOOLTIPS_CONSTANTS.AWARD_DEMOUNT_KIT, 
+   ItemPackType.TMAN_TOKEN: TOOLTIPS_CONSTANTS.TANKMAN_NOT_RECRUITED}
 _ICONS = {ItemPackType.CAMOUFLAGE_ALL: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
    ItemPackType.CAMOUFLAGE_WINTER: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
    ItemPackType.CAMOUFLAGE_SUMMER: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
@@ -257,7 +259,7 @@ def getItemIcon(rawItem, item):
     icon = rawItem.iconSource
     if not icon:
         if item is not None:
-            icon = _ICONS.get(rawItem.type, item.icon)
+            icon = _ICONS.get(rawItem.type, item.getBonusIcon())
         elif rawItem.type == ItemPackType.CUSTOM_PREMIUM:
             icon = _PREM_ICONS.get(rawItem.count, '')
         elif rawItem.type == ItemPackType.CUSTOM_PREMIUM_PLUS:
@@ -578,7 +580,7 @@ class _ShellNodeContainer(_NodeContainer):
             return (True, _UNLIMITED_ITEMS_COUNT)
 
     def _sortChildren(self):
-        self._children.sort(key=lambda item: item.id)
+        self._children.sort(key=(lambda item: item.id))
         if self.__vehicle is not None and self._children:
             vehicle_adjusters.changeShell(self.__vehicle, 0)
         return
@@ -701,7 +703,7 @@ class _CustomCrewSkillsNodeContainer(_NodeContainer):
         return []
 
     def parseCrewSkills(self, item):
-        return {idx:tankmanItem.get('skills', []) + tankmanItem.get('freeSkills', []) for idx, tankmanItem in enumerate(item.extra['tankmen'])}
+        return {idx: tankmanItem.get('skills', []) + tankmanItem.get('freeSkills', []) for idx, tankmanItem in enumerate(item.extra['tankmen'])}
 
     def _install(self, item, vehicle, slotIdx):
         crewSkills = self.parseCrewSkills(item)
@@ -773,7 +775,7 @@ def addCompensationInfo(itemsVOs, itemsPack, itemsCache=None):
 
 
 def getActiveOffer(offers):
-    return findFirst(lambda o: o.preferred, offers) or findFirst(lambda o: o.bestOffer, offers) or first(offers)
+    return findFirst((lambda o: o.preferred), offers) or findFirst((lambda o: o.bestOffer), offers) or first(offers)
 
 
 def addBuiltInEquipment(packItems, itemsCache, vehicleCD):
@@ -817,7 +819,7 @@ def _sortItemsByOrder(items, rule=None):
     if rule is None:
         rule = _PACK_ITEMS_SORT_ORDER
     maxIndex = len(rule)
-    items.sort(key=lambda i: rule.index(i.type) if i.type in rule else maxIndex)
+    items.sort(key=(lambda i: rule.index(i.type) if i.type in rule else maxIndex))
     return items
 
 

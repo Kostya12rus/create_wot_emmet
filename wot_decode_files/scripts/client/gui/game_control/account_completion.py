@@ -1,18 +1,17 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/account_completion.py
 import typing, constants
 from PlayerEvents import g_playerEvents
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import SHOW_DEMO_ACC_REGISTRATION
-from async import async, await
+from wg_async import wg_async, wg_await
 from bootcamp.BootCampEvents import g_bootcampEvents
 from gui.impl.lobby.account_completion.common import errors
 from gui.platform.base.settings import CONTENT_WAITING
 from gui.platform.base.statuses.constants import StatusTypes
 from gui.shared.event_dispatcher import showSteamAddEmailOverlay, showSteamConfirmEmailOverlay, showDemoAddCredentialsOverlay, showDemoErrorOverlay, showDemoConfirmCredentialsOverlay, showDemoCompleteOverlay, showDemoWaitingForTokenOverlayViewOverlay
-from gui.shared.lock_overlays import lockNotificationManager
 from helpers import dependency
 from skeletons.gui.game_control import IOverlayController, IBootcampController, ISteamCompletionController, IDemoAccCompletionController
 from skeletons.gui.login_manager import ILoginManager
@@ -48,28 +47,21 @@ class SteamCompletionController(ISteamCompletionController):
     def isSteamAccount(self):
         return self._loginManager.isWgcSteam
 
-    def onLobbyStarted(self, ctx):
-        lockNotificationManager(lock=True)
-
     def __onExitBootcamp(self, *args, **kwargs):
         self._bootcampExit = True
 
-    @async
+    @wg_async
     def __onSpaceCreate(self, *args, **kwargs):
         if not self._bootcampExit or self._bootcampController.isInBootcamp() or self._overlayController.isActive or not self.isSteamAccount:
-            lockNotificationManager(lock=False, releasePostponed=True)
             return
         self._bootcampExit = False
-        status = yield await(self._wgnpSteamAccCtrl.getEmailStatus(waitingID=CONTENT_WAITING))
+        status = yield wg_await(self._wgnpSteamAccCtrl.getEmailStatus(waitingID=CONTENT_WAITING))
         if self._overlayDestroyed or status.isUndefined or not self._hangarSpace.spaceInited:
-            lockNotificationManager(lock=False, releasePostponed=True)
             return
         if status.typeIs(StatusTypes.ADD_NEEDED):
             showSteamAddEmailOverlay()
-            lockNotificationManager(lock=False, releasePostponed=True, fireReleased=False)
         elif status.typeIs(StatusTypes.ADDED):
             showSteamConfirmEmailOverlay(email=status.email)
-        lockNotificationManager(lock=False, releasePostponed=True)
 
 
 class DemoAccCompletionController(IDemoAccCompletionController):
@@ -81,6 +73,7 @@ class DemoAccCompletionController(IDemoAccCompletionController):
     def __init__(self):
         super(DemoAccCompletionController, self).__init__()
         self._isDemoAccount = False
+        self._isDemoAccountOnce = False
         self._controllerDestroyed = False
 
     def init(self):
@@ -92,9 +85,17 @@ class DemoAccCompletionController(IDemoAccCompletionController):
         self._hangarSpace.onSpaceCreate -= self._onSpaceCreated
         self._controllerDestroyed = True
 
+    def onDisconnected(self):
+        self._isDemoAccount = False
+        self._isDemoAccountOnce = False
+
     @property
     def isDemoAccount(self):
         return self._isDemoAccount
+
+    @property
+    def isDemoAccountOnce(self):
+        return self._isDemoAccountOnce
 
     @property
     def isInDemoAccRegistration(self):
@@ -110,9 +111,9 @@ class DemoAccCompletionController(IDemoAccCompletionController):
         if self._hangarSpace.spaceInited:
             self._showDemoAccOverlay()
 
-    @async
+    @wg_async
     def updateOverlayState(self, waitingID=None, onComplete=None):
-        status = yield await(self._wgnpDemoAccCtrl.getCredentialsStatus(waitingID))
+        status = yield wg_await(self._wgnpDemoAccCtrl.getCredentialsStatus(waitingID))
         if self._controllerDestroyed or not self._hangarSpace.spaceInited:
             return
         if status.typeIs(StatusTypes.ADD_NEEDED):
@@ -136,12 +137,13 @@ class DemoAccCompletionController(IDemoAccCompletionController):
         if self._bootcampCtrl.isInBootcamp() and self.isInDemoAccRegistration:
             self._showDemoAccOverlay()
 
-    @async
+    @wg_async
     def _showDemoAccOverlay(self):
         if self._overlayController.isActive:
             return
-        yield await(self.updateOverlayState(waitingID=CONTENT_WAITING))
+        yield wg_await(self.updateOverlayState(waitingID=CONTENT_WAITING))
 
     def _onClientUpdate(self, diff, _):
         if constants.DEMO_ACCOUNT_ATTR in diff:
             self._isDemoAccount = bool(diff.get(constants.DEMO_ACCOUNT_ATTR))
+            self._isDemoAccountOnce = self._isDemoAccountOnce or self._isDemoAccount

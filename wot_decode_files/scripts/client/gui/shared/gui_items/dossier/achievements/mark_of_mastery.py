@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/dossier/achievements/mark_of_mastery.py
 from helpers import i18n
 from abstract import ClassProgressAchievement
@@ -42,10 +42,10 @@ class MarkOfMasteryAchievement(ClassProgressAchievement):
     def setCompDescr(self, compDescr):
         self.__compDescr = compDescr
 
-    def getIconName(self):
+    def _getUserNameCtx(self):
+        return {'name': i18n.makeString('#achievements:achievement/master%d' % (self._value or self.MIN_LVL))}
+
+    def _getIconName(self):
         if self.__prevMarkOfMastery < self._value:
             return 'markOfMastery%drecord' % (self._value or self.MIN_LVL)
         return 'markOfMastery%d' % (self._value or self.MIN_LVL)
-
-    def _getUserNameCtx(self):
-        return {'name': i18n.makeString('#achievements:achievement/master%d' % (self._value or self.MIN_LVL))}

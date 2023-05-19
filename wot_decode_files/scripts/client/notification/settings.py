@@ -1,9 +1,18 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/notification/settings.py
+import logging
+from collections import namedtuple
+from gui.impl import backport
+from gui.impl.gen import R
+from shared_utils import ScalarTypes
+log = logging.getLogger(__name__)
 LIST_SCROLL_STEP_FACTOR = 10
+DEF_ICON_NAME = '{0:>s}_1'
 DEF_ICON_PATH = '../maps/icons/library/{0:>s}-1.png'
+NotificationData = namedtuple('NotificationData', ('entityID', 'savedData', 'priorityLevel',
+                                                   'entity'))
 
 class NOTIFICATION_STATE(object):
     POPUPS = 0
@@ -24,22 +33,19 @@ class NOTIFICATION_TYPE(object):
     CLAN_APP = 10
     PROGRESSIVE_REWARD = 11
     MISSING_EVENTS = 12
-    CHOOSING_DEVICES = 13
-    RECRUIT_REMINDER = 14
-    EMAIL_CONFIRMATION_REMINDER = 15
-    PSACOIN_REMINDER = 16
-    GIFT_SYSTEM_OPERATION = 17
-    NEW_YEAR_SPECIAL_LOOTBOXES = 18
-    LUNAR_NY_ENVELOPES_RECEIVED = 19
-    LUNAR_NY_NEW_ENVELOPES_RECEIVED = 20
-    LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE = 21
-    RANGE = (
-     MESSAGE, INVITE, FRIENDSHIP_RQ, WGNC_POP_UP, CLAN_INVITES, CLAN_APPS, CLAN_APP_ACTION, CLAN_INVITE_ACTION,
-     CLAN_INVITE, CLAN_APP, PROGRESSIVE_REWARD, MISSING_EVENTS, CHOOSING_DEVICES, RECRUIT_REMINDER,
-     EMAIL_CONFIRMATION_REMINDER, LUNAR_NY_ENVELOPES_RECEIVED, LUNAR_NY_NEW_ENVELOPES_RECEIVED,
-     LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE, PSACOIN_REMINDER, GIFT_SYSTEM_OPERATION, NEW_YEAR_SPECIAL_LOOTBOXES)
+    RECRUIT_REMINDER = 13
+    EMAIL_CONFIRMATION_REMINDER = 14
+    BATTLE_PASS_SWITCH_CHAPTER_REMINDER = 15
+    SENIORITY_AWARDS_TOKENS = 16
+    SENIORITY_AWARDS_QUEST = 17
+    RESOURCE_WELL_START = 18
+    AUCTION_STAGE_START = 19
+    AUCTION_STAGE_FINISH = 20
+    WINBACK_SELECTABLE_REWARD_AVAILABLE = 21
+    RANGE = None
 
 
+NOTIFICATION_TYPE.RANGE = frozenset(v for k, v in NOTIFICATION_TYPE.__dict__.items() if not k.startswith('_') and isinstance(v, ScalarTypes) and v != NOTIFICATION_TYPE.UNDEFINED)
 ITEMS_MAX_LENGTHS = {NOTIFICATION_TYPE.MESSAGE: 250, 
    NOTIFICATION_TYPE.INVITE: 100, 
    NOTIFICATION_TYPE.FRIENDSHIP_RQ: 100, 
@@ -52,29 +58,29 @@ ITEMS_MAX_LENGTHS = {NOTIFICATION_TYPE.MESSAGE: 250,
    NOTIFICATION_TYPE.CLAN_APP: 500, 
    NOTIFICATION_TYPE.PROGRESSIVE_REWARD: 1, 
    NOTIFICATION_TYPE.MISSING_EVENTS: 1, 
-   NOTIFICATION_TYPE.CHOOSING_DEVICES: 5, 
    NOTIFICATION_TYPE.RECRUIT_REMINDER: 1, 
    NOTIFICATION_TYPE.EMAIL_CONFIRMATION_REMINDER: 1, 
-   NOTIFICATION_TYPE.PSACOIN_REMINDER: 1, 
-   NOTIFICATION_TYPE.GIFT_SYSTEM_OPERATION: 100, 
-   NOTIFICATION_TYPE.NEW_YEAR_SPECIAL_LOOTBOXES: 1, 
-   NOTIFICATION_TYPE.LUNAR_NY_ENVELOPES_RECEIVED: 1, 
-   NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED: 1, 
-   NOTIFICATION_TYPE.LUNAR_NY_NEW_ENVELOPES_RECEIVED_SIMPLE: 100}
+   NOTIFICATION_TYPE.BATTLE_PASS_SWITCH_CHAPTER_REMINDER: 1, 
+   NOTIFICATION_TYPE.RESOURCE_WELL_START: 1, 
+   NOTIFICATION_TYPE.AUCTION_STAGE_START: 1, 
+   NOTIFICATION_TYPE.AUCTION_STAGE_FINISH: 1, 
+   NOTIFICATION_TYPE.SENIORITY_AWARDS_TOKENS: 1, 
+   NOTIFICATION_TYPE.SENIORITY_AWARDS_QUEST: 1, 
+   NOTIFICATION_TYPE.WINBACK_SELECTABLE_REWARD_AVAILABLE: 1}
 
 class NOTIFICATION_BUTTON_STATE(object):
     HIDDEN = 0
     VISIBLE = 1
     ENABLED = 2
-    WARNING = 4
     DEFAULT = VISIBLE | ENABLED
 
 
 def makePathToIcon(iconName):
-    result = ''
-    if iconName:
-        if iconName.startswith('img://'):
-            result = iconName
-        else:
-            result = DEF_ICON_PATH.format(iconName)
-    return result
+    if not iconName:
+        return ''
+    iconRes = R.images.gui.maps.icons.library.dyn(DEF_ICON_NAME.format(iconName))
+    if not iconRes.exists():
+        resIcon = DEF_ICON_PATH.format(iconName)
+        log.warning('Deprecated format, iconName %s-1.png does not match with file name %s', iconName, resIcon)
+        return resIcon
+    return backport.image(iconRes())

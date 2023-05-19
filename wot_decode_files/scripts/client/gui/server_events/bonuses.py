@@ -1,28 +1,26 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/bonuses.py
-import copy, logging, typing
+import copy, logging
 from collections import namedtuple
 from functools import partial
 from operator import itemgetter
-import BigWorld
-from adisp import process
+import typing, BigWorld
+from adisp import adisp_process
+from battle_pass_common import BATTLE_PASS_OFFER_TOKEN_PREFIX, BATTLE_PASS_Q_CHAIN_BONUS_NAME, BATTLE_PASS_Q_CHAIN_TOKEN_PREFIX, BATTLE_PASS_SELECT_BONUS_NAME, BATTLE_PASS_STYLE_PROGRESS_BONUS_NAME, BATTLE_PASS_TOKEN_3D_STYLE, BATTLE_PASS_TOKEN_PREFIX
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import getFragmentType
-from constants import EVENT_TYPE as _ET, DOSSIER_TYPE, LOOTBOX_TOKEN_PREFIX, PREMIUM_ENTITLEMENTS, CURRENCY_TOKEN_PREFIX, RESOURCE_TOKEN_PREFIX, RentType
-from debug_utils import LOG_ERROR, LOG_CURRENT_EXCEPTION
+from constants import CURRENCY_TOKEN_PREFIX, DOSSIER_TYPE, EVENT_TYPE as _ET, LOOTBOX_TOKEN_PREFIX, PREMIUM_ENTITLEMENTS, RESOURCE_TOKEN_PREFIX, RentType, CUSTOMIZATION_PROGRESS_PREFIX, WoTPlusBonusType
+from comp7_common import COMP7_TOKEN_WEEKLY_REWARD_NAME
+from debug_utils import LOG_CURRENT_EXCEPTION, LOG_ERROR
 from dossiers2.custom.records import RECORD_DB_IDS
 from dossiers2.ui.achievements import ACHIEVEMENT_BLOCK, BADGES_BLOCK
 from external_strings_utils import strtobool
+from epic_constants import EPIC_OFFER_TOKEN_PREFIX, EPIC_SELECT_BONUS_NAME
 from frameworks.wulf import WindowLayer
 from gui import makeHtmlString
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
-from gui.app_loader.decorators import sf_lobby
-from gui.game_control.links import URLMacros
-from gui.gift_system.constants import NY_STAMP_CODE
-from gui.impl import backport
-from gui.impl.gen import R
 from gui.Scaleform.genConsts.BOOSTER_CONSTANTS import BOOSTER_CONSTANTS
 from gui.Scaleform.genConsts.TEXT_ALIGN import TEXT_ALIGN
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -31,43 +29,57 @@ from gui.Scaleform.locale.QUESTS import QUESTS
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
 from gui.Scaleform.locale.VEHICLE_CUSTOMIZATION import VEHICLE_CUSTOMIZATION
-from gui.Scaleform.settings import getBadgeIconPath, BADGES_ICONS, ICONS_SIZES
-from gui.server_events.awards_formatters import AWARDS_SIZES
+from gui.Scaleform.settings import BADGES_ICONS, ICONS_SIZES, getBadgeIconPath
+from gui.app_loader.decorators import sf_lobby
+from gui.collection.collections_constants import COLLECTION_ITEM_BONUS_NAME, COLLECTION_ITEM_PREFIX_NAME
+from gui.game_control.links import URLMacros
+from gui.impl import backport
+from gui.impl.backport import TooltipData
+from gui.impl.gen import R
+from gui.selectable_reward.constants import FEATURE_TO_PREFIX, SELECTABLE_BONUS_NAME
+from gui.server_events.awards_formatters import AWARDS_SIZES, BATTLE_BONUS_X5_TOKEN
+from gui.server_events.events_helpers import parseC11nProgressToken
 from gui.server_events.formatters import parseComplexToken
 from gui.server_events.recruit_helper import getRecruitInfo
 from gui.shared.formatters import text_styles
-from gui.shared.gui_items.crew_skin import localizedFullName
 from gui.shared.gui_items import GUI_ITEM_TYPE, GUI_ITEM_TYPE_INDICES
-from gui.shared.gui_items.Tankman import getRoleUserName, calculateRoleLevel, Tankman
+from gui.shared.gui_items.Tankman import Tankman, calculateRoleLevel, getRoleUserName
+from gui.shared.gui_items.Vehicle import getIconResourceName
+from gui.shared.gui_items.crew_book import orderCmp
+from gui.shared.gui_items.crew_skin import localizedFullName
 from gui.shared.gui_items.customization import CustomizationTooltipContext
 from gui.shared.gui_items.dossier.factories import getAchievementFactory
-from gui.shared.gui_items.crew_book import orderCmp
 from gui.shared.money import Currency, Money
 from gui.shared.utils.functions import makeTooltip, stripColorTagDescrTags
-from gui.shared.utils.requesters.blueprints_requester import getFragmentNationID, getVehicleCDForNational
-from gui.shared.utils.requesters.blueprints_requester import getVehicleCDForIntelligence
-from gui.shared.utils.requesters.blueprints_requester import makeNationalCD, makeIntelligenceCD
-from helpers import dependency
-from helpers import getLocalizedData, i18n
-from helpers import time_utils
+from gui.shared.utils.requesters.blueprints_requester import getFragmentNationID, getVehicleCDForIntelligence, getVehicleCDForNational, makeIntelligenceCD, makeNationalCD
+from helpers import dependency, getLocalizedData, i18n, time_utils
 from helpers.i18n import makeString as _ms
-from items import vehicles, tankmen
+from items import tankmen, vehicles
 from items.components import c11n_components as cc
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
-from items.components.ny_constants import CurrentNYConstants
 from items.tankmen import RECRUIT_TMAN_TOKEN_PREFIX
 from nations import NAMES
-from personal_missions import PM_BRANCH, PM_BRANCH_TO_FREE_TOKEN_NAME
 from optional_bonuses import BONUS_MERGERS
-from shared_utils import makeTupleByDict, CONST_CONTAINER, first
+from personal_missions import PM_BRANCH, PM_BRANCH_TO_FREE_TOKEN_NAME
+from shared_utils import CONST_CONTAINER, first, makeTupleByDict
+from skeletons.gui.battle_matters import IBattleMattersController
 from skeletons.gui.customization import ICustomizationService
+from skeletons.gui.game_control import ICollectionsSystemController
+from skeletons.gui.game_control import IWinbackController
 from skeletons.gui.goodies import IGoodiesCache
+from skeletons.gui.lobby_context import ILobbyContext
+from skeletons.gui.offers import IOffersDataProvider
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
-from gui.server_events.awards_formatters import BATTLE_BONUS_X5_TOKEN
-from battle_pass_common import BATTLE_PASS_OFFER_TOKEN_PREFIX, BATTLE_PASS_TOKEN_3D_STYLE, BATTLE_PASS_TOKEN_PREFIX, BATTLE_PASS_SELECT_BONUS_NAME, BATTLE_PASS_STYLE_PROGRESS_BONUS_NAME
-from lunar_ny.lunar_ny_constants import ENVELOPE_ENTITLEMENT_CODE_TO_TYPE
-from web.web_client_api.common import ItemPackEntry, ItemPackTypeGroup, getItemPackByGroupAndName, ItemPackType
+from web.web_client_api.common import ItemPackEntry, ItemPackType, ItemPackTypeGroup, getItemPackByGroupAndName
+if typing.TYPE_CHECKING:
+    from typing import List, Tuple, Dict, Callable, Optional
+    from gui.goodies.goodie_items import Booster, _PersonalDiscount, DemountKit, RecertificationForm, GoodieType
+    from items.components.crew_skins_components import CrewSkin
+    from account_helpers.offers.events_data import OfferEventData
+    from account_helpers.offers.offer_bonuses import ItemsOfferBonus
+    from gui.shared.gui_items.customization import C11nStyleProgressData
+    from gui.lobby_context import LobbyContext
 DEFAULT_CREW_LVL = 50
 _CUSTOMIZATIONS_SCALE = 44.0 / 128
 _ZERO_COMPENSATION_MONEY = Money(credits=0, gold=0)
@@ -122,11 +134,17 @@ class SimpleBonus(object):
     def isCompensation(self):
         return self._isCompensation
 
+    def isEqual(self, bonus):
+        return bonus.getName() == self._name and self._value == bonus.getValue()
+
     def getCompensationReason(self):
         return self._compensationReason
 
     def getContext(self):
         return self._ctx
+
+    def updateContext(self, ctx):
+        self._ctx.update(ctx)
 
     def formatValue(self):
         if self._value:
@@ -165,6 +183,12 @@ class SimpleBonus(object):
         return
 
     def getWrappedEpicBonusList(self):
+        return self._getWrappedBonusList()
+
+    def getWrappedEventLootBoxesBonusList(self):
+        return self._getWrappedBonusList()
+
+    def _getWrappedBonusList(self):
         awardItem = R.strings.tooltips.awardItem.dyn(self._name)
         return [
          {'id': 0, 
@@ -177,6 +201,36 @@ class SimpleBonus(object):
     def wrapToItemsPack(self, groupID=1):
         return []
 
+    def getIconBySize(self, size):
+        iconName = RES_ICONS.getBonusIcon(size, self.getName())
+        if iconName is None:
+            iconName = RES_ICONS.getBonusIcon(size, 'default')
+        return iconName
+
+    def getIconResource(self, size):
+        iconR = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(self.getName())
+        if iconR:
+            return iconR()
+        return R.images.gui.maps.icons.quests.bonuses.dyn(size).default()
+
+    def getIconLabel(self):
+        return text_styles.hightlight(('x{}').format(self.getValue()))
+
+    def hasIconFormat(self):
+        return False
+
+    def getLightViewModelData(self):
+        return (
+         self.getName(),)
+
+    def _format(self, styleSubset):
+        formattedValue = self.formatValue()
+        if self._name is not None and formattedValue is not None:
+            text = makeHtmlString(('html_templates:lobby/quests/{}').format(styleSubset), self._name, {'value': formattedValue})
+            if text != self._name:
+                return text
+        return formattedValue
+
     def __getCommonAwardsVOs(self, iconSize='small', align=TEXT_ALIGN.CENTER, withCounts=False):
         itemInfo = {'imgSource': self.getIconBySize(iconSize), 
            'label': self.getIconLabel(), 
@@ -188,26 +242,6 @@ class SimpleBonus(object):
             else:
                 itemInfo['count'] = 1
         return itemInfo
-
-    def getIconBySize(self, size):
-        iconName = RES_ICONS.getBonusIcon(size, self.getName())
-        if iconName is None:
-            iconName = RES_ICONS.getBonusIcon(size, 'default')
-        return iconName
-
-    def getIconLabel(self):
-        return text_styles.hightlight(('x{}').format(self.getValue()))
-
-    def hasIconFormat(self):
-        return False
-
-    def _format(self, styleSubset):
-        formattedValue = self.formatValue()
-        if self._name is not None and formattedValue is not None:
-            text = makeHtmlString(('html_templates:lobby/quests/{}').format(styleSubset), self._name, {'value': formattedValue})
-            if text != self._name:
-                return text
-        return formattedValue
 
 
 class IntegralBonus(SimpleBonus):
@@ -303,6 +337,16 @@ class CrystalBonus(IntegralBonus):
     def getIconLabel(self):
         return text_styles.crystal(self.getValue())
 
+    def getWrappedEpicBonusList(self):
+        awardItem = R.strings.tooltips.awardItem.dyn(self._name)
+        return [
+         {'id': 0, 
+            'type': ('custom/{}').format(self.getName()), 
+            'value': self.getValue(), 
+            'icon': {AWARDS_SIZES.SMALL: self.getIconBySize(AWARDS_SIZES.SMALL), AWARDS_SIZES.BIG: self.getIconBySize(AWARDS_SIZES.BIG)}, 
+            'name': backport.text(awardItem.header()) if awardItem else '', 
+            'description': backport.text(awardItem.body()) if awardItem else ''}]
+
 
 class EventCoinBonus(IntegralBonus):
 
@@ -340,6 +384,68 @@ class BpcoinBonus(IntegralBonus):
         return text_styles.bpcoin(self.getValue())
 
 
+class EquipCoinBonus(IntegralBonus):
+
+    def getIcon(self):
+        return backport.image(R.images.gui.maps.icons.library.equipCoin_1())
+
+    def getList(self):
+        res = [
+         {'value': self.formatValue(), 
+            'itemSource': self.getIcon(), 
+            'tooltip': TOOLTIPS.AWARDITEM_EQUIPCOIN}]
+        return res
+
+    def hasIconFormat(self):
+        return True
+
+    def getIconLabel(self):
+        return text_styles.equipCoin(self.getValue())
+
+
+class CurrenciesBonus(IntegralBonus):
+
+    def __init__(self, *args, **kwargs):
+        super(CurrenciesBonus, self).__init__(*args, **kwargs)
+        self._code = self._value.keys()[0]
+        self._value = self._value[self._code]['count']
+
+    def getList(self):
+        return [
+         {'value': self.formatValue(), 
+            'itemSource': self.getIconBySize(AWARDS_SIZES.SMALL), 
+            'tooltip': self.getTooltip()}]
+
+    def getCode(self):
+        return self._code
+
+    def getTooltip(self):
+        return _getItemTooltip(self._code)
+
+    def hasIconFormat(self):
+        return True
+
+    def getIconLabel(self):
+        return text_styles.hightlight(self.getValue())
+
+    def getIconBySize(self, size):
+        iconName = RES_ICONS.getBonusIcon(size, self._code)
+        if iconName is None:
+            return super(CurrenciesBonus, self).getIconBySize(size)
+        else:
+            return iconName
+
+    def getWrappedEpicBonusList(self):
+        awardItem = R.strings.tooltips.awardItem.dyn(self._code)
+        return [
+         {'id': 0, 
+            'type': ('custom/{}').format(self._code), 
+            'value': self.getValue(), 
+            'icon': {AWARDS_SIZES.SMALL: self.getIconBySize(AWARDS_SIZES.SMALL), AWARDS_SIZES.BIG: self.getIconBySize(AWARDS_SIZES.BIG)}, 
+            'name': backport.text(awardItem.header()) if awardItem else '', 
+            'description': backport.text(awardItem.body()) if awardItem else ''}]
+
+
 class FreeXpBonus(IntegralBonus):
 
     def getList(self):
@@ -363,8 +469,21 @@ class _PremiumDaysBonus(IntegralBonus):
     def getIconBySize(self, size):
         return RES_ICONS.getBonusIcon(size, ('{}_{}').format(self.getName(), self.getValue()))
 
+    def getIconResource(self, size):
+        iconR = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(('{}_{}').format(self.getName(), self.getValue()))
+        if iconR:
+            return iconR()
+        return R.invalid()
+
     def getIconLabel(self):
         return ''
+
+    def getWrappedEventLootBoxesBonusList(self):
+        result = self._getWrappedBonusList()
+        for bonus in result:
+            bonus['value'] = 1
+
+        return result
 
 
 class BasicPremiumDaysBonus(_PremiumDaysBonus):
@@ -412,10 +531,10 @@ class MetaBonus(SimpleBonus):
         else:
             NotImplementedError('Action "%s" handler is not implemented', action)
 
-    @process
+    @adisp_process
     def __handleBrowseAction(self, params):
         from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getClientControlledCloseCtx
-        from gui.shared.event_dispatcher import showBrowserOverlayView
+        from gui.server_events.events_dispatcher import showMetaBonusOverlayView
         url = params.get('url')
         if url is None:
             _logger.warning('Browse url is empty')
@@ -432,10 +551,10 @@ class MetaBonus(SimpleBonus):
                 if strtobool(params.get('isClientCloseControl', 'False')):
                     kwargs.update(getClientControlledCloseCtx())
                 if self.__isLobbyLoaded():
-                    showBrowserOverlayView(url, viewType, **kwargs)
+                    showMetaBonusOverlayView(url=url, alias=viewType, **kwargs)
                 else:
                     self.__app.loaderManager.onViewLoaded += self.__onViewLoaded
-                    self.__onLobbyLoadedCallbacks.append(partial(showBrowserOverlayView, url, viewType, **kwargs))
+                    self.__onLobbyLoadedCallbacks.append(partial(showMetaBonusOverlayView, url, viewType, **kwargs))
             elif target == 'external':
                 BigWorld.wg_openWebBrowser(url)
             else:
@@ -456,6 +575,7 @@ class MetaBonus(SimpleBonus):
 
 
 class TokensBonus(SimpleBonus):
+    TOKENS = 'tokens'
     _TOKEN_RECORD = namedtuple('_TOKEN_RECORD', [
      'id',
      'expires',
@@ -514,20 +634,22 @@ class BattleTokensBonus(TokensBonus):
         for tokenID, _ in self._value.iteritems():
             complexToken = parseComplexToken(tokenID)
             if complexToken.isDisplayable:
-                userName = self._getUserName(complexToken.styleID)
-                result.append(i18n.makeString(TOOLTIPS.MISSIONS_TOKEN_HEADER, name=userName))
+                result.append(self._getUserName(complexToken.styleID))
 
         if result:
             return (', ').join(result)
         else:
             return
 
-    def _getUserName(self, styleID):
-        webCache = self.eventsCache.prefetcher
-        return i18n.makeString(webCache.getTokenInfo(styleID))
+    def getWrappedEventLootBoxesBonusList(self):
+        return []
 
     def getWrappedEpicBonusList(self):
         return []
+
+    def _getUserName(self, styleID):
+        webCache = self.eventsCache.prefetcher
+        return i18n.makeString(webCache.getTokenInfo(styleID))
 
 
 class BattlePassTokensBonus(TokensBonus):
@@ -538,6 +660,21 @@ class BattlePassTokensBonus(TokensBonus):
 
     def isShowInGUI(self):
         return False
+
+
+class Comp7TokenWeeklyRewardBonus(TokensBonus):
+
+    def __init__(self, name, value, isCompensation=False, ctx=None):
+        super(Comp7TokenWeeklyRewardBonus, self).__init__(name, value, isCompensation, ctx)
+        self._name = COMP7_TOKEN_WEEKLY_REWARD_NAME
+
+    def isShowInGUI(self):
+        return True
+
+    def getTooltip(self):
+        header = TOOLTIPS.getAwardHeader(self.getName())
+        body = TOOLTIPS.getAwardBody(self.getName())
+        return makeTooltip(header or None, body or None)
 
 
 class BattlePassSelectTokensBonus(TokensBonus):
@@ -552,6 +689,112 @@ class BattlePassSelectTokensBonus(TokensBonus):
 
     def isShowInGUI(self):
         return True
+
+    def updateContext(self, ctx):
+        self._ctx.update(ctx)
+
+
+class EpicSelectTokensBonus(TokensBonus):
+    __offersProvider = dependency.descriptor(IOffersDataProvider)
+
+    def __init__(self, value, isCompensation=False, ctx=None):
+        super(EpicSelectTokensBonus, self).__init__(EPIC_SELECT_BONUS_NAME, value, isCompensation, ctx)
+
+    def getType(self):
+        tID = self._value.keys()[0]
+        bonusType = tID.split(':')[2]
+        return bonusType
+
+    def getIconBySize(self, size):
+        iconName = RES_ICONS.getBonusIcon(size, self.getType())
+        if iconName is None:
+            iconName = RES_ICONS.getBonusIcon(size, 'default')
+        return iconName
+
+    def isShowInGUI(self):
+        return True
+
+    def updateContext(self, ctx):
+        self._ctx.update(ctx)
+
+    def firstOfferCount(self):
+        offer = self.__getBonusOffer()
+        if not offer:
+            return 0
+        gift = offer.getFirstGift()
+        firstBonus = first(gift.bonuses)
+        return firstBonus.getGiftCount()
+
+    def isEqual(self, bonus):
+        if not isinstance(bonus, EpicSelectTokensBonus):
+            return False
+        return bonus.firstOfferCount() == self.firstOfferCount()
+
+    def isReceived(self):
+        offer = self.__getBonusOffer()
+        if not offer:
+            return True
+        return bool(self.__offersProvider.getReceivedGifts(offer.id))
+
+    def canClaim(self):
+        return self._ctx.get('canClaim', False)
+
+    def getWrappedEpicBonusList(self):
+        bonusList = []
+        offer = self.__getBonusOffer()
+        if offer is not None:
+            gift = first(offer.getAllGifts())
+            if gift:
+                firstBonus = first(gift.bonuses)
+                if firstBonus:
+                    bonusList = firstBonus.getWrappedEpicBonusList()
+                    for bonus in bonusList:
+                        bonus.update({'id': offer.giftToken, 
+                           'type': ('offer/{}').format(bonus['type']), 
+                           'icon': {AWARDS_SIZES.SMALL: self.getIconBySize(AWARDS_SIZES.SMALL), AWARDS_SIZES.BIG: self.getIconBySize(AWARDS_SIZES.BIG)}, 
+                           'isReceived': self._ctx.get('isReceived', False), 
+                           'name': backport.text(R.strings.tooltips.epicBattlesOffer.title.dyn(self.getType())())})
+
+        return bonusList
+
+    def getTooltip(self):
+        return TooltipData(tooltip=None, isSpecial=True, specialAlias=TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP, specialArgs=[
+         self.__getGiftTokenName()])
+
+    def __getGiftTokenName(self):
+        giftTokenName = first(self.getTokens().keys())
+        return giftTokenName
+
+    def __getBonusOffer(self):
+        tokenName = self.__getGiftTokenName().replace('_gift', '')
+        return self.__offersProvider.getOfferByToken(tokenName)
+
+
+class BattlePassQuestChainTokensBonus(TokensBonus):
+
+    def __init__(self, value, isCompensation=False, ctx=None):
+        super(BattlePassQuestChainTokensBonus, self).__init__(BATTLE_PASS_Q_CHAIN_BONUS_NAME, value, isCompensation, ctx)
+
+    @property
+    def tokenID(self):
+        return first(self._value.keys())
+
+    @property
+    def chapterID(self):
+        return int(self.__getTokenIDPart(2))
+
+    @property
+    def level(self):
+        return int(self.__getTokenIDPart(3))
+
+    def getType(self):
+        return self.__getTokenIDPart(1)
+
+    def isShowInGUI(self):
+        return True
+
+    def __getTokenIDPart(self, index):
+        return self.tokenID.split(':')[index]
 
 
 class BattlePassStyleProgressTokenBonus(TokensBonus):
@@ -603,7 +846,7 @@ class TmanTemplateTokensBonus(TokensBonus):
     def isShowInGUI(self):
         return True
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for tID, tokenRecord in self.getTokens().iteritems():
             recruitInfo = getRecruitInfo(tID)
@@ -627,6 +870,12 @@ class X5BattleTokensBonus(TokensBonus):
     def __init__(self, value, isCompensation=False, ctx=None):
         super(TokensBonus, self).__init__('tokens', value, isCompensation, ctx)
 
+    def _format(self, styleSubset):
+        return makeHtmlString(('html_templates:lobby/quests/bonuses').format(styleSubset), BATTLE_BONUS_X5_TOKEN, {'value': self.formatValue()})
+
+    def formatValue(self):
+        return self.getValue()[BATTLE_BONUS_X5_TOKEN]['count']
+
     def isShowInGUI(self):
         return True
 
@@ -634,23 +883,60 @@ class X5BattleTokensBonus(TokensBonus):
         return backport.text(R.strings.quests.bonusName.battle_bonus_x5())
 
     def getIconBySize(self, size):
-        bonusBattleTaskRes = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn('bonus_battle_task')
+        bonusBattleTaskRes = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(BATTLE_BONUS_X5_TOKEN)
         if bonusBattleTaskRes:
             return backport.image(bonusBattleTaskRes())
         else:
             return
 
+    def getIconResource(self, size):
+        bonusBattleTaskRes = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn('bonus_battle_task')
+        if bonusBattleTaskRes:
+            return bonusBattleTaskRes()
+        return R.invalid()
+
+    def getWrappedEventLootBoxesBonusList(self):
+        result = []
+        for _, tokenRecord in self.getTokens().iteritems():
+            result.append({'id': 0, 
+               'type': ItemPackType.CUSTOM_X5_BATTLE_BONUS, 
+               'value': tokenRecord.count, 
+               'icon': {AWARDS_SIZES.SMALL: self.getIconBySize(AWARDS_SIZES.SMALL), 
+                        AWARDS_SIZES.BIG: self.getIconBySize(AWARDS_SIZES.BIG)}, 
+               'name': self.getUserName(), 
+               'description': ''})
+
+        return result
+
+
+class SelectableBonus(TokensBonus):
+
+    def __init__(self, value, isCompensation=False, ctx=None):
+        super(SelectableBonus, self).__init__(SELECTABLE_BONUS_NAME, value, isCompensation, ctx)
+
+    def isShowInGUI(self):
+        return True
+
+    def getType(self):
+        return first(self._value.keys()).split(':')[2]
+
+    def formatValue(self):
+        if self._value:
+            return str(self._value)
+        else:
+            return
+
+    def getLightViewModelData(self):
+        return (
+         self.getType(),)
+
 
 class EntitlementBonus(SimpleBonus):
     _ENTITLEMENT_RECORD = namedtuple('_ENTITLEMENT_RECORD', ['id', 'amount'])
-    _FORMATTED_AMOUNT = (
-     'ranked_202201_access', NY_STAMP_CODE,
-     'giftsystem_3_simpleEnvelope', 'giftsystem_3_specialEnvelope', 'giftsystem_3_baseEnvelope')
+    _FORMATTED_AMOUNT = ('ranked_202203_access', )
 
     @staticmethod
     def hasConfiguredResources(entitlementID):
-        if entitlementID in ENVELOPE_ENTITLEMENT_CODE_TO_TYPE.keys():
-            return True
         if not R.strings.quests.bonusName.entitlements.dyn(entitlementID):
             return False
         for size in AWARDS_SIZES.ALL():
@@ -665,26 +951,21 @@ class EntitlementBonus(SimpleBonus):
 
     @classmethod
     def getUserName(cls, entitlementID):
-        if entitlementID in ENVELOPE_ENTITLEMENT_CODE_TO_TYPE.keys():
-            entitlementType = ENVELOPE_ENTITLEMENT_CODE_TO_TYPE[entitlementID].name
-            return backport.text(R.strings.lunar_ny.systemMessage.sendEnvelope.dyn(entitlementType)())
         if cls.hasConfiguredResources(entitlementID):
             return backport.text(R.strings.quests.bonusName.entitlements.dyn(entitlementID)())
         return ''
 
     @classmethod
     def getUserNameWithCount(cls, entitlementID, count):
-        result = ''
         if cls.hasConfiguredResources(entitlementID) and count > 0:
             if cls.isFormattedAmount(entitlementID):
                 res = R.strings.messenger.serviceChannelMessages.battleResults.quests.entitlements.fmtMultiplier()
                 formattedCountStr = backport.text(res, count=backport.getIntegralFormat(count)) if count > 1 else ''
-                result = text_styles.concatStylesToSingleLine(cls.getUserName(entitlementID), formattedCountStr)
             else:
                 countRes = R.strings.messenger.serviceChannelMessages.battleResults.quests.entitlements.multiplier()
                 formattedCountStr = backport.text(countRes, count=backport.getIntegralFormat(count))
-                result = text_styles.concatStylesToSingleLine(cls.getUserName(entitlementID), formattedCountStr)
-        return result
+            return text_styles.concatStylesToSingleLine(cls.getUserName(entitlementID), formattedCountStr)
+        return ''
 
     def isShowInGUI(self):
         value = self.getValue()
@@ -692,30 +973,23 @@ class EntitlementBonus(SimpleBonus):
 
     def getIconBySize(self, size):
         value = self.getValue()
-        entitlementID = value.id
-        if entitlementID in ENVELOPE_ENTITLEMENT_CODE_TO_TYPE.keys():
-            return backport.image(R.images.gui.maps.icons.lunar_ny.bonus.dyn(size).dyn(entitlementID)())
         if self.hasConfiguredResources(value.id):
             return backport.image(R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(value.id)())
         return ''
 
+    def getIconResource(self, size):
+        value = self.getValue()
+        if self.hasConfiguredResources(value.id):
+            return R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(value.id)()
+        return R.invalid()
+
     def getTooltip(self):
         return _getItemTooltip(self.getValue().id)
-
-    def getTooltipData(self):
-        entitlementCode = self.getValue().id
-        if entitlementCode == NY_STAMP_CODE:
-            return backport.createTooltipData(isSpecial=True, specialAlias=TOOLTIPS_CONSTANTS.NY_GIFT_STAMPS)
-        if entitlementCode in ENVELOPE_ENTITLEMENT_CODE_TO_TYPE.keys():
-            sArgs = [
-             TOOLTIPS_CONSTANTS.LUNAR_NY_ENVELOPE, entitlementCode]
-            return backport.createTooltipData(isSpecial=True, specialAlias=TOOLTIPS_CONSTANTS.WULF, specialArgs=sArgs)
-        return backport.createTooltipData(self.getTooltip())
 
     def getValue(self):
         return self._ENTITLEMENT_RECORD(*self._value)
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         value = self.getValue()
         descriptionRes = R.strings.tooltips.awardItem.dyn(value.id)
         return [
@@ -734,6 +1008,32 @@ class EntitlementBonus(SimpleBonus):
             return formattedValue
         else:
             return
+
+
+class CollectionEntitlementBonus(EntitlementBonus):
+    __collectionsSystem = dependency.descriptor(ICollectionsSystemController)
+
+    def __init__(self, name, value, isCompensation=False, ctx=None):
+        super(CollectionEntitlementBonus, self).__init__(name, value, isCompensation, ctx)
+        value = self.getValue()
+        _, _, collectionId, itemId = value.id.split('_')
+        self.__collectionId = int(collectionId)
+        self.__itemId = int(itemId)
+
+    def isShowInGUI(self):
+        return True
+
+    def getItem(self):
+        return self.__collectionsSystem.getCollection(self.__collectionId).items[self.__itemId]
+
+    def getType(self):
+        return self.getItem().type
+
+    def getCollectionId(self):
+        return self.__collectionId
+
+    def getItemId(self):
+        return self.__itemId
 
 
 def personalMissionsTokensFactory(name, value, isCompensation=False, ctx=None):
@@ -770,12 +1070,22 @@ def tokensFactory(name, value, isCompensation=False, ctx=None):
             result.append(BattlePassStyleProgressTokenBonus({tID: tValue}, isCompensation, ctx))
         elif tID.startswith(BATTLE_PASS_OFFER_TOKEN_PREFIX):
             result.append(BattlePassSelectTokensBonus({tID: tValue}, isCompensation, ctx))
+        elif tID.startswith(EPIC_OFFER_TOKEN_PREFIX):
+            result.append(EpicSelectTokensBonus({tID: tValue}, isCompensation, ctx))
+        elif _isSelectableBonusID(tID):
+            result.append(SelectableBonus({tID: tValue}, isCompensation, ctx))
+        elif tID.startswith(BATTLE_PASS_Q_CHAIN_TOKEN_PREFIX):
+            result.append(BattlePassQuestChainTokensBonus({tID: tValue}, isCompensation, ctx))
         elif tID.startswith(BATTLE_PASS_TOKEN_PREFIX):
             result.append(BattlePassTokensBonus(name, {tID: tValue}, isCompensation, ctx))
         elif tID.startswith(CURRENCY_TOKEN_PREFIX):
             createBonusFromTokens(result, CURRENCY_TOKEN_PREFIX, tID, tValue)
         elif tID.startswith(RESOURCE_TOKEN_PREFIX):
             result.append(ResourceBonus(name, {tID: tValue}, RESOURCE_TOKEN_PREFIX, isCompensation, ctx))
+        elif tID.startswith(CUSTOMIZATION_PROGRESS_PREFIX):
+            result.append(C11nProgressTokenBonus({tID: tValue}, isCompensation, ctx))
+        elif tID.startswith(COMP7_TOKEN_WEEKLY_REWARD_NAME):
+            result.append(Comp7TokenWeeklyRewardBonus(name, {tID: tValue}, isCompensation, ctx))
         else:
             result.append(BattleTokensBonus(name, {tID: tValue}, isCompensation, ctx))
 
@@ -783,7 +1093,14 @@ def tokensFactory(name, value, isCompensation=False, ctx=None):
 
 
 def entitlementsFactory(name, value, isCompensation=False, ctx=None):
-    return [ EntitlementBonus(name, (eID, eValue.get('count', 0)), isCompensation, ctx) for eID, eValue in value.iteritems() ]
+    result = []
+    for eID, eValue in value.iteritems():
+        if eID.startswith(COLLECTION_ITEM_PREFIX_NAME):
+            result.append(CollectionEntitlementBonus(COLLECTION_ITEM_BONUS_NAME, (eID, eValue.get('count', 0)), isCompensation, ctx))
+        else:
+            result.append(EntitlementBonus(name, (eID, eValue.get('count', 0)), isCompensation, ctx))
+
+    return result
 
 
 class FreeTokensBonus(TokensBonus):
@@ -831,6 +1148,31 @@ class CompletionTokensBonus(TokensBonus):
         return makeHtmlString('html_templates:lobby/quests/bonuses', self._name, {'value': self.formatValue()})
 
 
+class C11nProgressTokenBonus(TokensBonus):
+    BONUS_NAME = 'styleProgress'
+
+    def __init__(self, value, isCompensation=False, ctx=None):
+        super(C11nProgressTokenBonus, self).__init__(self.BONUS_NAME, value, isCompensation, ctx)
+        token = first(self.getTokens().values())
+        self.__tokenID = token.id
+        self.__progressData = parseC11nProgressToken(token)
+
+    def isShowInGUI(self):
+        return True
+
+    def getTokenID(self):
+        return self.__tokenID
+
+    def getStyleID(self):
+        return self.__progressData.styleID
+
+    def getBranchID(self):
+        return self.__progressData.branch
+
+    def getProgressLevel(self):
+        return self.__progressData.level
+
+
 class ItemsBonus(SimpleBonus):
 
     def getItems(self):
@@ -865,7 +1207,7 @@ class ItemsBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for item, count in self.getItems().iteritems():
             if item is not None and count:
@@ -893,6 +1235,10 @@ class ItemsBonus(SimpleBonus):
 
         return pack
 
+    def getLightViewModelData(self):
+        return (
+         first(self.getItems().iterkeys()).name,)
+
     def __getCommonAwardsVOs(self, item, count, iconSize='small', align=TEXT_ALIGN.RIGHT, withCounts=False):
         itemInfo = {'imgSource': item.getBonusIcon(iconSize), 
            'label': text_styles.stats(('x{}').format(count)), 
@@ -911,6 +1257,7 @@ class ItemsBonus(SimpleBonus):
 
 
 class GoodiesBonus(SimpleBonus):
+    GOODIES = 'goodies'
     goodiesCache = dependency.descriptor(IGoodiesCache)
 
     def getBoosters(self):
@@ -921,6 +1268,9 @@ class GoodiesBonus(SimpleBonus):
 
     def getDemountKits(self):
         return self._getGoodies(self.goodiesCache.getDemountKit)
+
+    def getRecertificationForms(self):
+        return self._getGoodies(self.goodiesCache.getRecertificationForm)
 
     def _getGoodies(self, goodieGetter):
         goodies = {}
@@ -949,7 +1299,7 @@ class GoodiesBonus(SimpleBonus):
 
     def getList(self):
         result = []
-        for booster, count in sorted(self.getBoosters().iteritems(), key=lambda (booster, count): booster.boosterType):
+        for booster, count in sorted(self.getBoosters().iteritems(), key=(lambda (booster, count): booster.boosterType)):
             if booster is not None:
                 result.append({'value': backport.getIntegralFormat(count), 
                    'tooltip': TOOLTIPS_CONSTANTS.BOOSTERS_BOOSTER_INFO, 
@@ -964,14 +1314,15 @@ class GoodiesBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for booster, count in self.getBoosters().iteritems():
             if booster is not None:
                 result.append({'id': booster.boosterID, 
                    'type': ('goodie/{}').format(booster.getTypeAsString()), 
                    'value': count, 
-                   'icon': {AWARDS_SIZES.SMALL: RES_ICONS.getBonusIcon(AWARDS_SIZES.SMALL, booster.boosterGuiType), AWARDS_SIZES.BIG: RES_ICONS.getBonusIcon(AWARDS_SIZES.BIG, booster.boosterGuiType)}, 
+                   'icon': {AWARDS_SIZES.SMALL: RES_ICONS.getBonusIcon(AWARDS_SIZES.SMALL, booster.getFullNameForResource()), 
+                            AWARDS_SIZES.BIG: RES_ICONS.getBonusIcon(AWARDS_SIZES.BIG, booster.getFullNameForResource())}, 
                    'name': booster.userName, 
                    'description': booster.getBonusDescription()})
 
@@ -984,13 +1335,36 @@ class GoodiesBonus(SimpleBonus):
                    'name': discount.userName, 
                    'description': discount.getBonusDescription()})
 
+        for form, count in self.getRecertificationForms().iteritems():
+            if form is not None:
+                result.append({'id': form.intCD, 
+                   'type': ('goodie/{}').format(form.itemTypeName), 
+                   'value': count, 
+                   'icon': {AWARDS_SIZES.SMALL: form.iconInfo, AWARDS_SIZES.BIG: form.bigIcon}, 
+                   'name': form.userName, 
+                   'description': form.shortDescription})
+
+        return result
+
+    def getWrappedEventLootBoxesBonusList(self):
+        result = []
+        for demountKit, count in self.getDemountKits().iteritems():
+            if demountKit is not None:
+                result.append({'id': demountKit.intCD, 
+                   'type': ('demountKit/{}').format(demountKit.demountKitGuiType), 
+                   'value': count, 
+                   'icon': {AWARDS_SIZES.SMALL: demountKit.getIcon(ICONS_SIZES.X48), AWARDS_SIZES.BIG: demountKit.getIcon(ICONS_SIZES.X80)}, 
+                   'name': demountKit.userName, 
+                   'description': demountKit.shortDescription})
+
+        result.extend(self._getWrappedBonusList())
         return result
 
     def formattedList(self):
         result = []
         for booster, count in self.getBoosters().iteritems():
             if booster is not None:
-                result.append(i18n.makeString('#quests:bonuses/boosters/name', name=booster.userName, quality=booster.qualityStr, count=count))
+                result.append(i18n.makeString('#quests:bonuses/boosters/name', name=booster.userName, count=count))
 
         for discount, count in self.getDiscounts().iteritems():
             if discount is not None:
@@ -998,6 +1372,9 @@ class GoodiesBonus(SimpleBonus):
 
         for demountKit, count in self.getDemountKits().iteritems():
             result.append(backport.text(R.strings.quests.bonuses.items.name(), name=demountKit.userName, count=count))
+
+        for recertificationForm, count in self.getRecertificationForms().iteritems():
+            result.append(backport.text(R.strings.quests.bonuses.items.name(), name=recertificationForm.userName, count=count))
 
         return result
 
@@ -1026,6 +1403,7 @@ class GoodiesBonus(SimpleBonus):
 
 
 class VehiclesBonus(SimpleBonus):
+    VEHICLES_BONUS = 'vehicles'
 
     @classmethod
     def isNonZeroCompensation(cls, vehInfo):
@@ -1066,7 +1444,7 @@ class VehiclesBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for item, vehInfo in self.getVehicles():
             icons = dict()
@@ -1198,6 +1576,9 @@ class VehiclesBonus(SimpleBonus):
                     return
                 if time <= time_utils.DAYS_IN_YEAR:
                     return int(time)
+                rentDaysLeft = time_utils.getDaysLeftDueDate(time)
+                if rentDaysLeft >= 0:
+                    return int(rentDaysLeft)
                 return
             return
 
@@ -1292,12 +1673,14 @@ class DossierBonus(SimpleBonus):
 
     def getBadges(self):
         result = []
+        badges = None
         for (block, record), _ in self.getRecords().iteritems():
             if _isBadge(block):
                 badgeID = int(record)
-                badge = self.itemsCache.items.getBadgeByID(badgeID)
-                if badge is not None:
-                    result.append(badge)
+                if badges is None:
+                    badges = self.itemsCache.items.getBadges()
+                if badgeID in badges:
+                    result.append(badges[badgeID])
 
         return result
 
@@ -1307,7 +1690,7 @@ class DossierBonus(SimpleBonus):
     def formattedList(self):
         return [ achievement.getUserName() for achievement in self.getAchievements() ]
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for block, record in self.getRecords().iterkeys():
             if block == 'singleAchievements':
@@ -1371,20 +1754,20 @@ class PersonalMissionDossierBonus(DossierBonus):
 
 class TankmenBonus(SimpleBonus):
     _TankmanInfoRecord = namedtuple('_TankmanInfoRecord', [
-     'nationID',
-     'role',
-     'vehicleTypeID',
-     'firstNameID',
-     'fnGroupID',
-     'lastNameID',
-     'lnGroupID',
-     'iconID',
-     'iGroupID',
-     'isPremium',
-     'roleLevel',
-     'freeXP',
-     'skills',
-     'isFemale',
+     'nationID', 
+     'role', 
+     'vehicleTypeID', 
+     'firstNameID', 
+     'fnGroupID', 
+     'lastNameID', 
+     'lnGroupID', 
+     'iconID', 
+     'iGroupID', 
+     'isPremium', 
+     'roleLevel', 
+     'freeXP', 
+     'skills', 
+     'isFemale', 
      'freeSkills'])
 
     def formatValue(self):
@@ -1445,6 +1828,21 @@ class TankmenBonus(SimpleBonus):
     def _makeTmanInfoByDescr(cls, td):
         return cls._TankmanInfoRecord(td.nationID, td.role, td.vehicleTypeID, td.firstNameID, -1, td.lastNameID, -1, td.iconID, -1, td.isPremium, td.roleLevel, td.freeXP, td.skills, td.isFemale, [])
 
+    @classmethod
+    def getTankmenDataForCrew(cls, vehCD, roleLevel):
+        vehicle = cls.itemsCache.items.getItemByCD(vehCD)
+        nation, vehicleTypeID = vehicle.typeDescr.id
+        result = {'nationID': nation, 
+           'vehicleTypeID': vehicleTypeID, 
+           'roleLevel': roleLevel, 
+           'freeXP': 0, 
+           'skills': []}
+        for field in cls._TankmanInfoRecord._fields:
+            if field not in result:
+                result[field] = None
+
+        return result
+
 
 class TankwomanBonus(TankmenBonus):
 
@@ -1500,7 +1898,7 @@ class CustomizationsBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for itemData in self.getCustomizations():
             itemType = itemData.get('custType')
@@ -1583,6 +1981,13 @@ class CustomizationsBonus(SimpleBonus):
             pack.append(ItemPackEntry(type=customization['type'], count=customization['value'], id=customization['id'], groupID=groupID))
 
         return pack
+
+    def hasAnyCustomCompensations(self):
+        for customizationItem in self._value:
+            if customizationItem.get('customCompensation'):
+                return True
+
+        return False
 
     def __getItemTypeStr(self, itemType):
         typeStr = itemType
@@ -1667,6 +2072,51 @@ class UniversalCrewbook(SimpleBonus):
         return first(bonusCls(options.get('name'), options.get('value')))
 
 
+class WoTPlusBonus(SimpleBonus):
+
+    def __init__(self, name):
+        super(WoTPlusBonus, self).__init__(name, None)
+        return
+
+
+class GoldBank(WoTPlusBonus):
+    _lobbyContext = dependency.descriptor(ILobbyContext)
+
+    def __init__(self):
+        super(GoldBank, self).__init__(WoTPlusBonusType.GOLD_BANK)
+
+    def getTooltip(self):
+        goldReserveCapacity = self._lobbyContext.getServerSettings().getRenewableSubMaxGoldReserveCapacity()
+        headerData, bodyData = getSimpleTooltipData(self._name)
+        header = i18n.makeString(headerData)
+        body = i18n.makeString(bodyData, goldReserveCapacity=goldReserveCapacity)
+        return makeTooltip(header, body)
+
+
+class IdleCrewXP(WoTPlusBonus):
+
+    def __init__(self):
+        super(IdleCrewXP, self).__init__(WoTPlusBonusType.IDLE_CREW_XP)
+
+
+class ExcludedMap(WoTPlusBonus):
+
+    def __init__(self):
+        super(ExcludedMap, self).__init__(WoTPlusBonusType.EXCLUDED_MAP)
+
+
+class FreeEquipmentDemounting(WoTPlusBonus):
+
+    def __init__(self):
+        super(FreeEquipmentDemounting, self).__init__(WoTPlusBonusType.FREE_EQUIPMENT_DEMOUNTING)
+
+
+class WoTPlusExclusiveVehicle(WoTPlusBonus):
+
+    def __init__(self):
+        super(WoTPlusExclusiveVehicle, self).__init__(WoTPlusBonusType.EXCLUSIVE_VEHICLE)
+
+
 def randomBlueprintBonusFactory(name, value, isCompensation=False, ctx=None):
     blueprintBonuses = []
     for params, fragmentCount in value.iteritems():
@@ -1717,9 +2167,6 @@ class RandomBlueprintBonus(SimpleBonus):
             return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.randomNational.header())
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.random.header())
 
-    def getAdditionalTooltipLabel(self):
-        return ''
-
     def getBlueprintSpecialAlias(self):
         if self._getBlueprintType() == BlueprintTypes.NATIONAL:
             return TOOLTIPS_CONSTANTS.BLUEPRINT_RANDOM_NATIONAL_INFO
@@ -1739,6 +2186,12 @@ class RandomBlueprintBonus(SimpleBonus):
     def getImage(self, size='big'):
         return RES_ICONS.getBlueprintFragment(size, self.getImageCategory())
 
+    def getIconResource(self, size):
+        iconR = R.images.gui.maps.icons.blueprints.fragment.dyn(size).dyn(self.getImageCategory())
+        if iconR:
+            return iconR()
+        return R.images.gui.maps.icons.quests.bonuses.dyn(size).default()
+
     def getCount(self):
         return self._value[1]
 
@@ -1747,6 +2200,15 @@ class RandomBlueprintBonus(SimpleBonus):
 
     def canPacked(self):
         return False
+
+    def getWrappedEventLootBoxesBonusList(self):
+        return [
+         {'id': 0, 
+            'type': ItemPackType.BLUEPRINT_ANY, 
+            'value': self.getCount(), 
+            'icon': {AWARDS_SIZES.SMALL: self.getImage(size='small'), AWARDS_SIZES.BIG: self.getImage()}, 
+            'name': self.getBlueprintTooltipName(), 
+            'description': backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.random.description())}]
 
     def _getFormattedMessage(self, styleSubset, formattedValue):
         return makeHtmlString(('html_templates:lobby/quests/{}').format(styleSubset), self._getHtmlTemplate(), {'value': formattedValue})
@@ -1765,12 +2227,6 @@ class RandomBlueprintBonus(SimpleBonus):
         if self._getBlueprintType() == BlueprintTypes.NATIONAL:
             return self._HTML_TEMPLATE_NATIONAL
         return self._HTML_TEMPLATE
-
-
-class BlueprintsIconsNames(CONST_CONTAINER):
-    FINAL_FRAGMENT = 'vehicle_complete'
-    UNIVERSAL_FRAGMENT = 'intelligence'
-    VEHICLE_FRAGMENT = 'vehicle'
 
 
 class VehicleBlueprintBonus(SimpleBonus):
@@ -1797,16 +2253,19 @@ class VehicleBlueprintBonus(SimpleBonus):
     def formatBlueprintValue(self):
         return text_styles.neutral(self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName)
 
-    def formatUserNameValue(self):
-        return ''
-
     def getImageCategory(self):
         if self._isFinalFragment():
-            return BlueprintsIconsNames.FINAL_FRAGMENT
-        return BlueprintsIconsNames.VEHICLE_FRAGMENT
+            return 'vehicle_complete'
+        return 'vehicle'
 
     def getImage(self, size='big'):
         return RES_ICONS.getBlueprintFragment(size, self.getImageCategory())
+
+    def getIconResource(self, size):
+        iconR = R.images.gui.maps.icons.blueprints.fragment.dyn(size).dyn(self.getImageCategory())
+        if iconR:
+            return iconR()
+        return R.images.gui.maps.icons.quests.bonuses.dyn(size).default()
 
     def getCount(self):
         return self._value[1]
@@ -1814,7 +2273,16 @@ class VehicleBlueprintBonus(SimpleBonus):
     def getTooltip(self):
         return ''
 
-    def getWrappedEpicBonusList(self):
+    def getWrappedEventLootBoxesBonusList(self):
+        return [
+         {'id': self.getBlueprintSpecialArgs(), 
+            'type': self._getWrapperType(), 
+            'value': self.getCount(), 
+            'icon': {AWARDS_SIZES.SMALL: self.getImage(size='small'), AWARDS_SIZES.BIG: self.getImage()}, 
+            'name': self.getBlueprintTooltipName(), 
+            'description': self._getDescription()}]
+
+    def _getWrappedBonusList(self):
         result = []
         result.append({'id': self._getFragmentCD(), 
            'type': ('custom/{}').format(self.getName()), 
@@ -1830,9 +2298,6 @@ class VehicleBlueprintBonus(SimpleBonus):
     def getBlueprintTooltipName(self):
         return backport.text(R.strings.tooltips.blueprint.VehicleBlueprintTooltip.header())
 
-    def getAdditionalTooltipLabel(self):
-        return backport.text(R.strings.quests.bonusName.blueprints.vehicle(), vehicleName=self.__getVehicleName())
-
     def _getDescription(self):
         return backport.text(R.strings.tooltips.blueprint.VehicleBlueprintTooltip.descriptionFirst())
 
@@ -1840,7 +2305,8 @@ class VehicleBlueprintBonus(SimpleBonus):
         return self._value[0]
 
     def _getFormattedMessage(self, styleSubset, formattedValue):
-        return makeHtmlString(('html_templates:lobby/quests/{}').format(styleSubset), self._HTML_TEMPLATE, {'vehicleName': self.__getVehicleName(), 'value': formattedValue})
+        vehicleName = self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName
+        return makeHtmlString(('html_templates:lobby/quests/{}').format(styleSubset), self._HTML_TEMPLATE, {'vehicleName': vehicleName, 'value': formattedValue})
 
     def _format(self, styleSubset):
         formattedValue = str(self.getValue()[1])
@@ -1856,8 +2322,8 @@ class VehicleBlueprintBonus(SimpleBonus):
             return True
         return False
 
-    def __getVehicleName(self):
-        return self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName
+    def _getWrapperType(self):
+        return ItemPackType.BLUEPRINT
 
 
 class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
@@ -1870,7 +2336,7 @@ class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
         return int(makeIntelligenceCD(self._getFragmentCD()))
 
     def getImageCategory(self):
-        return BlueprintsIconsNames.UNIVERSAL_FRAGMENT
+        return 'intelligence'
 
     def getBlueprintSpecialAlias(self):
         return TOOLTIPS_CONSTANTS.BLUEPRINT_FRAGMENT_INFO
@@ -1878,20 +2344,11 @@ class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
     def formatBlueprintValue(self):
         return ''
 
-    def formatUserNameValue(self):
-        return self.getBlueprintTooltipName()
-
     def canPacked(self):
         return self._ctx.get('isPacked', False) and self.getCount() > 1
 
     def getBlueprintTooltipName(self):
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.intelFragment())
-
-    def getEpicAwardLabel(self):
-        return backport.text(R.strings.ny.reward.label.blueprint.universal(), count=self.getCount())
-
-    def getAdditionalTooltipLabel(self):
-        return backport.text(R.strings.quests.bonusName.blueprints.universal())
 
     def _getDescription(self):
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.intelDescription())
@@ -1901,6 +2358,9 @@ class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
 
     def _isFinalFragment(self):
         return False
+
+    def _getWrapperType(self):
+        return ItemPackType.BLUEPRINT_INTELEGENCE_DATA
 
 
 class NationalBlueprintBonus(VehicleBlueprintBonus):
@@ -1919,9 +2379,6 @@ class NationalBlueprintBonus(VehicleBlueprintBonus):
     def getBlueprintSpecialAlias(self):
         return TOOLTIPS_CONSTANTS.BLUEPRINT_FRAGMENT_INFO
 
-    def formatUserNameValue(self):
-        return self.getBlueprintTooltipName()
-
     def formatBlueprintValue(self):
         return ''
 
@@ -1931,11 +2388,9 @@ class NationalBlueprintBonus(VehicleBlueprintBonus):
     def getBlueprintTooltipName(self):
         return i18n.makeString(TOOLTIPS.BLUEPRINT_BLUEPRINTFRAGMENTTOOLTIP_NATIONALFRAGMENT)
 
-    def getEpicAwardLabel(self):
-        return backport.text(R.strings.ny.reward.label.blueprint.national(), count=self.getCount())
-
-    def getAdditionalTooltipLabel(self):
-        return backport.text(R.strings.quests.bonusName.blueprints.nation(), nationName=self._localizedNationName())
+    def getLightViewModelData(self):
+        return (
+         self.getName() + '_' + self.getImageCategory(),)
 
     def _getDescription(self):
         return i18n.makeString(TOOLTIPS.BLUEPRINT_BLUEPRINTFRAGMENTTOOLTIP_NATIONALDESCRIPTION, nation=self._localizedNationName())
@@ -1952,6 +2407,9 @@ class NationalBlueprintBonus(VehicleBlueprintBonus):
 
     def __getNationID(self):
         return getFragmentNationID(self._getFragmentCD())
+
+    def _getWrapperType(self):
+        return ItemPackType.BLUEPRINT_NATIONAL
 
 
 class CrewSkinsBonus(SimpleBonus):
@@ -2003,7 +2461,7 @@ class CrewSkinsBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for item, count, _, _ in self.getItems():
             if item is not None:
@@ -2056,7 +2514,7 @@ class CrewBooksBonus(SimpleBonus):
                      crewBookItem,
                      count))
 
-            return sorted(result, lambda x, y: orderCmp(x[0], y[0]))
+            return sorted(result, (lambda x, y: orderCmp(x[0], y[0])))
 
     def format(self):
         return (', ').join(self.formattedList())
@@ -2068,14 +2526,14 @@ class CrewBooksBonus(SimpleBonus):
 
         return result
 
-    def getWrappedEpicBonusList(self):
+    def _getWrappedBonusList(self):
         result = []
         for item, count in self.getItems():
             if item is not None:
                 result.append({'id': item.intCD, 
-                   'type': ('item/{}').format(item.itemTypeName), 
+                   'type': ('crew_book/{}').format(item.getBookType()), 
                    'value': count, 
-                   'icon': {AWARDS_SIZES.SMALL: item.getOldStyleIcon(AWARDS_SIZES.SMALL), AWARDS_SIZES.BIG: item.getOldStyleIcon(AWARDS_SIZES.BIG)}, 
+                   'icon': {AWARDS_SIZES.SMALL: item.getShopIcon(AWARDS_SIZES.SMALL), AWARDS_SIZES.BIG: item.getShopIcon(AWARDS_SIZES.BIG)}, 
                    'name': item.userName, 
                    'description': item.fullDescription})
 
@@ -2088,6 +2546,32 @@ class CrewBooksBonus(SimpleBonus):
             pack.append(ItemPackEntry(type=type_, count=count, id=crewbook.intCDO.intCompactDescr, groupID=groupID))
 
         return pack
+
+    def getLightViewModelData(self):
+        return (
+         self.getItems()[0][0].icon,)
+
+    def getWrappedEventLootBoxesBonusList(self):
+        result = []
+        icons = R.images.gui.maps.icons.crewBooks.books
+        for item, count in self.getItems():
+            if item is not None:
+                if item.isCommon():
+                    iconSmall = icons.big.brochure_random()
+                    iconBig = icons.s600x450.brochure_random()
+                else:
+                    resName = getIconResourceName(item.icon)
+                    iconSmall = icons.small.dyn(resName)()
+                    iconBig = icons.s600x450.dyn(resName)()
+                result.append({'id': item.intCD, 
+                   'type': ('crew_book/{}').format(item.getBookType()), 
+                   'value': count, 
+                   'icon': {AWARDS_SIZES.SMALL: backport.image(iconSmall), 
+                            AWARDS_SIZES.BIG: backport.image(iconBig)}, 
+                   'name': item.userName, 
+                   'description': item.fullDescription})
+
+        return result
 
     def __getCommonAwardsVOs(self, item, count, iconSize='small', align=TEXT_ALIGN.RIGHT, withCounts=False):
         itemInfo = {'imgSource': item.getBonusIcon(iconSize), 
@@ -2216,45 +2700,12 @@ class DogTagComponentBonus(SimpleBonus):
         return cls._DogTagComponentRecord(componentId=dogTagInfo['id'], unlock=dogTagInfo.get('unlock'), grade=dogTagInfo.get('grade', 0), value=dogTagInfo.get('value'))
 
 
-class CharmsBonus(IntegralBonus):
-    _CharmValues = namedtuple('_CharmValues', ['id', 'count'])
-
-    def getValue(self):
-        charmId = first(self._value.keys(), 0)
-        count = 0
-        if charmId > 0:
-            count = self._value[charmId].get('count', 0)
-        return self._CharmValues(charmId, count)
-
-    def getCount(self):
-        count = self.getValue().count
-        countStr = ''
-        if count > 1:
-            countStr = backport.getIntegralFormat(count)
-        return countStr
-
-    def getIconBySize(self, size):
-        return backport.image(R.images.gui.maps.icons.lunar_ny.charms.c_80.num(self.getValue().id)())
-
-    def formatValue(self):
-        charmId, count = self.getValue()
-        charmName = backport.text(R.strings.lunar_ny.charmName.num(charmId)())
-        countStr = ''
-        if count > 1:
-            countStr = backport.text(R.strings.lunar_ny.battleResults.count(), count=count)
-        return charmName + countStr
-
-    def getCharms(self):
-        res = [ (cID, d.get('count')) for cID, d in self._value.iteritems() ]
-        res.sort()
-        return res
-
-
 _BONUSES = {Currency.CREDITS: CreditsBonus, 
    Currency.GOLD: GoldBonus, 
    Currency.CRYSTAL: CrystalBonus, 
    Currency.EVENT_COIN: EventCoinBonus, 
    Currency.BPCOIN: BpcoinBonus, 
+   Currency.EQUIP_COIN: EquipCoinBonus, 
    'strBonus': SimpleBonus, 
    'groups': SimpleBonus, 
    'xp': IntegralBonus, 
@@ -2269,7 +2720,7 @@ _BONUSES = {Currency.CREDITS: CreditsBonus,
    'berths': CountableIntegralBonus, 
    PREMIUM_ENTITLEMENTS.BASIC: BasicPremiumDaysBonus, 
    PREMIUM_ENTITLEMENTS.PLUS: PlusPremiumDaysBonus, 
-   'vehicles': VehiclesBonus, 
+   VehiclesBonus.VEHICLES_BONUS: VehiclesBonus, 
    'meta': MetaBonus, 
    'tokens': {'default': tokensFactory, 
               _ET.BATTLE_QUEST: tokensFactory, 
@@ -2289,9 +2740,6 @@ _BONUSES = {Currency.CREDITS: CreditsBonus,
    'blueprints': blueprintBonusFactory, 
    'blueprintsAny': randomBlueprintBonusFactory, 
    'crewSkins': CrewSkinsBonusFactory(), 
-   CurrentNYConstants.TOYS: SimpleBonus, 
-   CurrentNYConstants.TOY_FRAGMENTS: SimpleBonus, 
-   CurrentNYConstants.FILLERS: CountableIntegralBonus, 
    'entitlements': entitlementsFactory, 
    'rankedDailyBattles': CountableIntegralBonus, 
    'rankedBonusBattles': CountableIntegralBonus, 
@@ -2299,7 +2747,12 @@ _BONUSES = {Currency.CREDITS: CreditsBonus,
    'dogTagComponents': DogTagComponentBonus, 
    'selectableCrewbook': UniversalCrewbook, 
    'randomCrewbook': UniversalCrewbook, 
-   'charms': CharmsBonus}
+   'currencies': CurrenciesBonus, 
+   WoTPlusBonusType.GOLD_BANK: GoldBank, 
+   WoTPlusBonusType.IDLE_CREW_XP: IdleCrewXP, 
+   WoTPlusBonusType.EXCLUDED_MAP: ExcludedMap, 
+   WoTPlusBonusType.FREE_EQUIPMENT_DEMOUNTING: FreeEquipmentDemounting, 
+   WoTPlusBonusType.EXCLUSIVE_VEHICLE: WoTPlusExclusiveVehicle}
 HIDDEN_BONUSES = (
  MetaBonus,)
 _BONUSES_PRIORITY = (
@@ -2520,28 +2973,6 @@ def getMergedBonusesFromDicts(bonusesList):
     return result
 
 
-def getLunarMergedBonusesFromDicts(bonusesList):
-    result = getMergedBonusesFromDicts(bonusesList)
-
-    def updateResult(item, custResult):
-        amount, custType = item['value'], item['custType']
-        item['value'] = 1
-        if custType in custResult:
-            custResult[custType].extend([item] * amount)
-        else:
-            custResult[custType] = [
-             item] * amount
-
-    if 'customizations' in result:
-        customizations = result.pop('customizations')
-        customizationsResult = {}
-        for item in customizations:
-            updateResult(item, customizationsResult)
-            result['lunarNYCustomizations'] = customizationsResult
-
-    return result
-
-
 def splitBonuses(bonuses):
     split = []
     for bonus in bonuses:
@@ -2560,8 +2991,6 @@ def getSplitBonusFunction(bonus):
     else:
         if isinstance(bonus, CustomizationsBonus):
             return splitCustomizationsBonus
-        if isinstance(bonus, DossierBonus):
-            return splitDossierBonus
         if isinstance(bonus, (IntegralBonus, GoldBonus)):
             return splitIntegralBonuses
         if isinstance(bonus, SimpleBonus):
@@ -2591,16 +3020,6 @@ def splitSimpleBonuses(bonus):
 
     else:
         split.append(bonus)
-    return split
-
-
-def splitDossierBonus(bonus):
-    split = []
-    value = bonus.getValue()
-    for dossierType, achivements in value.iteritems():
-        for key, data in achivements.iteritems():
-            split.append(DossierBonus(bonus.getName(), {dossierType: {key: data}}, bonus.isCompensation(), bonus.getContext()))
-
     return split
 
 
@@ -2634,3 +3053,16 @@ def getVehicleCrewReward(vehiclesReward):
         tmen = [ tman for tman in vehicleInfo.get('tankmen', []) ]
         tmenBonus = TankmenBonus('tankmen', tmen)
         return tmenBonus
+
+
+@dependency.replace_none_kwargs(bmController=IBattleMattersController, winbackController=IWinbackController)
+def isDynamicOfferToken(bonusID, bmController=None, winbackController=None):
+    return bonusID == bmController.getDelayedRewardToken() or winbackController.isWinbackOfferToken(bonusID)
+
+
+def _isSelectableBonusID(bonusID):
+    offers = dependency.instance(IOffersDataProvider)
+    isSelectableBonus = any(bonusID.startswith(prefix) for prefix in FEATURE_TO_PREFIX.itervalues()) or isDynamicOfferToken(bonusID)
+    if isSelectableBonus and offers.getOfferByToken(bonusID) is None:
+        _logger.debug('Offer token %s has no offer', bonusID)
+    return isSelectableBonus

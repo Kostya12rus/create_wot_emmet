@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/gift_system_controller.py
 import typing
 from bootcamp.BootCampEvents import g_bootcampEvents
@@ -44,7 +44,7 @@ class GiftSystemController(IGiftSystemController):
         g_bootcampEvents.onBootcampFinished += self.__onBootcampFinished
 
     def fini(self):
-        g_bootcampEvents.onBootcampFinished += self.__onBootcampFinished
+        g_bootcampEvents.onBootcampFinished -= self.__onBootcampFinished
         self.__historyRequester.destroy()
         self.__webStateRequester.destroy()
         self.__em.clear()
@@ -88,7 +88,7 @@ class GiftSystemController(IGiftSystemController):
 
     def __onBootcampFinished(self):
         for eventHub in self.__eventHubs.itervalues():
-            eventHub.onBootcampFinished()
+            eventHub.reset()
 
     def __onGiftSettingsChanged(self, diff):
         if Configs.GIFTS_CONFIG.value in diff:

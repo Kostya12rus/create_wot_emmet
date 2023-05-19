@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/view_helpers/UsersInfoHelper.py
 import logging
 from collections import defaultdict
@@ -103,13 +103,13 @@ class UsersInfoHelper(object):
         user = self.getContact(userDbID)
         return (user.hasValidName() and user.hasValidRating(), self.buildGuiUserData(user))
 
-    def getGuiUserName(self, userID, formatter=lambda v: v, scope=UserEntityScope.LOBBY):
+    def getGuiUserName(self, userID, formatter=(lambda v: v), scope=UserEntityScope.LOBBY):
         userName = self.getUserName(userID, scope=scope)
         if userName:
             return formatter(userName)
         return ''
 
-    def getGuiUserRating(self, userDbID, formatter=lambda v: v):
+    def getGuiUserRating(self, userDbID, formatter=(lambda v: v)):
         userRating = self.getUserRating(userDbID)
         if userRating != '0':
             return formatter(shared_fmts.getGlobalRatingFmt(userRating))
@@ -129,7 +129,7 @@ class UsersInfoHelper(object):
 
     def syncUsersInfo(self):
         if self._invalid['names']:
-            self._rqCtrl.requestNicknames(list(self._invalid['names']), lambda names, _: self.onUserNamesReceived(names))
+            self._rqCtrl.requestNicknames(list(self._invalid['names']), (lambda names, _: self.onUserNamesReceived(names)))
         if self._invalid['ratings']:
             self._rqCtrl.requestGlobalRatings(list(self._invalid['ratings']), self.onUserRatingsReceived)
         self._invalid.clear()

@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/demo_add_credentials_overlay_view.py
 import typing
 from helpers.time_utils import getTimeDeltaFromNow
@@ -17,11 +17,9 @@ from gui.shared.event_dispatcher import showDemoConfirmCredentialsOverlay, showD
 from helpers import dependency
 from skeletons.gui.game_control import IBootcampController
 from skeletons.gui.platform.wgnp_controllers import IWGNPDemoAccRequestController
-from uilogging.account_completion.constants import LogGroup, ViewClosingResult
-from uilogging.account_completion.loggers import AccountCompletionViewLogger
 rAccCompletion = R.strings.dialogs.accountCompletion
 if typing.TYPE_CHECKING:
-    from async import _Future
+    from wg_async import _Future
     from gui.platform.wgnp.demo_account.request import AddCredentialsParams
 
 class DemoAddCredentialsOverlayView(BaseCredentialsOverlayView):
@@ -31,7 +29,6 @@ class DemoAddCredentialsOverlayView(BaseCredentialsOverlayView):
     _IS_CLOSE_BUTTON_VISIBLE = False
     _wgnpDemoAccCtrl = dependency.descriptor(IWGNPDemoAccRequestController)
     _bootcampController = dependency.descriptor(IBootcampController)
-    _uiLogger = AccountCompletionViewLogger(LogGroup.CREDENTIALS)
 
     def createToolTipContent(self, event, contentID):
         if event.contentID == R.views.common.tooltip_window.backport_tooltip_content.BackportTooltipContent():
@@ -43,12 +40,9 @@ class DemoAddCredentialsOverlayView(BaseCredentialsOverlayView):
     def activate(self, *args, **kwargs):
         super(DemoAddCredentialsOverlayView, self).activate(*args, **kwargs)
         self._wgnpDemoAccCtrl.statusEvents.subscribe(StatusTypes.CONFIRMED, self.__confirmedHandler)
-        self._uiLogger.viewOpened(self.getParentWindow(), type=AccountCompletionType.UNDEFINED)
 
     def deactivate(self):
         self._wgnpDemoAccCtrl.statusEvents.unsubscribe(StatusTypes.CONFIRMED, self.__confirmedHandler)
-        pwd = self._password
-        self._uiLogger.viewClosed(was_eye_clicked=pwd.wasPasswordVisibilityChanged, is_eye_on=pwd.isPasswordVisible)
         super(DemoAddCredentialsOverlayView, self).deactivate()
 
     def _validateInput(self):
@@ -62,12 +56,10 @@ class DemoAddCredentialsOverlayView(BaseCredentialsOverlayView):
         return self._wgnpDemoAccCtrl.addCredentials(email, password)
 
     def _handleSuccess(self, response):
-        self._uiLogger.setParams(result=ViewClosingResult.SUCCESS)
         self._handleTokenWaiting(response)
 
     def _handleTokenWaiting(self, response):
         completionType = AccountCompletionType.SOI if response.isCreated else AccountCompletionType.DOI
-        self._uiLogger.setParams(type=completionType)
         status = self._wgnpDemoAccCtrl.getCurrentStatus()
         if status == StatusTypes.CONFIRMATION_SENT:
             showDemoWaitingForTokenOverlayViewOverlay(completionType=completionType)

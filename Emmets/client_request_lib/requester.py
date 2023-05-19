@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/client_request_lib/requester.py
 from client_request_lib.data_sources.staging import StagingDataAccessor
 from client_request_lib.data_sources.fake import FakeDataAccessor
@@ -33,7 +33,7 @@ def _in_bigworld(func):
     if callable(func):
 
         def inner(*args, **kwargs):
-            BigWorld.callback(0.0, lambda : func(*args, **kwargs))
+            BigWorld.callback(0.0, (lambda : func(*args, **kwargs)))
 
         return inner
     return func
@@ -43,7 +43,7 @@ def bigworld_callback_wrapper(func):
 
     def wrapped(*args, **kwargs):
         new_args = [ _in_bigworld(arg) for arg in args ]
-        new_kwargs = {k:_in_bigworld(v) for k, v in kwargs.items()}
+        new_kwargs = {k: _in_bigworld(v) for k, v in kwargs.items()}
         return func(*new_args, **new_kwargs)
 
     return wrapped
@@ -117,10 +117,19 @@ class SpaAccessor(BaseAccessor):
         return self._data_source.get_account_attribute_by_prefix(callback, attr_prefix, fields=fields)
 
 
-class FreyaAccessor(BaseAccessor):
+class AgateAccessor(BaseAccessor):
 
-    def freya_v1_fetch_product_list(self, callback, params, fields=None):
-        return self._data_source.freya_v1_fetch_product_list(callback, params, fields=fields)
+    def agate_v4_fetch_product_list_state(self, callback, params, fields=None):
+        return self._data_source.agate_v4_fetch_product_list_state(callback, params, fields=fields)
+
+    def agate_v5_get_user_subscriptions(self, callback, params, fields=None):
+        return self._data_source.agate_v5_get_user_subscriptions(callback, params, fields=fields)
+
+    def get_inventory_entitlements(self, callback, entitlement_codes):
+        return self._data_source.get_inventory_entitlements(callback, entitlement_codes)
+
+    def get_inventory_entitlements_v5(self, callback, entitlementsFilter):
+        return self._data_source.get_inventory_entitlements_v5(callback, entitlementsFilter)
 
 
 class ClansAccessor(BaseAccessor):
@@ -366,10 +375,10 @@ class GiftSystemAccessor(BaseAccessor):
         return self._data_source.post_gift_system_gift(callback, entitlementCode, receiverID, metaInfo)
 
 
-class AgateAccessor(BaseAccessor):
+class UILoggingAccessor(BaseAccessor):
 
-    def get_inventory_entitlements(self, callback, entitlement_codes):
-        return self._data_source.get_inventory_entitlements(callback, entitlement_codes)
+    def get_uilogging_session(self, callback):
+        return self._data_source.get_uilogging_session(callback)
 
 
 class Requester(object):
@@ -388,11 +397,11 @@ class Requester(object):
     wgelen = RequestDescriptor(WGElenAccessor)
     wgrms = RequestDescriptor(WgrmsAccessor)
     promo_screens = RequestDescriptor(PromoScreensAccessor)
-    freya = RequestDescriptor(FreyaAccessor)
+    agate = RequestDescriptor(AgateAccessor)
     craftmachine = RequestDescriptor(CrafmachineAccessor)
     mapbox = RequestDescriptor(MapboxAccessor)
     gifts = RequestDescriptor(GiftSystemAccessor)
-    agate = RequestDescriptor(AgateAccessor)
+    uilogging = RequestDescriptor(UILoggingAccessor)
 
     @classmethod
     def create_requester(cls, url_fetcher, config, client_lang=None, user_agent=None):

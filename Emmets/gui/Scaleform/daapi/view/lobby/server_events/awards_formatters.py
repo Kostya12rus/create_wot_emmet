@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/server_events/awards_formatters.py
 from gui.Scaleform.daapi.view.lobby.missions.awards_formatters import NewStyleBonusComposer
 from gui.impl import backport
@@ -11,6 +11,7 @@ from gui.server_events.awards_formatters import AWARDS_SIZES, AwardsPacker, Ques
 from gui.server_events.bonuses import BlueprintsBonusSubtypes
 from gui.battle_pass.battle_pass_bonuses_helper import BonusesHelper
 from gui.shared.gui_items.crew_skin import localizedFullName as localizeSkinName
+from nations import NAMES
 SIMPLE_BONUSES_MAX_ITEMS = 5
 _DISPLAYED_AWARDS_COUNT = 2
 _END_LINE_SEPARATOR = ','
@@ -122,16 +123,41 @@ class CrewSkinFormatter(OldStyleBonusFormatter):
 
 
 class BlueprintsFormatter(OldStyleBonusFormatter):
+    _ORDER = [
+     BlueprintsBonusSubtypes.FINAL_FRAGMENT,
+     BlueprintsBonusSubtypes.UNIVERSAL_FRAGMENT,
+     BlueprintsBonusSubtypes.NATION_FRAGMENT,
+     BlueprintsBonusSubtypes.VEHICLE_FRAGMENT,
+     BlueprintsBonusSubtypes.RANDOM_FRAGMENT,
+     BlueprintsBonusSubtypes.RANDOM_NATIONAL_FRAGMENT]
+
+    def __init__(self):
+        super(BlueprintsFormatter, self).__init__()
+        self._groupedFragments = {}
 
     @classmethod
     def getOrder(cls):
         return 5
 
     def accumulateBonuses(self, bonus):
-        result = [
-         self._formatBlueprint(bonus, bonus.getCount())]
-        if result:
-            self._result.append(formatters.packSimpleBonusesBlock(result))
+        blueprintType = bonus.getBlueprintName()
+        fragments = self._groupedFragments.get(blueprintType, [])
+        fragments.append(bonus)
+        self._groupedFragments[blueprintType] = fragments
+
+    def extractFormattedBonuses(self, addLineSeparator=False):
+        result = []
+        for fragmentType in self._ORDER:
+            fragments = self._groupedFragments.get(fragmentType)
+            if fragments:
+                fragmentLabels = []
+                for fragment in fragments:
+                    fragmentLabels.append(self._formatBlueprint(fragment, fragment.getCount()))
+
+                result.append(formatters.packLongBonusesBlock(fragmentLabels, linesLimit=len(NAMES)))
+
+        self._groupedFragments = {}
+        return result
 
     @classmethod
     def _formatBlueprint(cls, bonus, count):
@@ -141,7 +167,8 @@ class BlueprintsFormatter(OldStyleBonusFormatter):
         elif blueprintType == BlueprintsBonusSubtypes.UNIVERSAL_FRAGMENT:
             blueprintString = backport.text(R.strings.quests.bonusName.blueprints.universal())
         elif blueprintType == BlueprintsBonusSubtypes.NATION_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.nation.any())
+            nation = backport.text(R.strings.nations.dyn(bonus.getImageCategory(), '')())
+            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.nation(), nationName=nation)
         elif blueprintType == BlueprintsBonusSubtypes.VEHICLE_FRAGMENT:
             blueprintString = backport.text(R.strings.quests.bonusName.blueprints.vehicle.any())
         elif blueprintType == BlueprintsBonusSubtypes.RANDOM_FRAGMENT:
@@ -246,7 +273,7 @@ class OldStyleAwardsPacker(AwardsPacker):
 
         fmts = [
          self.__defaultFormatter, self.__newStyleFormatter]
-        fmts.extend(sorted(self.getFormatters().itervalues(), key=lambda f: f.getOrder()))
+        fmts.extend(sorted(self.getFormatters().itervalues(), key=(lambda f: f.getOrder())))
         for formatter in fmts:
             formattedBonuses.extend(formatter.extractFormattedBonuses(isCustomizationBonusExist))
 
@@ -277,7 +304,7 @@ class BattlePassTextBonusesPacker(AwardsPacker):
                 if formatter:
                     formatter.accumulateBonuses(b)
 
-        for formatter in sorted(self.getFormatters().itervalues(), key=lambda f: f.getOrder()):
+        for formatter in sorted(self.getFormatters().itervalues(), key=(lambda f: f.getOrder())):
             formattedBonuses.extend(formatter.extractFormattedBonuses())
 
         return formattedBonuses

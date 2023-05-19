@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/platform/wgnp/demo_account/statuses.py
 import typing
 from constants import EMAIL_CONFIRMATION_TOKEN_NAME
@@ -48,12 +48,13 @@ def createCredentialStatusFromResponse(response):
             statusType = StatusTypes.ADD_NEEDED
         elif state == 'email_sent':
             statusType, data = StatusTypes.ADDED, {'login': login}
-        elif state == 'spa_generic_conflict':
+        if state == 'spa_generic_conflict':
             data = None
-        elif state == 'spa_weak_password':
-            statusType, data = StatusTypes.ADD_NEEDED, {'error': 'spa_weak_password', 'login': login}
         else:
-            return createCredentialsConfirmationStatus()
+            if state == 'spa_weak_password':
+                statusType, data = StatusTypes.ADD_NEEDED, {'error': 'spa_weak_password', 'login': login}
+            else:
+                return createCredentialsConfirmationStatus()
     else:
         data = {'error': Codes(response.code)}
     return DemoAccCredentialsStatus(statusType=statusType, data=data)
@@ -70,10 +71,11 @@ def createNicknameStatusFromResponse(response):
                 statusType, data = StatusTypes.ADD_NEEDED, {'cost': cost}
             else:
                 statusType = StatusTypes.ADDED
-        elif 'incomplete_state' in errors:
-            statusType = StatusTypes.PROCESSING
         else:
-            data = response.getData()
+            if 'incomplete_state' in errors:
+                statusType = StatusTypes.PROCESSING
+            else:
+                data = response.getData()
     else:
         data = {'error': Codes(response.code)}
     return DemoAccNicknameStatus(statusType=statusType, data=data)

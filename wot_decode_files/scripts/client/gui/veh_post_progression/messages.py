@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/veh_post_progression/messages.py
 from gui import SystemMessages
 from gui.SystemMessages import SM_TYPE
@@ -8,7 +8,7 @@ from gui.impl import backport
 from gui.impl.gen import R
 from gui.shared.gui_items.processors import makeSuccess, makeError
 from gui.shared.notifications import NotificationPriorityLevel
-from gui.shared.formatters.ext_currency import formatExtendedCurrencyValue
+from gui.veh_post_progression.formatters.ext_currency import formatExtendedCurrencyValue
 from gui.veh_post_progression.models.ext_money import ExtendedCurrency
 from post_progression_common import ACTION_TYPES
 _SPENT_MESSAGES = {ExtendedCurrency.VEH_XP: R.strings.system_messages.vehiclePostProgression.experienceSpent(), 

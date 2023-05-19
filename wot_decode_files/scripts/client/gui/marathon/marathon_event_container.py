@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/marathon/marathon_event_container.py
 import typing
 from cache import cached_property
@@ -106,16 +106,16 @@ class MarathonEventContainer(object):
             self.quest = None
             return
         else:
-            sortedQuests = sorted(quests.itervalues(), key=lambda quest: quest.getStartTime())
+            sortedQuests = sorted(quests.itervalues(), key=(lambda quest: quest.getStartTime()))
             for q in quests:
                 if self.suspendPrefix in q:
                     self.suspendFlag = True
                     break
 
             try:
-                self.quest = sortedQuests[(currentStep * self.questsPerStep)]
+                self.quest = sortedQuests[currentStep * self.questsPerStep]
             except IndexError:
-                self.quest = sortedQuests[(-1)]
+                self.quest = sortedQuests[-1]
 
             return
 

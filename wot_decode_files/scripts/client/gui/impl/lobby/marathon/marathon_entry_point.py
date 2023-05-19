@@ -1,10 +1,10 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/marathon/marathon_entry_point.py
 import time
 from functools import partial
-from adisp import process
+from adisp import adisp_process
 from frameworks.wulf import ViewFlags, ViewSettings
 from gui.impl.gen import R
 from gui.impl.pub import ViewImpl
@@ -20,7 +20,7 @@ from skeletons.gui.server_events import IEventsCache
 from helpers.time_utils import ONE_DAY, ONE_HOUR
 from gui.impl import backport
 from gui.shared.missions.packers.events import BattleQuestUIDataPacker
-_MARATHON_PREFIX = 'lunar_marathon'
+_MARATHON_PREFIX = 'winter_marathon'
 _POST_TIME_LEFT_LIMIT = ONE_HOUR * 12
 _eventsCache = dependency.descriptor(IEventsCache)
 
@@ -134,7 +134,7 @@ class MarathonEntryPoint(ViewImpl):
             return
         self.__purchasePackage(marathonEvent)
 
-    @process
+    @adisp_process
     def __purchasePackage(self, marathonEvent):
         if marathonEvent.isRewardObtained():
             urlStyle = yield marathonEvent.getMarathonStyleUrlIgb()

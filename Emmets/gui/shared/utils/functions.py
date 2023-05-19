@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/functions.py
-import random, re, typing, ArenaType, async as future_async
-from adisp import async
+import random, re, typing, ArenaType, wg_async as future_async
+from adisp import adisp_async
 from gui import GUI_SETTINGS, SystemMessages
 from gui.Scaleform.locale.SYSTEM_MESSAGES import SYSTEM_MESSAGES
 from gui.impl import backport
@@ -92,8 +92,8 @@ def makeTooltip(header=None, body=None, note=None, attention=None):
     return res_str
 
 
-@async
-@future_async.async
+@adisp_async
+@future_async.wg_async
 def checkAmmoLevel(vehicles, callback):
     showAmmoWarning = False
     ammoWarningMessage = 'lowAmmoAutoLoad'
@@ -115,7 +115,7 @@ def checkAmmoLevel(vehicles, callback):
             builder.setMessagesAndButtons(R.strings.dialogs.dyn(msg), R.strings.dialogs.dyn(ammoWarningMessage))
             builder.setIcon(R.images.gui.maps.icons.tanksetup.warning.ammunition())
             builder.setPreset(DialogPresets.TROPHY_DEVICE_UPGRADE)
-            success = yield future_async.await(dialogs.showSimple(builder.buildInLobby()))
+            success = yield future_async.wg_await(dialogs.showSimple(builder.buildInLobby()))
             callback(success)
         else:
             callback(True)
@@ -165,7 +165,7 @@ def getArenaSubTypeName(arenaTypeID):
     return ArenaType.g_cache[arenaTypeID].gameplayName
 
 
-def getArenaGeomentryName(arenaTypeID):
+def getArenaGeometryName(arenaTypeID):
     return ArenaType.g_cache[arenaTypeID].geometryName
 
 
@@ -193,7 +193,7 @@ def getBattleSubTypeWinText(arenaTypeID, teamID):
 def getBattleSubTypeBaseNumber(arenaTypeID, team, baseID):
     teamBasePositions = ArenaType.g_cache[arenaTypeID].teamBasePositions
     if len(teamBasePositions) >= team:
-        points = teamBasePositions[(team - 1)]
+        points = teamBasePositions[team - 1]
         if len(points) > 1:
             return ' %d' % (sorted(points.keys()).index(baseID) + 1)
     points = ArenaType.g_cache[arenaTypeID].controlPoints
@@ -206,7 +206,7 @@ def getBattleSubTypeBaseNumber(arenaTypeID, team, baseID):
 def isBaseExists(arenaTypeID, team):
     teamBasePositions = ArenaType.g_cache[arenaTypeID].teamBasePositions
     if len(teamBasePositions) >= team:
-        points = teamBasePositions[(team - 1)]
+        points = teamBasePositions[team - 1]
         if points:
             return True
     return False
@@ -280,3 +280,8 @@ def getImageResourceFromPath(path):
         resource = resource.dyn(pathItem)
 
     return resource
+
+
+def capitalizeText(text):
+    t = text.decode()
+    return t[0].upper() + t[1:]

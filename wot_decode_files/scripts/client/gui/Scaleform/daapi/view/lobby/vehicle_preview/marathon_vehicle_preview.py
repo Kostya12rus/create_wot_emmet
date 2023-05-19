@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/marathon_vehicle_preview.py
 import typing
 from gui.Scaleform.daapi.view.lobby.vehicle_preview.vehicle_preview import VehiclePreview
@@ -22,12 +22,13 @@ class MarathonVehiclePreview(VehiclePreview):
         self.__backToHangar = ctx.get('backToHangar', False)
 
     def _onRegisterFlashComponent(self, viewPy, alias):
-        if alias == VEHPREVIEW_CONSTANTS.BUYING_PANEL_PY_ALIAS:
+        if alias == VEHPREVIEW_CONSTANTS.BOTTOM_PANEL_PY_ALIAS:
             if self._itemsPack is not None:
                 viewPy.setMarathonEvent(self.__marathonPrefix)
                 viewPy.setInfoTooltip()
                 items = tuple(item for item in self._itemsPack if item.type not in ItemPackTypeGroup.CREW)
-                viewPy.setPackItems(items, self._price, self._oldPrice, self._title)
+                viewPy.setPackItems(items, self._price, self._oldPrice)
+                viewPy.setPanelTextData(self._title)
         elif alias == VEHPREVIEW_CONSTANTS.CREW_LINKAGE:
             if self._itemsPack:
                 crewItems = tuple(item for item in self._itemsPack if item.type in ItemPackTypeGroup.CREW)

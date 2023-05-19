@@ -1,10 +1,10 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/common/name_presenter.py
 import logging, re, typing, BigWorld
 from Event import Event
-from async import async, await, AsyncScope, AsyncEvent, BrokenPromiseError
+from wg_async import wg_async, wg_await, AsyncScope, AsyncEvent, BrokenPromiseError
 from gui.impl.backport import text as loc
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.account_completion.common.field_name_model import FieldNameModel, NameStateEnum
@@ -30,10 +30,10 @@ class ValidationRequestWrapper(object):
         super(ValidationRequestWrapper, self).__init__()
         self._isDisposed = False
 
-    @async
+    @wg_async
     def process(self, name, callback):
         self._isDisposed = False
-        response = yield await(self._wgnpDemoAccCtrl.validateNickname(name))
+        response = yield wg_await(self._wgnpDemoAccCtrl.validateNickname(name))
         if not self._isDisposed:
             callback(response)
         ValidationRequestWrapper.utilize(self)
@@ -135,11 +135,11 @@ class RemoteNameValidator(object):
         self._request()
         return
 
-    @async
+    @wg_async
     def _request(self):
         self._clearCurrentRequest()
         self._requestWrapper = ValidationRequestWrapper.create()
-        yield await(self._requestWrapper.process(self._name, self._requestCompleted))
+        yield wg_await(self._requestWrapper.process(self._name, self._requestCompleted))
 
     def _clearCurrentRequest(self):
         if self._requestWrapper is not None:
@@ -214,7 +214,7 @@ class NamePresenter(BaseFieldPresenter):
         self.onChanged()
         return isValid
 
-    @async
+    @wg_async
     def remotelyValidate(self):
         event = AsyncEvent(scope=self._asyncScope)
 
@@ -225,7 +225,7 @@ class NamePresenter(BaseFieldPresenter):
         self._remoteValidator.onStatusChanged += statusChangeHandler
         self._remoteValidator.validateNow(self.value)
         try:
-            yield await(event.wait())
+            yield wg_await(event.wait())
         except BrokenPromiseError:
             _logger.debug('%s has been destroyed before got a response to remote nickname validation request', self)
 

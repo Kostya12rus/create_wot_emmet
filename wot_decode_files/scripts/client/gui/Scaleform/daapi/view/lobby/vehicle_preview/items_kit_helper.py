@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/items_kit_helper.py
 import itertools, typing
 from collections import Container, namedtuple
@@ -71,7 +71,7 @@ _UNCOUNTABLE_ITEM_TYPE = {
  ItemPackType.CUSTOM_EVENT_COIN,
  ItemPackType.CUSTOM_EVENT_COIN_EXTERNAL,
  ItemPackType.CUSTOM_BPCOIN}
-_PACK_ITEMS_SORT_ORDER = list(itertools.chain(ItemPackTypeGroup.DISCOUNT, ItemPackTypeGroup.CUSTOM, ItemPackTypeGroup.TOKEN, ItemPackTypeGroup.GOODIE, ItemPackTypeGroup.CREW, ItemPackTypeGroup.STYLE, ItemPackTypeGroup.CAMOUFLAGE, ItemPackTypeGroup.DECAL, ItemPackTypeGroup.MODIFICATION, ItemPackTypeGroup.PAINT, ItemPackTypeGroup.ITEM))
+_PACK_ITEMS_SORT_ORDER = list(itertools.chain(ItemPackTypeGroup.DISCOUNT, ItemPackTypeGroup.CUSTOM, ItemPackTypeGroup.TOKEN, ItemPackTypeGroup.GOODIE, ItemPackTypeGroup.CREW, ItemPackTypeGroup.STYLE, ItemPackTypeGroup.CAMOUFLAGE, ItemPackTypeGroup.DECAL, ItemPackTypeGroup.MODIFICATION, ItemPackTypeGroup.PAINT, ItemPackTypeGroup.ITEM, ItemPackTypeGroup.OFFER))
 _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE, 
    ItemPackType.ITEM_EQUIPMENT: TOOLTIPS_CONSTANTS.SHOP_MODULE, 
    ItemPackType.ITEM_SHELL: TOOLTIPS_CONSTANTS.SHOP_SHELL, 
@@ -79,6 +79,7 @@ _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE,
    ItemPackType.GOODIE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_CREW_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_FREE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
+   ItemPackType.GOODIE_FREE_AND_CREW_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.GOODIE_FRONTLINE_EXPERIENCE: TOOLTIPS_CONSTANTS.SHOP_BOOSTER, 
    ItemPackType.VEHICLE: TOOLTIPS_CONSTANTS.AWARD_VEHICLE, 
    ItemPackType.VEHICLE_MEDIUM: TOOLTIPS_CONSTANTS.AWARD_VEHICLE, 
@@ -120,11 +121,12 @@ _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE,
    ItemPackType.REFERRAL_AWARDS: TOOLTIPS_CONSTANTS.REFERRAL_AWARDS, 
    ItemPackType.DEMOUNT_KIT: TOOLTIPS_CONSTANTS.AWARD_DEMOUNT_KIT, 
    ItemPackType.CUSTOM_BATTLE_PASS_POINTS: TOOLTIPS_CONSTANTS.BATTLE_PASS_POINTS, 
-   ItemPackType.LUNAR_NY_ENVELOPE: TOOLTIPS_CONSTANTS.SHOP_LUNAR_NY_ENVELOPE, 
-   ItemPackType.LUNAR_NY_PREREQUISITE: TOOLTIPS_CONSTANTS.SHOP_LUNAR_NY_PREREQUISITE}
-WULF_TOOLTIP_TYPES = (
- TOOLTIPS_CONSTANTS.SHOP_LUNAR_NY_ENVELOPE,
- TOOLTIPS_CONSTANTS.SHOP_LUNAR_NY_PREREQUISITE)
+   ItemPackType.GOODIE_RECERTIFICATIONFORM: TOOLTIPS_CONSTANTS.EPIC_BATTLE_RECERTIFICATION_FORM_TOOLTIP, 
+   ItemPackType.OFFER_BROCHURE: TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP, 
+   ItemPackType.OFFER_BATTLE_BOOSTER: TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP, 
+   ItemPackType.BLUEPRINT_NATIONAL_ANY: TOOLTIPS_CONSTANTS.BLUEPRINT_RANDOM_NATIONAL_INFO, 
+   ItemPackType.DEMOUNT_KITS: TOOLTIPS_CONSTANTS.AWARD_DEMOUNT_KIT, 
+   ItemPackType.TMAN_TOKEN: TOOLTIPS_CONSTANTS.TANKMAN_NOT_RECRUITED}
 _ICONS = {ItemPackType.CAMOUFLAGE_ALL: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
    ItemPackType.CAMOUFLAGE_WINTER: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
    ItemPackType.CAMOUFLAGE_SUMMER: RES_SHOP.MAPS_SHOP_REWARDS_48X48_PRIZE_CAMOUFLAGE, 
@@ -257,7 +259,7 @@ def getItemIcon(rawItem, item):
     icon = rawItem.iconSource
     if not icon:
         if item is not None:
-            icon = _ICONS.get(rawItem.type, item.icon)
+            icon = _ICONS.get(rawItem.type, item.getBonusIcon())
         elif rawItem.type == ItemPackType.CUSTOM_PREMIUM:
             icon = _PREM_ICONS.get(rawItem.count, '')
         elif rawItem.type == ItemPackType.CUSTOM_PREMIUM_PLUS:
@@ -276,14 +278,14 @@ def getItemTitle(rawItem, item, forBox=False, additionalInfo=False):
             if tooltipKey:
                 title = _ms(tooltipKey, group=item.userType, value=item.userName)
                 title = title.replace(_DOUBLE_OPEN_QUOTES, _OPEN_QUOTES).replace(_DOUBLE_CLOSE_QUOTES, _CLOSE_QUOTES)
-    elif rawItem.type == ItemPackType.CUSTOM_SLOT:
+    elif rawItem.type in (ItemPackType.CUSTOM_SLOT, ItemPackType.CUSTOM_SEVERAL_SLOTS):
         title = _ms(key=TOOLTIPS.AWARDITEM_SLOTS_HEADER)
     elif rawItem.type == ItemPackType.CUSTOM_GOLD:
         title = _ms(key=QUESTS.BONUSES_GOLD_DESCRIPTION, value=rawItem.count)
     elif rawItem.type == ItemPackType.CUSTOM_CREDITS:
         title = backport.text(R.strings.quests.bonuses.credits.description(), value=backport.getIntegralFormat(rawItem.count))
     elif rawItem.type == ItemPackType.CUSTOM_CRYSTAL:
-        title = _ms(key=QUESTS.BONUSES_CRYSTAL_DESCRIPTION, value=backport.getIntegralFormat(rawItem.count))
+        title = backport.text(R.strings.tooltips.awardItem.crystal.header())
     elif rawItem.type in (ItemPackType.CUSTOM_EVENT_COIN, ItemPackType.CUSTOM_EVENT_COIN_EXTERNAL):
         title = _ms(key=QUESTS.BONUSES_EVENTCOIN_DESCRIPTION, value=rawItem.count)
     elif rawItem.type == ItemPackType.CUSTOM_BPCOIN:
@@ -305,6 +307,10 @@ def getItemTitle(rawItem, item, forBox=False, additionalInfo=False):
                ItemPackType.CUSTOM_CREW_100: CrewTypes.SKILL_100}.get(rawItem.type))
         else:
             title = _ms(TOOLTIPS.CREW_HEADER)
+    elif rawItem.type == ItemPackType.CUSTOM_X5_BATTLE_BONUS:
+        title = backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.header())
+    elif rawItem.type == ItemPackType.CREW_BOOK_RANDOM:
+        title = backport.text(R.strings.tooltips.awardItem.randomBooklet.header())
     else:
         title = rawItem.title or ''
     return title
@@ -313,7 +319,7 @@ def getItemTitle(rawItem, item, forBox=False, additionalInfo=False):
 def getItemDescription(rawItem, item):
     if item is not None:
         description = item.fullDescription
-    elif rawItem.type == ItemPackType.CUSTOM_SLOT:
+    elif rawItem.type in (ItemPackType.CUSTOM_SLOT, ItemPackType.CUSTOM_SEVERAL_SLOTS):
         description = _ms(TOOLTIPS.AWARDITEM_SLOTS_BODY)
     elif rawItem.type == ItemPackType.CUSTOM_GOLD:
         description = _ms(TOOLTIPS.AWARDITEM_GOLD_BODY)
@@ -341,6 +347,10 @@ def getItemDescription(rawItem, item):
                ItemPackType.CREW_75: CrewTypes.SKILL_75, 
                ItemPackType.CREW_100: CrewTypes.SKILL_100, 
                ItemPackType.CUSTOM_CREW_100: CrewTypes.SKILL_100}.get(rawItem.type))
+    elif rawItem.type == ItemPackType.CUSTOM_X5_BATTLE_BONUS:
+        description = backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.body())
+    elif rawItem.type == ItemPackType.CREW_BOOK_RANDOM:
+        description = backport.text(R.strings.tooltips.awardItem.randomBooklet.body())
     else:
         description = rawItem.description or ''
     return description
@@ -357,14 +367,9 @@ def getItemTooltipType(rawItem, item):
 def showItemTooltip(toolTipMgr, rawItem, item):
     tooltipType = getItemTooltipType(rawItem, item)
     if tooltipType is not None:
-        if tooltipType in WULF_TOOLTIP_TYPES:
-            buildArgs = [
-             rawItem.id, rawItem.count]
-            toolTipMgr.showWulfTooltip(tooltipType, buildArgs)
-        else:
-            defaults = toolTipMgr.getTypedTooltipDefaultBuildArgs(tooltipType)
-            buildArgs = [ rawItem.extra.get(argName, defaultValue) for argName, defaultValue in defaults ]
-            toolTipMgr.onCreateTypedTooltip(tooltipType, [rawItem.id] + buildArgs[1:], 'INFO')
+        defaults = toolTipMgr.getTypedTooltipDefaultBuildArgs(tooltipType)
+        buildArgs = [ rawItem.extra.get(argName, defaultValue) for argName, defaultValue in defaults ]
+        toolTipMgr.onCreateTypedTooltip(tooltipType, [rawItem.id] + buildArgs[1:], 'INFO')
     else:
         header = getItemTitle(rawItem, item)
         body = getItemDescription(rawItem, item)
@@ -575,7 +580,7 @@ class _ShellNodeContainer(_NodeContainer):
             return (True, _UNLIMITED_ITEMS_COUNT)
 
     def _sortChildren(self):
-        self._children.sort(key=lambda item: item.id)
+        self._children.sort(key=(lambda item: item.id))
         if self.__vehicle is not None and self._children:
             vehicle_adjusters.changeShell(self.__vehicle, 0)
         return
@@ -698,7 +703,7 @@ class _CustomCrewSkillsNodeContainer(_NodeContainer):
         return []
 
     def parseCrewSkills(self, item):
-        return {idx:tankmanItem.get('skills', []) + tankmanItem.get('freeSkills', []) for idx, tankmanItem in enumerate(item.extra['tankmen'])}
+        return {idx: tankmanItem.get('skills', []) + tankmanItem.get('freeSkills', []) for idx, tankmanItem in enumerate(item.extra['tankmen'])}
 
     def _install(self, item, vehicle, slotIdx):
         crewSkills = self.parseCrewSkills(item)
@@ -770,7 +775,7 @@ def addCompensationInfo(itemsVOs, itemsPack, itemsCache=None):
 
 
 def getActiveOffer(offers):
-    return findFirst(lambda o: o.preferred, offers) or findFirst(lambda o: o.bestOffer, offers) or first(offers)
+    return findFirst((lambda o: o.preferred), offers) or findFirst((lambda o: o.bestOffer), offers) or first(offers)
 
 
 def addBuiltInEquipment(packItems, itemsCache, vehicleCD):
@@ -814,7 +819,7 @@ def _sortItemsByOrder(items, rule=None):
     if rule is None:
         rule = _PACK_ITEMS_SORT_ORDER
     maxIndex = len(rule)
-    items.sort(key=lambda i: rule.index(i.type) if i.type in rule else maxIndex)
+    items.sort(key=(lambda i: rule.index(i.type) if i.type in rule else maxIndex))
     return items
 
 

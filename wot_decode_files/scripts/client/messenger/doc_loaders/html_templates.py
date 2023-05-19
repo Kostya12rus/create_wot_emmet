@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/doc_loaders/html_templates.py
 import types
 from debug_utils import LOG_WARNING
@@ -28,6 +28,8 @@ class _MessageTemplate(templates.Template):
                 vo['buttonsStates'] = {}
             if 'bgIconHeight' in data:
                 vo['bgIconHeight'] = data['bgIconHeight']
+            if 'linkageData' in data:
+                vo['linkageData'] = data['linkageData']
         vo['message'] = super(_MessageTemplate, self).format(ctx=ctx, sourceKey='message')
         return vo
 
@@ -45,8 +47,6 @@ class MessageTemplates(templates.XMLCollection):
             formatted['bgIcon'] = source[bgIconSource]
         else:
             formatted['bgIcon'] = source.get(None, '')
-        if formatted.get('type') == 'nyBoxes' and 'savedData' in formatted:
-            formatted['nyData'] = formatted['savedData']
         return formatted
 
     def priority(self, key):
@@ -62,15 +62,14 @@ class MessageTemplates(templates.XMLCollection):
     def _make(self, source):
         sourceID = source.name
         data = {'type': source.readString('type'), 
+           'linkage': source.readString('linkage'), 
            'timestamp': -1, 
            'savedData': None, 
-           'lunarNYData': None, 
-           'nyData': None, 
            'bgIcon': self._makeBgIconsData(source['bgIcon']), 
            'bgIconSizeAuto': source.readBool('bgIconSizeAuto'), 
            'icon': source.readString('icon'), 
            'defaultIcon': source.readString('defaultIcon'), 
-           'filters': [], 'buttonsStates': {}, 'buttonsLayout': [], 'buttonsAlign': source.readString('buttonsAlign', default='left')}
+           'filters': [], 'buttonsLayout': []}
         priority = source.readString('priority', NotificationPriorityLevel.MEDIUM)
         if priority not in NotificationPriorityLevel.RANGE:
             LOG_WARNING('Priority is invalid', sourceID, priority)

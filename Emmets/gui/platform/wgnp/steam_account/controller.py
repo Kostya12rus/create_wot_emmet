@@ -1,8 +1,8 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/platform/wgnp/steam_account/controller.py
-import typing, time, async
+import typing, time, wg_async
 from BWUtil import AsyncReturn
 from constants import EMAIL_CONFIRMATION_TOKEN_NAME
 from gui.platform.base.statuses.controller_mixin import StatusesMixin
@@ -22,7 +22,7 @@ class WGNPSteamAccRequestController(StatusesMixin, WGNPRequestController, IWGNPS
     def emailAddedTime(self):
         return self._emailAddedTime
 
-    @async.async
+    @wg_async.wg_async
     def getEmailStatus(self, waitingID=None):
         status = self._getStatus()
         self._logger.debug('Getting email status from cache=%s, waitingID=%s.', status, waitingID)
@@ -32,7 +32,7 @@ class WGNPSteamAccRequestController(StatusesMixin, WGNPRequestController, IWGNPS
             self._updateStatus(status)
         raise AsyncReturn(status)
 
-    @async.async
+    @wg_async.wg_async
     def addEmail(self, email, waitingID=None):
         self._logger.debug('Adding waitingID=%s.', waitingID)
         response = yield self._request(AddEmailParams(self.settings.getUrl(), email), waitingID=waitingID)
@@ -43,7 +43,7 @@ class WGNPSteamAccRequestController(StatusesMixin, WGNPRequestController, IWGNPS
             self._updateStatus(SteamAccEmailStatus(StatusTypes.CONFIRMED))
         raise AsyncReturn(response)
 
-    @async.async
+    @wg_async.wg_async
     def confirmEmail(self, code, waitingID=None):
         self._logger.debug('Confirm email with waitingID=%s.', waitingID)
         response = yield self._request(ConfirmEmailParams(self.settings.getUrl(), code), waitingID=waitingID)

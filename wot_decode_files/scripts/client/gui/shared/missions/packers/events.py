@@ -1,28 +1,29 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/missions/packers/events.py
 import logging, typing, constants
 from gui.Scaleform.daapi.view.lobby.missions.awards_formatters import CurtailingAwardsComposer
 from gui.Scaleform.daapi.view.lobby.missions.missions_helper import getMissionInfoData
-from gui.Scaleform.genConsts.MISSIONS_STATES import MISSIONS_STATES
+from gui.impl.gen.view_models.common.missions.conditions.condition_group_model import ConditionGroupModel
 from gui.impl.gen.view_models.common.missions.conditions.preformatted_condition_model import PreformattedConditionModel
 from gui.impl.gen.view_models.common.missions.daily_quest_model import DailyQuestModel
+from gui.impl.gen.view_models.common.missions.event_model import EventStatus
 from gui.impl.gen.view_models.common.missions.quest_model import QuestModel
+from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.quest_card_model import QuestCardModel, CardState
 from gui.server_events.awards_formatters import AWARDS_SIZES
 from gui.server_events.events_helpers import isPremium, isDailyQuest
 from gui.server_events.formatters import DECORATION_SIZES
 from gui.shared.missions.packers.bonus import getDefaultBonusPacker, packBonusModelAndTooltipData
-from gui.shared.missions.packers.conditions import BonusConditionPacker
 from gui.shared.missions.packers.conditions import PostBattleConditionPacker
+from gui.shared.missions.packers.conditions import BonusConditionPacker
 from helpers import dependency
-from lunar_ny import ILunarNYController
 from skeletons.gui.server_events import IEventsCache
+from skeletons.gui.game_control import IComp7Controller
 from soft_exception import SoftException
 if typing.TYPE_CHECKING:
     from gui.server_events.event_items import ServerEventAbstract
     from gui.server_events.bonuses import SimpleBonus
-    from gui.shared.missions.packers.bonus import BonusUIPacker
 _logger = logging.getLogger(__name__)
 DEFAULT_AWARDS_COUNT = 10
 DAILY_QUEST_AWARDS_COUNT = 1000
@@ -51,18 +52,18 @@ class _EventUIDataPacker(object):
 
     def _getStatus(self):
         if self._event.isCompleted():
-            return MISSIONS_STATES.COMPLETED
+            return EventStatus.DONE
         if self._event.isAvailable()[0]:
-            return MISSIONS_STATES.NONE
-        return MISSIONS_STATES.NOT_AVAILABLE
+            return EventStatus.ACTIVE
+        return EventStatus.LOCKED
 
 
 class BattleQuestUIDataPacker(_EventUIDataPacker):
 
-    def __init__(self, event, bonusFormatter=CurtailingAwardsComposer(DEFAULT_AWARDS_COUNT)):
+    def __init__(self, event, bonusPackerGetter=getDefaultBonusPacker):
         super(BattleQuestUIDataPacker, self).__init__(event)
-        self._tooltipData = {}
-        self._bonusFormatter = bonusFormatter
+        self.__tooltipData = {}
+        self.__bonusPackerGetter = bonusPackerGetter
 
     def pack(self, model=None):
         if model is not None and not isinstance(model, QuestModel):
@@ -74,7 +75,7 @@ class BattleQuestUIDataPacker(_EventUIDataPacker):
             return model
 
     def getTooltipData(self):
-        return self._tooltipData
+        return self.__tooltipData
 
     def _packModel(self, model):
         super(BattleQuestUIDataPacker, self)._packModel(model)
@@ -84,9 +85,9 @@ class BattleQuestUIDataPacker(_EventUIDataPacker):
         self._packDefaultConds(model)
 
     def _packBonuses(self, model):
-        self._tooltipData = {}
-        packer = getDefaultBonusPacker()
-        packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, tooltipData=self._tooltipData)
+        packer = self.__bonusPackerGetter()
+        self.__tooltipData = {}
+        packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, tooltipData=self.__tooltipData)
 
     def _packPostBattleConds(self, model):
         postBattleContitionPacker = PostBattleConditionPacker()
@@ -119,11 +120,56 @@ class PrivateMissionUIDataPacker(_EventUIDataPacker):
     pass
 
 
+class Comp7WeeklyQuestPacker(_EventUIDataPacker):
+    __comp7Controller = dependency.descriptor(IComp7Controller)
+
+    def pack(self, model=None):
+        if model is None:
+            model = QuestCardModel()
+        model.setState(self.__getQuestState())
+        self.__updateQuestAttributes(model)
+        return model
+
+    def __getQuestState(self):
+        if self._event.isCompleted():
+            return CardState.COMPLETED
+        if self._event.isAvailable()[0] and self.__comp7Controller.isAvailable():
+            return CardState.ACTIVE
+        return CardState.LOCKED
+
+    def __updateQuestAttributes(self, cardModel):
+        description = self._event.getDescription()
+        iconKey = ''
+        currentProgress = 0
+        totalProgress = 0
+        postBattleConditionModel = self.__getConditionsByPacker(PostBattleConditionPacker)
+        if postBattleConditionModel is not None:
+            iconKey = postBattleConditionModel.getIconKey()
+            currentProgress = postBattleConditionModel.getCurrent()
+            totalProgress = postBattleConditionModel.getTotal()
+            description = description or postBattleConditionModel.getDescrData()
+        conditionModel = self.__getConditionsByPacker(BonusConditionPacker)
+        if conditionModel is not None:
+            iconKey = conditionModel.getIconKey()
+            currentProgress = conditionModel.getCurrent()
+            totalProgress = conditionModel.getTotal()
+            description = description or conditionModel.getDescrData()
+        if currentProgress == 0 and cardModel.getState() == CardState.COMPLETED:
+            currentProgress = 1
+        cardModel.setDescription(description)
+        cardModel.setIconKey(iconKey)
+        cardModel.setCurrentProgress(currentProgress)
+        cardModel.setTotalProgress(totalProgress or 1)
+        return
+
+    def __getConditionsByPacker(self, packerClass):
+        postBattleConditions = ConditionGroupModel()
+        packerClass().pack(self._event, postBattleConditions)
+        return findFirstConditionModel(postBattleConditions)
+
+
 class DailyQuestUIDataPacker(BattleQuestUIDataPacker):
     eventsCache = dependency.descriptor(IEventsCache)
-    lunarNYController = dependency.descriptor(ILunarNYController)
-    _NY_BONUSES_ORDER = ('battleToken', 'entitlements')
-    _LUNAR_NY_BONUSES_ORDER = ('entitlements', )
 
     def pack(self, model=None):
         if model is not None and not isinstance(model, DailyQuestModel):
@@ -134,26 +180,6 @@ class DailyQuestUIDataPacker(BattleQuestUIDataPacker):
             self._packModel(model)
             self.__resolveQuestIcon(model)
             return model
-
-    def _packBonuses(self, model):
-        self._tooltipData = {}
-        packer = getDefaultBonusPacker()
-        if self.lunarNYController.isActive():
-            bonuses = sorted(self._event.getBonuses(), key=self.__keyLunarNYSortOrder)
-            packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, self._tooltipData, bonuses)
-        else:
-            bonuses = sorted(self._event.getBonuses(), key=self.__keySortOrder)
-            packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, self._tooltipData, bonuses)
-
-    def __keySortOrder(self, bonus):
-        if bonus.getName() in self._NY_BONUSES_ORDER:
-            return self._NY_BONUSES_ORDER.index(bonus.getName())
-        return len(self._NY_BONUSES_ORDER)
-
-    def __keyLunarNYSortOrder(self, bonus):
-        if bonus.getName() in self._LUNAR_NY_BONUSES_ORDER:
-            return self._LUNAR_NY_BONUSES_ORDER.index(bonus.getName())
-        return len(self._LUNAR_NY_BONUSES_ORDER)
 
     def __resolveQuestIcon(self, model):
         iconId = self._event.getIconID()

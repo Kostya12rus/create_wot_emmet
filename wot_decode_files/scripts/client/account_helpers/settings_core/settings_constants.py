@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/settings_constants.py
 from shared_utils import CONST_CONTAINER
 VERSION = 'VERSION'
@@ -140,21 +140,7 @@ class GAME(CONST_CONTAINER):
     LOGIN_SERVER_SELECTION = 'loginServerSelection'
     UNIT_FILTER = 'unitFilter'
     SWITCH_SETUPS_IN_LOADING = 'switchEquipment'
-
-
-class TUTORIAL(CONST_CONTAINER):
-    CUSTOMIZATION = 'customization'
-    PERSONAL_CASE = 'personalCase'
-    TECHNICAL_MAINTENANCE = 'technicalMaintenance'
-    RESEARCH = 'research'
-    RESEARCH_TREE = 'researchTree'
-    MEDKIT_INSTALLED = 'medKitInstalled'
-    REPAIRKIT_INSTALLED = 'repairKitInstalled'
-    FIRE_EXTINGUISHER_INSTALLED = 'fireExtinguisherInstalled'
-    MEDKIT_USED = 'medKitUsed'
-    REPAIRKIT_USED = 'repairKitUsed'
-    FIRE_EXTINGUISHER_USED = 'fireExtinguisherUsed'
-    WAS_QUESTS_TUTORIAL_STARTED = 'wasQuestsTutorialStarted'
+    SCROLL_SMOOTHING = 'scrollSmoothing'
 
 
 class SOUND(CONST_CONTAINER):
@@ -210,6 +196,7 @@ class AIM(CONST_CONTAINER):
     ARCADE = 'arcade'
     SNIPER = 'sniper'
     SPG = 'spg'
+    CONTOUR = 'contour'
 
 
 class SPGAim(CONST_CONTAINER):
@@ -218,7 +205,12 @@ class SPGAim(CONST_CONTAINER):
     SPG_STRATEGIC_CAM_MODE = 'spgStrategicCamMode'
     AUTO_CHANGE_AIM_MODE = 'autoChangeAimMode'
     AIM_ENTRANCE_MODE = 'aimEntranceMode'
-    SCROLL_SMOOTHING_ENABLED = 'scrollSmoothingEnabled'
+
+
+class CONTOUR(CONST_CONTAINER):
+    ENHANCED_CONTOUR = 'contour'
+    CONTOUR_PENETRABLE_ZONE = 'contourPenetrableZone'
+    CONTOUR_IMPENETRABLE_ZONE = 'contourImpenetrableZone'
 
 
 class SPGAimEntranceModeOptions(CONST_CONTAINER):
@@ -235,6 +227,11 @@ class MARKERS(CONST_CONTAINER):
     ALLY = 'ally'
     ENEMY = 'enemy'
     DEAD = 'dead'
+
+
+class MARKER_SETTINGS(CONST_CONTAINER):
+    MARKER_BASE_VEHICLE_DIST = 'markerBaseVehicleDist'
+    MARKER_ALT_VEHICLE_DIST = 'markerAltVehicleDist'
 
 
 class FEEDBACK(CONST_CONTAINER):
@@ -318,11 +315,12 @@ class GuiSettingsBehavior(CONST_CONTAINER):
     RANKED_WELCOME_VIEW_SHOWED = 'isRankedWelcomeViewShowed'
     RANKED_WELCOME_VIEW_STARTED = 'isRankedWelcomeViewStarted'
     EPIC_RANDOM_CHECKBOX_CLICKED = 'isEpicRandomCheckboxClicked'
-    TECHTREE_INTRO_BLUEPRINTS_RECEIVED = 'techTreeIntroBlueprintsReceived'
-    TECHTREE_INTRO_SHOWED = 'techTreeIntroShowed'
     DISPLAY_PLATOON_MEMBER_CLICKED = 'isDisplayPlatoonMembersClicked'
     VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW = 'vehPostProgressionUnlockMsgNeedShow'
     BIRTHDAY_CALENDAR_INTRO_SHOWED = 'birthdayCalendarIntroShowed'
+    RESOURCE_WELL_INTRO_SHOWN = 'resourceWellIntroShown'
+    COMP7_INTRO_SHOWN = 'isComp7IntroShown'
+    CREW_22_WELCOME_SHOWN = 'crew22WelcomeShown'
 
 
 class OnceOnlyHints(CONST_CONTAINER):
@@ -354,7 +352,6 @@ class OnceOnlyHints(CONST_CONTAINER):
     ACCOUNT_BUTTON_HINT = 'AccountButtonHint'
     SESSION_STATS_OPEN_BTN_HINT = 'SessionStatsOpenBtnHint'
     SESSION_STATS_SETTINGS_BTN_HINT = 'SessionStatsSettingsBtnHint'
-    CRYSTAL_BTN_HINT = 'CrystalsBtnHint'
     BATTLE_SESSION_UP_BUTTON_TOURNAMENT_HINT = 'BattleSessionUpButtonTournamentHint'
     CREW_OPERATION_BTN_HINT = 'CrewOperationBtnHint'
     SOUND_BUTTONEX_HINT = 'SoundButtonExHint'
@@ -362,11 +359,14 @@ class OnceOnlyHints(CONST_CONTAINER):
     AMMUNITION_PANEL_HINT = 'AmmunitionPanelHintZoneHint'
     PLATOON_BTN_HINT = 'PlatoonBtnHint'
     AMMUNITION_FILTER_HINT = 'FilterHintZoneHint'
+    MODERNIZED_SETUP_TAB_HINT = 'ModernizedSetupTabHint'
     OPT_DEV_DRAG_AND_DROP_HINT = 'OptDevDragAndDropHint'
     HANGAR_MANUAL_HINT = 'HangarManualHint'
     DOGTAG_HANGAR_HINT = 'DogTagHangarHint'
     DOGTAG_PROFILE_HINT = 'DogTagProfileHint'
     WOTPLUS_HANGAR_HINT = 'WotPlusHangarHint'
+    PERSONAL_RESERVES_HANGAR_HINT = 'PersonalReservesHangarHint'
+    PERSONAL_RESERVES_ACTIVATION_HINT = 'PersonalReservesActivationHint'
     WOTPLUS_PROFILE_HINT = 'WotPlusProfileHint'
     MODE_SELECTOR_WIDGETS_BTN_HINT = 'ModeSelectorWidgetsBtnHint'
     MAPS_TRAINING_NEWBIE_HINT = 'MapsTrainingNewbieHint'
@@ -381,9 +381,10 @@ class OnceOnlyHints(CONST_CONTAINER):
     COMPARE_SPECIALIZATION_BUTTON_HINT = 'CompareSpecializationButtonHint'
     TRADE_IN_VEHICLE_POST_PROGRESSION_ENTRY_POINT_HINT = 'TradeInVehiclePreviewPostProgressionButtonHint'
     PERSONAL_TRADE_IN_VEHICLE_POST_PROGRESSION_ENTRY_POINT_HINT = 'PersonalTradeInVehiclePreviewPostProgressionButtonHint'
-    NY_GIFT_SYSTEM_FRIEND_SELECT_HINT = 'NyGiftSystemFriendSelectHint'
-    LUNAR_NY_DROPDOWN_HINT = 'LunarNYDropdownHint'
-    LUNAR_NY_CONGRATULATION_HINT = 'LunarNYCongratulationHint'
+    APPLY_ABILITIES_TO_TYPE_CHECKBOX_HINT = 'ApplyAbilitiesToTypeCheckboxHint'
+    SHOW_ABILITIES_BUTTON_HINT = 'ShowAbilitiesButtonHint'
+    BATTLE_MATTERS_FIGHT_BUTTON_HINT = 'BattleMattersFightButtonHint'
+    BATTLE_MATTERS_ENTRY_POINT_BUTTON_HINT = 'BattleMattersEntryPointHint'
 
 
 class SESSION_STATS(CONST_CONTAINER):
@@ -475,13 +476,11 @@ class SESSION_STATS(CONST_CONTAINER):
 class BattlePassStorageKeys(CONST_CONTAINER):
     INTRO_SHOWN = 'introShown'
     INTRO_VIDEO_SHOWN = 'introVideoShown'
-    BUY_BUTTON_HINT_IS_SHOWN = 'buyButtonHintIsShown'
     BUY_ANIMATION_WAS_SHOWN = 'buyAnimationWasShown'
     FLAGS_VERSION = 'flagsVersion'
-    TROPHY_NOTIFICATION_SHOWN = 'trophyNotificationShown'
-    NEW_DEVICE_NOTIFICATION_SHOWN = 'newDeviceNotificationShown'
     DAILY_QUESTS_INTRO_SHOWN = 'dailyQuestsIntroShown'
-    MASK_CHOSEN_DEVICES = 15
+    EXTRA_CHAPTER_INTRO_SHOWN = 'extraChapterIntroShown'
+    EXTRA_CHAPTER_VIDEO_SHOWN = 'extraChapterVideoShown'
 
 
 class BattleCommStorageKeys(CONST_CONTAINER):
@@ -498,27 +497,3 @@ class ScorePanelStorageKeys(CONST_CONTAINER):
     SHOW_HP_VALUES = 'showHPValues'
     SHOW_HP_DIFFERENCE = 'showHPDifference'
     ENABLE_TIER_GROUPING = 'enableTierGrouping'
-
-
-class NYLootBoxesStorageKeys(CONST_CONTAINER):
-    NEW_COUNT = 'newCount'
-    DELIVERED_COUNT = 'deliveredCount'
-
-
-class NewYearStorageKeys(CONST_CONTAINER):
-    HAS_TOYS_HINT_SHOWN = 'hasToysHintShown'
-    NY_VEHICLES_PROGRESS_ENTRY = 'nyVehiclesProgressEntry'
-    NY_VEHICLES_POST_EVENT_ENTRY = 'nyVehiclesPostEventEntry'
-    NY_VEHICLES_LEVEL_UP_ENTRY = 'nyVehiclesLevelUpEntry'
-    NY_STATISTICS_HINT_SHOWN = 'nyLootboxStatisticsHintShown'
-    GLADE_INTRO_VISITED = 'gladeIntroVisited'
-    GIFT_SYSTEM_INTRO_VISITED = 'giftSystemIntroVisited'
-    DECORATIONS_POPOVER_VIEWED = 'decorationsPopoverViewed'
-    DECORATIONS_POPOVER_BROKEN = 'decorationsPopoverBroken'
-    CELEBRITY_CHALLENGE_VISITED = 'celebrityChallengeVisited'
-    CELEBRITY_WELCOME_VIEWED = 'celebrityChallengeWelcomeViewed'
-    LOOT_BOX_VIDEO_OFF = 'lootBoxVideoOff'
-    BOOL_FLAGS = (
-     HAS_TOYS_HINT_SHOWN, NY_VEHICLES_PROGRESS_ENTRY, NY_VEHICLES_POST_EVENT_ENTRY, NY_STATISTICS_HINT_SHOWN,
-     GLADE_INTRO_VISITED, GIFT_SYSTEM_INTRO_VISITED, DECORATIONS_POPOVER_VIEWED, DECORATIONS_POPOVER_BROKEN,
-     CELEBRITY_CHALLENGE_VISITED, CELEBRITY_WELCOME_VIEWED, LOOT_BOX_VIDEO_OFF)

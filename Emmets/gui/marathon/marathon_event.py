@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/marathon/marathon_event.py
 import logging, typing
 from functools import partial
@@ -8,7 +8,7 @@ import constants
 from constants import MarathonConfig
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import MARATHON_REWARD_WAS_SHOWN_PREFIX, MARATHON_VIDEO_WAS_SHOWN_PREFIX
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.impl.lobby.marathon.marathon_reward_helper import showMarathonReward
 from gui.marathon.marathon_event_container import MarathonEventContainer
@@ -99,26 +99,26 @@ class MarathonEvent(object):
     def styleID(self):
         return self._data.styleID
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def getUrl(self, callback):
         url = yield self._data.urlMacros.parse(self._getUrl())
         callback(url)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def getMarathonVehicleUrl(self, callback):
         url = yield self._data.urlMacros.parse(self._getUrl(urlType=MarathonConfig.REWARD_VEHICLE_URL))
         callback(url)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def getMarathonVehicleUrlIgb(self, callback):
         url = yield self._data.urlMacros.parse(self._getUrl(urlType=MarathonConfig.REWARD_VEHICLE_URL_IGB))
         callback(url)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def getMarathonStyleUrlIgb(self, callback):
         url = yield self._data.urlMacros.parse(self._getUrl(urlType=MarathonConfig.REWARD_STYLE_URL_IGB))
         callback(url)
@@ -152,7 +152,7 @@ class MarathonEvent(object):
             name = str(tokenNames[tokenPrefixLen:])
             res.append(int(filter(str.isdigit, name)))
 
-        currentStep = sorted(res)[(-1)] if res else 0
+        currentStep = sorted(res)[-1] if res else 0
         return (
          currentStep, self._data.questsInChain)
 
@@ -353,7 +353,7 @@ class MarathonEvent(object):
             progress = self._eventsCache.questsProgress.getQuestsData()
         if progressType == 'tokens':
             progress = self._eventsCache.questsProgress.getTokensData()
-        return {k:v for k, v in progress.iteritems() if k.startswith(prefix) and k.endswith(postfix)}
+        return {k: v for k, v in progress.iteritems() if k.startswith(prefix) and k.endswith(postfix)}
 
     def __getHangarFlagHeaderIcon(self):
         for key, imgPath in self._data.icons.mapFlagHeaderIcon.iteritems():

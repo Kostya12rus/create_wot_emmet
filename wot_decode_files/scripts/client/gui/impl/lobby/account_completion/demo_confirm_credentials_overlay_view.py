@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/demo_confirm_credentials_overlay_view.py
 import typing, BigWorld
 from gui.impl.backport import text as loc
@@ -12,10 +12,8 @@ from gui.platform.base.statuses.constants import StatusTypes
 from gui.shared.event_dispatcher import showDemoAddCredentialsOverlay, showDemoCompleteOverlay, showContactSupportOverlay, showDemoWaitingForTokenOverlayViewOverlay
 from helpers import dependency
 from skeletons.gui.platform.wgnp_controllers import IWGNPDemoAccRequestController
-from uilogging.account_completion.constants import LogGroup, ViewClosingResult
-from uilogging.account_completion.loggers import AccountCompletionViewLogger
 if typing.TYPE_CHECKING:
-    from async import _Future
+    from wg_async import _Future
     from gui.platform.wgnp.demo_account.request import ConfirmCredentialsParams
 res = R.strings.dialogs.accountCompletion
 
@@ -23,16 +21,13 @@ class DemoConfirmCredentialsOverlayView(BaseConfirmCredentialsOverlayView):
     __slots__ = ()
     _IS_CLOSE_BUTTON_VISIBLE = False
     _wgnpDemoAccCtrl = dependency.descriptor(IWGNPDemoAccRequestController)
-    _uiLogger = AccountCompletionViewLogger(LogGroup.CONFIRM)
 
     def activate(self, *args, **kwargs):
         super(DemoConfirmCredentialsOverlayView, self).activate(*args, **kwargs)
         self._wgnpDemoAccCtrl.statusEvents.subscribe(StatusTypes.CONFIRMED, self.__confirmedHandler)
-        self._uiLogger.viewOpened(self.getParentWindow())
 
     def deactivate(self):
         self._wgnpDemoAccCtrl.statusEvents.unsubscribe(StatusTypes.CONFIRMED, self.__confirmedHandler)
-        self._uiLogger.viewClosed()
         super(DemoConfirmCredentialsOverlayView, self).deactivate()
 
     def _getEmailAddedTime(self):
@@ -42,16 +37,13 @@ class DemoConfirmCredentialsOverlayView(BaseConfirmCredentialsOverlayView):
         return self._wgnpDemoAccCtrl.confirmCredentials(self._code.value)
 
     def _handleSuccess(self, *_):
-        self._uiLogger.setParams(result=ViewClosingResult.SUCCESS)
         self._handleTokenWaiting()
 
     def _handleTokenWaiting(self):
         status = self._wgnpDemoAccCtrl.getCurrentStatus()
         if status == StatusTypes.CONFIRMED:
-            self._uiLogger.setParams(type=AccountCompletionType.DOI)
             showDemoCompleteOverlay(completionType=AccountCompletionType.DOI)
         else:
-            self._uiLogger.setParams(type=AccountCompletionType.DOI)
             showDemoWaitingForTokenOverlayViewOverlay(completionType=AccountCompletionType.DOI)
 
     def _handleError(self, response):
@@ -74,7 +66,6 @@ class DemoConfirmCredentialsOverlayView(BaseConfirmCredentialsOverlayView):
             self._setWarning(loc(res.warningServerUnavailable()))
 
     def _onResend(self):
-        self._uiLogger.setParams(result=ViewClosingResult.BACK_TO_CREDENTIALS)
         showDemoAddCredentialsOverlay(initialEmail=self._email)
 
     def __confirmedHandler(self, *_):

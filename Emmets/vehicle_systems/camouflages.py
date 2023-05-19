@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/camouflages.py
 import logging
 from collections import namedtuple, defaultdict
@@ -67,8 +67,9 @@ ModelAnimatorParams.__new__.__defaults__ = (
  math_utils.createIdentityMatrix(), '', '')
 LoadedModelAnimator = namedtuple('LoadedModelAnimator', ('animator', 'node', 'attachmentPartNode'))
 AttachmentParams = namedtuple('AttachmentParams', ('transform', 'attachNode', 'modelName',
-                                                   'sequenceId', 'attachmentLogic',
-                                                   'initialVisibility', 'partNodeAlias'))
+                                                   'hangarModelName', 'sequenceId',
+                                                   'attachmentLogic', 'initialVisibility',
+                                                   'partNodeAlias'))
 AttachmentParams.__new__.__defaults__ = (
  math_utils.createIdentityMatrix(), '', '', None, '', True, '')
 _isDeferredRenderer = isRendererPipelineDeferred()
@@ -153,6 +154,7 @@ def getOutfitComponent(outfitCD, vehicleDescriptor=None, seasonType=None):
                 outfitComponent = baseOutfitComponent.applyDiff(outfitComponent)
             else:
                 outfitComponent = baseOutfitComponent
+            outfitComponent = styleDescr.addPartsToOutfit(seasonType, outfitComponent, vehicleDescriptor.makeCompactDescr() if vehicleDescriptor else '')
             if IS_EDITOR:
 
                 def setupAlternateItem(itemType, outfit, sourceOutfit, collectionName):
@@ -577,6 +579,7 @@ def __prepareAnimator(loadedAnimators, animatorName, wrapperToBind, node, attach
     else:
         animator = loadedAnimators.pop(animatorName)
         animator.bindTo(wrapperToBind)
+        animator.setEnabled(False)
         if hasattr(animator, 'setBoolParam'):
             animator.setBoolParam('isDeferred', _isDeferredRenderer)
         return LoadedModelAnimator(animator, node, attachmentPartNode)
@@ -632,7 +635,7 @@ def getAttachments(outfit, vehicleDescr):
 
     def getAttachmentParams(slotParams, slotData, idx):
         item = getItemByCompactDescr(slotData.intCD)
-        return AttachmentParams(transform=__createTransform(slotParams, slotData), attachNode=slotParams.attachNode, modelName=item.modelName, sequenceId=item.sequenceId, attachmentLogic=item.attachmentLogic, initialVisibility=item.initialVisibility, partNodeAlias='attachment' + str(idx) if item.attachmentLogic != 'prefab' else None)
+        return AttachmentParams(transform=__createTransform(slotParams, slotData), attachNode=slotParams.attachNode, modelName=item.modelName, hangarModelName=item.hangarModelName, sequenceId=item.sequenceId, attachmentLogic=item.attachmentLogic, initialVisibility=item.initialVisibility, partNodeAlias='attachment' + str(idx) if item.attachmentLogic != 'prefab' else None)
 
     return __getParams(outfit, vehicleDescr, 'attachment', GUI_ITEM_TYPE.ATTACHMENT, getAttachmentParams)
 
@@ -873,7 +876,7 @@ def __getProjectionDecalScale(component, slotParams=None):
     scale = Math.Vector3(scale)
     if component.scaleFactorId:
         scaleFactors = slotParams.scaleFactors if slotParams is not None else DEFAULT_DECAL_SCALE_FACTORS
-        scaleFactor = scaleFactors[(component.scaleFactorId - 1)]
+        scaleFactor = scaleFactors[component.scaleFactorId - 1]
         scale.x *= scaleFactor
         scale.z *= scaleFactor
     return scale

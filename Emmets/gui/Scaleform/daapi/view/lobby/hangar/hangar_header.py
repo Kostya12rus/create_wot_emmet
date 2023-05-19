@@ -1,47 +1,47 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/hangar_header.py
 import logging, BigWorld, constants, nations
 from CurrentVehicle import g_currentVehicle
 from gui import g_guiResetters
-from gui.battle_pass.battle_pass_helpers import getSupportedArenaBonusTypeFor
 from gui.ClientUpdateManager import g_clientUpdateManager
-from gui.event_boards.listener import IEventBoardsListener
-from gui.impl.gen import R
-from gui.impl import backport
-from gui.prb_control import prb_getters
-from gui.prb_control.entities.listener import IGlobalListener
 from gui.Scaleform.daapi.view.lobby.missions.regular import missions_page
 from gui.Scaleform.daapi.view.meta.HangarHeaderMeta import HangarHeaderMeta
+from gui.Scaleform.genConsts.HANGAR_ALIASES import HANGAR_ALIASES
 from gui.Scaleform.genConsts.HANGAR_HEADER_QUESTS import HANGAR_HEADER_QUESTS
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
-from gui.Scaleform.genConsts.HANGAR_ALIASES import HANGAR_ALIASES
 from gui.Scaleform.locale.MENU import MENU
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
+from gui.battle_pass.battle_pass_helpers import getSupportedArenaBonusTypeFor
+from gui.event_boards.listener import IEventBoardsListener
+from gui.impl import backport
+from gui.impl.gen import R
+from gui.prb_control import prb_getters
+from gui.prb_control.entities.listener import IGlobalListener
 from gui.server_events import finders
-from gui.server_events.events_constants import RANKED_DAILY_GROUP_ID, FUN_RANDOM_GROUP_ID
+from gui.server_events.events_constants import BATTLE_ROYALE_GROUPS_ID
+from gui.server_events.events_constants import RANKED_DAILY_GROUP_ID
 from gui.server_events.events_dispatcher import showPersonalMission, showMissionsElen, showMissionsMarathon, showPersonalMissionOperationsPage, showPersonalMissionsOperationsMap, showMissionsCategories, showMissionsBattlePass, showMissionsMapboxProgression
-from gui.server_events.events_helpers import isRankedDaily, isDailyEpic, isFunRandomQuest
+from gui.server_events.events_helpers import isRankedDaily, isDailyEpic
 from gui.shared import events
 from gui.shared.event_bus import EVENT_BUS_SCOPE
 from gui.shared.formatters import icons
 from gui.shared.personality import ServicesLocator
 from gui.shared.utils.functions import makeTooltip
 from helpers import dependency
+from helpers import time_utils
 from helpers.i18n import makeString as _ms
+from helpers.time_utils import ONE_DAY
 from personal_missions import PM_BRANCH
 from skeletons.connection_mgr import IConnectionManager
-from skeletons.gui.game_control import IBattlePassController, IBootcampController, IResourceWellController
+from skeletons.gui.battle_matters import IBattleMattersController
 from skeletons.gui.event_boards_controllers import IEventBoardController
-from skeletons.gui.game_control import IMarathonEventsController, IFestivityController, IRankedBattlesController, IQuestsController, IBattleRoyaleController, IMapboxController, IEpicBattleMetaGameController, IFunRandomController
+from skeletons.gui.game_control import IBattlePassController, IBootcampController, ICollectiveGoalEntryPointController, IResourceWellController, IMarathonEventsController, IFestivityController, IRankedBattlesController, IQuestsController, IBattleRoyaleController, IMapboxController, IEpicBattleMetaGameController, IFunRandomController, IComp7Controller, IArmoryYardController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
-from helpers import time_utils
-from helpers.time_utils import ONE_DAY
-from gui.server_events.events_constants import BATTLE_ROYALE_GROUPS_ID
 from skeletons.tutorial import ITutorialLoader
 _logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class HANGAR_FLAGS_ORDER(object):
 
 QUEST_TYPE_BY_PM_BRANCH = {PM_BRANCH.REGULAR: HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_REGULAR, 
    PM_BRANCH.PERSONAL_MISSION_2: HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_PM2}
-HANGAR_HEADER_QUESTS_TO_PM_BRANCH = {value:key for key, value in QUEST_TYPE_BY_PM_BRANCH.iteritems()}
+HANGAR_HEADER_QUESTS_TO_PM_BRANCH = {value: key for key, value in QUEST_TYPE_BY_PM_BRANCH.iteritems()}
 FLAG_BY_QUEST_TYPE = {HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_REGULAR: RES_ICONS.MAPS_ICONS_LIBRARY_HANGARFLAG_FLAG_VINOUS, 
    HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_PM2: RES_ICONS.MAPS_ICONS_LIBRARY_HANGARFLAG_FLAG_RED, 
    HANGAR_HEADER_QUESTS.QUEST_TYPE_COMMON: RES_ICONS.MAPS_ICONS_LIBRARY_HANGARFLAG_FLAG_BLUE, 
@@ -138,35 +138,34 @@ def _findPersonalMissionsState(eventsCache, vehicle, branch):
             fullDone = False
         if operation.isDisabled():
             operationState |= WIDGET_PM_STATE.OPERATION_DISABLED
-        else:
-            if not operation.isUnlocked():
-                operationState |= WIDGET_PM_STATE.UNAVAILABLE
+        elif not operation.isUnlocked():
+            operationState |= WIDGET_PM_STATE.UNAVAILABLE
+            continue
+        for chainID, chain in operation.getQuests().iteritems():
+            if not operation.getChainClassifier(chainID).matchVehicle(vehicleType):
                 continue
-            for chainID, chain in operation.getQuests().iteritems():
-                if not operation.getChainClassifier(chainID).matchVehicle(vehicleType):
+            firsQuest = chain.values()[0]
+            if vehicleLvl < firsQuest.getVehMinLevel():
+                operationState |= WIDGET_PM_STATE.NO_VEHICLE
+            for quest in chain.itervalues():
+                if quest.isInProgress():
+                    if operation.isDisabled():
+                        return (WIDGET_PM_STATE.OPERATION_DISABLED, None)
+                    if quest.isDisabled():
+                        return (WIDGET_PM_STATE.MISSION_DISABLED, None)
+                    if vehicleLvl < quest.getVehMinLevel():
+                        return (WIDGET_PM_STATE.LOW_LEVEL, None)
+                    if quest.isOnPause:
+                        return (WIDGET_PM_STATE.ON_PAUSE, quest)
+                    return (WIDGET_PM_STATE.IN_PROGRESS, quest)
+                if operation.isDisabled() or quest.isDisabled() or operationState & WIDGET_PM_STATE.NO_VEHICLE:
                     continue
-                firsQuest = chain.values()[0]
-                if vehicleLvl < firsQuest.getVehMinLevel():
-                    operationState |= WIDGET_PM_STATE.NO_VEHICLE
-                for quest in chain.itervalues():
-                    if quest.isInProgress():
-                        if operation.isDisabled():
-                            return (WIDGET_PM_STATE.OPERATION_DISABLED, None)
-                        if quest.isDisabled():
-                            return (WIDGET_PM_STATE.MISSION_DISABLED, None)
-                        if vehicleLvl < quest.getVehMinLevel():
-                            return (WIDGET_PM_STATE.LOW_LEVEL, None)
-                        if quest.isOnPause:
-                            return (WIDGET_PM_STATE.ON_PAUSE, quest)
-                        return (WIDGET_PM_STATE.IN_PROGRESS, quest)
-                    if operation.isDisabled() or quest.isDisabled() or operationState & WIDGET_PM_STATE.NO_VEHICLE:
-                        continue
-                    elif quest.isFullCompleted():
-                        operationState |= WIDGET_PM_STATE.DONE
-                    elif quest.isMainCompleted():
-                        operationState |= WIDGET_PM_STATE.COMPLETED
-                    else:
-                        operationState |= WIDGET_PM_STATE.AVAILABLE
+                elif quest.isFullCompleted():
+                    operationState |= WIDGET_PM_STATE.DONE
+                elif quest.isMainCompleted():
+                    operationState |= WIDGET_PM_STATE.COMPLETED
+                else:
+                    operationState |= WIDGET_PM_STATE.AVAILABLE
 
         branchState |= operationState
 
@@ -223,7 +222,11 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
     __mapboxCtrl = dependency.descriptor(IMapboxController)
     __epicController = dependency.descriptor(IEpicBattleMetaGameController)
     __resourceWell = dependency.descriptor(IResourceWellController)
+    __battleMattersController = dependency.descriptor(IBattleMattersController)
+    __collectiveGoalEntryPointController = dependency.descriptor(ICollectiveGoalEntryPointController)
     __funRandomCtrl = dependency.descriptor(IFunRandomController)
+    __comp7Controller = dependency.descriptor(IComp7Controller)
+    __armoryYardCtrl = dependency.descriptor(IArmoryYardController)
 
     def __init__(self):
         super(HangarHeader, self).__init__()
@@ -238,8 +241,6 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
             showMissionsCategories(missionID=questID)
         elif questType == HANGAR_HEADER_QUESTS.QUEST_GROUP_RANKED_DAILY:
             showMissionsCategories(groupID=RANKED_DAILY_GROUP_ID)
-        elif questType == HANGAR_HEADER_QUESTS.QUEST_GROUP_FUN_RANDOM:
-            showMissionsCategories(groupID=FUN_RANDOM_GROUP_ID)
         elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_BATTLE_PASS:
             showMissionsBattlePass()
         elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_MAPBOX:
@@ -247,10 +248,11 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         elif questType in QUEST_TYPE_BY_PM_BRANCH.itervalues():
             if questID:
                 showPersonalMission(missionID=int(questID))
-            elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_REGULAR:
-                self.__showAvailablePMOperation(PM_BRANCH.REGULAR)
-            elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_PM2:
-                self.__showAvailablePMOperation(PM_BRANCH.PERSONAL_MISSION_2)
+            else:
+                if questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_REGULAR:
+                    self.__showAvailablePMOperation(PM_BRANCH.REGULAR)
+                elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_PERSONAL_PM2:
+                    self.__showAvailablePMOperation(PM_BRANCH.PERSONAL_MISSION_2)
         elif questType == HANGAR_HEADER_QUESTS.QUEST_TYPE_EVENT:
             showMissionsElen(questID)
         elif HANGAR_HEADER_QUESTS.QUEST_TYPE_MARATHON in questType:
@@ -262,6 +264,10 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
     def onUpdateHangarFlag(self):
         self.update()
 
+    def onPrbEntitySwitched(self):
+        super(HangarHeader, self).onPrbEntitySwitched()
+        self.__updateBattleMattersEntryPoint()
+
     def update(self, *_):
         headerVO = self._makeHeaderVO()
         self.as_setDataS(headerVO)
@@ -269,7 +275,10 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.__updateBattleRoyaleWidget()
         self.__updateEpicWidget()
         self.__updateResourceWellEntryPoint()
+        self.__updateCollectiveGoalEntryPoint()
         self.__updateFunRandomWidget()
+        self.__updateComp7Widget()
+        self.__updateArmoryYardEntryPoint()
 
     def updateRankedHeader(self, *_):
         self.__updateRBWidget()
@@ -289,7 +298,12 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.__mapboxCtrl.onPrimeTimeStatusUpdated += self.update
         self.__mapboxCtrl.addProgressionListener(self.update)
         self.__resourceWell.onEventUpdated += self.update
-        self.__funRandomCtrl.onGameModeStatusUpdated += self.update
+        self.__funRandomCtrl.subscription.addSubModesWatcher(self.update, True)
+        self.__collectiveGoalEntryPointController.onEventUpdated += self.__updateCollectiveGoalEntryPoint
+        self.__battleMattersController.onStateChanged += self.__onBattleMattersStateChanged
+        self.__battleMattersController.onFinish += self.__onBattleMattersStateChanged
+        self.__updateBattleMattersEntryPoint()
+        self.__armoryYardCtrl.onUpdated += self.update
         g_clientUpdateManager.addCallbacks({'inventory.1': self.update, 
            'stats.tutorialsCompleted': self.update})
         if self._eventsController:
@@ -298,6 +312,7 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.addListener(events.TutorialEvent.SET_HANGAR_HEADER_ENABLED, self.__onSetHangarHeaderEnabled, scope=EVENT_BUS_SCOPE.LOBBY)
         self._lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingChanged
         g_guiResetters.add(self.__onChangeScreenResolution)
+        self.startGlobalListening()
 
     def _dispose(self):
         g_clientUpdateManager.removeObjectCallbacks(self)
@@ -310,7 +325,11 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.__battlePassController.onSeasonStateChanged -= self.update
         self.__rankedController.onGameModeStatusUpdated -= self.update
         self.__resourceWell.onEventUpdated -= self.update
-        self.__funRandomCtrl.onGameModeStatusUpdated -= self.update
+        self.__collectiveGoalEntryPointController.onEventUpdated -= self.__updateCollectiveGoalEntryPoint
+        self.__battleMattersController.onStateChanged -= self.__onBattleMattersStateChanged
+        self.__battleMattersController.onFinish -= self.__onBattleMattersStateChanged
+        self.__funRandomCtrl.subscription.removeSubModesWatcher(self.update, True)
+        self.__armoryYardCtrl.onUpdated -= self.update
         self._currentVehicle = None
         self.__screenWidth = None
         if self._eventsController:
@@ -318,6 +337,7 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.removeListener(events.TutorialEvent.SET_HANGAR_HEADER_ENABLED, self.__onSetHangarHeaderEnabled, scope=EVENT_BUS_SCOPE.LOBBY)
         self._lobbyContext.getServerSettings().onServerSettingsChange -= self.__onServerSettingChanged
         g_guiResetters.remove(self.__onChangeScreenResolution)
+        self.stopGlobalListening()
         super(HangarHeader, self)._dispose()
         return
 
@@ -330,7 +350,7 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         if self.__epicController.isEpicPrbActive():
             return {'isVisible': True, 'quests': self.__getEpicQuestsToHeaderVO()}
         if self.__funRandomCtrl.isFunRandomPrbActive():
-            return {'isVisible': True, 'quests': self.__getFunRandomQuestsToHeaderVO()}
+            return {'isVisible': True, 'quests': []}
         if self._currentVehicle.isPresent():
             return {'isVisible': True, 'quests': self._getCommonQuestsToHeaderVO(self._currentVehicle.item)}
         return emptyHeaderVO
@@ -340,7 +360,7 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         if self.__battleRoyaleController.isBattleRoyaleMode():
             if not (self.__battleRoyaleController.isInPrimeTime() and self.__isShowPersonalMission):
                 return []
-        if self._lobbyContext.getServerSettings().isPersonalMissionsEnabled() and not self.__mapboxCtrl.isMapboxMode():
+        if self.isPersonalMissionEnabled():
             personalMissions = self.__getPersonalMissionsVO(vehicle)
             if personalMissions:
                 quests.append(personalMissions)
@@ -363,6 +383,9 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
             quests.append(eventQuests)
         return quests
 
+    def isPersonalMissionEnabled(self):
+        return self._lobbyContext.getServerSettings().isPersonalMissionsEnabled() and not self.__mapboxCtrl.isMapboxMode() and not self.__comp7Controller.isComp7PrbActive()
+
     def __getRankedQuestsToHeaderVO(self):
         quests = []
         rankedBattleQuests = self.__getRankedBattleQuestsVO()
@@ -377,16 +400,12 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
             quests.append(epicBattleQuests)
         return quests
 
-    def __getFunRandomQuestsToHeaderVO(self):
-        vehicle = self._currentVehicle.item
-        if vehicle is None:
-            return []
+    def __updateComp7Widget(self):
+        if self.__comp7Controller.isComp7PrbActive():
+            self.as_createComp7S()
+            self.__updateBattlePassSmallWidget()
         else:
-            quests = [self.__getDisabledPersonalMissionsVO(constants.ARENA_GUI_TYPE_LABEL.LABELS[constants.ARENA_GUI_TYPE.FUN_RANDOM])]
-            funRandomBattleQuests = self.__getFunRandomBattleQuestsVO(vehicle)
-            if funRandomBattleQuests:
-                quests.append(funRandomBattleQuests)
-            return quests
+            self.as_removeComp7S()
 
     def __updateBPWidget(self):
         isBPAvailable = not self.__battlePassController.isDisabled()
@@ -447,6 +466,9 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
     def __onChangeScreenResolution(self):
         self.__screenWidth = BigWorld.screenSize()[0]
         self.update()
+
+    def __onBattleMattersStateChanged(self):
+        self.__updateBattleMattersEntryPoint()
 
     def __getDisabledPersonalMissionsVO(self, modeName):
         result = []
@@ -556,6 +578,8 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
 
     def __getBattleQuestsVO(self, vehicle):
         quests = self._questController.getCurrentModeQuestsForVehicle(vehicle)
+        if self.__comp7Controller.isComp7PrbActive():
+            quests = [ quest for quest in quests if quest.hasBonusType(constants.ARENA_BONUS_TYPE.COMP7) ]
         totalCount = len(quests)
         completedQuests = len([ q for q in quests if q.isCompleted() ])
         festivityFlagData = self._festivityController.getHangarQuestsFlagData()
@@ -591,7 +615,7 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         return label
 
     def __getRankedBattleQuestsVO(self):
-        quests = self._eventsCache.getActiveQuests(lambda q: isRankedDaily(q.getID()))
+        quests = self._eventsCache.getActiveQuests((lambda q: isRankedDaily(q.getID())))
         label = ''
         totalCount = len(quests)
         completedQuests = len([ q for q in quests.itervalues() if q.isCompleted() ])
@@ -610,10 +634,11 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
                     label = backport.text(R.strings.menu.hangar_header.battle_quests_label.active(), total=diff)
                 else:
                     label = icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.CancelIcon_1()))
-            elif not isAnyPrimeLeftNextDay:
-                label = icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.ConfirmIcon_1()))
             else:
-                label = icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.time_icon()))
+                if not isAnyPrimeLeftNextDay:
+                    label = icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.ConfirmIcon_1()))
+                else:
+                    label = icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.time_icon()))
         questsVo = [
          self._headerQuestFormaterVo(totalCount > 0, backport.image(commonQuestsIcon), label, HANGAR_HEADER_QUESTS.QUEST_GROUP_RANKED_DAILY, flag=backport.image(R.images.gui.maps.icons.library.hangarFlag.flag_ranked()), tooltip=TOOLTIPS_CONSTANTS.RANKED_QUESTS_PREVIEW, isTooltipSpecial=True)]
         return self._wrapQuestGroup(HANGAR_HEADER_QUESTS.QUEST_GROUP_RANKED_DAILY, '', questsVo)
@@ -729,26 +754,6 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
          self._headerQuestFormaterVo(enable, eventQuestsIcon, eventQuestsLabel, HANGAR_HEADER_QUESTS.QUEST_TYPE_EVENT, questID=eventId, isReward=True, tooltip=eventQuestsTooltip, isTooltipSpecial=eventQuestsTooltipIsSpecial)]
         return self._wrapQuestGroup(HANGAR_HEADER_QUESTS.QUEST_GROUP_EVENTS, '', quests)
 
-    def __getFunRandomBattleQuestsVO(self, vehicle):
-        iconPath = R.images.gui.maps.icons.fun_random.quests
-        if self.__funRandomCtrl.isSuitableVehicle(vehicle) is None:
-            quests = [ q for q in self._questController.getQuestForVehicle(vehicle) if isFunRandomQuest(q.getID()) ]
-            flag = iconPath.flag_icon()
-        else:
-            quests = []
-            flag = iconPath.flag_icon_disabled()
-        totalCount = len(quests)
-        label = ''
-        if totalCount > 0:
-            completedQuests = len([ q for q in quests if q.isCompleted() ])
-            if completedQuests != totalCount:
-                label = _getActiveQuestLabel(totalCount, completedQuests)
-            else:
-                label = icons.makeImageTag(RES_ICONS.MAPS_ICONS_LIBRARY_OUTLINE_QUESTS_ALL_DONE)
-        quests = [
-         self._headerQuestFormaterVo(totalCount > 0, backport.image(flag), label, HANGAR_HEADER_QUESTS.QUEST_GROUP_FUN_RANDOM, flag=backport.image(iconPath.flag_bg()), tooltip=TOOLTIPS_CONSTANTS.FUN_RANDOM_QUESTS_PREVIEW, isTooltipSpecial=True)]
-        return self._wrapQuestGroup(HANGAR_HEADER_QUESTS.QUEST_GROUP_COMMON, '', quests)
-
     def _wrapQuestGroup(self, groupID, icon, quests, isRightSide=False):
         return {'groupID': groupID, 
            'groupIcon': icon, 
@@ -788,7 +793,10 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
     def __updateBattlePassSmallWidget(self):
         currentArenaBonusType = self.__getCurentArenaBonusType()
         secondaryPointCanBeAvailable = currentArenaBonusType not in (
-         constants.ARENA_BONUS_TYPE.REGULAR, constants.ARENA_BONUS_TYPE.UNKNOWN, constants.ARENA_BONUS_TYPE.MAPBOX)
+         constants.ARENA_BONUS_TYPE.REGULAR,
+         constants.ARENA_BONUS_TYPE.UNKNOWN,
+         constants.ARENA_BONUS_TYPE.MAPBOX,
+         constants.ARENA_BONUS_TYPE.WINBACK)
         secondaryEntryPointAvailable = secondaryPointCanBeAvailable and not self.__battlePassController.isDisabled()
         self.as_setSecondaryEntryPointVisibleS(secondaryEntryPointAvailable)
         if secondaryEntryPointAvailable:
@@ -798,6 +806,18 @@ class HangarHeader(HangarHeaderMeta, IGlobalListener, IEventBoardsListener):
         self.__isShowPersonalMission = isVisible
 
     def __updateResourceWellEntryPoint(self):
+        isRandom = self.__getCurentArenaBonusType() == constants.ARENA_BONUS_TYPE.REGULAR and not self.__bootcampController.isInBootcamp()
+        isResourceWellVisible = self.__resourceWell.isActive() or self.__resourceWell.isPaused() or self.__resourceWell.isNotStarted()
+        self.as_setResourceWellEntryPointS(isRandom and isResourceWellVisible)
+
+    def __updateCollectiveGoalEntryPoint(self):
+        isCollecitveGoalVisible = self.__collectiveGoalEntryPointController.isEnabled()
+        self.as_setCollectiveGoalEntryPointS(isCollecitveGoalVisible)
+
+    def __updateArmoryYardEntryPoint(self):
+        self.as_setArmoryYardEntryPointS(self.__armoryYardCtrl.isEnabled())
+
+    def __updateBattleMattersEntryPoint(self):
         isRandom = self.__getCurentArenaBonusType() == constants.ARENA_BONUS_TYPE.REGULAR
-        isResourceWellVisible = not self.__bootcampController.isInBootcamp() and isRandom and (self.__resourceWell.isActive() or self.__resourceWell.isPaused())
-        self.as_setResourceWellEntryPointS(isResourceWellVisible)
+        controller = self.__battleMattersController
+        self.as_setBattleMattersEntryPointS(controller.isEnabled() and (not controller.isFinished() or controller.hasDelayedRewards()) and isRandom)

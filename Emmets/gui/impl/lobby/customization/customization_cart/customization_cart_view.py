@@ -1,12 +1,12 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/customization/customization_cart/customization_cart_view.py
 from collections import namedtuple
 import logging, typing
 from frameworks.wulf import ViewFlags, ViewSettings
-from adisp import process as adisp_process
-from async import async, await
+from adisp import adisp_process
+from wg_async import wg_async, wg_await
 from CurrentVehicle import g_currentVehicle
 from frameworks.wulf import WindowFlags
 from gui import DialogsInterface
@@ -20,12 +20,12 @@ from gui.impl.pub import ViewImpl
 from gui.impl.gen.view_models.views.lobby.customization.customization_cart.cart_model import CartModel
 from gui.impl.gen.view_models.views.lobby.customization.customization_cart.cart_slot_model import CartSlotModel
 from gui.impl.gen.view_models.views.lobby.customization.customization_cart.cart_season_model import CartSeasonModel
+from gui.Scaleform.daapi.view.dialogs.ExchangeDialogMeta import InfoItemBase
 from gui.shop import showBuyGoldForCustomization
 from gui.customization.processors.cart import SeparateItemsProcessor, StyleItemsProcessor, EditableStyleItemsProcessor
 from gui.customization.processors.cart import ProcessorSelector, ItemsType
 from gui.customization.shared import SEASON_TYPE_TO_NAME, SEASONS_ORDER, MoneyForPurchase, getTotalPurchaseInfo
 from gui.customization.shared import containsVehicleBound, getPurchaseMoneyState, isTransactionValid
-from gui.customization.shared import CartExchangeCreditsInfoItem
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
 from gui.Scaleform.daapi.view.dialogs.ExchangeDialogMeta import ExchangeCreditsSingleItemMeta
 from gui.Scaleform.daapi.view.dialogs.ExchangeDialogMeta import ExchangeCreditsMultiItemsMeta
@@ -65,6 +65,27 @@ def _getSeasonModel(seasonType, seasons):
         return season
 
 
+class CartExchangeCreditsInfoItem(InfoItemBase):
+
+    @property
+    def itemTypeName(self):
+        return 'customization'
+
+    @property
+    def userName(self):
+        return 'Cart'
+
+    @property
+    def itemTypeID(self):
+        return GUI_ITEM_TYPE.CUSTOMIZATION
+
+    def getExtraIconInfo(self):
+        return
+
+    def getGUIEmblemID(self):
+        return 'notFound'
+
+
 class CustomizationCartView(ViewImpl):
     __slots__ = ('__c11nView', '__ctx', '__purchaseItems', '__mode', '__counters',
                  '__items', '__blur', '__moneyState', '__isProlongStyleRent')
@@ -83,7 +104,7 @@ class CustomizationCartView(ViewImpl):
         self.__purchaseItems = []
         self.__mode = ItemsType.DEFAULT
         self.__items = {}
-        self.__counters = {season:[0, 0] for season in SeasonType.COMMON_SEASONS}
+        self.__counters = {season: [0, 0] for season in SeasonType.COMMON_SEASONS}
         self.__moneyState = MoneyForPurchase.NOT_ENOUGH
         self.__blur = CachedBlur()
         if ctx is not None:
@@ -221,7 +242,7 @@ class CustomizationCartView(ViewImpl):
 
     def __removeListeners(self):
         model = self.viewModel
-        model.onCloseAction += self.__onWindowClose
+        model.onCloseAction -= self.__onWindowClose
         model.seasons.onSelectItem -= self.__onSelectItem
         model.rent.onSelectAutoRent -= self.__onSelectAutoRent
         model.purchase.onBuyAction -= self.__onBuy
@@ -277,7 +298,7 @@ class CustomizationCartView(ViewImpl):
 
     def __setItemsNCounters(self, itemDescriptors):
         self.__items = {}
-        self.__counters = {season:[0, 0] for season in SeasonType.COMMON_SEASONS}
+        self.__counters = {season: [0, 0] for season in SeasonType.COMMON_SEASONS}
         for season in SeasonType.COMMON_SEASONS:
             for idx, item in enumerate(itemDescriptors[season]):
                 self.__items[item.identificator] = _SelectItemData(season, item.quantity, item.purchaseIndices, idx, item.intCD, item.dependents, item.dependentOn)
@@ -301,9 +322,9 @@ class CustomizationCartView(ViewImpl):
         self.__setTotalData(model)
         return
 
-    @async
+    @wg_async
     def __onBuy(self):
-        positive = yield await(tryToShowReplaceExistingStyleDialog(self))
+        positive = yield wg_await(tryToShowReplaceExistingStyleDialog(self))
         if not positive:
             return
         if self.__moneyState is MoneyForPurchase.NOT_ENOUGH:
@@ -318,7 +339,7 @@ class CustomizationCartView(ViewImpl):
             builder = ResSimpleDialogBuilder()
             builder.setPreset(DialogPresets.CUSTOMIZATION_INSTALL_BOUND)
             builder.setMessagesAndButtons(R.strings.dialogs.customization.buy_install_bound)
-            isOk = yield await(dialogs.showSimple(builder.build(self)))
+            isOk = yield wg_await(dialogs.showSimple(builder.build(self)))
             self.__onBuyConfirmed(isOk)
             return
         self.__onBuyConfirmed(True)
@@ -438,10 +459,8 @@ class _ItemUIDataPacker(_BaseUIDataPacker):
             model.setIcon(item.iconUrl)
         else:
             model.setIcon(item.iconUrl)
-        if item.itemTypeID == GUI_ITEM_TYPE.MODIFICATION:
-            model.setShowUnsupportedAlert(not isRendererPipelineDeferred())
-        else:
-            model.setShowUnsupportedAlert(False)
+        canShow = item.itemTypeID == GUI_ITEM_TYPE.MODIFICATION or item.itemTypeID == GUI_ITEM_TYPE.PROJECTION_DECAL and item.isProgressive
+        model.setShowUnsupportedAlert(canShow and not isRendererPipelineDeferred())
         isSpecial = item.isVehicleBound and (item.buyCount > 0 or item.inventoryCount > 0) and not item.isProgressionAutoBound or item.isLimited and item.buyCount > 0
         model.setIsSpecial(isSpecial)
         return model

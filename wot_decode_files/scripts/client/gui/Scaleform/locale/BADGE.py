@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/BADGE.py
 from debug_utils import LOG_WARNING
 
@@ -273,6 +273,42 @@ class BADGE(object):
     BADGE_115_DESCR = '#badge:badge_115_descr'
     BADGE_116 = '#badge:badge_116'
     BADGE_116_DESCR = '#badge:badge_116_descr'
+    BADGE_117 = '#badge:badge_117'
+    BADGE_117_DESCR = '#badge:badge_117_descr'
+    BADGE_118 = '#badge:badge_118'
+    BADGE_118_DESCR = '#badge:badge_118_descr'
+    BADGE_119 = '#badge:badge_119'
+    BADGE_119_DESCR = '#badge:badge_119_descr'
+    BADGE_120 = '#badge:badge_120'
+    BADGE_120_DESCR = '#badge:badge_120_descr'
+    BADGE_121 = '#badge:badge_121'
+    BADGE_121_DESCR = '#badge:badge_121_descr'
+    BADGE_122 = '#badge:badge_122'
+    BADGE_122_DESCR = '#badge:badge_122_descr'
+    BADGE_123 = '#badge:badge_123'
+    BADGE_123_DESCR = '#badge:badge_123_descr'
+    BADGE_124 = '#badge:badge_124'
+    BADGE_124_DESCR = '#badge:badge_124_descr'
+    BADGE_125 = '#badge:badge_125'
+    BADGE_125_DESCR = '#badge:badge_125_descr'
+    BADGE_126 = '#badge:badge_126'
+    BADGE_126_DESCR = '#badge:badge_126_descr'
+    SUFFIX_BADGE_126 = '#badge:suffix/badge_126'
+    BADGE_127 = '#badge:badge_127'
+    BADGE_127_DESCR = '#badge:badge_127_descr'
+    BADGE_128 = '#badge:badge_128'
+    BADGE_128_DESCR = '#badge:badge_128_descr'
+    BADGE_129 = '#badge:badge_129'
+    BADGE_129_DESCR = '#badge:badge_129_descr'
+    BADGE_130 = '#badge:badge_130'
+    BADGE_130_DESCR = '#badge:badge_130_descr'
+    BADGE_131 = '#badge:badge_131'
+    BADGE_131_DESCR = '#badge:badge_131_descr'
+    BADGE_132 = '#badge:badge_132'
+    BADGE_132_DESCR = '#badge:badge_132_descr'
+    BADGE_133 = '#badge:badge_133'
+    BADGE_133_DESCR = '#badge:badge_133_descr'
+    SUFFIX_BADGE_133 = '#badge:suffix/badge_133'
     BADGE_ENUM = (
      BADGE_0,
      BADGE_0_DESCR,
@@ -522,7 +558,41 @@ class BADGE(object):
      BADGE_115,
      BADGE_115_DESCR,
      BADGE_116,
-     BADGE_116_DESCR)
+     BADGE_116_DESCR,
+     BADGE_117,
+     BADGE_117_DESCR,
+     BADGE_118,
+     BADGE_118_DESCR,
+     BADGE_119,
+     BADGE_119_DESCR,
+     BADGE_120,
+     BADGE_120_DESCR,
+     BADGE_121,
+     BADGE_121_DESCR,
+     BADGE_122,
+     BADGE_122_DESCR,
+     BADGE_123,
+     BADGE_123_DESCR,
+     BADGE_124,
+     BADGE_124_DESCR,
+     BADGE_125,
+     BADGE_125_DESCR,
+     BADGE_126,
+     BADGE_126_DESCR,
+     BADGE_127,
+     BADGE_127_DESCR,
+     BADGE_128,
+     BADGE_128_DESCR,
+     BADGE_129,
+     BADGE_129_DESCR,
+     BADGE_130,
+     BADGE_130_DESCR,
+     BADGE_131,
+     BADGE_131_DESCR,
+     BADGE_132,
+     BADGE_132_DESCR,
+     BADGE_133,
+     BADGE_133_DESCR)
     BADGE_ALL_SHORT_ENUM = (
      BADGE_10_SHORT,
      BADGE_11_SHORT,
@@ -657,7 +727,24 @@ class BADGE(object):
      BADGE_113_DESCR,
      BADGE_114_DESCR,
      BADGE_115_DESCR,
-     BADGE_116_DESCR)
+     BADGE_116_DESCR,
+     BADGE_117_DESCR,
+     BADGE_118_DESCR,
+     BADGE_119_DESCR,
+     BADGE_120_DESCR,
+     BADGE_121_DESCR,
+     BADGE_122_DESCR,
+     BADGE_123_DESCR,
+     BADGE_124_DESCR,
+     BADGE_125_DESCR,
+     BADGE_126_DESCR,
+     BADGE_127_DESCR,
+     BADGE_128_DESCR,
+     BADGE_129_DESCR,
+     BADGE_130_DESCR,
+     BADGE_131_DESCR,
+     BADGE_132_DESCR,
+     BADGE_133_DESCR)
     BADGE_ALL_DESCR_LONG_ENUM = (
      BADGE_102_DESCR_LONG,)
 

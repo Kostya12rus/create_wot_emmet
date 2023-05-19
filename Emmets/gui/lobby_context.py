@@ -1,12 +1,12 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/lobby_context.py
 from helpers.server_settings import ServerSettings
 import BigWorld
 from Event import Event, EventManager
 from account_helpers import isRoamingEnabled
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from constants import CURRENT_REALM
 from debug_utils import LOG_ERROR, LOG_NOTE
 from gui.lobby_ctx_listener import LobbyContextChangeListener
@@ -194,8 +194,8 @@ class LobbyContext(ILobbyContext):
         if confirmator in self.__headerNavigationConfirmators:
             self.__headerNavigationConfirmators.remove(confirmator)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def isHeaderNavigationPossible(self, callback=None):
         for confirmator in set(self.__headerNavigationConfirmators):
             confirmed = yield confirmator()
@@ -211,8 +211,8 @@ class LobbyContext(ILobbyContext):
         if confirmator in self.__fightButtonConfirmators:
             self.__fightButtonConfirmators.remove(confirmator)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def isFightButtonPressPossible(self, callback=None):
         for confirmator in self.__fightButtonConfirmators:
             confirmed = yield confirmator()
@@ -228,8 +228,8 @@ class LobbyContext(ILobbyContext):
         if confirmator in self.__platoonCreationConfirmators:
             self.__platoonCreationConfirmators.remove(confirmator)
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def isPlatoonCreationPossible(self, callback=None):
         for confirmator in self.__platoonCreationConfirmators:
             confirmed = yield confirmator()

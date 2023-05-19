@@ -1,11 +1,11 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/customization/customization_view.py
 import math
 from typing import Optional
 import nations
-from adisp import process
+from adisp import adisp_process
 from gui import DialogsInterface
 from gui.Scaleform.daapi.view.dialogs.confirm_customization_item_dialog_meta import ConfirmC11nSellMeta
 from gui.Scaleform.daapi.view.lobby.event_boards.event_helpers import LEVELS_RANGE
@@ -95,7 +95,7 @@ class _VehiclesFilter(object):
     __slots__ = ('vehicles', )
 
     def __init__(self, invVehicles):
-        self.vehicles = {nation:{level:[] for level in LEVELS_RANGE} for nation in nations.MAP}
+        self.vehicles = {nation: {level: [] for level in LEVELS_RANGE} for nation in nations.MAP}
         for vehicle in invVehicles:
             vehicleType = vehicle.descriptor.type
             self.vehicles[vehicleType.customizationNationID][vehicle.level].append(vehicle)
@@ -145,7 +145,7 @@ class StorageCategoryCustomizationView(StorageCategoryCustomizationViewMeta):
         else:
             event_dispatcher.showHangar()
 
-    @process
+    @adisp_process
     def sellCustomizationItem(self, itemCD, vehicleCD=None):
         item = self._itemsCache.items.getItemByCD(int(itemCD))
         vehicleCD = int(vehicleCD) if vehicleCD is not None and not math.isnan(vehicleCD) else None
@@ -191,7 +191,6 @@ class StorageCategoryCustomizationView(StorageCategoryCustomizationViewMeta):
 
     def _getInvVehicleCriteria(self):
         criteria = REQ_CRITERIA.INVENTORY
-        criteria |= ~REQ_CRITERIA.VEHICLE.EXPIRED_RENT
         criteria |= ~REQ_CRITERIA.VEHICLE.IS_OUTFIT_LOCKED
         criteria |= ~REQ_CRITERIA.VEHICLE.BATTLE_ROYALE
         criteria |= ~REQ_CRITERIA.VEHICLE.MAPS_TRAINING
@@ -213,7 +212,7 @@ class StorageCategoryCustomizationView(StorageCategoryCustomizationViewMeta):
         return dataProviderVoItemsList
 
     def _calcItemsCount(self, itemList):
-        return sum((item['count'] if 1 else 1) for item in itemList if not item['isRentable'])
+        return sum(item['count'] if 1 else 1 for item in itemList if not item['isRentable'])
 
     def _getVoListForItem(self, item):
         if not item.isVehicleBound:
@@ -224,7 +223,7 @@ class StorageCategoryCustomizationView(StorageCategoryCustomizationViewMeta):
             if item.boundInventoryCount() > 0:
                 inventoryVehicles = [ vehicle.intCD for vehicle in _VehiclesFilter(self._invVehicles).getVehicles(item) ]
                 vehicleDiff = item.getBoundVehicles().difference(inventoryVehicles)
-                voList = [ self._getVO(item, vehicle) for vehicle in vehicleDiff ]
+                voList = [ self._getVO(item, vehicle) for vehicle in vehicleDiff if item.boundInventoryCount(vehicle) ]
             if item.inventoryCount > 0:
                 voList.append(self._getVO(item))
         return voList

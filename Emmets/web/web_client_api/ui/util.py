@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/ui/util.py
 import typing
 from account_helpers import AccountSettings
@@ -70,7 +70,7 @@ class _RunTriggerChainSchema(W2CSchema):
 class _ShowToolTipSchema(W2CSchema):
     tooltipType = Field(required=True, type=basestring)
     itemId = Field(type=(int, basestring))
-    blockId = Field(type=basestring, validator=lambda value, _: value in ACHIEVEMENT_BLOCK.ALL)
+    blockId = Field(type=basestring, validator=(lambda value, _: value in ACHIEVEMENT_BLOCK.ALL))
 
 
 class _ShowCustomTooltipSchema(W2CSchema):
@@ -149,7 +149,7 @@ class UtilWebApiMixin(object):
     def getCountersInfo(self, cmd):
         ids = cmd.id_list or _COUNTER_IDS_MAP.keys()
         counters = AccountSettings.getCounters(NEW_LOBBY_TAB_COUNTER)
-        return {id:counters.get(_COUNTER_IDS_MAP[id]) for id in ids if id in _COUNTER_IDS_MAP}
+        return {id: counters.get(_COUNTER_IDS_MAP[id]) for id in ids if id in _COUNTER_IDS_MAP}
 
     @w2c(W2CSchema, 'blink_taskbar')
     def blinkTaskbar(self, _):
@@ -231,7 +231,8 @@ class UtilWebApiMixin(object):
         ctx = PlatformFetchProductListCtx(cmd)
         response = yield self._webCtrl.sendRequest(ctx=ctx)
         if response.isSuccess():
-            yield {'result': response.getData()}
+            data = response.getData()
+            yield {'result': {'body': data}}
         else:
             yield {'error': self.__getErrorResponse(response.data, 'Unable to fetch product list.')}
 
@@ -249,8 +250,7 @@ class UtilWebApiMixin(object):
         return
 
     @w2c(_ChatAvailabilitySchema, 'check_if_chat_available')
-    def checkIfChatAvailable(self, cmd, ctx):
-        callback = ctx.get('callback')
+    def checkIfChatAvailable(self, cmd):
         receiverId = cmd.receiver_id
 
         def isAvailable():
@@ -258,13 +258,14 @@ class UtilWebApiMixin(object):
             return receiver.hasValidName() and not receiver.isIgnored()
 
         def onNamesReceivedCallback():
-            callback(isAvailable())
+            self.__usersInfoHelper.onNamesReceived -= onNamesReceivedCallback
+            yield isAvailable()
 
         if not bool(self.__usersInfoHelper.getUserName(receiverId)):
             self.__usersInfoHelper.onNamesReceived += onNamesReceivedCallback
             self.__usersInfoHelper.syncUsersInfo()
         else:
-            return isAvailable()
+            yield isAvailable()
 
     @w2c(_VehicleCustomizationPreviewSchema, 'can_install_style')
     def canStyleBeInstalled(self, cmd):

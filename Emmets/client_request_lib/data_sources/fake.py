@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/client_request_lib/data_sources/fake.py
 import random, string, time
 from functools import wraps, partial
@@ -36,7 +36,7 @@ def fake_method(example):
 
         name = func.__name__
         if 'get_' in name:
-            name = name.split('get_', 1)[(-1)]
+            name = name.split('get_', 1)[-1]
         EXAMPLES[name] = example
         return wrapped
 
@@ -68,13 +68,19 @@ def get_gift_system_state(req_event_ids):
        'expiration_time': current_time + time_utils.ONE_MINUTE, 
        'expiration_delta': 5 * time_utils.ONE_MINUTE, 
        'state': []}
-    return {event_id:event_stub for event_id in req_event_ids}
+    return {event_id: event_stub for event_id in req_event_ids}
 
 
 def post_gift_system_gift(*_):
     current_time = int(time.time())
     response_stub = {'execution_time': current_time - time_utils.ONE_SECOND}
     return response_stub
+
+
+def get_uilogging_session(*_, **__):
+    return {'auth': {'token': 'uilogging_token_stub', 'expiration': time.time() + 86400}, 'logging': {'max_logs_count': 50, 
+                   'max_log_properties_count': 250, 
+                   'url': 'https://localhost:81/logging'}}
 
 
 class FakeDataAccessor(base.BaseDataAccessor):
@@ -113,7 +119,7 @@ class FakeDataAccessor(base.BaseDataAccessor):
     def _filter_data(self, data, fields):
         if isinstance(data, list):
             return [ self._filter_data(i, fields) for i in data ]
-        return {k:v for k, v in data.iteritems() if k in fields}
+        return {k: v for k, v in data.iteritems() if k in fields}
 
     def _request_data(self, section, entity_id, fields=None):
         if not self._account:
@@ -155,7 +161,7 @@ class FakeDataAccessor(base.BaseDataAccessor):
             self._compare_keys(example, data)
         self._storage.setdefault(section, {})[entity_id] = data
 
-    @fake_method(example=lambda clan_id: {'clan_id': clan_id, 
+    @fake_method(example=(lambda clan_id: {'clan_id': clan_id, 
        'xp_avg': random.randrange(1, 1000) / 10.0, 
        'efficiency': random.randrange(1, 10000), 
        'battles_count_avg': random.randrange(1, 10000), 
@@ -172,28 +178,28 @@ class FakeDataAccessor(base.BaseDataAccessor):
        'fs_battles_count_10_28d': random.randrange(1, 100), 
        'gm_battles_count_28d': random.randrange(1, 100), 
        'fs_battles_count_28d': random.randrange(1, 100), 
-       'fb_battles_count_28d': random.randrange(1, 100)})
+       'fb_battles_count_28d': random.randrange(1, 100)}))
     def get_clans_ratings(self, clan_ids, fields=None):
         return [ self._request_data('clans_ratings', i, fields=fields) for i in clan_ids ]
 
-    @fake_method(example=lambda clan_id: {'name': 'xxx', 
+    @fake_method(example=(lambda clan_id: {'name': 'xxx', 
        'tag': 'ff', 'motto': 'yyyy', 'leader_id': 666, 'members_count': 13, 
        'clan_id': clan_id, 'created_at': datetime.now(), 
        'accepts_join_requests': True, 
-       'treasury': 2423})
+       'treasury': 2423}))
     def get_clans_info(self, clan_ids, fields=None):
         return [ self._request_data('clans_info', clan_id, fields=fields) for clan_id in clan_ids ]
 
-    @fake_method(example=lambda acc_id: {'id': acc_id, 'name': 'name'})
+    @fake_method(example=(lambda acc_id: {'id': acc_id, 'name': 'name'}))
     def get_accounts_names(self, account_ids, fields=None):
         return [ self._request_data('accounts_names', account_id, fields=fields) for account_id in account_ids ]
 
-    @fake_method(example=lambda attr_prefix: {'user_stated_country': 'RU'})
+    @fake_method(example=(lambda attr_prefix: {'user_stated_country': 'RU'}))
     def get_account_attribute_by_prefix(self, attr_prefix, fields=None):
         return self._request_data('account_attributes', attr_prefix, fields=fields)
 
-    @fake_method(example=lambda clan_id: [ {'account_id': 2324 + i, 'role_name': 'officer', 'role_bw_flag': 1 << i, 'clan_id': clan_id, 'joined_at': datetime.now()} for i in range(11)
-    ])
+    @fake_method(example=(lambda clan_id: [ {'account_id': 2324 + i, 'role_name': 'officer', 'role_bw_flag': 1 << i, 'clan_id': clan_id, 'joined_at': datetime.now()} for i in range(11)
+    ]))
     def get_clan_members(self, clan_id, fields=None):
         return self._request_data('clan_members', clan_id, fields=fields)
 
@@ -221,56 +227,56 @@ class FakeDataAccessor(base.BaseDataAccessor):
     def get_accounts_clans(self, account_ids, fields):
         return [ self._request_data('accounts_clans', i, fields=fields) for i in account_ids ]
 
-    @fake_method(example=lambda (account_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
+    @fake_method(example=(lambda (account_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
                            'error', 'deleted')), 'created_at': datetime.now(), 'updated_at': datetime.now(), 'sender_id': random.randrange(1, 10000), 'id': random.randrange(1, 1000000), 'account_id': account_id, 'clan_id': random.randrange(1, 10000), 'status_changer_id': random.randrange(1, 10000), 'comment': ('Welcome {}!').format(random.randrange(1, 10000)) if random.choice((1, 0)) else ''} for i in range(random.randrange(0, 1000))
-    ])
+    ]))
     @paginated_method
     def get_account_applications(self, fields=None, statuses=None):
         return self._request_data('account_applications', (
          self.account, tuple(statuses or [])), fields=fields)
 
-    @fake_method(example=lambda (clan_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
+    @fake_method(example=(lambda (clan_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
                            'error', 'deleted')), 'created_at': datetime.now(), 'updated_at': datetime.now(), 'sender_id': random.randrange(1, 10000), 'id': random.randrange(1, 1000000), 'account_id': random.randrange(1, 10000), 'clan_id': clan_id, 'status_changer_id': random.randrange(1, 10000), 'comment': ('Welcome {}!').format(random.randrange(1, 10000)) if random.choice((1, 0)) else ''} for i in range(random.randrange(0, 1000))
-    ])
+    ]))
     @paginated_method
     def get_clan_applications(self, clan_id, fields=None, statuses=None):
         return self._request_data('clan_applications', (
          clan_id, tuple(statuses or [])), fields=fields)
 
-    @fake_method(example=lambda search: [] if len(search) % 2 else [ {'name': 'Clan Name %d' % random.randrange(1, 1000), 'tag': 'TCLAN', 'motto': 'Clan Motto', 'leader_id': random.randrange(1, 10000), 'clan_id': random.randrange(1, 100), 'members_count': random.randrange(1, 50), 'created_at': datetime.now(), 'accepts_join_requests': random.choice((True, False))} for i in range(random.randrange(1, 36))
-                           ])
+    @fake_method(example=(lambda search: [] if len(search) % 2 else [ {'name': 'Clan Name %d' % random.randrange(1, 1000), 'tag': 'TCLAN', 'motto': 'Clan Motto', 'leader_id': random.randrange(1, 10000), 'clan_id': random.randrange(1, 100), 'members_count': random.randrange(1, 50), 'created_at': datetime.now(), 'accepts_join_requests': random.choice((True, False))} for i in range(random.randrange(1, 36))
+                           ]))
     @paginated_method
     def search_clans(self, search, fields=None):
         return self._request_data('search_clans', search)
 
-    @fake_method(example=lambda account: [ {'name': 'Clan Name %d' % random.randrange(1, 1000), 'tag': 'TCLAN', 'motto': 'Clan Motto', 'leader_id': random.randrange(1, 10000), 'clan_id': random.randrange(1, 100), 'members_count': random.randrange(1, 50), 'created_at': datetime.now(), 'accepts_join_requests': random.choice((True, False))} for i in range(random.randrange(1, 36))
-    ])
+    @fake_method(example=(lambda account: [ {'name': 'Clan Name %d' % random.randrange(1, 1000), 'tag': 'TCLAN', 'motto': 'Clan Motto', 'leader_id': random.randrange(1, 10000), 'clan_id': random.randrange(1, 100), 'members_count': random.randrange(1, 50), 'created_at': datetime.now(), 'accepts_join_requests': random.choice((True, False))} for i in range(random.randrange(1, 36))
+    ]))
     @paginated_method
     def get_recommended_clans(self, fields=None):
         return self._request_data('recommended_clans', self.account)
 
-    @fake_method(example=lambda (clan_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
+    @fake_method(example=(lambda (clan_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
                            'error', 'deleted')), 'created_at': datetime.now(), 'updated_at': datetime.now(), 'sender_id': random.randrange(1, 10000), 'id': random.randrange(1, 1000000), 'account_id': random.randrange(1, 10000), 'clan_id': clan_id, 'comment': ('Welcome {}!').format(random.randrange(1, 10000)) if random.choice((1, 0)) else '', 'status_changer_id': 2132} for i in range(random.randrange(0, 1000))
-    ])
+    ]))
     @paginated_method
     def get_clan_invites(self, clan_id, fields=None, statuses=None):
         return self._request_data('clan_invites', (
          clan_id, tuple(statuses or [])), fields=fields)
 
-    @fake_method(example=lambda (account_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
+    @fake_method(example=(lambda (account_id, statuses): [ {'status': random.choice(statuses or ('active', 'declined', 'cancelled', 'accepted', 'expired',
                            'error', 'deleted')), 'created_at': datetime.now(), 'updated_at': datetime.now(), 'sender_id': random.randrange(1, 10000), 'id': random.randrange(1, 1000000), 'account_id': account_id, 'clan_id': random.randrange(1, 10000), 'status_changer_id': 2132, 'comment': ('Welcome {}!').format(random.randrange(1, 10000)) if random.choice((1, 0)) else ''} for i in range(random.randrange(0, 1000))
-    ])
+    ]))
     @paginated_method
     def get_account_invites(self, fields=None, statuses=None):
         return self._request_data('account_invites', (
          self.account, tuple(statuses or [])), fields=fields)
 
-    @fake_method(example=lambda account_id: {'global_rating': random.randrange(100, 10000), 
+    @fake_method(example=(lambda account_id: {'global_rating': random.randrange(100, 10000), 
        'battle_avg_xp': random.randrange(100, 10000), 
        'battles_count': random.randrange(1, 1000), 
        'battle_avg_performance': random.uniform(0, 1), 
        'xp_amount': random.randrange(100, 1000), 
-       'account_id': account_id})
+       'account_id': account_id}))
     def get_accounts_info(self, account_ids, fields=None):
         return [ self._request_data('accounts_info', acc_id, fields=fields) for acc_id in account_ids ]
 
@@ -404,20 +410,20 @@ class FakeDataAccessor(base.BaseDataAccessor):
     def create_applications(self, clan_ids, comment, fields=None):
         return self._request_data('create_applications', clan_ids, fields=fields)
 
-    @fake_method(example=lambda obj_id: {'transaction_id': 213, 
-       'id': obj_id, 'account_id': 343, 'clan_id': 17})
+    @fake_method(example=(lambda obj_id: {'transaction_id': 213, 
+       'id': obj_id, 'account_id': 343, 'clan_id': 17}))
     def accept_application(self, application_id, fields=None):
         return self._request_data('accept_application', application_id, fields=fields)
 
-    @fake_method(example=lambda obj_id: {'id': obj_id, 'account_id': 343, 'clan_id': 17})
+    @fake_method(example=(lambda obj_id: {'id': obj_id, 'account_id': 343, 'clan_id': 17}))
     def decline_application(self, application_id, fields=None):
         return self._request_data('decline_application', application_id, fields=fields)
 
-    @fake_method(example=lambda obj_id: {'transaction_id': 213, 'id': obj_id, 'account_id': 343, 'clan_id': 17})
+    @fake_method(example=(lambda obj_id: {'transaction_id': 213, 'id': obj_id, 'account_id': 343, 'clan_id': 17}))
     def accept_invite(self, invite_id, fields=None):
         return self._request_data('accept_invite', invite_id, fields=fields)
 
-    @fake_method(example=lambda obj_id: {'id': obj_id, 'account_id': 343, 'clan_id': 17})
+    @fake_method(example=(lambda obj_id: {'id': obj_id, 'account_id': 343, 'clan_id': 17}))
     def decline_invite(self, invite_id, fields=None):
         return self._request_data('decline_invite', invite_id, fields=fields)
 
@@ -532,7 +538,7 @@ class FakeDataAccessor(base.BaseDataAccessor):
     def unlock_reserve(self, periphery_id, unit_id, reserve_id, fields=None):
         return self._request_data('unlock_reserve', unit_id)
 
-    @fake_method(example=lambda clan_id: {'skirmishes_statistics': {'last_28_days_battles_count': 1, 
+    @fake_method(example=(lambda clan_id: {'skirmishes_statistics': {'last_28_days_battles_count': 1, 
                                  'last_28_days_wins_count': 1, 
                                  'wins_count': 1, 
                                  'loses_count': 1, 
@@ -550,11 +556,11 @@ class FakeDataAccessor(base.BaseDataAccessor):
        'level_8_statistics': {'wins_count': 1, 
                               'battles_count': 1}, 
        'level_10_statistics': {'wins_count': 1, 
-                               'battles_count': 1}})
+                               'battles_count': 1}}))
     def clan_statistics(self, clan_id, fields=None):
         return self._request_data('clan_statistics', clan_id)
 
-    @fake_method(example=lambda account_id: {'skirmishes_statistics': {'wins_count': 1, 
+    @fake_method(example=(lambda account_id: {'skirmishes_statistics': {'wins_count': 1, 
                                  'loses_count': 1, 
                                  'draws_count': 1}, 
        'battles_statistics': {'wins_count': 1, 
@@ -565,7 +571,7 @@ class FakeDataAccessor(base.BaseDataAccessor):
                                      'battles': 1}, 
        'industrial_resource_last_28_days': {'random_battles': 1, 
                                             'skirmishes': 1, 
-                                            'battles': 1}})
+                                            'battles': 1}}))
     def account_statistics(self, account_id, fields=None):
         return self._request_data('account_statistics', account_id)
 
@@ -624,6 +630,11 @@ class FakeDataAccessor(base.BaseDataAccessor):
         self._storage.get('post_gift_system_gift', {}).clear()
         return self._request_data('post_gift_system_gift', None)
 
+    @fake_method(example=get_uilogging_session)
+    def get_uilogging_session(self):
+        self._storage.get('uilogging_session', {}).clear()
+        return self._request_data('uilogging_session', None)
+
     @fake_method(example={'data': {'balance': [
                           {'code': 'fake_code', 
                              'amount': 0, 
@@ -632,3 +643,13 @@ class FakeDataAccessor(base.BaseDataAccessor):
                 'on_hold': {'granted': [], 'consumed': []}}})
     def get_inventory_entitlements(self, entitlement_codes):
         return self._request_data('inventory_entitlements', None)
+
+    @fake_method(example={'data': {'balance': [
+                          {'code': 'fake_code', 
+                             'amount': 0, 
+                             'expires_at': '1970-01-01T00:00:00Z', 
+                             'tags': []}], 
+                'balance_version': 0, 
+                'on_hold': {'granted': [], 'consumed': []}}})
+    def get_inventory_entitlements_v5(self, entitlementsFilter):
+        return self._request_data('get_inventory_entitlements_v5', None)

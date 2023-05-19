@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/c11n_constants.py
 import constants
 from soft_exception import SoftException
@@ -48,7 +48,8 @@ class CustomizationType(object):
     SEQUENCE = 11
     ATTACHMENT = 12
     RANGE = {
-     PAINT, CAMOUFLAGE, DECAL, STYLE, MODIFICATION, ITEM_GROUP, PROJECTION_DECAL, PERSONAL_NUMBER, FONT}
+     PAINT, CAMOUFLAGE, DECAL, STYLE, MODIFICATION, ITEM_GROUP, PROJECTION_DECAL, 
+     PERSONAL_NUMBER, FONT}
     STYLE_ONLY_RANGE = {ATTACHMENT, SEQUENCE}
     FULL_RANGE = RANGE | STYLE_ONLY_RANGE
     APPLIED_TO_TYPES = (
@@ -59,8 +60,8 @@ class CustomizationType(object):
     TYPES_FOR_EDITABLE_STYLE = (PAINT, DECAL, PERSONAL_NUMBER, MODIFICATION, PROJECTION_DECAL)
 
 
-CustomizationTypeNames = {getattr(CustomizationType, k):k for k in dir(CustomizationType) if isinstance(getattr(CustomizationType, k), int) if isinstance(getattr(CustomizationType, k), int)}
-CustomizationNamesToTypes = {v:k for k, v in CustomizationTypeNames.iteritems()}
+CustomizationTypeNames = {getattr(CustomizationType, k): k for k in dir(CustomizationType) if isinstance(getattr(CustomizationType, k), int)}
+CustomizationNamesToTypes = {v: k for k, v in CustomizationTypeNames.iteritems()}
 
 class CustomizationDisplayType(object):
     HISTORICAL = 0
@@ -82,10 +83,12 @@ class ItemTags(object):
     ADD_NATIONAL_EMBLEM = 'addNationalEmblem'
     DISABLE_VERTICAL_MIRROR = 'disableVerticalMirror'
     STYLE_PROGRESSION = 'styleProgression'
+    QUESTS_PROGRESSION = 'questsProgression'
     PROGRESSION_REWIND_ENABLED = 'progression_rewind_enabled'
     ONLY_VERTICAL_MIRROR = 'onlyVerticalMirror'
     HIDE_IF_INCOMPATIBLE = 'hideIfIncompatible'
     STYLE_SERIAL_NUMBER = 'styleSerialNumber'
+    LOCKED_ON_VEHICLE = 'lockedOnVehicle'
 
 
 class ProjectionDecalType(object):
@@ -184,10 +187,12 @@ class ApplyArea(object):
     GUN_INSIGNIA_REGIONS = (GUN, GUN_1)
     GUN_PERSONAL_NUMBER_REGIONS = (GUN_2, GUN_3)
     RANGE = {
-     HULL, HULL_1, HULL_2, HULL_3,
-     TURRET, TURRET_1, TURRET_2, TURRET_3,
-     GUN, GUN_1, GUN_2, GUN_3,
-     CHASSIS, CHASSIS_1, CHASSIS_2, CHASSIS_3}
+     HULL, HULL_1, HULL_2, HULL_3, 
+     TURRET, TURRET_1, TURRET_2, 
+     TURRET_3, 
+     GUN, GUN_1, GUN_2, GUN_3, 
+     CHASSIS, 
+     CHASSIS_1, CHASSIS_2, CHASSIS_3}
     DECAL_REGIONS = HULL_DECAL_REGIONS + TURRET_DECAL_REGIONS + GUN_DECAL_REGIONS
     CAMOUFLAGE_REGIONS = HULL_CAMOUFLAGE_REGIONS + TURRET_CAMOUFLAGE_REGIONS + GUN_CAMOUFLAGE_REGIONS
     PAINT_REGIONS = CHASSIS_PAINT_REGIONS + HULL_PAINT_REGIONS + TURRET_PAINT_REGIONS + GUN_PAINT_REGIONS
@@ -240,7 +245,7 @@ class SeasonType(object):
         raise SoftException('unknown arenaKind', arenaKind)
 
 
-SeasonTypeNames = {getattr(SeasonType, k):k for k in dir(SeasonType) if not k.startswith('_') and isinstance(getattr(SeasonType, k), int) if not k.startswith('_') and isinstance(getattr(SeasonType, k), int)}
+SeasonTypeNames = {getattr(SeasonType, k): k for k in dir(SeasonType) if not k.startswith('_') and isinstance(getattr(SeasonType, k), int)}
 
 class ModificationType(object):
     UNDEFINED = 0
@@ -258,7 +263,7 @@ class DecalType(object):
      EMBLEM, INSCRIPTION)
 
 
-DecalTypeNames = {getattr(DecalType, k):k for k in dir(DecalType) if not k.startswith('_') if not k.startswith('_')}
+DecalTypeNames = {getattr(DecalType, k): k for k in dir(DecalType) if not k.startswith('_')}
 
 class StyleFlags(object):
     ENABLED = 1
@@ -306,10 +311,9 @@ class CamouflageTilingType(object):
 CamouflageTilingType.RANGE = tuple([ getattr(CamouflageTilingType, k) for k in dir(CamouflageTilingType) if not k.startswith('_') and k not in ('RANGE',
                                                                                                                                                 'NONE')
                                    ])
-CamouflageTilingTypeNames = {getattr(CamouflageTilingType, k):k for k in dir(CamouflageTilingType) if not k.startswith('_') and k not in ('RANGE',
-                                                                                                                                          'NONE') if not k.startswith('_') and k not in ('RANGE',
-                                                                                                                                                                                         'NONE')}
-CamouflageTilingTypeNameToType = {v:k for k, v in CamouflageTilingTypeNames.iteritems()}
+CamouflageTilingTypeNames = {getattr(CamouflageTilingType, k): k for k in dir(CamouflageTilingType) if not k.startswith('_') and k not in ('RANGE',
+                                                                                                                                           'NONE')}
+CamouflageTilingTypeNameToType = {v: k for k, v in CamouflageTilingTypeNames.iteritems()}
 EASING_TRANSITION_DURATION = 0.8
 IMMEDIATE_TRANSITION_DURATION = 0.0
 
@@ -338,7 +342,7 @@ class EDITING_STYLE_REASONS(object):
     IS_EDITABLE = 'isEditable'
     NOT_EDITABLE = 'notEditable'
     NOT_REACHED_LEVEL = 'notReachedLevel'
-    NOT_HAVE_ANY_PROGRESIIVE_DECALS = 'notHaveAnyProgressiveDecals'
+    NOT_HAVE_ANY_PROGRESSIVE_DECALS = 'notHaveAnyProgressiveDecals'
     ENABLED = (
      IS_EDITABLE,)
-    DISABLED = (NOT_EDITABLE, NOT_REACHED_LEVEL, NOT_HAVE_ANY_PROGRESIIVE_DECALS)
+    DISABLED = (NOT_EDITABLE, NOT_REACHED_LEVEL, NOT_HAVE_ANY_PROGRESSIVE_DECALS)

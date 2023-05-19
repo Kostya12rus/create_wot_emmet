@@ -1,18 +1,14 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/missions/regular/missions_views.py
-import typing
 from functools import partial
 import BigWorld
-from adisp import process
-from async import async, await
+from adisp import adisp_process
+from wg_async import wg_async, wg_await
 from constants import PremiumConfigs
 from debug_utils import LOG_ERROR
-from gifts.gifts_common import GiftEventID
 from gui import DialogsInterface
-from gui.gift_system.constants import HubUpdateReason
-from gui.gift_system.mixins import GiftEventHubWatcher
 from gui.Scaleform.Waiting import Waiting
 from gui.Scaleform.daapi.settings import BUTTON_LINKAGES
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -24,20 +20,14 @@ from gui.Scaleform.daapi.view.meta.MissionsGroupedViewMeta import MissionsGroupe
 from gui.Scaleform.daapi.view.meta.MissionsMarathonViewMeta import MissionsMarathonViewMeta
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.Scaleform.genConsts.EVENTBOARDS_ALIASES import EVENTBOARDS_ALIASES
-from gui.Scaleform.genConsts.LINKEDSET_ALIASES import LINKEDSET_ALIASES
 from gui.Scaleform.genConsts.STORE_CONSTANTS import STORE_CONSTANTS
 from gui.Scaleform.locale.EVENT_BOARDS import EVENT_BOARDS
-from gui.Scaleform.locale.LINKEDSET import LINKEDSET
 from gui.Scaleform.locale.QUESTS import QUESTS
 from gui.Scaleform.genConsts.QUESTS_ALIASES import QUESTS_ALIASES
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.event_boards.settings import expandGroup, isGroupMinimized
-from gui.impl.lobby.missions.daily_quests_view import DailyTabs
-from gui.impl.new_year.navigation import NewYearNavigation
-from gui.impl.new_year.sounds import NewYearSoundsManager
 from gui.server_events import settings, caches
-from gui.server_events.event_items import DEFAULTS_GROUPS
-from gui.server_events.events_dispatcher import hideMissionDetails, showDailyQuests
+from gui.server_events.events_dispatcher import hideMissionDetails
 from gui.server_events.events_dispatcher import showMissionsCategories
 from gui.server_events.events_helpers import isMarathon, isDailyQuest, isPremium
 from gui.shared import actions
@@ -47,14 +37,12 @@ from gui.shared.event_dispatcher import showTankPremiumAboutPage
 from gui.shared.formatters import text_styles, icons
 from helpers import dependency
 from helpers.i18n import makeString as _ms
-from new_year.ny_constants import AnchorNames
-from skeletons.gui.game_control import IReloginController, IMarathonEventsController, IBrowserController, IFestivityController
+from skeletons.gui.game_control import IReloginController, IMarathonEventsController, IBrowserController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from gui import makeHtmlString
 from gui.impl import backport
 from gui.impl.gen import R
-from uilogging.ny.loggers import NyCelebrityButtonLogger
 
 class _GroupedMissionsView(MissionsGroupedViewMeta):
 
@@ -69,12 +57,6 @@ class _GroupedMissionsView(MissionsGroupedViewMeta):
                     blockData['isCollapsed'] = settings.isGroupMinimized(gID)
 
         return
-
-    def onDailyClick(self):
-        pass
-
-    def onNYChallengeClick(self):
-        pass
 
 
 class MissionsGroupedView(_GroupedMissionsView):
@@ -101,7 +83,7 @@ class MissionsGroupedView(_GroupedMissionsView):
            'btnLinkage': BUTTON_LINKAGES.BUTTON_LINK}
 
     def _getViewQuestFilter(self):
-        return lambda q: isMarathon(q.getGroupID())
+        return (lambda q: isMarathon(q.getGroupID()))
 
 
 class MissionsMarathonView(MissionsMarathonViewMeta):
@@ -126,7 +108,7 @@ class MissionsMarathonView(MissionsMarathonViewMeta):
     def getSuitableEvents(self):
         return []
 
-    @process
+    @adisp_process
     def reload(self):
         browser = self._browserCtrl.getBrowser(self.__browserID)
         if browser is not None and self._marathonEvent and self.__browserView:
@@ -155,7 +137,7 @@ class MissionsMarathonView(MissionsMarathonViewMeta):
     def markVisited(self):
         pass
 
-    @process
+    @adisp_process
     def _onRegisterFlashComponent(self, viewPy, alias):
         if alias == VIEW_ALIAS.BROWSER and self._marathonEvent:
             if self.__browserID is None:
@@ -171,9 +153,9 @@ class MissionsMarathonView(MissionsMarathonViewMeta):
                 LOG_ERROR('Attampt to initialize browser 2nd time!')
         return
 
-    @async
+    @wg_async
     def _onEventsUpdate(self, *args):
-        yield await(self.eventsCache.prefetcher.demand())
+        yield wg_await(self.eventsCache.prefetcher.demand())
         if self._builder:
             self.__updateEvents()
 
@@ -242,7 +224,7 @@ class MissionsEventBoardsView(MissionsEventBoardsViewMeta):
         ctx = {'eventID': eventID}
         self.__openDetailsContainer(EVENTBOARDS_ALIASES.EVENTBOARDS_DETAILS_AWARDS_LINKAGE, ctx)
 
-    @process
+    @adisp_process
     def serverClick(self, eventID, serverID):
 
         def doJoin():
@@ -256,7 +238,7 @@ class MissionsEventBoardsView(MissionsEventBoardsViewMeta):
              actions.OnLobbyInitedAction(onInited=doJoin),))
 
     @checkEventExist
-    @process
+    @adisp_process
     def registrationClick(self, eventID):
         self.as_setWaitingVisibleS(True)
         yield self.eventsController.joinEvent(eventID)
@@ -264,7 +246,7 @@ class MissionsEventBoardsView(MissionsEventBoardsViewMeta):
         self._onEventsUpdate()
 
     @checkEventExist
-    @process
+    @adisp_process
     def participateClick(self, eventID):
         eventData = self.__eventsData.getEvent(eventID)
         started = eventData.isStarted()
@@ -343,7 +325,7 @@ class MissionsEventBoardsView(MissionsEventBoardsViewMeta):
             view.onDisposed += self.__tableViewDisposed
         return
 
-    @process
+    @adisp_process
     def __tableViewDisposed(self, view):
         self.as_setPlayFadeInTweenEnabledS(False)
         view.onDisposed -= self.__tableViewDisposed
@@ -357,11 +339,8 @@ class MissionsEventBoardsView(MissionsEventBoardsViewMeta):
         g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(viewAlias), ctx=ctx), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
-class MissionsCategoriesView(_GroupedMissionsView, GiftEventHubWatcher):
-    QUESTS_COUNT_LINKEDSET_BLOCK = 1
-    _GIFT_EVENT_ID = GiftEventID.NY_HOLIDAYS
+class MissionsCategoriesView(_GroupedMissionsView):
     _lobbyContext = dependency.descriptor(ILobbyContext)
-    _festivityController = dependency.descriptor(IFestivityController)
     __showDQInMissionsTab = False
 
     @classmethod
@@ -370,72 +349,23 @@ class MissionsCategoriesView(_GroupedMissionsView, GiftEventHubWatcher):
 
     @staticmethod
     def getViewQuestFilter():
-        return lambda q: not (isMarathon(q.getGroupID()) or isPremium(q.getGroupID()) or isDailyQuest(q.getID()))
+        return (lambda q: not (isMarathon(q.getGroupID()) or isPremium(q.getGroupID()) or isDailyQuest(q.getID())))
 
     @staticmethod
     def getViewQuestFilterIncludingDailyQuests():
         viewQuestFilter = MissionsCategoriesView.getViewQuestFilter()
-        return lambda q: viewQuestFilter(q) or isPremium(q.getGroupID()) or isDailyQuest(q.getID())
-
-    def openMissionDetailsView(self, eventID, blockID):
-        if blockID == DEFAULTS_GROUPS.LINKEDSET_QUESTS:
-            g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(LINKEDSET_ALIASES.LINKED_SET_DETAILS_CONTAINER_VIEW), ctx={'eventID': eventID}), scope=EVENT_BUS_SCOPE.LOBBY)
-        else:
-            super(MissionsCategoriesView, self).openMissionDetailsView(eventID, blockID)
-
-    def onLinkedSetUpdated(self, _):
-        self._filterMissions()
-
-    def useTokenClick(self, eventID):
-        level = 6
-        g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(LINKEDSET_ALIASES.LINKED_SET_VEHICLE_LIST_POPUP_PY), ctx={'infoText': _ms(LINKEDSET.VEHICLE_LIST_POPUP_INFO_TEXT, level=level), 
-           'levelsRange': [
-                         level], 
-           'section': 'linkedset_view_vehicle'}), scope=EVENT_BUS_SCOPE.LOBBY)
+        return (lambda q: viewQuestFilter(q) or isPremium(q.getGroupID()) or isDailyQuest(q.getID()))
 
     def onClickButtonDetails(self):
         showTankPremiumAboutPage()
 
-    def onDailyClick(self):
-        showDailyQuests(subTab=DailyTabs.QUESTS)
-
-    def onNYChallengeClick(self):
-        NewYearNavigation.switchByAnchorName(AnchorNames.CELEBRITY)
-        NewYearSoundsManager.setHangarPlaceGarage()
-        NyCelebrityButtonLogger().logClickInMissions()
-
     def _populate(self):
         super(MissionsCategoriesView, self)._populate()
-        g_eventBus.addListener(events.MissionsEvent.ON_LINKEDSET_STATE_UPDATED, self.onLinkedSetUpdated, EVENT_BUS_SCOPE.LOBBY)
         self._lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChange
-        self._festivityController.onStateChanged += self.__festivityStateChanged
-        self.catchGiftEventHub()
 
     def _dispose(self):
-        g_eventBus.removeListener(events.MissionsEvent.ON_LINKEDSET_STATE_UPDATED, self.onLinkedSetUpdated, EVENT_BUS_SCOPE.LOBBY)
         self._lobbyContext.getServerSettings().onServerSettingsChange -= self.__onServerSettingsChange
-        self._festivityController.onStateChanged -= self.__festivityStateChanged
-        self.releaseGiftEventHub()
         super(MissionsCategoriesView, self)._dispose()
-
-    def _appendBlockDataToResult(self, result, data):
-        if data.blockData.get('blockId', None) == DEFAULTS_GROUPS.LINKEDSET_QUESTS and self._getQuestFilteredCountFromBlockData(data) == 0:
-            return self.QUESTS_COUNT_LINKEDSET_BLOCK
-        else:
-            result.append(data.blockData)
-            return
-
-    def _getQuestTotalCountFromBlockData(self, data):
-        if data.blockData.get('blockId', None) == DEFAULTS_GROUPS.LINKEDSET_QUESTS:
-            return self.QUESTS_COUNT_LINKEDSET_BLOCK
-        else:
-            return super(MissionsCategoriesView, self)._getQuestTotalCountFromBlockData(data)
-
-    def _getQuestFilteredCountFromBlockData(self, data):
-        if data.blockData.get('blockId', None) == DEFAULTS_GROUPS.LINKEDSET_QUESTS:
-            return self.QUESTS_COUNT_LINKEDSET_BLOCK
-        else:
-            return super(MissionsCategoriesView, self)._getQuestFilteredCountFromBlockData(data)
 
     @staticmethod
     def _getBackground():
@@ -446,28 +376,12 @@ class MissionsCategoriesView(_GroupedMissionsView, GiftEventHubWatcher):
             return self.getViewQuestFilterIncludingDailyQuests()
         return self.getViewQuestFilter()
 
-    def _appendNYBanner(self, quests):
-        if self._festivityController.isEnabled():
-            blockId = QUESTS_ALIASES.MISSIONS_NY_BANNER_VIEW_ALIAS
-            if self.isGiftEventDisabled(isCached=False):
-                blockId = QUESTS_ALIASES.MISSIONS_NY_GIFT_OFF_BANNER_VIEW_ALIAS
-            quests.append({'blockId': blockId})
-            return True
-        return False
-
-    def _onGiftHubUpdate(self, reason, extra=None):
-        if reason == HubUpdateReason.SETTINGS:
-            self._filterMissions()
-
     def __onServerSettingsChange(self, diff):
         if PremiumConfigs.PREM_QUESTS not in diff:
             return
         diffConfig = diff.get(PremiumConfigs.PREM_QUESTS)
         if 'enabled' in diffConfig:
             self._onEventsUpdate()
-
-    def __festivityStateChanged(self):
-        self._filterMissions()
 
 
 class CurrentVehicleMissionsView(CurrentVehicleMissionsViewMeta):

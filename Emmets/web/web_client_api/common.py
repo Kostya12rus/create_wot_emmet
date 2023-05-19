@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/common.py
 import itertools
 from collections import namedtuple
@@ -78,6 +78,7 @@ class ItemPackType(CONST_CONTAINER):
     GOODIE_EXPERIENCE = 'goodie/experience'
     GOODIE_FREE_EXPERIENCE = 'goodie/free_experience'
     GOODIE_CREW_EXPERIENCE = 'goodie/crew_experience'
+    GOODIE_FREE_AND_CREW_EXPERIENCE = 'goodie/free_xp_and_crew_xp'
     GOODIE_FRONTLINE_EXPERIENCE = 'goodie/fl_experience'
     GOODIE_RECERTIFICATIONFORM = 'goodie/recertificationForm'
     CREW_50 = 'crew/50'
@@ -140,6 +141,7 @@ class ItemPackType(CONST_CONTAINER):
     OFFER = 'offer'
     OFFER_BROCHURE = 'offer/crew_book/brochure'
     OFFER_BATTLE_BOOSTER = 'offer/item/equipment'
+    TMAN_TOKEN = 'tmanToken'
 
 
 class ItemPackTypeGroup(CONST_CONTAINER):
@@ -160,6 +162,7 @@ class ItemPackTypeGroup(CONST_CONTAINER):
      ItemPackType.GOODIE_EXPERIENCE,
      ItemPackType.GOODIE_CREW_EXPERIENCE,
      ItemPackType.GOODIE_FREE_EXPERIENCE,
+     ItemPackType.GOODIE_FREE_AND_CREW_EXPERIENCE,
      ItemPackType.GOODIE_FRONTLINE_EXPERIENCE)
     CAMOUFLAGE = (
      ItemPackType.CAMOUFLAGE_ALL,
@@ -217,6 +220,8 @@ class ItemPackTypeGroup(CONST_CONTAINER):
     OFFER = (
      ItemPackType.OFFER_BATTLE_BOOSTER,
      ItemPackType.OFFER_BROCHURE)
+    TMAN_TOKEN = {
+     ItemPackType.TMAN_TOKEN}
 
 
 CompensationSpec = namedtuple('CompensationSpec', ('type', 'value', 'count'))

@@ -1,20 +1,19 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/event_dispatcher.py
-import logging
+import logging, typing
 from operator import attrgetter
-import typing
 from BWUtil import AsyncReturn
 import adisp
 from CurrentVehicle import HeroTankPreviewAppearance
-from async import async, await
 from constants import GameSeasonType, RentType
 from debug_utils import LOG_WARNING
 from frameworks.wulf import ViewFlags, Window, WindowFlags, WindowLayer, WindowStatus
 from gui import DialogsInterface, GUI_SETTINGS, SystemMessages
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.daapi.view.dialogs import DIALOG_BUTTON_ID, I18nConfirmDialogMeta, I18nInfoDialogMeta
+from gui.Scaleform.daapi.view.dialogs.ConfirmModuleMeta import SellModuleMeta
 from gui.Scaleform.daapi.view.lobby.clans.clan_helpers import getClanQuestURL
 from gui.Scaleform.daapi.view.lobby.referral_program.referral_program_helpers import getReferralProgramURL
 from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getBuyCollectibleVehiclesUrl, getClientControlledCloseCtx, getRentVehicleUrl, getShopURL, getTelecomRentVehicleUrl
@@ -26,14 +25,16 @@ from gui.Scaleform.genConsts.BATTLEROYALE_ALIASES import BATTLEROYALE_ALIASES
 from gui.Scaleform.genConsts.BOOSTER_CONSTANTS import BOOSTER_CONSTANTS
 from gui.Scaleform.genConsts.CLANS_ALIASES import CLANS_ALIASES
 from gui.Scaleform.genConsts.EPICBATTLES_ALIASES import EPICBATTLES_ALIASES
-from gui.Scaleform.genConsts.FUNRANDOM_ALIASES import FUNRANDOM_ALIASES
+from gui.Scaleform.genConsts.HANGAR_ALIASES import HANGAR_ALIASES
 from gui.Scaleform.genConsts.MAPBOX_ALIASES import MAPBOX_ALIASES
 from gui.Scaleform.genConsts.PERSONAL_MISSIONS_ALIASES import PERSONAL_MISSIONS_ALIASES
+from gui.Scaleform.genConsts.QUESTS_ALIASES import QUESTS_ALIASES
 from gui.Scaleform.genConsts.RANKEDBATTLES_ALIASES import RANKEDBATTLES_ALIASES
 from gui.Scaleform.genConsts.STORAGE_CONSTANTS import STORAGE_CONSTANTS
 from gui.game_control.links import URLMacros
 from gui.impl import backport
 from gui.impl.gen import R
+from gui.impl.gen.view_models.views.dialogs.template_settings.default_dialog_template_settings import DisplayFlags
 from gui.impl.gen.view_models.views.lobby.vehicle_preview.top_panel.top_panel_tabs_model import TabID
 from gui.impl.lobby.account_completion.utils.common import AccountCompletionType
 from gui.impl.lobby.account_completion.utils.decorators import waitShowOverlay
@@ -41,19 +42,20 @@ from gui.impl.lobby.common.congrats.common_congrats_view import CongratsWindow
 from gui.impl.lobby.maps_training.maps_training_queue_view import MapsTrainingQueueView
 from gui.impl.lobby.tank_setup.dialogs.confirm_dialog import TankSetupConfirmDialog, TankSetupExitConfirmDialog
 from gui.impl.lobby.tank_setup.dialogs.refill_shells import ExitFromShellsConfirm, RefillShells
+from gui.impl.lobby.crew.crew_header_view import BuildedMessage
+from gui.impl.pub import ViewImpl
 from gui.impl.pub.lobby_window import LobbyNotificationWindow, LobbyWindow
 from gui.impl.pub.notification_commands import WindowNotificationCommand
 from gui.prb_control.settings import CTRL_ENTITY_TYPE
 from gui.resource_well.resource import Resource
-from gui.resource_well.resource_well_helpers import isIntroShown, isResourceWellRewardVehicle
+from gui.resource_well.resource_well_helpers import isResourceWellRewardVehicle
 from gui.shared import events, g_eventBus
 from gui.shared.ClanCache import g_clanCache
 from gui.shared.event_bus import EVENT_BUS_SCOPE
 from gui.shared.formatters import text_styles
-from gui.shared.gui_items.Vehicle import getUserName
+from gui.shared.gui_items.Vehicle import getNationLessName, getUserName
 from gui.shared.gui_items.processors.goodies import BoosterActivator
 from gui.shared.money import Currency, MONEY_UNDEFINED, Money
-from gui.shared.notifications import NotificationPriorityLevel
 from gui.shared.utils import isPopupsWindowsOpenDisabled
 from gui.shared.utils.functions import getUniqueViewName, getViewName
 from gui.shared.utils.requesters import REQ_CRITERIA
@@ -64,18 +66,20 @@ from items import ITEM_TYPES, parseIntCompactDescr, vehicles as vehicles_core
 from nations import NAMES
 from shared_utils import first
 from skeletons.gui.app_loader import IAppLoader
-from skeletons.gui.game_control import IBrowserController, ICNLootBoxesController, IClanNotificationController, IFunRandomController, IHeroTankController, IMarathonEventsController, IReferralProgramController, IResourceWellController
+from skeletons.gui.game_control import IBrowserController, IClanNotificationController, ICollectionsSystemController, IHeroTankController, IMarathonEventsController, IReferralProgramController, IResourceWellController, IWotPlusController, IArmoryYardController
 from skeletons.gui.goodies import IGoodiesCache
 from skeletons.gui.impl import IGuiLoader, INotificationWindowController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
 from soft_exception import SoftException
-from uilogging.veh_post_progression.loggers import VehPostProgressionEntryPointLogger
+from wg_async import wg_async, wg_await
 if typing.TYPE_CHECKING:
-    from typing import Callable, Dict, Generator, Iterable, List, Union, Tuple
+    from typing import Callable, Dict, Generator, Iterable, List, Union, Tuple, Optional, Any
     from gui.marathon.marathon_event import MarathonEvent
+    from enum import EnumMeta
+    from gui.impl.lobby.crew.confirm_skills_learn_dialog import ConfirmSkillsLearnDialogData
     from gui.Scaleform.framework.managers import ContainerManager
-    from uilogging.resource_well.constants import ParentScreens
+    from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource
 _logger = logging.getLogger(__name__)
 
 class SettingsTabIndex(object):
@@ -115,6 +119,10 @@ def showRankedPrimeTimeWindow():
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(RANKEDBATTLES_ALIASES.RANKED_BATTLE_PRIME_TIME), ctx={}), EVENT_BUS_SCOPE.LOBBY)
 
 
+def showComp7PrimeTimeWindow():
+    g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(HANGAR_ALIASES.COMP7_PRIME_TIME_ALIAS), ctx={}), EVENT_BUS_SCOPE.LOBBY)
+
+
 def showRankedBattleIntro():
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(RANKEDBATTLES_ALIASES.RANKED_BATTLES_INTRO_ALIAS)), scope=EVENT_BUS_SCOPE.LOBBY)
 
@@ -125,6 +133,26 @@ def showEpicBattlesPrimeTimeWindow():
 
 def showEpicBattlesAfterBattleWindow(levelUpInfo, parent=None):
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(EPICBATTLES_ALIASES.EPIC_BATTLES_AFTER_BATTLE_ALIAS, parent=parent), ctx={'levelUpInfo': levelUpInfo}), EVENT_BUS_SCOPE.LOBBY)
+
+
+def showFrontlineContainerWindow(activeTab=None):
+    from frontline.gui.impl.gen.view_models.views.lobby.views.frontline_container_tab_model import TabType
+    from frontline.gui.impl.lobby.views.frontline_container_view import FrontlineContainerView
+    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.frontline.lobby.FrontlineContainerView(), FrontlineContainerView, ScopeTemplates.VIEW_SCOPE), activeTab=activeTab if activeTab else TabType.PROGRESS, flags=ViewFlags.LOBBY_TOP_SUB_VIEW), scope=EVENT_BUS_SCOPE.LOBBY)
+
+
+def closeFrontlineContainerWindow():
+    g_eventBus.handleEvent(events.DestroyGuiImplViewEvent(layoutID=R.views.frontline.lobby.FrontlineContainerView()))
+
+
+def showFrontlineWelcomeWindow(showFullScreen=False, showContainerOnClose=False):
+    from frontline.gui.impl.lobby.views.welcome_view import WelcomeViewWindow
+    WelcomeViewWindow(showFullScreen=showFullScreen, showContainerOnClose=showContainerOnClose).load()
+
+
+def showFrontlineInfoWindow():
+    from frontline.gui.impl.lobby.views.sub_views.info_view import InfoViewWindow
+    InfoViewWindow().load()
 
 
 def showBattleRoyaleLevelUpWindow(reusableInfo, parent=None):
@@ -169,12 +197,7 @@ def showVehicleRentDialog(intCD, rentType, nums, seasonType, price, buyParams):
     _purchaseOffer(intCD, rentType, nums, price, seasonType, buyParams, renew=False)
 
 
-def showFunRandomPrimeTimeWindow():
-    event = events.LoadViewEvent(SFViewLoadParams(FUNRANDOM_ALIASES.FUN_RANDOM_PRIME_TIME), ctx={})
-    g_eventBus.handleEvent(event, EVENT_BUS_SCOPE.LOBBY)
-
-
-@adisp.process
+@adisp.adisp_process
 @dependency.replace_none_kwargs(itemsCache=IItemsCache)
 def _purchaseOffer(vehicleCD, rentType, nums, price, seasonType, buyParams, renew, itemsCache=None):
     from gui.Scaleform.daapi.view.dialogs.ExchangeDialogMeta import ExchangeCreditsWebProductMeta
@@ -192,7 +215,7 @@ def _purchaseOffer(vehicleCD, rentType, nums, price, seasonType, buyParams, rene
         SystemMessages.pushMessage(backport.text(R.strings.system_messages.vehicle_rent.dyn(('not_enough_{}').format(price.getCurrency()))(), vehName=vehicleName), type=SystemMessages.SM_TYPE.Error)
 
 
-@adisp.process
+@adisp.adisp_process
 def _doPurchaseOffer(vehicleCD, rentType, nums, price, seasonType, buyParams, renew):
     from gui.Scaleform.daapi.view.dialogs.rent_confirm_dialog import RentConfirmDialogMeta
     requestConfirmed = yield DialogsInterface.showDialog(meta=RentConfirmDialogMeta(vehicleCD, rentType, nums, price, seasonType, renew))
@@ -282,20 +305,14 @@ def showChangeVehicleNationDialog(vehicleCD):
     window.load()
 
 
-def showPiggyBankView():
-    import BigWorld
-    lobbyContext = dependency.instance(ILobbyContext)
-    isWotPlusEnabled = lobbyContext.getServerSettings().isRenewableSubEnabled()
-    isWotPlusNSEnabled = lobbyContext.getServerSettings().isWotPlusNewSubscriptionEnabled()
-    hasWotPlusActive = BigWorld.player().renewableSubscription.isEnabled()
-    hasGold = BigWorld.player().renewableSubscription.getGoldReserve()
-    showNewPiggyBank = isWotPlusEnabled and (hasWotPlusActive or isWotPlusNSEnabled or hasGold)
-    if showNewPiggyBank:
-        from gui.impl.lobby.currency_reserves.currency_reserves_view import CurrencyReservesView
+@dependency.replace_none_kwargs(wotPlusController=IWotPlusController)
+def showPiggyBankView(wotPlusController=None):
+    from gui.impl.lobby.currency_reserves.currency_reserves_view import CurrencyReservesView
+    from gui.impl.lobby.premacc.piggybank import PiggyBankView
+    if wotPlusController.isWotPlusEnabled():
         viewId = R.views.lobby.currency_reserves.CurrencyReserves()
         params = GuiImplViewLoadParams(viewId, CurrencyReservesView, ScopeTemplates.LOBBY_SUB_SCOPE)
     else:
-        from gui.impl.lobby.premacc.piggybank import PiggyBankView
         viewId = R.views.lobby.premacc.piggybank.Piggybank()
         params = GuiImplViewLoadParams(viewId, PiggyBankView, ScopeTemplates.LOBBY_SUB_SCOPE)
     uiLoader = dependency.instance(IGuiLoader)
@@ -309,7 +326,12 @@ def showPiggyBankView():
 
 def showMapsBlacklistView():
     from gui.impl.lobby.premacc.maps_blacklist_view import MapsBlacklistView
-    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(layoutID=R.views.lobby.premacc.maps_blacklist_view.MapsBlacklistView(), viewClass=MapsBlacklistView, scope=ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(layoutID=R.views.lobby.excluded_maps.ExcludedMapsView(), viewClass=MapsBlacklistView, scope=ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+
+
+def showCrew22Welcome():
+    from gui.impl.lobby.crew.crew_intro_view import CrewIntroWindow
+    CrewIntroWindow().load()
 
 
 def showDailyExpPageView(exitEvent=None):
@@ -319,11 +341,11 @@ def showDailyExpPageView(exitEvent=None):
 
 
 def showDashboardView():
-    from gui.impl.lobby.premacc.prem_dashboard_view import PremDashboardView
-    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.premacc.prem_dashboard_view.PremDashboardView(), PremDashboardView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+    from gui.impl.lobby.account_dashboard.account_dashboard_view import AccountDashboardView
+    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.account_dashboard.AccountDashboard(), AccountDashboardView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
-@async
+@wg_async
 def showBattleBoosterBuyDialog(battleBoosterIntCD):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.dialogs.full_screen_dialog_view import FullScreenDialogWindowWrapper
@@ -332,7 +354,7 @@ def showBattleBoosterBuyDialog(battleBoosterIntCD):
     yield dialogs.showSimple(wrapper)
 
 
-@async
+@wg_async
 def showBattleBoosterSellDialog(battleBoosterIntCD):
     from gui.impl.lobby.dialogs.full_screen_dialog_view import FullScreenDialogWindowWrapper
     from gui.impl.lobby.instructions.booster_sell_dialog import BoosterSellWindowView
@@ -341,9 +363,9 @@ def showBattleBoosterSellDialog(battleBoosterIntCD):
     yield dialogs.showSimple(wrapper)
 
 
-@async
+@wg_async
 def showPlatoonResourceDialog(resources, callback):
-    result = yield await(showResSimpleDialog(resources, None, ''))
+    result = yield wg_await(showResSimpleDialog(resources, None, ''))
     if result:
         callback(result)
     return
@@ -399,14 +421,15 @@ def showDogTags(compID=-1, makeTopView=True):
         return
 
 
-def showStrongholds(url=None):
+def showStrongholds(url=None, reloadView=False):
     strongholdProvider = g_clanCache.strongholdProvider
     browserCtrl = dependency.instance(IBrowserController)
     browserIsActive = browserCtrl is not None and browserCtrl.getAllBrowsers()
-    if browserIsActive and strongholdProvider is not None and strongholdProvider.isTabActive():
+    if browserIsActive and strongholdProvider is not None and strongholdProvider.isTabActive() and not reloadView:
         strongholdProvider.loadUrl(url)
     else:
-        g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_STRONGHOLD), ctx={'url': url}), scope=EVENT_BUS_SCOPE.LOBBY)
+        ctx = {'url': url} if url is not None else {}
+        g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_STRONGHOLD), ctx=ctx), scope=EVENT_BUS_SCOPE.LOBBY)
     return
 
 
@@ -414,7 +437,7 @@ def openManualPage(chapterIndex):
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.MANUAL_CHAPTER_VIEW), ctx={'chapterIndex': chapterIndex}), EVENT_BUS_SCOPE.LOBBY)
 
 
-@adisp.process
+@adisp.adisp_process
 def showShop(url='', path='', params=None, isClientCloseControl=False):
     parse = URLMacros().parse
     if path:
@@ -533,7 +556,13 @@ def showVehiclePreviewWithoutBottomPanel(vehCD, backCallback=None, **kwargs):
        'hiddenBlocks': (
                       OptionalBlocks.CLOSE_BUTTON, OptionalBlocks.BUYING_PANEL), 
        'previewAlias': VIEW_ALIAS.CONFIGURABLE_VEHICLE_PREVIEW, 
-       'itemsPack': kwargs.get('itemsPack')}), EVENT_BUS_SCOPE.LOBBY)
+       'itemsPack': kwargs.get('itemsPack'), 
+       'backBtnLabel': kwargs.get('backBtnLabel')}), EVENT_BUS_SCOPE.LOBBY)
+
+
+def showDelayedReward():
+    kwargs = {'tab': QUESTS_ALIASES.BATTLE_MATTERS_VIEW_PY_ALIAS, 'openVehicleSelection': True}
+    g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_MISSIONS), ctx=kwargs), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
 def goToHeroTankOnScene(vehTypeCompDescr, previewAlias=VIEW_ALIAS.LOBBY_HANGAR, previewBackCb=None, previousBackAlias=None, hangarVehicleCD=None):
@@ -541,19 +570,24 @@ def goToHeroTankOnScene(vehTypeCompDescr, previewAlias=VIEW_ALIAS.LOBBY_HANGAR, 
     from HeroTank import HeroTank
     from ClientSelectableCameraObject import ClientSelectableCameraObject
     marathonCtrl = dependency.instance(IMarathonEventsController)
+    armoryYardCtrl = dependency.instance(IArmoryYardController)
     for entity in BigWorld.entities.values():
         if entity and isinstance(entity, HeroTank):
             descriptor = entity.typeDescriptor
             if descriptor:
                 marathons = marathonCtrl.getMarathons()
                 activeMarathon = next((marathon for marathon in marathons if marathon.vehicleID == descriptor.type.compactDescr), None)
-                if activeMarathon:
+                isArmoryYard = armoryYardCtrl is not None and armoryYardCtrl.isActive() and armoryYardCtrl.getFinalRewardVehicle().intCD == descriptor.type.compactDescr
+                if isArmoryYard:
+                    armoryYardCtrl.showHeroTankVehiclePreview()
+                elif activeMarathon:
                     title = backport.text(R.strings.marathon.vehiclePreview.buyingPanel.title())
                     showMarathonVehiclePreview(descriptor.type.compactDescr, activeMarathon.remainingPackedRewards, title, activeMarathon.prefix, True)
-                elif isResourceWellRewardVehicle(descriptor.type.compactDescr):
-                    showResourceWellHeroPreview(descriptor.type.compactDescr, previewAlias=previewAlias, previousBackAlias=previousBackAlias)
                 else:
-                    showHeroTankPreview(vehTypeCompDescr, previewAlias=previewAlias, previewBackCb=previewBackCb, previousBackAlias=previousBackAlias, hangarVehicleCD=hangarVehicleCD)
+                    if isResourceWellRewardVehicle(descriptor.type.compactDescr):
+                        showResourceWellHeroPreview(descriptor.type.compactDescr, previewAlias=previewAlias, previousBackAlias=previousBackAlias)
+                    else:
+                        showHeroTankPreview(vehTypeCompDescr, previewAlias=previewAlias, previewBackCb=previewBackCb, previousBackAlias=previousBackAlias, hangarVehicleCD=hangarVehicleCD)
             ClientSelectableCameraObject.switchCamera(entity)
             break
 
@@ -600,10 +634,6 @@ def showAwardWindow(award, isUniqueName=True):
     else:
         name = VIEW_ALIAS.AWARD_WINDOW
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.AWARD_WINDOW, name), ctx={'award': award}), EVENT_BUS_SCOPE.LOBBY)
-
-
-def showModalAwardWindow(award):
-    g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.AWARD_WINDOW_MODAL, name=getUniqueViewName(VIEW_ALIAS.AWARD_WINDOW_MODAL)), ctx={'award': award}), EVENT_BUS_SCOPE.LOBBY)
 
 
 def showMissionAwardWindow(award):
@@ -655,15 +685,16 @@ def selectVehicleInHangar(itemCD, loadHangar=True):
     veh = itemsCache.items.getItemByCD(int(itemCD))
     if not veh.isInInventory:
         raise SoftException(('Vehicle (itemCD={}) must be in inventory.').format(itemCD))
-    g_eventBus.handleEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.SELECT_VEHICLE_IN_HANGAR, ctx={'vehicleInvID': veh.invID}), scope=EVENT_BUS_SCOPE.LOBBY)
+    g_eventBus.handleEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.SELECT_VEHICLE_IN_HANGAR, ctx={'vehicleInvID': veh.invID, 
+       'prevVehicleInvID': g_currentVehicle.invID}), scope=EVENT_BUS_SCOPE.LOBBY)
     g_currentVehicle.selectVehicle(veh.invID)
     if loadHangar:
         showHangar()
 
 
-def showPersonalCase(tankmanInvID, tabIndex, scope=EVENT_BUS_SCOPE.DEFAULT):
+def showPersonalCase(tankmanInvID, tabID, scope=EVENT_BUS_SCOPE.DEFAULT):
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.PERSONAL_CASE, getViewName(VIEW_ALIAS.PERSONAL_CASE, tankmanInvID)), ctx={'tankmanID': tankmanInvID, 
-       'page': tabIndex}), scope)
+       'page': tabID}), scope)
 
 
 def showCollectibleVehicles(nationID):
@@ -671,8 +702,8 @@ def showCollectibleVehicles(nationID):
     showShop(getBuyCollectibleVehiclesUrl(), nationName)
 
 
-@adisp.async
-@adisp.process
+@adisp.adisp_async
+@adisp.adisp_process
 @dependency.replace_none_kwargs(goodiesCache=IGoodiesCache)
 def showBoosterActivateDialog(boosterIntCD, callback=None, goodiesCache=None):
     success = False
@@ -702,10 +733,6 @@ def stopTutorial():
     g_eventBus.handleEvent(events.TutorialEvent(events.TutorialEvent.STOP_TRAINING), scope=EVENT_BUS_SCOPE.GLOBAL)
 
 
-def runTutorialChain(chapterID):
-    g_eventBus.handleEvent(events.TutorialEvent(events.TutorialEvent.START_TRAINING, settingsID='TRIGGERS_CHAINS', initialChapter=chapterID, restoreIfRun=True))
-
-
 def runSalesChain(chapterID, restoreIfRun=True, reloadIfRun=False, isStopForced=False):
     g_eventBus.handleEvent(events.TutorialEvent(events.TutorialEvent.START_TRAINING, settingsID='SALES_TRIGGERS', initialChapter=chapterID, restoreIfRun=restoreIfRun, reloadIfRun=reloadIfRun, isStopForced=isStopForced))
 
@@ -715,7 +742,7 @@ def changeAppResolution(width, height, scale):
        'height': height, 'scale': scale}), scope=EVENT_BUS_SCOPE.GLOBAL)
 
 
-@adisp.process
+@adisp.adisp_process
 def requestProfile(databaseID, userName, successCallback):
     itemsCache = dependency.instance(IItemsCache)
     userDossier, _, isHidden = yield itemsCache.items.requestUserDossier(databaseID)
@@ -724,7 +751,7 @@ def requestProfile(databaseID, userName, successCallback):
             key = 'messenger/userInfoHidden'
         else:
             key = 'messenger/userInfoNotAvailable'
-        DialogsInterface.showI18nInfoDialog(key, lambda result: None, I18nInfoDialogMeta(key, messageCtx={'userName': userName}))
+        DialogsInterface.showI18nInfoDialog(key, (lambda result: None), I18nInfoDialogMeta(key, messageCtx={'userName': userName}))
     else:
         successCallback(databaseID, userName)
     return
@@ -793,20 +820,19 @@ def showTankPremiumAboutPage():
     return
 
 
-@adisp.process
-def showBrowserOverlayView(url, alias=VIEW_ALIAS.BROWSER_LOBBY_TOP_SUB, params=None, callbackOnLoad=None, webHandlers=None, forcedSkipEscape=False, browserParams=None, hiddenLayers=None, callbackOnClose=None, parent=None):
+@adisp.adisp_process
+def showBrowserOverlayView(url, alias=VIEW_ALIAS.BROWSER_LOBBY_TOP_SUB, params=None, callbackOnLoad=None, webHandlers=None, forcedSkipEscape=False, browserParams=None, hiddenLayers=None):
     if url:
         if browserParams is None:
             browserParams = {}
         url = yield URLMacros().parse(url, params=params)
-        g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(alias, parent=parent), ctx={'url': url, 
+        g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(alias), ctx={'url': url, 
            'allowRightClick': False, 
            'callbackOnLoad': callbackOnLoad, 
            'webHandlers': webHandlers, 
            'forcedSkipEscape': forcedSkipEscape, 
            'browserParams': browserParams, 
-           'hiddenLayers': hiddenLayers or (), 
-           'callbackOnClose': callbackOnClose}), EVENT_BUS_SCOPE.LOBBY)
+           'hiddenLayers': hiddenLayers or ()}), EVENT_BUS_SCOPE.LOBBY)
     return
 
 
@@ -833,28 +859,15 @@ def showProgressiveRewardAwardWindow(bonuses, specialRewardType, currentStep, no
 
 
 @dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
-def showSeniorityRewardAwardWindow(qID, data, notificationMgr=None):
+def showSeniorityRewardAwardWindow(completedQuests, data, notificationMgr=None):
     from gui.impl.lobby.seniority_awards.seniority_reward_award_view import SeniorityRewardAwardWindow
-    from account_helpers.AccountSettings import AccountSettings, SENIORITY_AWARDS_WINDOW_SHOWN
-    AccountSettings.setSessionSettings(SENIORITY_AWARDS_WINDOW_SHOWN, True)
-    window = SeniorityRewardAwardWindow(qID, data, R.views.lobby.seniority_awards.SeniorityAwardsView())
+    window = SeniorityRewardAwardWindow(completedQuests, data, R.views.lobby.seniority_awards.SeniorityAwardsView())
     notificationMgr.append(WindowNotificationCommand(window))
 
 
-def showSeniorityAwardsNotificationWindow():
-    from gui.impl.lobby.seniority_awards.seniority_awards_notification_view import SeniorityAwardsNotificationWindow
-    uiLoader = dependency.instance(IGuiLoader)
-    contentResId = R.views.lobby.seniority_awards.SeniorityAwardsNotificationView()
-    if uiLoader.windowsManager.getViewByLayoutID(contentResId) is None:
-        window = SeniorityAwardsNotificationWindow()
-        window.load()
-        window.center()
-    return
-
-
-def showBattlePassAwardsWindow(bonuses, data, useQueue=False):
+def showBattlePassAwardsWindow(bonuses, data, useQueue=False, needNotifyClosing=True, packageRewards=None):
     from gui.impl.lobby.battle_pass.battle_pass_awards_view import BattlePassAwardWindow
-    findAndLoadWindow(useQueue, BattlePassAwardWindow, bonuses, data)
+    findAndLoadWindow(useQueue, BattlePassAwardWindow, bonuses, data, packageRewards, needNotifyClosing)
 
 
 def showBattlePassHowToEarnPointsView(parent=None, chapterID=0):
@@ -882,9 +895,11 @@ def showStylePreview(vehCD, style, descr='', backCallback=None, backBtnDescrLabe
        'style': style, 
        'styleDescr': descr, 
        'backCallback': backCallback, 
+       'backPreviewAlias': kwargs.get('backPreviewAlias'), 
        'backBtnDescrLabel': backBtnDescrLabel, 
        'topPanelData': kwargs.get('topPanelData'), 
-       'itemsPack': kwargs.get('itemsPack')}), scope=EVENT_BUS_SCOPE.LOBBY)
+       'itemsPack': kwargs.get('itemsPack'), 
+       'outfit': kwargs.get('outfit')}), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
 def showStyleProgressionPreview(vehCD, style, descr, backCallback, backBtnDescrLabel='', *args, **kwargs):
@@ -892,6 +907,7 @@ def showStyleProgressionPreview(vehCD, style, descr, backCallback, backBtnDescrL
        'style': style, 
        'styleDescr': descr, 
        'backCallback': backCallback, 
+       'backPreviewAlias': kwargs.get('backPreviewAlias'), 
        'backBtnDescrLabel': backBtnDescrLabel, 
        'styleLevel': kwargs.get('styleLevel')}), scope=EVENT_BUS_SCOPE.LOBBY)
 
@@ -911,6 +927,7 @@ def showStyleBuyingPreview(vehCD, style, descr, backCallback, backBtnDescrLabel=
        'style': style, 
        'styleDescr': descr, 
        'backCallback': backCallback, 
+       'backPreviewAlias': kwargs.get('backPreviewAlias'), 
        'backBtnDescrLabel': backBtnDescrLabel, 
        'styleLevel': kwargs.get('styleLevel'), 
        'price': kwargs.get('price'), 
@@ -954,17 +971,17 @@ def findAndLoadWindow(useQueue, windowType, *args, **kwargs):
     return newWindow
 
 
-@async
+@wg_async
 def showPreformattedDialog(preset, title, message, buttons, focusedButton, btnDownSounds):
     from gui.impl.dialogs import dialogs
     from gui.impl.dialogs.builders import FormattedSimpleDialogBuilder
     builder = FormattedSimpleDialogBuilder()
     builder.setMessagesAndButtons(preset, title, message, buttons, focusedButton, btnDownSounds)
-    result = yield await(dialogs.show(builder.build()))
+    result = yield wg_await(dialogs.show(builder.build()))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showResSimpleDialog(resources, icon, formattedMessage, parent=None):
     from gui.impl.dialogs import dialogs
     from gui.impl.dialogs.builders import ResSimpleDialogBuilder
@@ -972,11 +989,11 @@ def showResSimpleDialog(resources, icon, formattedMessage, parent=None):
     builder.setMessagesAndButtons(resources)
     builder.setIcon(icon)
     builder.setFormattedMessage(formattedMessage)
-    result = yield await(dialogs.showSimple(builder.buildInLobby(parent)))
+    result = yield wg_await(dialogs.showSimple(builder.buildInLobby(parent)))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showDynamicButtonInfoDialogBuilder(resources, icon, formattedMessage, parent=None):
     from gui.impl.dialogs import dialogs
     from gui.impl.dialogs.builders import InfoDialogBuilder
@@ -984,11 +1001,11 @@ def showDynamicButtonInfoDialogBuilder(resources, icon, formattedMessage, parent
     builder.setMessagesAndButtons(resources, resources)
     builder.setIcon(icon)
     builder.setFormattedMessage(formattedMessage)
-    result = yield await(dialogs.showSimple(builder.build(parent)))
+    result = yield wg_await(dialogs.showSimple(builder.build(parent)))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def tryToShowReplaceExistingStyleDialog(parent=None):
     from account_helpers.settings_core.ServerSettingsManager import UI_STORAGE_KEYS
     from gui.impl.dialogs import dialogs
@@ -1035,31 +1052,31 @@ def tryToShowReplaceExistingStyleDialog(parent=None):
     if len(storedStyleDiffs) < EDITABLE_STYLE_STORAGE_DEPTH:
         raise AsyncReturn(True)
     newStyleName = currentStyle.userString
-    styleToReplaceName = service.getItemByID(GUI_ITEM_TYPE.STYLE, storedStyleDiffs[(-1)][0]).userName
+    styleToReplaceName = service.getItemByID(GUI_ITEM_TYPE.STYLE, storedStyleDiffs[-1][0]).userName
     context.mode.unselectSlot()
     builder = WarningDialogBuilder()
     builder.setTitleArgs([newStyleName])
     builder.setMessageArgs(fmtArgs=[
      UserFormatStringArgModel(('{} {}').format(styleToReplaceName, backport.text(R.strings.dialogs.editableStyles.confirmReset.formattedPartOfMessage())), 'formatted_message', R.styles.AlertBigTextStyle())])
     builder.setMessagesAndButtons(R.strings.dialogs.editableStyles.confirmReset, focused=DialogButtons.CANCEL)
-    result, dontShowAgain = yield await(dialogs.showSimpleWithResultData(builder.build(parent=parent)))
+    result, dontShowAgain = yield wg_await(dialogs.showSimpleWithResultData(builder.build(parent=parent)))
     if result and dontShowAgain:
         serverSettings.saveInUIStorage({UI_STORAGE_KEYS.DISABLE_EDITABLE_STYLE_REWRITE_WARNING: True})
     raise AsyncReturn(result)
     return
 
 
-@async
+@wg_async
 def showDialog(dialog, callback):
     from gui.impl.dialogs import dialogs
-    isOk = yield await(dialogs.showSimple(dialog))
+    isOk = yield wg_await(dialogs.showSimple(dialog))
     callback((isOk, {}))
 
 
-@async
+@wg_async
 def showOptDeviceCommonWindowDialog(wrappedViewClass, deviceDescr=None, layoutID=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(compDescr=deviceDescr, layoutID=layoutID or R.views.lobby.demountkit.CommonWindow(), wrappedViewClass=wrappedViewClass))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(compDescr=deviceDescr, layoutID=layoutID or R.views.lobby.demountkit.CommonWindow(), wrappedViewClass=wrappedViewClass))
     if result.busy:
         raise AsyncReturn((False, {}))
     else:
@@ -1067,7 +1084,7 @@ def showOptDeviceCommonWindowDialog(wrappedViewClass, deviceDescr=None, layoutID
         raise AsyncReturn((isOk, {}))
 
 
-@async
+@wg_async
 def showOptionalDeviceDestroy(itemCD, callback):
     from gui.impl.dialogs.gf_builders import WarningDialogBuilder
     builder = WarningDialogBuilder()
@@ -1075,16 +1092,25 @@ def showOptionalDeviceDestroy(itemCD, callback):
     optionalDevice = dependency.instance(IItemsCache).items.getItemByCD(itemCD)
     title = backport.text(R.strings.dialogs.equipmentDestroy.conformation(), equipment=optionalDevice.userName)
     builder.setTitle(title)
+    builder.setDisplayFlags(DisplayFlags.RESPONSIVEHEADER.value)
     from gui.impl.dialogs.dialog_template import DialogTemplateView
-    result = yield await(showOptDeviceCommonWindowDialog(lambda **_: builder.buildView(), layoutID=DialogTemplateView.LAYOUT_ID))
+    result = yield wg_await(showOptDeviceCommonWindowDialog((lambda **_: builder.buildView()), layoutID=DialogTemplateView.LAYOUT_ID))
     callback(result)
 
 
-@async
+@wg_async
+def showLearnConfirmDialog(dialogData=None):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.crew.confirm_skills_learn_dialog import ConfirmSkillsLearnDialog
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=ConfirmSkillsLearnDialog.LAYOUT_ID, wrappedViewClass=ConfirmSkillsLearnDialog, dialogData=dialogData))
+    raise AsyncReturn(result)
+
+
+@wg_async
 def showOptionalDeviceDemount(deviceDescr, callback, forFitting=False):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.demount_kit.demount_dialog import DemountOptionalDeviceDialog
-    result = yield await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, layoutID=DemountOptionalDeviceDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceDialog))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, layoutID=DemountOptionalDeviceDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceDialog))
     if result.busy:
         callback((False, {}))
     else:
@@ -1095,11 +1121,11 @@ def showOptionalDeviceDemount(deviceDescr, callback, forFitting=False):
             callback((isOK, data))
 
 
-@async
+@wg_async
 def showOptionalDeviceDemountSinglePrice(deviceDescr, callback, forFitting=False):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.demount_kit.demount_single_price_dialog import DemountOptionalDeviceSinglePriceDialog
-    result = yield await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, layoutID=DemountOptionalDeviceSinglePriceDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceSinglePriceDialog))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, layoutID=DemountOptionalDeviceSinglePriceDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceSinglePriceDialog))
     if result.busy:
         callback((False, {}))
     else:
@@ -1110,11 +1136,11 @@ def showOptionalDeviceDemountSinglePrice(deviceDescr, callback, forFitting=False
             callback((isOK, data))
 
 
-@async
+@wg_async
 def showOptionalDeviceDemountFromSlot(deviceDescr, callback, forFitting=False, vehicle=None):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.demount_kit.demount_from_slot_dialog import DemountOptionalDeviceFromSlotDialog
-    result = yield await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, vehicle=vehicle, layoutID=DemountOptionalDeviceFromSlotDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceFromSlotDialog))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(itemCD=deviceDescr, forFitting=forFitting, vehicle=vehicle, layoutID=DemountOptionalDeviceFromSlotDialog.LAYOUT_ID, wrappedViewClass=DemountOptionalDeviceFromSlotDialog))
     if result.busy:
         callback((False, {}))
     else:
@@ -1140,7 +1166,7 @@ def showOfferGiftsWindow(offerID, overrideSuccessCallback=None):
     g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(layoutID, OfferGiftsWindow, ScopeTemplates.LOBBY_SUB_SCOPE), offerID=offerID, overrideSuccessCallback=overrideSuccessCallback), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
-@async
+@wg_async
 def showOfferGiftDialog(offerID, giftID, cdnTitle='', callback=None):
     from gui.impl.lobby.offers.offer_gift_dialog import makeOfferGiftDialog
     dialogBuilder = makeOfferGiftDialog(offerID, giftID, cdnTitle)
@@ -1149,10 +1175,23 @@ def showOfferGiftDialog(offerID, giftID, cdnTitle='', callback=None):
     yield showDialog(dialogBuilder.build(parent=view), callback)
 
 
-def showOfferGiftVehiclePreview(offerID, giftID, confirmCallback=None):
+@wg_async
+def showBonusDelayedConfirmationDialog(vehicle, callback=None):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.dialogs.full_screen_dialog_view import FullScreenDialogWindowWrapper
+    from gui.impl.lobby.battle_matters.battle_matters_exchange_rewards import BattleMattersExchangeRewards
+    vehicleUserName = vehicle.userName
+    vehicleName = getNationLessName(vehicle.name)
+    result = yield wg_await(dialogs.showSimple(FullScreenDialogWindowWrapper(BattleMattersExchangeRewards(vehicleName, vehicleUserName))))
+    callback(result)
+
+
+def showOfferGiftVehiclePreview(offerID, giftID, confirmCallback=None, backBtnLabel=None, customCallbacks=None):
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.OFFER_GIFT_VEHICLE_PREVIEW), ctx={'offerID': offerID, 
        'giftID': giftID, 
-       'confirmCallback': confirmCallback}), scope=EVENT_BUS_SCOPE.LOBBY)
+       'confirmCallback': confirmCallback, 
+       'backBtnLabel': backBtnLabel, 
+       'customCallbacks': customCallbacks}), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
 def showOfferRewardWindow(offerID, giftID, cdnTitle='', cdnDescription='', cdnIcon=''):
@@ -1219,46 +1258,46 @@ def showCompareAmmunitionSelectorView(**kwargs):
     return
 
 
-@async
+@wg_async
 def showNeedRepairDialog(vehicle, wrappedViewClass, repairClazz, startState=None, parent=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialog(layoutID=R.views.lobby.tanksetup.dialogs.NeedRepair(), wrappedViewClass=wrappedViewClass, vehicle=vehicle, startState=startState, parent=parent, repairClazz=repairClazz))
+    result = yield wg_await(dialogs.showSingleDialog(layoutID=R.views.lobby.tanksetup.dialogs.NeedRepair(), wrappedViewClass=wrappedViewClass, vehicle=vehicle, startState=startState, parent=parent, repairClazz=repairClazz))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showTankSetupConfirmDialog(items, vehicle=None, startState=None, parent=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=TankSetupConfirmDialog, items=items, vehicle=vehicle, startState=startState, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=TankSetupConfirmDialog, items=items, vehicle=vehicle, startState=startState, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showTankSetupExitConfirmDialog(items, vehicle=None, startState=None, fromSection=None, parent=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=TankSetupExitConfirmDialog, items=items, vehicle=vehicle, startState=startState, fromSection=fromSection, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=TankSetupExitConfirmDialog, items=items, vehicle=vehicle, startState=startState, fromSection=fromSection, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showRefillShellsDialog(price, shells, startState=None, parent=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.RefillShells(), wrappedViewClass=RefillShells, price=price, shells=shells, startState=startState, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.RefillShells(), wrappedViewClass=RefillShells, price=price, shells=shells, startState=startState, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showExitFromShellsDialog(price, shells, startState=None, parent=None):
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.RefillShells(), wrappedViewClass=ExitFromShellsConfirm, price=price, shells=shells, startState=startState, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.RefillShells(), wrappedViewClass=ExitFromShellsConfirm, price=price, shells=shells, startState=startState, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showBattleAbilitiesConfirmDialog(items, vehicleType, withInstall=None, parent=None, applyForAllVehiclesByType=False):
     from gui.impl.lobby.tank_setup.dialogs.battle_abilities_confirm import BattleAbilitiesSetupConfirm
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=BattleAbilitiesSetupConfirm, items=items, withInstall=withInstall, parent=parent, vehicleType=vehicleType, applyForAllVehiclesByType=applyForAllVehiclesByType))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=BattleAbilitiesSetupConfirm, items=items, withInstall=withInstall, parent=parent, vehicleType=vehicleType, applyForAllVehiclesByType=applyForAllVehiclesByType))
     raise AsyncReturn(result)
 
 
@@ -1266,11 +1305,11 @@ def showBlueprintsSalePage(url=None):
     showBlueprintsExchangeOverlay(url=url)
 
 
-@async
+@wg_async
 def showActiveTestConfirmDialog(startTime, finishTime, link, parent=None):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.matchmaker.active_test_confirm_view import ActiveTestConfirmView
-    result = yield await(dialogs.showSingleDialog(layoutID=R.views.lobby.matchmaker.ActiveTestConfirmView(), wrappedViewClass=ActiveTestConfirmView, startTime=startTime, finishTime=finishTime, link=link, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialog(layoutID=R.views.lobby.matchmaker.ActiveTestConfirmView(), wrappedViewClass=ActiveTestConfirmView, startTime=startTime, finishTime=finishTime, link=link, parent=parent))
     isOK = result.result
     raise AsyncReturn(isOK)
 
@@ -1288,15 +1327,21 @@ def showBattlePassRewardsSelectionWindow(chapterID=0, level=0, onRewardsReceived
     window.load()
 
 
-def showEpicRewardsSelectionWindow(onRewardsReceivedCallback=None, onCloseCallback=None, onLoadedCallback=None):
+def showEpicRewardsSelectionWindow(onRewardsReceivedCallback=None, onCloseCallback=None, onLoadedCallback=None, isAutoDestroyWindowsOnReceivedRewards=True):
     from gui.impl.lobby.frontline.rewards_selection_view import RewardsSelectionWindow
-    window = RewardsSelectionWindow(onRewardsReceivedCallback, onCloseCallback, onLoadedCallback)
+    window = RewardsSelectionWindow(onRewardsReceivedCallback, onCloseCallback, onLoadedCallback, isAutoDestroyWindowsOnReceivedRewards)
     window.load()
+    return window
 
 
-def showFrontlineAwards(bonuses):
+def showFrontlineAwards(bonuses, onCloseCallback=None, onAnimationEndedCallback=None, useQueue=False):
     from gui.impl.lobby.frontline.awards_view import AwardsWindow
-    AwardsWindow(bonuses).load()
+    findAndLoadWindow(useQueue, AwardsWindow, bonuses, onCloseCallback=onCloseCallback, onAnimationEndedCallback=onAnimationEndedCallback)
+
+
+def showBlankGiftWindow(itemCD, count):
+    from gui.impl.lobby.blank_gift.awards_view import BlankGiftWindow
+    BlankGiftWindow(itemCD, count).load()
 
 
 def showNewLevelWindow(pLevel=1, cLevel=2, pXp=50, cXp=70, boosterFlXP=30, originalFlXP=10, rank=1):
@@ -1310,16 +1355,61 @@ def showNewLevelWindow(pLevel=1, cLevel=2, pXp=50, cXp=70, boosterFlXP=30, origi
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(EPICBATTLES_ALIASES.EPIC_BATTLES_AFTER_BATTLE_ALIAS), ctx={'levelUpInfo': extensionInfo}), EVENT_BUS_SCOPE.LOBBY)
 
 
-@async
+@wg_async
 def showBattlePassActivateChapterConfirmDialog(chapterID, callback):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.battle_pass.activate_chapter_confirm_dialog import ActivateChapterConfirmDialog
-    result = yield await(dialogs.showSingleDialogWithResultData(chapterID=chapterID, layoutID=ActivateChapterConfirmDialog.LAYOUT_ID, wrappedViewClass=ActivateChapterConfirmDialog))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(chapterID=chapterID, layoutID=ActivateChapterConfirmDialog.LAYOUT_ID, wrappedViewClass=ActivateChapterConfirmDialog))
     if result.busy:
         callback((False, {}))
     else:
         isOK, data = result.result
         callback((isOK, data))
+
+
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader)
+def showDeconstructionDeviceWindow(ctx=None, parent=None, guiLoader=None, upgradedPair=None, onDeconstructedCallback=None):
+    from gui.impl.lobby.tank_setup.deconstruction_device_view import DeconstructionDeviceWindow
+    view = guiLoader.windowsManager.getViewByLayoutID(R.views.lobby.tanksetup.DeconstructionDeviceView())
+    if view is None:
+        window = DeconstructionDeviceWindow(upgradedPair, parent or getParentWindow(), onDeconstructedCallback=onDeconstructedCallback)
+        window.load()
+    return
+
+
+@wg_async
+def showDeconstructionDeviceDialog(ctx):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.tank_setup.dialogs.deconstruct_confirm import DeconstructConfirm
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=DeconstructConfirm.LAYOUT_ID, ctx=ctx, wrappedViewClass=DeconstructConfirm))
+    raise AsyncReturn(result.result)
+
+
+@adisp.adisp_process
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader, itemsCache=IItemsCache)
+def showConfirmInStorageDialog(itemIntCD, guiLoader=None, itemsCache=None, parent=None):
+    from gui.shared.gui_items import GUI_ITEM_TYPE
+    item = itemsCache.items.getItemByCD(itemIntCD)
+    if item.itemTypeID == GUI_ITEM_TYPE.OPTIONALDEVICE and item.isModernized:
+        from gui.impl.lobby.tank_setup.dialogs.module_deconstruct_dialogs import ConfirmInStorageDialogWindow
+        rView = R.views.lobby.tanksetup.dialogs.ConfirmActionsWithEquipmentDialog
+        view = guiLoader.windowsManager.getViewByLayoutID(rView())
+        if view is None:
+            window = ConfirmInStorageDialogWindow(itemIntCD, parent or getParentWindow())
+            window.load()
+            yield lambda callback: callback(True)
+            return
+    yield DialogsInterface.showDialog(SellModuleMeta(int(itemIntCD)))
+    return
+
+
+@wg_async
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader, itemsCache=IItemsCache)
+def showConfirmOnSlotDialog(itemIntCD, fromVehicle=False, guiLoader=None, itemsCache=None, parent=None):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.tank_setup.dialogs.module_deconstruct_dialogs import ConfirmOnSlotDialogView
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(itemIntCD=itemIntCD, fromVehicle=fromVehicle, layoutID=ConfirmOnSlotDialogView.LAYOUT_ID, wrappedViewClass=ConfirmOnSlotDialogView))
+    raise AsyncReturn(result.result)
 
 
 @dependency.replace_none_kwargs(guiLoader=IGuiLoader)
@@ -1342,7 +1432,17 @@ def showBattlePassBuyLevelWindow(ctx=None, parent=None, guiLoader=None):
     return
 
 
-@async
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader)
+def showOnboardingView(styleCD=None, isFirstRun=False, parent=None, guiLoader=None):
+    from gui.impl.lobby.customization.progression_styles.onboarding_view import OnboardingWindow
+    view = guiLoader.windowsManager.getViewByLayoutID(R.views.lobby.customization.progression_styles.OnboardingView())
+    if view is None:
+        window = OnboardingWindow({'styleCD': styleCD, 'isFirstRun': isFirstRun}, parent or getParentWindow())
+        window.load()
+    return
+
+
+@wg_async
 def showVehPostProgressionView(vehTypeCompDescr, exitEvent=None):
     from gui.impl.lobby.veh_post_progression.post_progression_intro import getPostProgressionIntroWindowProc
     intoProc = getPostProgressionIntroWindowProc()
@@ -1354,12 +1454,11 @@ def showVehPostProgressionView(vehTypeCompDescr, exitEvent=None):
 def showVehPostProgressionCmpView(vehTypeCompDescr, exitEvent=None):
     loadEvent = events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.VEH_POST_PROGRESSION_CMP), ctx={'intCD': vehTypeCompDescr, 'exit': exitEvent})
     g_eventBus.handleEvent(loadEvent, scope=EVENT_BUS_SCOPE.LOBBY)
-    VehPostProgressionEntryPointLogger().logEnter()
 
 
 def getParentWindow():
     guiLoader = dependency.instance(IGuiLoader)
-    windows = guiLoader.windowsManager.findWindows(lambda w: w.layer == WindowLayer.SUB_VIEW)
+    windows = guiLoader.windowsManager.findWindows((lambda w: w.layer == WindowLayer.SUB_VIEW))
     return first(windows)
 
 
@@ -1485,19 +1584,19 @@ def showContactSupportOverlay(message, isCloseVisible=True, onClose=None):
     wnd.setSubView(ContactSupportOverlayView, message=message, isCloseVisible=isCloseVisible, onClose=onClose)
 
 
-def showModeSelectorWindow(isEventEnabled, provider=None):
+def showModeSelectorWindow(isEventEnabled, provider=None, subSelectorCallback=None):
     from gui.impl.lobby.mode_selector.mode_selector_view import ModeSelectorView
     appLoader = dependency.instance(IAppLoader)
     app = appLoader.getApp()
     containerManager = app.containerManager
-    containerManager.load(GuiImplViewLoadParams(ModeSelectorView.layoutID, ModeSelectorView, ScopeTemplates.DEFAULT_SCOPE), isEventEnabled=isEventEnabled, provider=provider)
+    containerManager.load(GuiImplViewLoadParams(ModeSelectorView.layoutID, ModeSelectorView, ScopeTemplates.DEFAULT_SCOPE), isEventEnabled=isEventEnabled, provider=provider, subSelectorCallback=subSelectorCallback)
 
 
-@async
+@wg_async
 def showBuyModuleDialog(newModule, installedModule, currency, mountDisabledReason, callback):
     from gui.impl.dialogs import dialogs
     from gui.impl.lobby.research.buy_module_dialog_view import BuyModuleDialogView
-    result = yield await(dialogs.showSingleDialogWithResultData(module=newModule, previousModule=installedModule, currency=currency, mountDisabledReason=mountDisabledReason, layoutID=R.views.lobby.research.BuyModuleDialogView(), wrappedViewClass=BuyModuleDialogView))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(module=newModule, previousModule=installedModule, currency=currency, mountDisabledReason=mountDisabledReason, layoutID=R.views.lobby.research.BuyModuleDialogView(), wrappedViewClass=BuyModuleDialogView))
     if result.busy:
         callback((False, {}))
     else:
@@ -1534,39 +1633,24 @@ def showMapsTrainingResultsWindow(arenaUniqueID, isFromNotifications):
     return
 
 
-@async
-def showAccelerateCrewTrainingDialog(successCallback):
-    from gui.impl.dialogs import dialogs
-    from gui.impl.pub.dialog_window import DialogButtons
-    from gui.impl.dialogs.gf_builders import InfoDialogBuilder
-    builder = InfoDialogBuilder()
-    stringRoot = R.strings.dialogs.xpToTmenCheckbox
-    builder.setTitle(stringRoot.title())
-    builder.setDescription(stringRoot.message())
-    builder.setConfirmButtonLabel(stringRoot.submit())
-    builder.setCancelButtonLabel(stringRoot.cancel())
-    result = yield await(dialogs.show(builder.build()))
-    if result.result == DialogButtons.SUBMIT:
-        successCallback()
-
-
-@async
+@wg_async
 def showIdleCrewBonusDialog(description, successCallback):
     from gui.impl.dialogs import dialogs
     from gui.impl.pub.dialog_window import DialogButtons
-    from gui.impl.dialogs.gf_builders import InfoDialogBuilder
-    builder = InfoDialogBuilder()
+    from gui.impl.dialogs.gf_builders import PassiveXPDialogBuilder
+    builder = PassiveXPDialogBuilder()
     stringRoot = R.strings.dialogs.idleCrewBonus
     builder.setTitle(stringRoot.title())
-    builder.setDescription(description)
+    builder.setDescriptionMsg(description.text)
+    builder.setMessageIcon(description.icon)
     builder.setConfirmButtonLabel(stringRoot.submit())
     builder.setCancelButtonLabel(stringRoot.cancel())
-    result = yield await(dialogs.show(builder.build()))
+    result = yield wg_await(dialogs.show(builder.build()))
     if result.result == DialogButtons.SUBMIT:
         successCallback()
 
 
-@async
+@wg_async
 def showWotPlusRentDialog(title, description, icon, successCallback):
     from gui.impl.dialogs import dialogs
     from gui.impl.pub.dialog_window import DialogButtons
@@ -1584,33 +1668,49 @@ def showWotPlusRentDialog(title, description, icon, successCallback):
         builder.setDescription(description)
         builder.setConfirmButtonLabel(stringRoot.submit())
         builder.setCancelButtonLabel(stringRoot.cancel())
-        result = yield await(dialogs.show(builder.build()))
+        result = yield wg_await(dialogs.show(builder.build()))
         if result.result == DialogButtons.SUBMIT:
             successCallback()
         return
 
 
-@async
+@wg_async
 def showPostProgressionPairModDialog(vehicle, stepID, modID, parent=None):
     from gui.impl.lobby.veh_post_progression.dialogs.buy_pair_modification import BuyPairModificationDialog
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=BuyPairModificationDialog, vehicle=vehicle, stepID=stepID, modID=modID, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.tanksetup.dialogs.Confirm(), wrappedViewClass=BuyPairModificationDialog, vehicle=vehicle, stepID=stepID, modID=modID, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showDestroyPairModificationsDialog(vehicle, stepIDs, parent=None):
     from gui.impl.lobby.veh_post_progression.dialogs.destroy_pair_modification import DestroyPairModificationsDialog
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=DestroyPairModificationsDialog.LAYOUT_ID, wrappedViewClass=DestroyPairModificationsDialog, vehicle=vehicle, stepIDs=stepIDs, parent=parent))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=DestroyPairModificationsDialog.LAYOUT_ID, wrappedViewClass=DestroyPairModificationsDialog, vehicle=vehicle, stepIDs=stepIDs, parent=parent))
     raise AsyncReturn(result)
 
 
-@async
+@wg_async
 def showPostProgressionResearchDialog(vehicle, stepIDs, parent=None):
     from gui.impl.lobby.veh_post_progression.dialogs.research_confirm import PostProgressionResearchConfirm
     from gui.impl.dialogs import dialogs
-    result = yield await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.veh_post_progression.PostProgressionResearchSteps(), parent=parent, wrappedViewClass=PostProgressionResearchConfirm, vehicle=vehicle, stepIDs=stepIDs))
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(layoutID=R.views.lobby.veh_post_progression.PostProgressionResearchSteps(), parent=parent, wrappedViewClass=PostProgressionResearchConfirm, vehicle=vehicle, stepIDs=stepIDs))
+    raise AsyncReturn(result)
+
+
+@wg_async
+def showTokenRecruitDialog(ctx):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.recruit_window.recruit_dialog import TokenRecruitDialog
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(ctx=ctx, layoutID=TokenRecruitDialog.LAYOUT_ID, wrappedViewClass=TokenRecruitDialog))
+    raise AsyncReturn(result)
+
+
+@wg_async
+def showTankwomanRecruitAwardDialog(ctx):
+    from gui.impl.dialogs import dialogs
+    from gui.impl.lobby.recruit_window.recruit_dialog import QuestRecruitDialog
+    result = yield wg_await(dialogs.showSingleDialogWithResultData(ctx=ctx, layoutID=QuestRecruitDialog.LAYOUT_ID, wrappedViewClass=QuestRecruitDialog))
     raise AsyncReturn(result)
 
 
@@ -1626,9 +1726,19 @@ def showEliteWindow(vehicleCD, notificationMgr=None):
     notificationMgr.append(WindowNotificationCommand(window))
 
 
-def showWotPlusInfoPage():
+def showWotPlusInfoPage(source):
+    from uilogging.wot_plus.loggers import WotPlusInfoPageLogger
+    WotPlusInfoPageLogger().logInfoPage(source)
     url = GUI_SETTINGS.renewableSubscriptionInfoPage
     showBrowserOverlayView(url, VIEW_ALIAS.WOT_PLUS_INFO_VIEW)
+
+
+def showSteamRedirectWotPlus():
+    g_eventBus.handleEvent(events.OpenLinkEvent(events.OpenLinkEvent.WOT_PLUS_STEAM_SHOP))
+
+
+def showWotPlusProductPage():
+    g_eventBus.handleEvent(events.OpenLinkEvent(events.OpenLinkEvent.WOT_PLUS_SHOP))
 
 
 def showVehicleRentalPage():
@@ -1666,15 +1776,16 @@ def showRankedSelectableReward(rewards=None):
     window.load()
 
 
+def showSubscriptionsPage():
+    from gui.impl.lobby.player_subscriptions.player_subscriptions_view import PlayerSubscriptionsView
+    g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.player_subscriptions.PlayerSubscriptions(), PlayerSubscriptionsView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+
+
 @dependency.replace_none_kwargs(resourceWell=IResourceWellController)
 def showResourceWellProgressionWindow(resourceWell=None, backCallback=showHangar):
-    from gui.impl.lobby.resource_well.intro_view import IntroView
     from gui.impl.lobby.resource_well.completed_progression_view import CompletedProgressionView
     from gui.impl.lobby.resource_well.progression_view import ProgressionView
-    if not isIntroShown():
-        view = IntroView
-        viewRes = R.views.lobby.resource_well.IntroView()
-    elif resourceWell.isCompleted():
+    if resourceWell.isCompleted():
         view = CompletedProgressionView
         viewRes = R.views.lobby.resource_well.CompletedProgressionView()
     else:
@@ -1686,16 +1797,16 @@ def showResourceWellProgressionWindow(resourceWell=None, backCallback=showHangar
     return
 
 
-def showResourcesLoadingWindow(parentScreen):
+def showResourcesLoadingWindow():
     from gui.impl.lobby.resource_well.resources_loading_view import ResourcesLoadingWindow
-    ResourcesLoadingWindow(parentScreen=parentScreen).load()
+    ResourcesLoadingWindow().load()
 
 
-@async
+@wg_async
 def showResourcesLoadingConfirm(resources, isReturnOperation, callback):
     from gui.impl.dialogs.dialogs import showSingleDialogWithResultData
     from gui.impl.lobby.resource_well.resources_loading_confirm import ResourcesLoadingConfirm
-    result = yield await(showSingleDialogWithResultData(layoutID=R.views.lobby.resource_well.ResourcesLoadingConfirm(), wrappedViewClass=ResourcesLoadingConfirm, resources=resources, isReturnOperation=isReturnOperation))
+    result = yield wg_await(showSingleDialogWithResultData(layoutID=R.views.lobby.resource_well.ResourcesLoadingConfirm(), wrappedViewClass=ResourcesLoadingConfirm, resources=resources, isReturnOperation=isReturnOperation))
     if result.busy:
         callback((False, {}))
     else:
@@ -1703,11 +1814,11 @@ def showResourcesLoadingConfirm(resources, isReturnOperation, callback):
         callback((isOK, data))
 
 
-@async
+@wg_async
 def showResourceWellNoSerialVehiclesConfirm(callback):
     from gui.impl.dialogs.dialogs import showSingleDialogWithResultData
     from gui.impl.lobby.resource_well.no_serial_vehicles_confirm import NoSerialVehiclesConfirm
-    result = yield await(showSingleDialogWithResultData(layoutID=R.views.lobby.resource_well.NoSerialVehiclesConfirm(), wrappedViewClass=NoSerialVehiclesConfirm))
+    result = yield wg_await(showSingleDialogWithResultData(layoutID=R.views.lobby.resource_well.NoSerialVehiclesConfirm(), wrappedViewClass=NoSerialVehiclesConfirm))
     if result.busy:
         callback((False, {}))
     else:
@@ -1760,38 +1871,145 @@ def showResourceWellHeroPreview(vehicleCD, backCallback=None, previewAlias=VIEW_
        'previousBackAlias': previousBackAlias}), EVENT_BUS_SCOPE.LOBBY)
 
 
-@dependency.replace_none_kwargs(funRandomCtrl=IFunRandomController)
-def showFunRandomInfoPage(funRandomCtrl=None):
-    url = funRandomCtrl.getModeSettings().infoPageUrl
-    if not url:
-        _logger.error('Invalid url to open infoPage about fun random mode')
+@dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
+def showBattleMattersReward(ctx=None, notificationMgr=None):
+    from gui.impl.lobby.battle_matters.battle_matters_rewards_view import BattleMattersRewardsViewWindow
+    if ctx is not None:
+        window = BattleMattersRewardsViewWindow(ctx=ctx)
+        notificationMgr.append(WindowNotificationCommand(window))
+    else:
+        _logger.error('No context for BattleMatters rewards View')
+    return
+
+
+def showPersonalReservesPage():
+    from account_helpers.AccountSettings import AccountSettings, SHOWN_PERSONAL_RESERVES_INTRO
+    showBoostersActivation()
+    if not AccountSettings.getSettings(SHOWN_PERSONAL_RESERVES_INTRO):
+        showPersonalReservesIntro(True, showBoostersActivation)
+
+
+def showPersonalReservesIntro(changeShownFlag=False, callbackOnClose=None, uiLoggingKey=None):
+    from gui.impl.lobby.personal_reserves.personal_reserves_intro import PersonalReservesIntro, INTRO_UI_LOGGING_KEY, INTRO_CALLBACK_ON_CLOSE_KEY
+    from account_helpers.AccountSettings import AccountSettings, SHOWN_PERSONAL_RESERVES_INTRO
+    uiLoader = dependency.instance(IGuiLoader)
+    if changeShownFlag:
+        AccountSettings.setSettings(SHOWN_PERSONAL_RESERVES_INTRO, True)
+    contentResId = R.views.lobby.personal_reserves.ReservesIntroView()
+    if uiLoader.windowsManager.getViewByLayoutID(contentResId) is None:
+        g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(contentResId, PersonalReservesIntro, ScopeTemplates.LOBBY_SUB_SCOPE), ctx={INTRO_CALLBACK_ON_CLOSE_KEY: callbackOnClose, 
+           INTRO_UI_LOGGING_KEY: uiLoggingKey}), scope=EVENT_BUS_SCOPE.LOBBY)
+    return
+
+
+def showBoostersActivation():
+    uiLoader = dependency.instance(IGuiLoader)
+    contentResId = R.views.lobby.personal_reserves.ReservesActivationView()
+    if uiLoader.windowsManager.getViewByLayoutID(contentResId) is None:
+        from gui.impl.lobby.personal_reserves.reserves_activation_view import ReservesActivationView
+        g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(contentResId, ReservesActivationView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+    else:
+        closeReservesIntroAndConversionView()
+    return
+
+
+def closeReservesIntroAndConversionView():
+    uiLoader = dependency.instance(IGuiLoader)
+    viewIdsToClose = [
+     R.views.lobby.personal_reserves.ReservesIntroView(),
+     R.views.lobby.personal_reserves.ReservesConversionView()]
+    for viewIdToClose in viewIdsToClose:
+        introView = uiLoader.windowsManager.getViewByLayoutID(viewIdToClose)
+        if introView:
+            introView.destroyWindow()
+
+
+def showPersonalReservesConversion():
+    from gui.impl.lobby.personal_reserves.reserves_conversion_view import ReservesConversionView
+    uiLoader = dependency.instance(IGuiLoader)
+    contentResId = R.views.lobby.personal_reserves.ReservesConversionView()
+    if uiLoader.windowsManager.getViewByLayoutID(contentResId) is None:
+        g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.personal_reserves.ReservesConversionView(), ReservesConversionView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
+    return
+
+
+def showComp7MetaRootView(tabId=None, *args, **kwargs):
+    from gui.impl.lobby.comp7.meta_view.meta_root_view import MetaRootViewWindow
+    g_eventBus.handleEvent(events.Comp7Event(events.Comp7Event.OPEN_META), scope=EVENT_BUS_SCOPE.LOBBY)
+    if not MetaRootViewWindow.getInstances():
+        MetaRootViewWindow(tabId=tabId, parent=getParentWindow(), *args, **kwargs).load()
+
+
+def showComp7NoVehiclesScreen():
+    from gui.impl.lobby.comp7.views.no_vehicles_screen import NoVehiclesScreenWindow
+    if not NoVehiclesScreenWindow.getInstances():
+        NoVehiclesScreenWindow(parent=getParentWindow()).load()
+
+
+def showComp7IntroScreen():
+    from gui.impl.lobby.comp7.views.intro_screen import IntroScreenWindow
+    if not IntroScreenWindow.getInstances():
+        IntroScreenWindow(parent=getParentWindow()).load()
+
+
+@dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
+def showComp7RanksRewardsScreen(quest, periodicQuests, notificationMgr=None):
+    from gui.impl.lobby.comp7.views.rewards_screen import RanksRewardsScreenWindow
+    window = RanksRewardsScreenWindow(quest=quest, periodicQuests=periodicQuests)
+    notificationMgr.append(WindowNotificationCommand(window))
+
+
+@dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
+def showComp7TokensRewardsScreen(quest, notificationMgr=None):
+    from gui.impl.lobby.comp7.views.rewards_screen import TokensRewardsScreenWindow
+    window = TokensRewardsScreenWindow(quest=quest)
+    notificationMgr.append(WindowNotificationCommand(window))
+
+
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader, collections=ICollectionsSystemController)
+def showCollectionWindow(collectionId, backCallback=None, backBtnText='', parent=None, guiLoader=None, collections=None):
+    if not collections.isEnabled():
+        showHangar()
         return
-    showBrowserOverlayView(url, VIEW_ALIAS.WEB_VIEW_TRANSPARENT, hiddenLayers=(
-     WindowLayer.MARKER, WindowLayer.VIEW, WindowLayer.WINDOW))
+    else:
+        from gui.impl.lobby.collection.collection import CollectionWindow
+        view = guiLoader.windowsManager.getViewByLayoutID(R.views.lobby.collection.CollectionView())
+        if view is None:
+            window = CollectionWindow(collectionId, backCallback, backBtnText, parent or getParentWindow())
+            window.load()
+        return
 
 
-def showCNLootBoxesWelcomeScreen():
-    cnLootBoxesCtrl = dependency.instance(ICNLootBoxesController)
-    if cnLootBoxesCtrl.isActive() and cnLootBoxesCtrl.isLootBoxesAvailable():
-        from gui.impl.lobby.cn_loot_boxes.china_loot_boxes_welcome_screen import ChinaLootBoxesWelcomeScreenWindow
-        window = ChinaLootBoxesWelcomeScreenWindow()
-        window.load()
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader, collections=ICollectionsSystemController)
+def showCollectionItemPreviewWindow(itemId, collectionId, guiLoader=None, collections=None):
+    if not collections.isEnabled():
+        showHangar()
+        return
+    else:
+        from gui.impl.lobby.collection.collection_item_preview import CollectionItemPreviewWindow
+        view = guiLoader.windowsManager.getViewByLayoutID(R.views.lobby.collection.CollectionItemPreview())
+        if view is None:
+            window = CollectionItemPreviewWindow(itemId, collectionId)
+            window.load()
+        return
 
 
-def showCNLootBoxStorageWindow():
-    from gui.impl.lobby.cn_loot_boxes.china_loot_boxes_storage_screen import ChinaLootBoxesStorageScreenWindow
-    window = ChinaLootBoxesStorageScreenWindow()
+@dependency.replace_none_kwargs(guiLoader=IGuiLoader, notificationMgr=INotificationWindowController)
+def showCollectionAwardsWindow(collectionId, bonuses, guiLoader=None, notificationMgr=None):
+    from gui.impl.lobby.collection.awards_view import AwardsWindow
+    if guiLoader.windowsManager.getViewByLayoutID(R.views.lobby.collection.AwardsView()) is None:
+        window = AwardsWindow(collectionId, bonuses)
+        notificationMgr.append(WindowNotificationCommand(window))
+    return
+
+
+def showWinbackIntroView(parent=None):
+    from gui.impl.lobby.winback.winback_daily_quests_intro_view import WinbackDailyQuestsIntroWindow
+    window = WinbackDailyQuestsIntroWindow(parent=parent if parent is not None else getParentWindow())
     window.load()
+    return
 
 
-def showCNLootBoxOpenWindow(boxType, rewards):
-    from gui.impl.lobby.cn_loot_boxes.china_loot_boxes_open_box_screen import ChinaLootBoxesOpenBoxScreenWindow
-    window = ChinaLootBoxesOpenBoxScreenWindow(boxType=boxType, rewards=rewards)
-    window.load()
-
-
-def showCNLootBoxOpenErrorWindow():
-    from gui.impl.lobby.cn_loot_boxes.china_loot_boxes_open_box_error_view import ChinaLootBoxesOpenBoxErrorWindow
-    window = ChinaLootBoxesOpenBoxErrorWindow()
-    window.load()
-    SystemMessages.pushMessage(text=backport.text(R.strings.system_messages.lootboxes.open.server_error.DISABLED()), priority=NotificationPriorityLevel.MEDIUM, type=SystemMessages.SM_TYPE.Error)
+def showWinbackSelectRewardView(selectableBonusTokens=None):
+    from gui.impl.lobby.winback.winback_selectable_reward_view import WinbackSelectableRewardWindow
+    WinbackSelectableRewardWindow(selectableBonusTokens).load()

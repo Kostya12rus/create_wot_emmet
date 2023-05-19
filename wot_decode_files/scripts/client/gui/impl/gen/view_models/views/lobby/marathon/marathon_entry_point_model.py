@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/marathon/marathon_entry_point_model.py
 from frameworks.wulf import Array
 from frameworks.wulf import ViewModel
@@ -21,13 +21,25 @@ class MarathonEntryPointModel(ViewModel):
     def progressGrind(self):
         return self._getViewModel(0)
 
+    @staticmethod
+    def getProgressGrindType():
+        return BaseEventModel
+
     @property
     def progressPro(self):
         return self._getViewModel(1)
 
+    @staticmethod
+    def getProgressProType():
+        return BaseEventModel
+
     @property
     def progressPost(self):
         return self._getViewModel(2)
+
+    @staticmethod
+    def getProgressPostType():
+        return BaseEventModel
 
     def getState(self):
         return self._getNumber(3)
@@ -124,6 +136,10 @@ class MarathonEntryPointModel(ViewModel):
 
     def setUserTokens(self, value):
         self._setArray(18, value)
+
+    @staticmethod
+    def getUserTokensType():
+        return unicode
 
     def _initialize(self):
         super(MarathonEntryPointModel, self)._initialize()

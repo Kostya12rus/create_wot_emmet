@@ -1,8 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/tooltip_mgr.py
-import inspect, itertools, logging, Keys
+import inspect, itertools, logging, BigWorld, Keys
+from collections import namedtuple
 from Event import SafeEvent, EventManager
 from gui import InputHandler
 from gui.Scaleform.framework.entities.abstract.ToolTipMgrMeta import ToolTipMgrMeta
@@ -10,12 +11,18 @@ from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
 from gui.shared import events
 from gui.shared.tooltips import builders
 from helpers import dependency, uniprof
-from helpers.gui_utils import getMousePosition
+from ids_generators import SequenceIDGenerator
 from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.impl import IGuiLoader
 from soft_exception import SoftException
+ToolTipInfo = namedtuple('ToolTipInfo', ('id', 'region', 'name'))
 _logger = logging.getLogger(__name__)
-UNIPROF_REGION_COLOR = 9611473
+_id_generator = SequenceIDGenerator()
+LIVE_REGION_COLOR = 9611473
+LOADING_REGION_COLOR = 12757201
+_TOOLTIP_VARIANT_TYPED = 'typed'
+_TOOLTIP_VARIANT_COMPLEX = 'complex'
+_TOOLTIP_VARIANT_WULF = 'wulf'
 
 class ToolTip(ToolTipMgrMeta):
     appLoader = dependency.descriptor(IAppLoader)
@@ -32,11 +39,11 @@ class ToolTip(ToolTipMgrMeta):
         self._dynamic = {}
         self.__fastRedraw = False
         self.__isAdvancedKeyPressed = False
-        self.__isComplex = False
+        self.__tooltipVariant = None
         self.__tooltipID = None
         self.__args = None
         self.__stateType = None
-        self.__tooltipRegion = None
+        self.__tooltipInfos = []
         self.__tooltipWindowId = 0
         self.__em = EventManager()
         self.onShow = SafeEvent(self.__em)
@@ -46,12 +53,7 @@ class ToolTip(ToolTipMgrMeta):
     def show(self, data, linkage):
         self.as_showS(data, linkage, self.__fastRedraw)
 
-    def showWulfTooltip(self, toolType, args):
-        mouseX, mouseY = getMousePosition()
-        self.onCreateWulfTooltip(toolType, args, mouseX, mouseY)
-
     def hide(self):
-        self.__destroyTooltipWindow()
         self.as_hideS()
 
     def handleKeyEvent(self, event):
@@ -62,10 +64,13 @@ class ToolTip(ToolTipMgrMeta):
         isSupportAdvanced = self.isSupportAdvanced(tooltipType, *args)
         if isSupportAdvanced:
             self.__fastRedraw = True
-            if self.__isComplex:
+            if self.__tooltipVariant == _TOOLTIP_VARIANT_COMPLEX:
                 self.onCreateComplexTooltip(tooltipType, self.__stateType)
             else:
-                self.onCreateTypedTooltip(tooltipType, args, self.__stateType)
+                if self.__tooltipVariant == _TOOLTIP_VARIANT_TYPED:
+                    self.onCreateTypedTooltip(tooltipType, args, self.__stateType)
+                elif self.__tooltipVariant == _TOOLTIP_VARIANT_WULF:
+                    self.onCreateWulfTooltip(tooltipType, args, *self.__stateType)
 
     def isReadyToHandleKey(self, event):
         altPressed = event.key == Keys.KEY_LALT or event.key == Keys.KEY_RALT
@@ -89,16 +94,31 @@ class ToolTip(ToolTipMgrMeta):
         else:
             if not self._isAllowedTypedTooltip:
                 return
-            if self.__tooltipRegion is None:
-                self.__tooltipRegion = ('Typed tooltip "{}"').format(tooltipType)
-                uniprof.enterToRegion(self.__tooltipRegion, UNIPROF_REGION_COLOR)
+            id = _id_generator.next()
+            region = ('Typed tooltip {} {}').format(tooltipType, id)
+            name = ('tooltip {}').format(tooltipType)
+            info = ToolTipInfo(id, region, name)
+            self.__tooltipInfos.append(info)
+            uniprof.enterToRegion(region, LIVE_REGION_COLOR)
+            BigWorld.notify(BigWorld.EventType.VIEW_CREATED, name, id, name)
             builder = self._builders.getBuilder(tooltipType)
             if builder is not None:
-                data = builder.build(self, stateType, self.__isAdvancedKeyPressed, *args)
+                region = ('Loading {} {}').format(tooltipType, id)
+                uniprof.enterToRegion(region, LOADING_REGION_COLOR)
+                BigWorld.notify(BigWorld.EventType.LOADING_VIEW, name, id, name)
+                try:
+                    data = builder.build(self, stateType, self.__isAdvancedKeyPressed, *args)
+                except:
+                    BigWorld.notify(BigWorld.EventType.LOAD_FAILED, name, id, name)
+                    uniprof.exitFromRegion(region)
+                    raise
+
+                BigWorld.notify(BigWorld.EventType.VIEW_LOADED, name, id, name)
+                uniprof.exitFromRegion(region)
             else:
                 _logger.warning('Tooltip can not be displayed: type "%s" is not found', tooltipType)
                 return
-            self.__cacheTooltipData(False, tooltipType, args, stateType)
+            self.__cacheTooltipData(_TOOLTIP_VARIANT_TYPED, tooltipType, args, stateType)
             self.onShow(tooltipType, args, self.__isAdvancedKeyPressed)
             if data is not None and data.isDynamic():
                 data.changeVisibility(True)
@@ -120,6 +140,7 @@ class ToolTip(ToolTipMgrMeta):
             window.load()
             window.move(x, y)
             self.__tooltipWindowId = window.uniqueID
+            self.__cacheTooltipData(_TOOLTIP_VARIANT_WULF, tooltipType, args, (x, y))
             self.onShow(tooltipType, args, self.__isAdvancedKeyPressed)
             return
 
@@ -127,11 +148,13 @@ class ToolTip(ToolTipMgrMeta):
         if self._areTooltipsDisabled:
             return
         else:
-            if self.__tooltipRegion is None:
-                self.__tooltipRegion = ('Complex tooltip "{}"').format(tooltipID)
-                uniprof.enterToRegion(self.__tooltipRegion, UNIPROF_REGION_COLOR)
+            id = _id_generator.next()
+            region = ('Complex tooltip {} {}').format(tooltipID, id)
+            info = ToolTipInfo(id, region, None)
+            self.__tooltipInfos.append(info)
+            uniprof.enterToRegion(region, LIVE_REGION_COLOR)
             self._complex.build(self, stateType, self.__isAdvancedKeyPressed, tooltipID)
-            self.__cacheTooltipData(True, tooltipID, tuple(), stateType)
+            self.__cacheTooltipData(_TOOLTIP_VARIANT_COMPLEX, tooltipID, tuple(), stateType)
             self.onShow(tooltipID, None, self.__isAdvancedKeyPressed)
             return
 
@@ -142,9 +165,11 @@ class ToolTip(ToolTipMgrMeta):
         self.__tooltipID = None
         self.__fastRedraw = False
         self.__destroyTooltipWindow()
-        if self.__tooltipRegion is not None:
-            uniprof.exitFromRegion(self.__tooltipRegion)
-            self.__tooltipRegion = None
+        if self.__tooltipInfos:
+            info = self.__tooltipInfos.pop(0)
+            if info.name is not None:
+                BigWorld.notify(BigWorld.EventType.VIEW_DESTROYED, info.name, info.id, info.name)
+            uniprof.exitFromRegion(info.region)
         self.onHide(hideTooltipId)
         return
 
@@ -177,14 +202,15 @@ class ToolTip(ToolTipMgrMeta):
             self._areTooltipsDisabled = True
 
     def isSupportAdvanced(self, tooltipType, *args):
-        builder = self._complex if self.__isComplex else self._builders.getBuilder(tooltipType)
+        isComplex = self.__tooltipVariant == _TOOLTIP_VARIANT_COMPLEX
+        builder = self._complex if isComplex else self._builders.getBuilder(tooltipType)
         if builder is None:
             return False
         else:
             return builder.supportAdvanced(tooltipType, *args)
 
-    def __cacheTooltipData(self, isComplex, tooltipID, args, stateType):
-        self.__isComplex = isComplex
+    def __cacheTooltipData(self, tooltipType, tooltipID, args, stateType):
+        self.__tooltipVariant = tooltipType
         self.__tooltipID = tooltipID
         self.__args = args
         self.__stateType = stateType

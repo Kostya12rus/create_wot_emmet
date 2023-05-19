@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/store/browser/web_handlers.py
 from gui.shared.event_dispatcher import showShop
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -18,6 +18,7 @@ from web.web_client_api.battle_pass import BattlePassWebApi
 from web.web_client_api.ui import NotificationWebApi, OpenWindowWebApi, OpenTabWebApi, CloseWindowWebApi, UtilWebApi
 from web.web_client_api.frontline import FrontLineWebApi
 from web.web_client_api.blueprints_convert_sale import BlueprintsConvertSaleWebApi
+from web.web_client_api.uilogging import UILoggingWebApi
 
 class _OpenTabWebApi(OpenTabWebApi):
 
@@ -32,10 +33,10 @@ class _OpenTabWebApi(OpenTabWebApi):
 
     def __getReturnCallback(self, backUrl):
         if backUrl is not None:
-            return lambda : showShop(backUrl)
+            return (lambda : showShop(backUrl))
         else:
             return
 
 
 def createShopWebHandlers():
-    return webApiCollection(CloseWindowWebApi, OpenWindowWebApi, NotificationWebApi, _OpenTabWebApi, RequestWebApi, ShopWebApi, SoundWebApi, SoundStateWebApi, HangarSoundWebApi, UtilWebApi, FrontLineWebApi, HeroTankWebApi, BattlePassWebApi, ClansWebApi, RankedBattlesWebApi, BlueprintsConvertSaleWebApi, PlatformWebApi, QuestsWebApi, LootBoxWebApi)
+    return webApiCollection(CloseWindowWebApi, OpenWindowWebApi, NotificationWebApi, _OpenTabWebApi, RequestWebApi, ShopWebApi, SoundWebApi, SoundStateWebApi, HangarSoundWebApi, UtilWebApi, FrontLineWebApi, HeroTankWebApi, BattlePassWebApi, ClansWebApi, RankedBattlesWebApi, BlueprintsConvertSaleWebApi, PlatformWebApi, QuestsWebApi, LootBoxWebApi, UILoggingWebApi)

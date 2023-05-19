@@ -1,33 +1,26 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/carousels/basic/carousel_data_provider.py
 import typing, BigWorld
-from account_helpers.renewable_subscription import RenewableSubscription
 from account_helpers.telecom_rentals import TelecomRentals
+from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.Scaleform import MENU
 from gui.Scaleform.daapi.view.common.vehicle_carousel.carousel_data_provider import CarouselDataProvider
 from gui.Scaleform.daapi.view.common.vehicle_carousel.carousel_data_provider import getStatusStrings
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
-from gui.impl.gen import R
-from gui.impl import backport
-from gui.impl.lobby.new_year.vehicles.ny_vehicles_view import VehicleCooldownNotifier
 from gui.shared.formatters import text_styles
 from gui.shared.gui_items.Vehicle import Vehicle
-from gui.shared.money import Money
 from gui.shared.tooltips import ACTION_TOOLTIPS_TYPE
 from gui.shared.tooltips.formatters import packActionTooltipData
-from gui.shared.utils.functions import makeTooltip
 from gui.shared.utils.requesters import REQ_CRITERIA
-from gui.ClientUpdateManager import g_clientUpdateManager
 from helpers import dependency
+from skeletons.gui.game_control import IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
-from skeletons.new_year import INewYearController
-from new_year.vehicle_branch_helpers import hasNewVehicleLevel
 from telecom_rentals_common import ROSTER_EXPIRATION_TOKEN_NAME, PARTNERSHIP_TOKEN_NAME
 if typing.TYPE_CHECKING:
-    from typing import Set
+    from typing import Set, Dict
 
 class _FRONT_SUPPLY_ITEMS(object):
     RENT_TANK = 0
@@ -41,55 +34,38 @@ class _SUPPLY_ITEMS(object):
     ALL = (BUY_TANK, RESTORE_TANK, BUY_SLOT)
 
 
-class _BEFORE_SUPPLY_ITEMS(object):
-    NY_SLOT = 0
-    ALL = (NY_SLOT,)
-
-
 class HangarCarouselDataProvider(CarouselDataProvider):
     _lobbyContext = dependency.descriptor(ILobbyContext)
-    _nyController = dependency.descriptor(INewYearController)
+    _wotPlusCtrl = dependency.descriptor(IWotPlusController)
 
-    def __init__(self, carouselFilter, itemsCache, currentVehicle):
-        super(HangarCarouselDataProvider, self).__init__(carouselFilter, itemsCache, currentVehicle)
+    def __init__(self, carouselFilter, itemsCache):
+        super(HangarCarouselDataProvider, self).__init__(carouselFilter, itemsCache)
         self._serverSettings = self._lobbyContext.getServerSettings()
         self._setBaseCriteria()
         self._frontSupplyItems = []
-        self._wotPlusVehicles = []
         self._telecomRentalsVehicles = []
-        self._vehicleBranch = []
         self._supplyItems = []
         self._emptySlotsCount = 0
         self._restorableVehiclesCount = 0
-        self._wotPlusInfo = None
         self._telecomRentals = None
-        self.vehicleCooldownNotifier = None
         return
 
     def _populate(self):
-        self._wotPlusInfo = BigWorld.player().renewableSubscription
-        self._wotPlusInfo.onRenewableSubscriptionDataChanged += self._onWotPlusDataChanged
-        self._wotPlusInfo.onPendingRentChanged += self._onWotPlusPendingRentChanged
+        self._wotPlusCtrl.onDataChanged += self._onWotPlusDataChanged
         self._telecomRentals = BigWorld.player().telecomRentals
         self._telecomRentals.onPendingRentChanged += self._onTelecomPendingRentChanged
         g_clientUpdateManager.addCallback('tokens', self._onTelecomRentalsChanged)
         super(HangarCarouselDataProvider, self)._populate()
 
     def _dispose(self):
-        self._wotPlusInfo.onRenewableSubscriptionDataChanged -= self._onWotPlusDataChanged
-        self._wotPlusInfo.onPendingRentChanged -= self._onWotPlusPendingRentChanged
+        self._wotPlusCtrl.onDataChanged -= self._onWotPlusDataChanged
         self._telecomRentals.onPendingRentChanged -= self._onTelecomPendingRentChanged
         g_clientUpdateManager.removeObjectCallbacks(self, True)
         super(HangarCarouselDataProvider, self)._dispose()
 
     def _onWotPlusDataChanged(self, diff):
-        if 'isEnabled' in diff:
+        if 'exclusiveVehicle' in diff:
             self.buildList()
-
-    def _onWotPlusPendingRentChanged(self, vehCD):
-        if vehCD is not None:
-            self.buildList()
-        return
 
     def _onTelecomRentalsChanged(self, diff):
         if PARTNERSHIP_TOKEN_NAME in diff or ROSTER_EXPIRATION_TOKEN_NAME in diff:
@@ -102,28 +78,24 @@ class HangarCarouselDataProvider(CarouselDataProvider):
 
     @property
     def collection(self):
-        return self._vehicleItems + self._supplyItems + self._frontSupplyItems + self._vehicleBranch
+        return self._vehicleItems + self._supplyItems + self._frontSupplyItems
 
     def getCurrentVehiclesCount(self):
         frontItems = len(self._getFrontAdditionalItemsIndexes())
         backItems = len(self._getAdditionalItemsIndexes())
-        vehBranchItems = len(self._getBeforeAdditionalItemsIndexes())
-        return len(self._filteredIndices) - backItems - frontItems - vehBranchItems
+        return len(self._filteredIndices) - backItems - frontItems
 
     def updateVehicles(self, vehiclesCDs=None, filterCriteria=None, forceUpdate=False):
-        rentalVehicles = self._wotPlusVehicles + self._telecomRentalsVehicles
+        rentalVehicles = self._telecomRentalsVehicles
         changeInRentals = set(vehiclesCDs or ()).issubset(rentalVehicles)
         filterCriteria = filterCriteria or REQ_CRITERIA.EMPTY
         if vehiclesCDs:
             filterCriteria |= REQ_CRITERIA.IN_CD_LIST(vehiclesCDs)
-        criteria = self._baseCriteria | filterCriteria | REQ_CRITERIA.VEHICLE.ACTIVE_IN_NATION_GROUP | REQ_CRITERIA.VEHICLE.WOTPLUS_RENT ^ REQ_CRITERIA.VEHICLE.TELECOM_RENT
+        criteria = self._baseCriteria | filterCriteria | REQ_CRITERIA.VEHICLE.ACTIVE_IN_NATION_GROUP | REQ_CRITERIA.VEHICLE.TELECOM_RENT
         newRentalsVehicles = self._itemsCache.items.getVehicles(criteria).viewkeys()
         isVehicleRemoved = not set(vehiclesCDs or ()).issubset(newRentalsVehicles)
         isVehicleAdded = not set(vehiclesCDs or ()).issubset(rentalVehicles)
         if changeInRentals or isVehicleRemoved or isVehicleAdded:
-            rentPendingVehCD = self._wotPlusInfo.getRentPending()
-            if isVehicleAdded and rentPendingVehCD in newRentalsVehicles:
-                self._wotPlusInfo.resetRentPending()
             rentPendingVehCD = self._telecomRentals.getRentsPending()
             rentPendingVehCD = rentPendingVehCD.intersection(newRentalsVehicles)
             if isVehicleAdded and rentPendingVehCD:
@@ -138,17 +110,10 @@ class HangarCarouselDataProvider(CarouselDataProvider):
         self.flashObject.invalidateItems(self._getSupplyIndices(), self._supplyItems)
         self.applyFilter()
 
-    def updateVehicleBranch(self):
-        self._vehicleBranch = []
-        self._buildVehicleBranch()
-        self.flashObject.invalidateItems(self.__getVehicleBranchIndices(), self._vehicleBranch)
-        self.applyFilter()
-
     def clear(self):
         super(HangarCarouselDataProvider, self).clear()
         self._supplyItems = []
         self._frontSupplyItems = []
-        self._verifySlotNotifier()
 
     def _setBaseCriteria(self):
         self._baseCriteria = REQ_CRITERIA.INVENTORY
@@ -163,16 +128,6 @@ class HangarCarouselDataProvider(CarouselDataProvider):
         if totalRentVehicles > 0:
             self._telecomRentalsVehicles = [ veh.intCD for veh in self._vehicles[-totalRentVehicles:] ]
 
-    def _buildWotPlusVehicleItems(self):
-        self._wotPlusVehicles = []
-        if self._wotPlusInfo.isEnabled():
-            rentPromotionCriteria = REQ_CRITERIA.VEHICLE.WOTPLUS_RENT | self._baseCriteria
-            oldVehLen = len(self._vehicles)
-            self._addVehicleItemsByCriteria(rentPromotionCriteria)
-            totalWotPlusVehicles = len(self._vehicles) - oldVehLen
-            if totalWotPlusVehicles > 0:
-                self._wotPlusVehicles = [ veh.intCD for veh in self._vehicles[-totalWotPlusVehicles:] ]
-
     def _buildRentPromitionVehicleItems(self):
         rentPromotionCriteria = REQ_CRITERIA.VEHICLE.RENT_PROMOTION | ~self._baseCriteria
         self._addVehicleItemsByCriteria(rentPromotionCriteria)
@@ -180,16 +135,14 @@ class HangarCarouselDataProvider(CarouselDataProvider):
     def _buildVehicleItems(self):
         super(HangarCarouselDataProvider, self)._buildVehicleItems()
         self._buildTelecomRentalVehicleItems()
-        self._buildWotPlusVehicleItems()
         self._buildRentPromitionVehicleItems()
         self._buildSupplyItems()
-        self._buildVehicleBranch()
         self._buildFrontSupplyItems()
 
     def _getFrontAdditionalItemsIndexes(self):
         frontIndices = self._getFrontIndices()
         pruneIndices = set()
-        if (not self._isWotPlusRentEnabled() or self._wotPlusVehicles) and (not self._isTelecomRentalsEnabled() or self._telecomRentals.getAvailableRentCount() == 0):
+        if not self._isTelecomRentalsEnabled() or self._telecomRentals.getAvailableRentCount() == 0:
             pruneIndices.add(_FRONT_SUPPLY_ITEMS.RENT_TANK)
         return [ suppIdx for suppIdx in frontIndices if frontIndices.index(suppIdx) not in pruneIndices ]
 
@@ -204,11 +157,6 @@ class HangarCarouselDataProvider(CarouselDataProvider):
             pruneIndices.add(_SUPPLY_ITEMS.RESTORE_TANK)
         return [ suppIdx for suppIdx in supplyIndices if supplyIndices.index(suppIdx) not in pruneIndices ]
 
-    def _getBeforeAdditionalItemsIndexes(self):
-        if not self._nyController.isVehicleBranchEnabled():
-            return []
-        return self.__getVehicleBranchIndices()
-
     def _buildSupplyItems(self):
         self._supplyItems = []
         items = self._itemsCache.items
@@ -220,14 +168,14 @@ class HangarCarouselDataProvider(CarouselDataProvider):
         criteria = REQ_CRITERIA.IN_CD_LIST(items.recycleBin.getVehiclesIntCDs()) | REQ_CRITERIA.VEHICLE.IS_RESTORE_POSSIBLE
         self._restorableVehiclesCount = len(items.getVehicles(criteria))
         if slotPrice != defaultSlotPrice:
-            discount = packActionTooltipData(ACTION_TOOLTIPS_TYPE.ECONOMICS, 'slotsPrices', True, Money(gold=slotPrice), Money(gold=defaultSlotPrice))
+            discount = packActionTooltipData(ACTION_TOOLTIPS_TYPE.ECONOMICS, 'slotsPrices', True, slotPrice, defaultSlotPrice)
         else:
             discount = None
         smallBuySlotString, buySlotString = getStatusStrings('buySlot')
         smallBuyTankString, buyTankString = getStatusStrings('buyTank')
         smallRestoreTankString, restoreTankString = getStatusStrings('restoreTank')
-        smallRestoreTankCountString, restoreTankCountString = getStatusStrings('restoreTankCount', style=text_styles.main, styleLarge=text_styles.main, ctx={'count': self._restorableVehiclesCount})
-        smallEmptySlotsString, emptySlotsString = getStatusStrings('buyTankEmptyCount', style=text_styles.main, styleLarge=text_styles.main, ctx={'count': self._emptySlotsCount})
+        smallRestoreTankCountString, restoreTankCountString = getStatusStrings('restoreTankCount', style=text_styles.main, ctx={'count': self._restorableVehiclesCount})
+        smallEmptySlotsString, emptySlotsString = getStatusStrings('buyTankEmptyCount', style=text_styles.main, ctx={'count': self._emptySlotsCount})
         self._supplyItems.append({'buyTank': True, 
            'smallInfoText': text_styles.concatStylesToMultiLine(smallBuyTankString, smallEmptySlotsString), 
            'infoText': text_styles.concatStylesToMultiLine(buyTankString, emptySlotsString), 
@@ -238,8 +186,10 @@ class HangarCarouselDataProvider(CarouselDataProvider):
            'infoText': text_styles.concatStylesToMultiLine(restoreTankString, restoreTankCountString), 
            'icon': RES_ICONS.MAPS_ICONS_LIBRARY_TANKITEM_BUY_TANK, 
            'tooltip': TOOLTIPS.TANKS_CAROUSEL_RESTORE_VEHICLE})
+        slotPriceCurrency = slotPrice.getCurrency()
         buySlotVO = {'buySlot': True, 
-           'slotPrice': slotPrice, 
+           'slotPrice': slotPrice.get(slotPriceCurrency, 0), 
+           'slotPriceCurrency': slotPriceCurrency, 
            'icon': RES_ICONS.MAPS_ICONS_LIBRARY_TANKITEM_BUY_SLOT, 
            'infoText': buySlotString, 
            'smallInfoText': smallBuySlotString, 
@@ -252,7 +202,7 @@ class HangarCarouselDataProvider(CarouselDataProvider):
 
     def _buildFrontSupplyItems(self):
         self._frontSupplyItems = []
-        if not self._wotPlusVehicles and self._isWotPlusRentEnabled() or self._isTelecomRentalsEnabled() and not self._telecomRentals.getAvailableRentCount() == 0:
+        if self._isTelecomRentalsEnabled() and not self._telecomRentals.getAvailableRentCount() == 0:
             text = MENU.TANKCAROUSEL_WOTPLUSSELECTIONAVAILABLE
             if self._telecomRentals.getRentsPending():
                 text = MENU.TANKCAROUSEL_WOTPLUSSELECTIONPENDING
@@ -272,61 +222,13 @@ class HangarCarouselDataProvider(CarouselDataProvider):
         previousItemsCount = len(self._vehicles) + len(_SUPPLY_ITEMS.ALL)
         return [ previousItemsCount + idx for idx in _FRONT_SUPPLY_ITEMS.ALL ]
 
-    def _buildVehicleBranch(self):
-        self._verifySlotNotifier()
-        self._startSlotNotifier()
-        self._vehicleBranch = []
-        freeSlotsCount = len(self._nyController.getVehicleBranch().getFreeVehicleSlots())
-        tankTreeAvailable = self._nyController.getVehicleBranch().hasAvailableSlots()
-        smallNyTankString, nyTankString = getStatusStrings('nyTank', style=text_styles.nyVehicleSmallTitle, styleLarge=text_styles.nyVehicleTitle)
-        if freeSlotsCount == 0 and tankTreeAvailable:
-            smallNyStatusSlotsString, nyStatusSlotsString = getStatusStrings('nyTankSlotsFull', style=text_styles.nyVehicleSmallMain, styleLarge=text_styles.nyVehicleMain)
-        else:
-            smallNyStatusSlotsString, nyStatusSlotsString = getStatusStrings('nyTankEmptyCount', style=text_styles.nyVehicleSmallMain, styleLarge=text_styles.nyVehicleMain, ctx={'count': freeSlotsCount})
-        infoText = text_styles.concatStylesToMultiLine(nyTankString, nyStatusSlotsString)
-        self._vehicleBranch.append({'nySlot': True, 
-           'smallInfoText': text_styles.concatStylesToMultiLine(smallNyTankString, smallNyStatusSlotsString), 
-           'infoText': infoText, 
-           'infoHoverText': infoText, 
-           'icon': backport.image(R.images.gui.maps.icons.newYear.tank_slots.carousel.ny_slot()), 
-           'iconSmall': backport.image(R.images.gui.maps.icons.newYear.tank_slots.carousel.ny_slot_small()), 
-           'tooltip': makeTooltip(header=backport.text(R.strings.tooltips.tankCarusel.newYearSlot.header()), body=backport.text(R.strings.tooltips.tankCarusel.newYearSlot.body())), 
-           'nyBlinkEnabled': freeSlotsCount > 0, 
-           'showBubble': hasNewVehicleLevel(), 
-           'iconHover': backport.image(R.images.gui.maps.icons.newYear.tank_slots.carousel.ny_slot_hover()), 
-           'iconHoverSmall': backport.image(R.images.gui.maps.icons.newYear.tank_slots.carousel.ny_slot_small_hover()), 
-           'additionalImgSrc': '', 
-           'clickEnabled': True})
-
-    def _startSlotNotifier(self):
-        if self._nyController.isVehicleBranchEnabled():
-            self.vehicleCooldownNotifier = VehicleCooldownNotifier(self.updateVehicleBranch, self._nyController.getVehicleBranch().getVehicleSlots())
-            self.vehicleCooldownNotifier.startNotification()
-
-    def _verifySlotNotifier(self):
-        if self.vehicleCooldownNotifier is not None:
-            self.vehicleCooldownNotifier.stopNotification()
-            self.vehicleCooldownNotifier.clear()
-            self.vehicleCooldownNotifier = None
-        return
-
     def _getSupplyIndices(self):
         return [ len(self._vehicles) + idx for idx in _SUPPLY_ITEMS.ALL ]
-
-    def _isWotPlusRentEnabled(self):
-        hasWotPlusActive = self._wotPlusInfo.isEnabled()
-        isRentalEnabled = self._serverSettings.isWotPlusTankRentalEnabled()
-        isNotRentPending = self._wotPlusInfo.getRentPending() is None
-        return hasWotPlusActive and isRentalEnabled and isNotRentPending
 
     def _isTelecomRentalsEnabled(self):
         hasTelecomRentalsActive = self._telecomRentals.isActive()
         isRentalEnabled = self._serverSettings.isTelecomRentalsEnabled()
         return hasTelecomRentalsActive and isRentalEnabled
-
-    def __getVehicleBranchIndices(self):
-        rentSlotIdx = self._getFrontAdditionalItemsIndexes()
-        return [ len(self._vehicles) + len(_SUPPLY_ITEMS.ALL) + len(rentSlotIdx) + idx for idx in _BEFORE_SUPPLY_ITEMS.ALL ]
 
 
 class BCCarouselDataProvider(CarouselDataProvider):
@@ -349,7 +251,8 @@ class BCCarouselDataProvider(CarouselDataProvider):
 
     def selectVehicle(self, idx):
         self._selectedIdx = idx
-        self._currentVehicle.selectVehicle(self._vehicles[idx].invID)
+        realIdx = self._filteredIndices[idx]
+        return self._vehicles[realIdx].invID
 
     def _buildVehicle(self, vehicle):
         vehicle.dailyXPFactor = 1

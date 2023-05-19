@@ -1,12 +1,13 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/shared/web_view.py
-import logging, typing, BigWorld
-from adisp import process
+import typing, BigWorld, logging
+from adisp import adisp_process
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.daapi.view.lobby.hangar.BrowserView import makeBrowserParams
 from gui.Scaleform.daapi.view.meta.BrowserScreenMeta import BrowserScreenMeta
+from gui.Scaleform.framework.entities.DisposableEntity import EntityState
 from gui.shared import EVENT_BUS_SCOPE, events
 from gui.shared.view_helpers.blur_manager import CachedBlur
 from gui.sounds.ambients import HangarOverlayEnv
@@ -32,7 +33,6 @@ class WebView(BrowserScreenMeta):
         self._forcedSkipEscape = ctx.get('forcedSkipEscape', False) if ctx else False
         self._browserParams = (ctx or {}).get('browserParams', makeBrowserParams())
         self.__callbackOnLoad = ctx.get('callbackOnLoad', None) if ctx else None
-        self.__callbackOnClose = ctx.get('callbackOnClose', None) if ctx else None
         return
 
     @property
@@ -86,8 +86,6 @@ class WebView(BrowserScreenMeta):
         self.removeListener(events.HideWindowEvent.HIDE_OVERLAY_BROWSER_VIEW, self.__handleBrowserClose, scope=EVENT_BUS_SCOPE.LOBBY)
         if self.__browserId:
             self.__browserCtrl.delBrowser(self.__browserId)
-        if callable(self.__callbackOnClose):
-            self.__callbackOnClose()
 
     def _refresh(self):
         self.__browser.refresh()
@@ -95,7 +93,7 @@ class WebView(BrowserScreenMeta):
     def _onError(self):
         self.__updateSkipEscape(True)
 
-    @process
+    @adisp_process
     def __loadBrowser(self, width, height):
         url = self._getUrl()
         if url is not None:
@@ -157,9 +155,13 @@ class WebViewTransparent(WebView):
     def onEscapePress(self):
         self.destroy()
 
+    def _needToBeDisposed(self):
+        return self.getState() == EntityState.UNDEFINED or super(WebViewTransparent, self)._needToBeDisposed()
+
     def _dispose(self):
         if self.__blur is not None:
             self.__blur.fini()
+            self.__blur = None
         if self.__hiddenLayers:
             containerManager = self.app.containerManager
             containerManager.showContainers(self.__hiddenLayers, 0)

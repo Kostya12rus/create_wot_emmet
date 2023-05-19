@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/SYSTEM_MESSAGES.py
 from debug_utils import LOG_WARNING
 
@@ -181,6 +181,7 @@ class SYSTEM_MESSAGES(object):
     SQUAD_NOTVALIDDELETED = '#system_messages:squad/notValidDeleted'
     SQUAD_NOTVALIDDELETEDFILTER = '#system_messages:squad/notValidDeletedFilter'
     SQUAD_NOTVALIDMAXSPGDELETED = '#system_messages:squad/notValidMaxSpgDeleted'
+    SQUAD_NOTVALIDMAXSCOUTDELETED = '#system_messages:squad/notValidMaxScoutDeleted'
     SQUAD_NOTVALIDENQUEUEDATA = '#system_messages:squad/notValidEnqueueData'
     BATTLESESSION_KICKEDFROMQUEUE = '#system_messages:battleSession/kickedFromQueue'
     MEMBERROSTERCHANGEDMAIN = '#system_messages:memberRosterChangedMain'
@@ -204,6 +205,7 @@ class SYSTEM_MESSAGES(object):
     DENUNCIATION_SUCCESS = '#system_messages:denunciation/success'
     CUSTOMIZATION_UNAVAILABLE = '#system_messages:customization/unavailable'
     CUSTOMIZATION_PROHIBITED = '#system_messages:customization/prohibited'
+    CUSTOMIZATION_INVALIDVEHICLE = '#system_messages:customization/invalidVehicle'
     CUSTOMIZATION_PERSONAL_NUMBER_PROHIBITED = '#system_messages:customization/personal_number_prohibited'
     CUSTOMIZATION_SERVER_ERROR = '#system_messages:customization/server_error'
     CUSTOMIZATION_CREDITS_NOT_ENOUGH = '#system_messages:customization/credits_not_enough'
@@ -393,6 +395,11 @@ class SYSTEM_MESSAGES(object):
     ADD_TANKMAN_SKILL_INVALID_VEHICLE = '#system_messages:add_tankman_skill/invalid_vehicle'
     ADD_TANKMAN_SKILL_VEHICLE_NEED_REPAIR = '#system_messages:add_tankman_skill/vehicle_need_repair'
     ADD_TANKMAN_SKILL_VEHICLE_LOCKED = '#system_messages:add_tankman_skill/vehicle_locked'
+    LEARN_TANKMAN_FREE_SKILL_SUCCESS = '#system_messages:learn_tankman_free_skill/success'
+    LEARN_TANKMAN_FREE_SKILL_SERVER_ERROR = '#system_messages:learn_tankman_free_skill/server_error'
+    LEARN_TANKMAN_FREE_SKILL_INVALID_VEHICLE = '#system_messages:learn_tankman_free_skill/invalid_vehicle'
+    LEARN_TANKMAN_FREE_SKILL_VEHICLE_NEED_REPAIR = '#system_messages:learn_tankman_free_skill/vehicle_need_repair'
+    LEARN_TANKMAN_FREE_SKILL_VEHICLE_LOCKED = '#system_messages:learn_tankman_free_skill/vehicle_locked'
     DROP_TANKMAN_SKILL_SUCCESS = '#system_messages:drop_tankman_skill/success'
     DROP_TANKMAN_SKILL_SERVER_ERROR = '#system_messages:drop_tankman_skill/server_error'
     DROP_TANKMAN_SKILL_INVALID_VEHICLE = '#system_messages:drop_tankman_skill/invalid_vehicle'
@@ -451,6 +458,7 @@ class SYSTEM_MESSAGES(object):
     VEHICLE_RESTORE_DISABLED = '#system_messages:vehicle_restore/DISABLED'
     VEHICLE_SLOT_BUY_SUCCESS = '#system_messages:vehicle_slot_buy/success'
     VEHICLE_SLOT_BUY_NOT_ENOUGH_GOLD = '#system_messages:vehicle_slot_buy/not_enough_gold'
+    VEHICLE_SLOT_BUY_NOT_ENOUGH_CREDITS = '#system_messages:vehicle_slot_buy/not_enough_credits'
     VEHICLE_SLOT_BUY_WALLET_NOT_AVAILABLE = '#system_messages:vehicle_slot_buy/wallet_not_available'
     VEHICLE_SLOT_BUY_SERVER_ERROR = '#system_messages:vehicle_slot_buy/server_error'
     VEHICLE_SELL_SUCCESS = '#system_messages:vehicle_sell/success'
@@ -466,6 +474,7 @@ class SYSTEM_MESSAGES(object):
     VEHICLE_SELL_WALLET_NOT_AVAILABLE = '#system_messages:vehicle_sell/wallet_not_available'
     VEHICLE_SELL_VEHICLE_SELL_LIMIT = '#system_messages:vehicle_sell/vehicle_sell_limit'
     VEHICLE_SELL_NOT_ENOUGH_SPACE = '#system_messages:vehicle_sell/not_enough_space'
+    VEHICLE_SELL_EQUIPCOIN_ERROR = '#system_messages:vehicle_sell/equipCoin_error'
     VEHICLE_SELL_SUCCESS_WITH_DEMOUNT_KIT = '#system_messages:vehicle_sell/success/with_demount_kit'
     VEHICLE_SELL_SUCCESS_DISMANTLING_WITH_DEMOUNT_KIT = '#system_messages:vehicle_sell/success_dismantling/with_demount_kit'
     VEHICLE_SELL_DEMOUNT_KIT_DISABLED = '#system_messages:vehicle_sell/demount_kit_disabled'
@@ -599,6 +608,10 @@ class SYSTEM_MESSAGES(object):
     MODULE_SELL_SUCCESS = '#system_messages:module_sell/success'
     MODULE_SELL_INVALID_MODULE = '#system_messages:module_sell/invalid_module'
     MODULE_SELL_SERVER_ERROR = '#system_messages:module_sell/server_error'
+    ARTEFACT_DECONSTRUCTING_SUCCESS = '#system_messages:artefact_deconstructing/success'
+    ARTEFACT_DECONSTRUCTING_INVALID_MODULE = '#system_messages:artefact_deconstructing/invalid_module'
+    ARTEFACT_DECONSTRUCTING_SERVER_ERROR = '#system_messages:artefact_deconstructing/server_error'
+    ARTEFACT_DECONSTRUCTINGMULT_SUCCESS = '#system_messages:artefact_deconstructingMult/success'
     ARTEFACT_SELL_SUCCESS = '#system_messages:artefact_sell/success'
     ARTEFACT_SELL_INVALID_MODULE = '#system_messages:artefact_sell/invalid_module'
     ARTEFACT_SELL_SERVER_ERROR = '#system_messages:artefact_sell/server_error'
@@ -623,6 +636,7 @@ class SYSTEM_MESSAGES(object):
     ARTEFACT_APPLY_SUCCESS = '#system_messages:artefact_apply/success'
     ARTEFACT_APPLY_MONEY_SUCCESS = '#system_messages:artefact_apply/money_success'
     ARTEFACT_REMOVE_SUCCESS = '#system_messages:artefact_remove/success'
+    ARTEFACT_REMOVE_WOT_PLUS_SUCCESS = '#system_messages:artefact_remove/wot_plus_success'
     ARTEFACT_REMOVE_MONEY_SUCCESS = '#system_messages:artefact_remove/money_success'
     ARTEFACT_REMOVE_DEMOUNT_KIT_SUCCESS = '#system_messages:artefact_remove/demount_kit_success'
     ARTEFACT_REMOVE_INCOMPATIBLEEQS = '#system_messages:artefact_remove/incompatibleEqs'
@@ -701,6 +715,7 @@ class SYSTEM_MESSAGES(object):
     PREBATTLE_REQUEST_NAME_SET_VEHICLE_LIST = '#system_messages:prebattle/request/name/SET_VEHICLE_LIST'
     PREBATTLE_REQUEST_NAME_CHANGE_FALLOUT_QUEUE_TYPE = '#system_messages:prebattle/request/name/CHANGE_FALLOUT_QUEUE_TYPE'
     PREBATTLE_REQUEST_NAME_AUTO_SEARCH = '#system_messages:prebattle/request/name/AUTO_SEARCH'
+    PREBATTLE_REQUEST_NAME_CHANGE_FUN_SUB_MODE = '#system_messages:prebattle/request/name/CHANGE_FUN_SUB_MODE'
     FORTIFICATION_REQUEST_NAME_CREATE_FORT = '#system_messages:fortification/request/name/CREATE_FORT'
     FORTIFICATION_REQUEST_NAME_DELETE_FORT = '#system_messages:fortification/request/name/DELETE_FORT'
     FORTIFICATION_REQUEST_NAME_ADD_BUILDING = '#system_messages:fortification/request/name/ADD_BUILDING'
@@ -801,6 +816,7 @@ class SYSTEM_MESSAGES(object):
     WALLET_NOT_AVAILABLE = '#system_messages:wallet/not_available'
     WALLET_NOT_AVAILABLE_GOLD = '#system_messages:wallet/not_available_gold'
     WALLET_NOT_AVAILABLE_FREEXP = '#system_messages:wallet/not_available_freexp'
+    SENIORITY_AWARDS_CLAIM_REWARD_FAILED = '#system_messages:seniority_awards/claim_reward_failed'
     PERSONALMISSIONS_SELECT_SUCCESS = '#system_messages:personalMissions/select/success'
     PERSONALMISSIONS_SELECT_SERVER_ERROR = '#system_messages:personalMissions/select/server_error'
     PERSONALMISSIONS_SELECT_SERVER_ERROR_WRONG_ARGS_TYPE = '#system_messages:personalMissions/select/server_error/WRONG_ARGS_TYPE'
@@ -933,6 +949,8 @@ class SYSTEM_MESSAGES(object):
     UNIT_ERRORS_SWITCH_SIZE_CONSTRAINTS = '#system_messages:unit/errors/SWITCH_SIZE_CONSTRAINTS'
     UNIT_ERRORS_BAD_VEHICLES_SET = '#system_messages:unit/errors/BAD_VEHICLES_SET'
     UNIT_ERRORS_WRONG_VEHICLE = '#system_messages:unit/errors/WRONG_VEHICLE'
+    UNIT_ERRORS_ACCOUNT_BANNED = '#system_messages:unit/errors/ACCOUNT_BANNED'
+    UNIT_ERRORS_NO_ARENA_VEHICLES = '#system_messages:unit/errors/NO_ARENA_VEHICLES'
     IGR_CUSTOMIZATION_BEGIN = '#system_messages:igr/customization/begin'
     IGR_CUSTOMIZATION_END = '#system_messages:igr/customization/end'
     INFO_NOAVAILABLE = '#system_messages:info/noAvailable'
@@ -1153,6 +1171,9 @@ class SYSTEM_MESSAGES(object):
     PROGRESSIVEREWARD_SWITCH_ON = '#system_messages:progressiveReward/switch_on'
     PROGRESSIVEREWARD_ERROR = '#system_messages:progressiveReward/error'
     MAPS_BLACK_LIST_SELECT_SUCCESS = '#system_messages:maps_black_list/select/success'
+    MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_NOSUBSCRIPTIONS = '#system_messages:maps_black_list/select/success/wotPlusEnabled/noSubscriptions'
+    MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_WOTPLUS = '#system_messages:maps_black_list/select/success/wotPlusEnabled/wotPlus'
+    MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_PREMIUM = '#system_messages:maps_black_list/select/success/wotPlusEnabled/premium'
     MAPS_BLACK_LIST_SELECT_SERVER_ERROR_COOLDOWN = '#system_messages:maps_black_list/select/server_error/COOLDOWN'
     MAPS_BLACK_LIST_SELECT_SERVER_ERROR = '#system_messages:maps_black_list/select/server_error'
     MAPS_BLACK_LIST_SWITCH_OFF_TITLE = '#system_messages:maps_black_list/switch_off/title'
@@ -1218,9 +1239,10 @@ class SYSTEM_MESSAGES(object):
     BATTLEPASS_SWITCH_DISABLE_RANKED_BODY = '#system_messages:battlePass/switch_disable/ranked/body'
     BATTLEPASS_SWITCH_ENABLED_EPICBATTLE_BODY = '#system_messages:battlePass/switch_enabled/epicBattle/body'
     BATTLEPASS_SWITCH_DISABLE_EPICBATTLE_BODY = '#system_messages:battlePass/switch_disable/epicBattle/body'
+    BATTLEPASS_SWITCH_ENABLED_COMP7_BODY = '#system_messages:battlePass/switch_enabled/comp7/body'
+    BATTLEPASS_SWITCH_DISABLE_COMP7_BODY = '#system_messages:battlePass/switch_disable/comp7/body'
     UPGRADETROPHYDEVICE_SWITCH_ON_BODY = '#system_messages:upgradeTrophyDevice/switch_on/body'
     UPGRADETROPHYDEVICE_SWITCH_OFF_BODY = '#system_messages:upgradeTrophyDevice/switch_off/body'
-    BATTLEPASS_BADGEREMOVED_TEXT = '#system_messages:battlePass/badgeRemoved/text'
     BATTLEPASS_REWARDCHOICE_ERROR = '#system_messages:battlePass/rewardChoice/error'
     BATTLEPASS_EXTRASTARTED_HEADER = '#system_messages:battlePass/extraStarted/header'
     BATTLEPASS_EXTRASTARTED_BODY = '#system_messages:battlePass/extraStarted/body'
@@ -1232,6 +1254,7 @@ class SYSTEM_MESSAGES(object):
     BATTLEPASS_GAMEMODEENABLED_BODY_22 = '#system_messages:battlePass/gameModeEnabled/body/22'
     BATTLEPASS_GAMEMODEENABLED_BODY_27 = '#system_messages:battlePass/gameModeEnabled/body/27'
     BATTLEPASS_GAMEMODEENABLED_BODY_37 = '#system_messages:battlePass/gameModeEnabled/body/37'
+    BATTLEPASS_GAMEMODEENABLED_BODY_43 = '#system_messages:battlePass/gameModeEnabled/body/43'
     BATTLEPASS_SEASONEND_TEXT = '#system_messages:battlePass/seasonEnd/text'
     BATTLEPASS_SEASONEND_REWARDS_STYLE = '#system_messages:battlePass/seasonEnd/rewards/style'
     BATTLEPASS_SEASONEND_REWARDS_CREWBOOK = '#system_messages:battlePass/seasonEnd/rewards/crewBook'
@@ -1255,6 +1278,7 @@ class SYSTEM_MESSAGES(object):
     OFFERS_UNAVAILABLE_MANY = '#system_messages:offers/unavailable_many'
     OFFERS_SERVER_ERROR_COOLDOWN = '#system_messages:offers/server_error/COOLDOWN'
     OFFERS_SERVER_ERROR_DISABLED = '#system_messages:offers/server_error/DISABLED'
+    OFFERS_SERVER_ERROR_EXCEPTION = '#system_messages:offers/server_error/EXCEPTION'
     OFFERS_SERVER_ERROR_MULTI_ERROR = '#system_messages:offers/server_error/MULTI_ERROR'
     MISSINGEVENTS_BUTTON = '#system_messages:missingEvents/button'
     MISSINGEVENTS_HEADER = '#system_messages:missingEvents/header'
@@ -1263,6 +1287,10 @@ class SYSTEM_MESSAGES(object):
     DOG_TAGS_SWITCH_OFF_BODY = '#system_messages:dog_tags/switch_off/body'
     DOG_TAGS_SWITCH_ON_TITLE = '#system_messages:dog_tags/switch_on/title'
     DOG_TAGS_SWITCH_ON_BODY = '#system_messages:dog_tags/switch_on/body'
+    PLAYER_SUBSCRIPTIONS_SWITCH_OFF_TITLE = '#system_messages:player_subscriptions/switch_off/title'
+    PLAYER_SUBSCRIPTIONS_SWITCH_OFF_BODY = '#system_messages:player_subscriptions/switch_off/body'
+    PLAYER_SUBSCRIPTIONS_SWITCH_ON_TITLE = '#system_messages:player_subscriptions/switch_on/title'
+    PLAYER_SUBSCRIPTIONS_SWITCH_ON_BODY = '#system_messages:player_subscriptions/switch_on/body'
     VEHICLEPOSTPROGRESSION_RESEARCHSTEPS_TITLE = '#system_messages:vehiclePostProgression/researchSteps/title'
     VEHICLEPOSTPROGRESSION_EXPERIENCESPENT = '#system_messages:vehiclePostProgression/experienceSpent'
     VEHICLEPOSTPROGRESSION_FREEEXPERIENCESPENT = '#system_messages:vehiclePostProgression/freeExperienceSpent'
@@ -1317,18 +1345,9 @@ class SYSTEM_MESSAGES(object):
     PARENTCONTROL_LINKTEXT = '#system_messages:parentControl/linkText'
     RESOURCEWELL_RESOURCESLOADINGERROR = '#system_messages:resourceWell/resourcesLoadingError'
     RESOURCEWELL_RESOURCESRETURNERROR = '#system_messages:resourceWell/resourcesReturnError'
-    FUNRANDOM_NOTIFICATION_PRIMETIME_TITLE = '#system_messages:funRandom/notification/primeTime/title'
-    FUNRANDOM_NOTIFICATION_PRIMETIME = '#system_messages:funRandom/notification/primeTime'
-    FUNRANDOM_NOTIFICATION_AVAILABLE_TITLE = '#system_messages:funRandom/notification/available/title'
-    FUNRANDOM_NOTIFICATION_AVAILABLE = '#system_messages:funRandom/notification/available'
-    FUNRANDOM_NOTIFICATION_NOTSET_TITLE = '#system_messages:funRandom/notification/notSet/title'
-    FUNRANDOM_NOTIFICATION_NOTSET = '#system_messages:funRandom/notification/notSet'
-    WOTANNIVERSARY_SWITCH_PAUSE_BODY = '#system_messages:wotAnniversary/switch_pause/body'
-    WOTANNIVERSARY_SWITCH_ENABLED_BODY = '#system_messages:wotAnniversary/switch_enabled/body'
-    WOTANNIVERSARY_SWITCH_DISABLE_BODY = '#system_messages:wotAnniversary/switch_disable/body'
-    WOTANNIVERSARY_EVENTWILLENDSOON_HEADER = '#system_messages:wotAnniversary/eventWillEndSoon/header'
-    WOTANNIVERSARY_EVENTWILLENDSOON_BODY = '#system_messages:wotAnniversary/eventWillEndSoon/body'
-    WOTANNIVERSARY_AWARD_HEADER = '#system_messages:wotAnniversary/award/header'
+    UNIT_WARNINGS_EXPIRED_PLAY_LIMITS = '#system_messages:unit/warnings/EXPIRED_PLAY_LIMITS'
+    UNIT_WARNINGS_EXPIRED_PLAY_LIMITS_TO_COMMANDER = '#system_messages:unit/warnings/EXPIRED_PLAY_LIMITS_TO_COMMANDER'
+    WINBACK_TURNOFFBATTLESERROR = '#system_messages:winback/turnOffBattlesError'
     UNIT_NOTIFICATION_DIVISIONTYPE_ENUM = (
      UNIT_NOTIFICATION_DIVISIONTYPE_MIDDLE,
      UNIT_NOTIFICATION_DIVISIONTYPE_CHAMPION,
@@ -1387,7 +1406,9 @@ class SYSTEM_MESSAGES(object):
      UNIT_ERRORS_PREV_RATED_BATTLE_IN_PROGRESS,
      UNIT_ERRORS_SWITCH_SIZE_CONSTRAINTS,
      UNIT_ERRORS_BAD_VEHICLES_SET,
-     UNIT_ERRORS_WRONG_VEHICLE)
+     UNIT_ERRORS_WRONG_VEHICLE,
+     UNIT_ERRORS_ACCOUNT_BANNED,
+     UNIT_ERRORS_NO_ARENA_VEHICLES)
     UNIT_WARNINGS_ENUM = (
      UNIT_WARNINGS_NO_CLAN_MEMBERS,
      UNIT_WARNINGS_CANT_PICK_LEADER,
@@ -1409,7 +1430,9 @@ class SYSTEM_MESSAGES(object):
      UNIT_WARNINGS_ANOTHER_PLAYER_BECOME_EQUIPMENT_COMMANDER,
      UNIT_WARNINGS_ANOTHER_PLAYER_BECOME_COMMANDER_WITH_EQUIPMENT_PERMISSION,
      UNIT_WARNINGS_PLAYER_BECOME_COMMANDER,
-     UNIT_WARNINGS_PLAYER_BECOME_COMMANDER_WITH_EQUIPMENT_PERMISSION)
+     UNIT_WARNINGS_PLAYER_BECOME_COMMANDER_WITH_EQUIPMENT_PERMISSION,
+     UNIT_WARNINGS_EXPIRED_PLAY_LIMITS,
+     UNIT_WARNINGS_EXPIRED_PLAY_LIMITS_TO_COMMANDER)
     UNIT_NOTIFICATION_ENUM = (
      UNIT_NOTIFICATION_PLAYER_BECOME_EQUIPMENT_COMMANDER,
      UNIT_NOTIFICATION_PLAYEROFFLINE,
@@ -1440,7 +1463,8 @@ class SYSTEM_MESSAGES(object):
      PREBATTLE_REQUEST_NAME_CHANGE_DIVISION,
      PREBATTLE_REQUEST_NAME_SET_VEHICLE_LIST,
      PREBATTLE_REQUEST_NAME_CHANGE_FALLOUT_QUEUE_TYPE,
-     PREBATTLE_REQUEST_NAME_AUTO_SEARCH)
+     PREBATTLE_REQUEST_NAME_AUTO_SEARCH,
+     PREBATTLE_REQUEST_NAME_CHANGE_FUN_SUB_MODE)
     RANKED_NOTIFICATIONSALL_BONUSNAME_ENUM = (
      RANKED_NOTIFICATIONS_BONUSNAME_YEARPOINTS,
      RANKED_NOTIFICATIONS_BONUSNAME_SELECTABLEREWARD,
@@ -1636,6 +1660,7 @@ class SYSTEM_MESSAGES(object):
      SQUAD_NOTVALIDDELETED,
      SQUAD_NOTVALIDDELETEDFILTER,
      SQUAD_NOTVALIDMAXSPGDELETED,
+     SQUAD_NOTVALIDMAXSCOUTDELETED,
      SQUAD_NOTVALIDENQUEUEDATA,
      BATTLESESSION_KICKEDFROMQUEUE,
      MEMBERROSTERCHANGEDMAIN,
@@ -1659,6 +1684,7 @@ class SYSTEM_MESSAGES(object):
      DENUNCIATION_SUCCESS,
      CUSTOMIZATION_UNAVAILABLE,
      CUSTOMIZATION_PROHIBITED,
+     CUSTOMIZATION_INVALIDVEHICLE,
      CUSTOMIZATION_PERSONAL_NUMBER_PROHIBITED,
      CUSTOMIZATION_SERVER_ERROR,
      CUSTOMIZATION_CREDITS_NOT_ENOUGH,
@@ -1848,6 +1874,11 @@ class SYSTEM_MESSAGES(object):
      ADD_TANKMAN_SKILL_INVALID_VEHICLE,
      ADD_TANKMAN_SKILL_VEHICLE_NEED_REPAIR,
      ADD_TANKMAN_SKILL_VEHICLE_LOCKED,
+     LEARN_TANKMAN_FREE_SKILL_SUCCESS,
+     LEARN_TANKMAN_FREE_SKILL_SERVER_ERROR,
+     LEARN_TANKMAN_FREE_SKILL_INVALID_VEHICLE,
+     LEARN_TANKMAN_FREE_SKILL_VEHICLE_NEED_REPAIR,
+     LEARN_TANKMAN_FREE_SKILL_VEHICLE_LOCKED,
      DROP_TANKMAN_SKILL_SUCCESS,
      DROP_TANKMAN_SKILL_SERVER_ERROR,
      DROP_TANKMAN_SKILL_INVALID_VEHICLE,
@@ -1906,6 +1937,7 @@ class SYSTEM_MESSAGES(object):
      VEHICLE_RESTORE_DISABLED,
      VEHICLE_SLOT_BUY_SUCCESS,
      VEHICLE_SLOT_BUY_NOT_ENOUGH_GOLD,
+     VEHICLE_SLOT_BUY_NOT_ENOUGH_CREDITS,
      VEHICLE_SLOT_BUY_WALLET_NOT_AVAILABLE,
      VEHICLE_SLOT_BUY_SERVER_ERROR,
      VEHICLE_SELL_SUCCESS,
@@ -1921,6 +1953,7 @@ class SYSTEM_MESSAGES(object):
      VEHICLE_SELL_WALLET_NOT_AVAILABLE,
      VEHICLE_SELL_VEHICLE_SELL_LIMIT,
      VEHICLE_SELL_NOT_ENOUGH_SPACE,
+     VEHICLE_SELL_EQUIPCOIN_ERROR,
      VEHICLE_SELL_SUCCESS_WITH_DEMOUNT_KIT,
      VEHICLE_SELL_SUCCESS_DISMANTLING_WITH_DEMOUNT_KIT,
      VEHICLE_SELL_DEMOUNT_KIT_DISABLED,
@@ -2054,6 +2087,10 @@ class SYSTEM_MESSAGES(object):
      MODULE_SELL_SUCCESS,
      MODULE_SELL_INVALID_MODULE,
      MODULE_SELL_SERVER_ERROR,
+     ARTEFACT_DECONSTRUCTING_SUCCESS,
+     ARTEFACT_DECONSTRUCTING_INVALID_MODULE,
+     ARTEFACT_DECONSTRUCTING_SERVER_ERROR,
+     ARTEFACT_DECONSTRUCTINGMULT_SUCCESS,
      ARTEFACT_SELL_SUCCESS,
      ARTEFACT_SELL_INVALID_MODULE,
      ARTEFACT_SELL_SERVER_ERROR,
@@ -2078,6 +2115,7 @@ class SYSTEM_MESSAGES(object):
      ARTEFACT_APPLY_SUCCESS,
      ARTEFACT_APPLY_MONEY_SUCCESS,
      ARTEFACT_REMOVE_SUCCESS,
+     ARTEFACT_REMOVE_WOT_PLUS_SUCCESS,
      ARTEFACT_REMOVE_MONEY_SUCCESS,
      ARTEFACT_REMOVE_DEMOUNT_KIT_SUCCESS,
      ARTEFACT_REMOVE_INCOMPATIBLEEQS,
@@ -2156,6 +2194,7 @@ class SYSTEM_MESSAGES(object):
      PREBATTLE_REQUEST_NAME_SET_VEHICLE_LIST,
      PREBATTLE_REQUEST_NAME_CHANGE_FALLOUT_QUEUE_TYPE,
      PREBATTLE_REQUEST_NAME_AUTO_SEARCH,
+     PREBATTLE_REQUEST_NAME_CHANGE_FUN_SUB_MODE,
      FORTIFICATION_REQUEST_NAME_CREATE_FORT,
      FORTIFICATION_REQUEST_NAME_DELETE_FORT,
      FORTIFICATION_REQUEST_NAME_ADD_BUILDING,
@@ -2256,6 +2295,7 @@ class SYSTEM_MESSAGES(object):
      WALLET_NOT_AVAILABLE,
      WALLET_NOT_AVAILABLE_GOLD,
      WALLET_NOT_AVAILABLE_FREEXP,
+     SENIORITY_AWARDS_CLAIM_REWARD_FAILED,
      PERSONALMISSIONS_SELECT_SUCCESS,
      PERSONALMISSIONS_SELECT_SERVER_ERROR,
      PERSONALMISSIONS_SELECT_SERVER_ERROR_WRONG_ARGS_TYPE,
@@ -2388,6 +2428,8 @@ class SYSTEM_MESSAGES(object):
      UNIT_ERRORS_SWITCH_SIZE_CONSTRAINTS,
      UNIT_ERRORS_BAD_VEHICLES_SET,
      UNIT_ERRORS_WRONG_VEHICLE,
+     UNIT_ERRORS_ACCOUNT_BANNED,
+     UNIT_ERRORS_NO_ARENA_VEHICLES,
      IGR_CUSTOMIZATION_BEGIN,
      IGR_CUSTOMIZATION_END,
      INFO_NOAVAILABLE,
@@ -2608,6 +2650,9 @@ class SYSTEM_MESSAGES(object):
      PROGRESSIVEREWARD_SWITCH_ON,
      PROGRESSIVEREWARD_ERROR,
      MAPS_BLACK_LIST_SELECT_SUCCESS,
+     MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_NOSUBSCRIPTIONS,
+     MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_WOTPLUS,
+     MAPS_BLACK_LIST_SELECT_SUCCESS_WOTPLUSENABLED_PREMIUM,
      MAPS_BLACK_LIST_SELECT_SERVER_ERROR_COOLDOWN,
      MAPS_BLACK_LIST_SELECT_SERVER_ERROR,
      MAPS_BLACK_LIST_SWITCH_OFF_TITLE,
@@ -2673,9 +2718,10 @@ class SYSTEM_MESSAGES(object):
      BATTLEPASS_SWITCH_DISABLE_RANKED_BODY,
      BATTLEPASS_SWITCH_ENABLED_EPICBATTLE_BODY,
      BATTLEPASS_SWITCH_DISABLE_EPICBATTLE_BODY,
+     BATTLEPASS_SWITCH_ENABLED_COMP7_BODY,
+     BATTLEPASS_SWITCH_DISABLE_COMP7_BODY,
      UPGRADETROPHYDEVICE_SWITCH_ON_BODY,
      UPGRADETROPHYDEVICE_SWITCH_OFF_BODY,
-     BATTLEPASS_BADGEREMOVED_TEXT,
      BATTLEPASS_REWARDCHOICE_ERROR,
      BATTLEPASS_EXTRASTARTED_HEADER,
      BATTLEPASS_EXTRASTARTED_BODY,
@@ -2687,6 +2733,7 @@ class SYSTEM_MESSAGES(object):
      BATTLEPASS_GAMEMODEENABLED_BODY_22,
      BATTLEPASS_GAMEMODEENABLED_BODY_27,
      BATTLEPASS_GAMEMODEENABLED_BODY_37,
+     BATTLEPASS_GAMEMODEENABLED_BODY_43,
      BATTLEPASS_SEASONEND_TEXT,
      BATTLEPASS_SEASONEND_REWARDS_STYLE,
      BATTLEPASS_SEASONEND_REWARDS_CREWBOOK,
@@ -2710,6 +2757,7 @@ class SYSTEM_MESSAGES(object):
      OFFERS_UNAVAILABLE_MANY,
      OFFERS_SERVER_ERROR_COOLDOWN,
      OFFERS_SERVER_ERROR_DISABLED,
+     OFFERS_SERVER_ERROR_EXCEPTION,
      OFFERS_SERVER_ERROR_MULTI_ERROR,
      MISSINGEVENTS_BUTTON,
      MISSINGEVENTS_HEADER,
@@ -2718,6 +2766,10 @@ class SYSTEM_MESSAGES(object):
      DOG_TAGS_SWITCH_OFF_BODY,
      DOG_TAGS_SWITCH_ON_TITLE,
      DOG_TAGS_SWITCH_ON_BODY,
+     PLAYER_SUBSCRIPTIONS_SWITCH_OFF_TITLE,
+     PLAYER_SUBSCRIPTIONS_SWITCH_OFF_BODY,
+     PLAYER_SUBSCRIPTIONS_SWITCH_ON_TITLE,
+     PLAYER_SUBSCRIPTIONS_SWITCH_ON_BODY,
      VEHICLEPOSTPROGRESSION_RESEARCHSTEPS_TITLE,
      VEHICLEPOSTPROGRESSION_EXPERIENCESPENT,
      VEHICLEPOSTPROGRESSION_FREEEXPERIENCESPENT,
@@ -2772,18 +2824,9 @@ class SYSTEM_MESSAGES(object):
      PARENTCONTROL_LINKTEXT,
      RESOURCEWELL_RESOURCESLOADINGERROR,
      RESOURCEWELL_RESOURCESRETURNERROR,
-     FUNRANDOM_NOTIFICATION_PRIMETIME_TITLE,
-     FUNRANDOM_NOTIFICATION_PRIMETIME,
-     FUNRANDOM_NOTIFICATION_AVAILABLE_TITLE,
-     FUNRANDOM_NOTIFICATION_AVAILABLE,
-     FUNRANDOM_NOTIFICATION_NOTSET_TITLE,
-     FUNRANDOM_NOTIFICATION_NOTSET,
-     WOTANNIVERSARY_SWITCH_PAUSE_BODY,
-     WOTANNIVERSARY_SWITCH_ENABLED_BODY,
-     WOTANNIVERSARY_SWITCH_DISABLE_BODY,
-     WOTANNIVERSARY_EVENTWILLENDSOON_HEADER,
-     WOTANNIVERSARY_EVENTWILLENDSOON_BODY,
-     WOTANNIVERSARY_AWARD_HEADER)
+     UNIT_WARNINGS_EXPIRED_PLAY_LIMITS,
+     UNIT_WARNINGS_EXPIRED_PLAY_LIMITS_TO_COMMANDER,
+     WINBACK_TURNOFFBATTLESERROR)
 
     @classmethod
     def unit_notification_divisiontype(cls, key0):

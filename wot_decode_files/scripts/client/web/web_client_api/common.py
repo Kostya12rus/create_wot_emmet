@@ -1,9 +1,10 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/common.py
 import itertools
 from collections import namedtuple
+from enum import Enum, unique
 from gui.shared.money import MONEY_UNDEFINED
 from shared_utils import CONST_CONTAINER
 SPA_ID_TYPES = (
@@ -19,8 +20,30 @@ ItemPackEntry = namedtuple('ItemPackEntry', ('type', 'id', 'count', 'groupID', '
 ItemPackEntry.__new__.__defaults__ = (
  None, None, None, None, None, None, '', '', {})
 
+class _Enum(Enum):
+
+    @classmethod
+    def hasValue(cls, value):
+        return value in cls._value2member_map_
+
+
+@unique
+class TManLocation(_Enum):
+    NEWBIES = 'newbies'
+    BARRACKS = 'barracks'
+    TANKS = 'tanks'
+    DEMOBILIZED = 'demobilized'
+
+
+@unique
+class TManGender(_Enum):
+    MALE = 'male'
+    FEMALE = 'female'
+
+
 class ShopItemType(CONST_CONTAINER):
     VEHICLE = 'vehicle'
+    CREW = 'crew'
     EQUIPMENT = 'equipment'
     DEVICE = 'device'
     BOOSTER = 'booster'
@@ -55,7 +78,9 @@ class ItemPackType(CONST_CONTAINER):
     GOODIE_EXPERIENCE = 'goodie/experience'
     GOODIE_FREE_EXPERIENCE = 'goodie/free_experience'
     GOODIE_CREW_EXPERIENCE = 'goodie/crew_experience'
+    GOODIE_FREE_AND_CREW_EXPERIENCE = 'goodie/free_xp_and_crew_xp'
     GOODIE_FRONTLINE_EXPERIENCE = 'goodie/fl_experience'
+    GOODIE_RECERTIFICATIONFORM = 'goodie/recertificationForm'
     CREW_50 = 'crew/50'
     CREW_75 = 'crew/75'
     CREW_100 = 'crew/100'
@@ -71,9 +96,11 @@ class ItemPackType(CONST_CONTAINER):
     CUSTOM_EVENT_COIN_EXTERNAL = 'custom/event_coin'
     CUSTOM_BPCOIN = 'custom/bpcoin'
     CUSTOM_SLOT = 'custom/slot'
+    CUSTOM_SEVERAL_SLOTS = 'custom/slots'
     CUSTOM_REFERRAL_CREW = 'custom/crew'
     CUSTOM_SUPPLY_POINT = 'custom/supply_point'
     CUSTOM_BATTLE_PASS_POINTS = 'custom/battlePassPoints'
+    CUSTOM_X5_BATTLE_BONUS = 'custom/X5_battle'
     TOKEN = 'token'
     PAINT_ALL = 'paint/all'
     PAINT_SUMMER = 'paint/summer'
@@ -102,14 +129,19 @@ class ItemPackType(CONST_CONTAINER):
     CREW_BOOK_CREW_BOOK = 'crew_book/crewBook'
     CREW_BOOK_PERSONAL_BOOK = 'crew_book/personalBook'
     CREW_BOOK_UNIVERSAL_BOOK = 'crew_book/universalBook'
+    CREW_BOOK_RANDOM = 'crew_book/random'
     BLUEPRINT = 'blueprint'
     BLUEPRINT_NATIONAL = 'blueprint/national'
     BLUEPRINT_INTELEGENCE_DATA = 'blueprint/intelligence_data'
     BLUEPRINT_ANY = 'blueprint/any'
+    BLUEPRINT_NATIONAL_ANY = 'blueprint/nationalAny'
     DEMOUNT_KIT = 'demountKit'
     REFERRAL_AWARDS = 'referral_awards'
-    LUNAR_NY_ENVELOPE = 'lunarNY_envelop'
-    LUNAR_NY_PREREQUISITE = 'lunarNY_prerequisite'
+    DEMOUNT_KITS = 'demountKit/common'
+    OFFER = 'offer'
+    OFFER_BROCHURE = 'offer/crew_book/brochure'
+    OFFER_BATTLE_BOOSTER = 'offer/item/equipment'
+    TMAN_TOKEN = 'tmanToken'
 
 
 class ItemPackTypeGroup(CONST_CONTAINER):
@@ -130,6 +162,7 @@ class ItemPackTypeGroup(CONST_CONTAINER):
      ItemPackType.GOODIE_EXPERIENCE,
      ItemPackType.GOODIE_CREW_EXPERIENCE,
      ItemPackType.GOODIE_FREE_EXPERIENCE,
+     ItemPackType.GOODIE_FREE_AND_CREW_EXPERIENCE,
      ItemPackType.GOODIE_FRONTLINE_EXPERIENCE)
     CAMOUFLAGE = (
      ItemPackType.CAMOUFLAGE_ALL,
@@ -184,6 +217,11 @@ class ItemPackTypeGroup(CONST_CONTAINER):
      ItemPackType.CREW_BOOK_CREW_BOOK,
      ItemPackType.CREW_BOOK_PERSONAL_BOOK,
      ItemPackType.CREW_BOOK_UNIVERSAL_BOOK)
+    OFFER = (
+     ItemPackType.OFFER_BATTLE_BOOSTER,
+     ItemPackType.OFFER_BROCHURE)
+    TMAN_TOKEN = {
+     ItemPackType.TMAN_TOKEN}
 
 
 CompensationSpec = namedtuple('CompensationSpec', ('type', 'value', 'count'))

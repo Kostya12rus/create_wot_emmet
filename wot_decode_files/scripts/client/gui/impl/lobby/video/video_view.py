@@ -1,19 +1,19 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/video/video_view.py
-import logging, Windowing
+import logging, Windowing, BigWorld
 from frameworks.wulf import ViewSettings, WindowFlags, WindowLayer
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.video.video_view_model import VideoViewModel
 from gui.impl.lobby.video.video_sound_manager import DummySoundManager
 from gui.impl.pub import ViewImpl
 from gui.impl.pub.lobby_window import LobbyWindow
-from gui.impl.pub.lobby_window import LobbyNotificationWindow
 from gui.Scaleform.Waiting import Waiting
 from gui.sounds.filters import switchVideoOverlaySoundFilter
-from helpers import getClientLanguage
+from helpers import getClientLanguage, dependency
 from shared_utils import CONST_CONTAINER
+from skeletons.gui.app_loader import IAppLoader
 _logger = logging.getLogger(__name__)
 
 class _SubtitlesLanguages(CONST_CONTAINER):
@@ -39,7 +39,12 @@ _SUBTITLE_TO_LOCALES_MAP = {_SubtitlesLanguages.CS: {
    _SubtitlesLanguages.DE: {
                           'de'}, 
    _SubtitlesLanguages.EN: {
-                          'bg', 'da', 'el', 'en', 'et', 'fi', 'hr', 'hu', 'id', 'lt', 'lv', 'nl', 'no', 'pt', 'ro', 'sr', 'sv', 'vi'}, 
+                          'bg', 
+                          'da', 'el', 'en', 'et', 
+                          'fi', 'hr', 'hu', 'id', 
+                          'lt', 'lv', 'nl', 'no', 
+                          'pt', 'ro', 'sr', 'sv', 
+                          'vi'}, 
    _SubtitlesLanguages.ES: {
                           'es'}, 
    _SubtitlesLanguages.FR: {
@@ -64,11 +69,15 @@ _SUBTITLE_TO_LOCALES_MAP = {_SubtitlesLanguages.CS: {
                             'zh_tw'}, 
    _SubtitlesLanguages.ZHSG: {
                             'zh_sg', 'zh_cn'}}
-_LOCALE_TO_SUBTITLE_MAP = {loc:subID for subID, locales in _SUBTITLE_TO_LOCALES_MAP.iteritems() for loc in locales}
+_LOCALE_TO_SUBTITLE_MAP = {loc: subID for loc in _SUBTITLE_TO_LOCALES_MAP.iteritems()}
+_LAYERS = [
+ WindowLayer.OVERLAY, WindowLayer.CURSOR, WindowLayer.WAITING, WindowLayer.SERVICE_LAYOUT]
 
 class VideoView(ViewImpl):
     __slots__ = ('__onVideoStartedHandle', '__onVideoStoppedHandle', '__onVideoClosedHandle',
-                 '__isAutoClose', '__soundControl', '__videoResID')
+                 '__isAutoClose', '__soundControl', '__previouslyVisibleLayers',
+                 '__app')
+    __appFactory = dependency.descriptor(IAppLoader)
 
     def __init__(self, *args, **kwargs):
         settings = ViewSettings(R.views.lobby.video.video_view.VideoView())
@@ -81,18 +90,19 @@ class VideoView(ViewImpl):
         self.__onVideoClosedHandle = kwargs.get('onVideoClosed')
         self.__isAutoClose = kwargs.get('isAutoClose')
         self.__soundControl = kwargs.get('soundControl') or DummySoundManager()
-        self.__videoResID = kwargs.get('videoResID')
+        self.__previouslyVisibleLayers = []
+        self.__app = self.__appFactory.getApp()
 
     @property
     def viewModel(self):
         return super(VideoView, self).getViewModel()
 
-    def _onLoading(self, *args, **kwargs):
-        super(VideoView, self)._initialize(*args, **kwargs)
-        if self.__videoResID is None:
-            _logger.error('__videoResID is not specified!')
+    def _onLoading(self, videoSource, *args, **kwargs):
+        super(VideoView, self)._onLoading(*args, **kwargs)
+        if videoSource is None:
+            _logger.error('__videoSource is not specified!')
         else:
-            self.viewModel.setVideoSource(self.__videoResID)
+            self.viewModel.setVideoSource(videoSource)
             language = getClientLanguage()
             self.viewModel.setSubtitleTrack(_LOCALE_TO_SUBTITLE_MAP.get(language, 0))
             self.viewModel.setIsWindowAccessible(Windowing.isWindowAccessible())
@@ -106,8 +116,13 @@ class VideoView(ViewImpl):
     def _onLoaded(self, *args, **kwargs):
         Waiting.suspend(id(self))
 
+    def _initialize(self, *args, **kwargs):
+        super(VideoView, self)._initialize(*args, **kwargs)
+        self.__hideBack()
+
     def _finalize(self):
         Waiting.resume(id(self))
+        self.__showBack()
         self.viewModel.onCloseBtnClick -= self.__onCloseWindow
         self.viewModel.onVideoStarted -= self.__onVideoStarted
         self.viewModel.onVideoStopped -= self.__onVideoStopped
@@ -117,6 +132,8 @@ class VideoView(ViewImpl):
             self.__onVideoClosedHandle = None
         self.__soundControl.stop()
         self.__soundControl = DummySoundManager()
+        self.__app = None
+        self.__previouslyVisibleLayers = None
         switchVideoOverlaySoundFilter(on=False)
         return
 
@@ -148,18 +165,24 @@ class VideoView(ViewImpl):
             self.__soundControl.pause()
         self.viewModel.setIsWindowAccessible(isWindowAccessible)
 
+    def __hideBack(self):
+        BigWorld.worldDrawEnabled(False)
+        if self.__app is not None:
+            containerManager = self.__app.containerManager
+            self.__previouslyVisibleLayers = containerManager.getVisibleLayers()
+            containerManager.setVisibleLayers(_LAYERS)
+        return
+
+    def __showBack(self):
+        BigWorld.worldDrawEnabled(True)
+        if self.__app is not None:
+            self.__app.containerManager.setVisibleLayers(self.__previouslyVisibleLayers)
+        return
+
 
 class VideoViewWindow(LobbyWindow):
     __slots__ = ()
 
     def __init__(self, *args, **kwargs):
         super(VideoViewWindow, self).__init__(content=VideoView(*args, **kwargs), wndFlags=WindowFlags.WINDOW | WindowFlags.WINDOW_FULLSCREEN, layer=WindowLayer.OVERLAY, decorator=None)
-        return
-
-
-class LunarNYVideoViewWindow(LobbyNotificationWindow):
-    __slots__ = ()
-
-    def __init__(self, parent=None, *args, **kwargs):
-        super(LunarNYVideoViewWindow, self).__init__(content=VideoView(*args, **kwargs), wndFlags=WindowFlags.WINDOW | WindowFlags.WINDOW_FULLSCREEN, layer=WindowLayer.OVERLAY, parent=parent, decorator=None)
         return

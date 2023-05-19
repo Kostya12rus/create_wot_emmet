@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/demo_renaming_overlay_view.py
 import typing, BigWorld
-from async import await, async, AsyncReturn
+from wg_async import wg_await, wg_async, AsyncReturn
 from gui.impl.backport import text as loc
 from gui.impl.dialogs import dialogs
 from gui.impl.dialogs.gf_builders import ResDialogBuilder
@@ -22,10 +22,8 @@ from helpers import dependency
 from skeletons.gui.game_control import IDemoAccCompletionController, IBootcampController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.platform.wgnp_controllers import IWGNPDemoAccRequestController
-from uilogging.account_completion.constants import ViewClosingResult
-from uilogging.account_completion.loggers import AccountCompletionRenamingLogger, AccountCompletionSkipRenamingLogger
 if typing.TYPE_CHECKING:
-    from async import _Future
+    from wg_async import _Future
     from gui.platform.wgnp.demo_account.request import ChangeNicknameParams
 _res = R.strings.dialogs.accountCompletion.renamingOverlay
 
@@ -39,8 +37,6 @@ class DemoRenamingOverlayView(BaseWGNPOverlayView):
     _demoAccController = dependency.descriptor(IDemoAccCompletionController)
     _wgnpDemoAccCtrl = dependency.descriptor(IWGNPDemoAccRequestController)
     _bootcampCtrl = dependency.descriptor(IBootcampController)
-    _uiLogger = AccountCompletionRenamingLogger()
-    _skipDialogLogger = AccountCompletionSkipRenamingLogger()
 
     def __init__(self):
         super(DemoRenamingOverlayView, self).__init__()
@@ -53,26 +49,23 @@ class DemoRenamingOverlayView(BaseWGNPOverlayView):
 
     def activate(self, *args, **kwargs):
         super(DemoRenamingOverlayView, self).activate(*args, **kwargs)
-        self._uiLogger.viewOpened(self.getParentWindow())
         self._wgnpDemoAccCtrl.statusEvents.subscribe(StatusTypes.UNDEFINED, self._onRenamingDisabled, context=NICKNAME_CONTEXT)
         self._name.onChanged += self._updateConfirmButtonAvailability
         self._updateConfirmButtonAvailability()
 
     def deactivate(self):
-        self._uiLogger.viewClosed()
         self._wgnpDemoAccCtrl.statusEvents.unsubscribe(StatusTypes.UNDEFINED, self._onRenamingDisabled, context=NICKNAME_CONTEXT)
         self._name.onChanged -= self._updateConfirmButtonAvailability
         self._name.clear()
         super(DemoRenamingOverlayView, self).deactivate()
 
-    @async
+    @wg_async
     def _closeClickedHandler(self):
         CurtainWindow.getInstance().hide()
         if self._bootcampCtrl.isInBootcamp():
             builder = ResDialogBuilder()
             builder.setMessagesAndButtons(R.strings.dialogs.accountCompletion.renaming.skip)
-            result = yield await(dialogs.show(builder.build()))
-            self._skipDialogLogger.logDialogResult(result.result)
+            result = yield wg_await(dialogs.show(builder.build()))
             if result.result != DialogButtons.SUBMIT:
                 CurtainWindow.getInstance().reveal()
                 return
@@ -93,7 +86,7 @@ class DemoRenamingOverlayView(BaseWGNPOverlayView):
         self._name.validate()
         return self._name.isValid
 
-    @async
+    @wg_async
     def _confirmClickedHandler(self):
         if not self._name.isAlreadyRemotelyValidated:
             yield self._name.remotelyValidate()
@@ -103,16 +96,15 @@ class DemoRenamingOverlayView(BaseWGNPOverlayView):
     def _doRequest(self):
         return self._request()
 
-    @async
+    @wg_async
     def _request(self):
         self._requestedName = self._name.value
         self._name.cancelRemoteValidation()
-        status = yield await(self._wgnpDemoAccCtrl.getNicknameStatus())
-        response = yield await(self._wgnpDemoAccCtrl.changeNickname(self._requestedName, status.cost))
+        status = yield wg_await(self._wgnpDemoAccCtrl.getNicknameStatus())
+        response = yield wg_await(self._wgnpDemoAccCtrl.changeNickname(self._requestedName, status.cost))
         raise AsyncReturn(response)
 
     def _handleSuccess(self, *_):
-        self._uiLogger.setParams(result=ViewClosingResult.SUCCESS)
         showDemoAccRenamingCompleteOverlay(self._requestedName, self._onClose)
 
     def _handleError(self, response):

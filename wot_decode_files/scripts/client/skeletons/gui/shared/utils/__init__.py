@@ -1,16 +1,15 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/skeletons/gui/shared/utils/__init__.py
 import typing
 from skeletons.gui.shared.utils import requesters
 if typing.TYPE_CHECKING:
-    from Event import Event
-    from gui.shared.utils.requesters import battle_pass_requester
+    from gui.shared.gui_items import ItemsCollection
+    from gui.shared.gui_items.Tankman import Tankman
     from gui.veh_post_progression.models.progression import PostProgressionItem
     from items.vehicles import VehicleType
-    from lunar_ny.lunar_ny_requester import ILunarNYRequester
-    from new_year import ny_requester
+    from gui.shared.gui_items.dossier import AccountDossier
 
 class IItemsRequester(requesters.IRequester):
 
@@ -83,11 +82,11 @@ class IItemsRequester(requesters.IRequester):
         raise NotImplementedError
 
     @property
-    def lunarNY(self):
+    def gameRestrictions(self):
         raise NotImplementedError
 
     @property
-    def festivity(self):
+    def resourceWell(self):
         raise NotImplementedError
 
     def requestUserDossier(self, databaseID, callback):
@@ -135,6 +134,9 @@ class IItemsRequester(requesters.IRequester):
     def getItems(self, itemTypeID=None, criteria=None, nationID=None, onlyWithPrices=True):
         raise NotImplementedError
 
+    def getItemsAsync(self, itemTypeID=None, criteria=None, nationID=None, onlyWithPrices=True, callback=None):
+        raise NotImplementedError
+
     def getVehicles(self, criteria=None):
         raise NotImplementedError
 
@@ -171,6 +173,9 @@ class IItemsRequester(requesters.IRequester):
     def getDogTag(self, databaseID=None):
         raise NotImplementedError
 
+    def getBattleRoyaleStats(self, arenaType, databaseID=None, vehicleIntCD=None):
+        raise NotImplementedError
+
     def getVehPostProgression(self, vehIntCD, vehType=None):
         raise NotImplementedError
 
@@ -204,10 +209,6 @@ class IHangarSpace(object):
 
     @property
     def space(self):
-        raise NotImplementedError
-
-    @property
-    def spaceID(self):
         raise NotImplementedError
 
     @property
@@ -289,9 +290,6 @@ class IHangarSpace(object):
     def updateAnchorsParams(self, *args):
         raise NotImplementedError
 
-    def resetLastUpdatedVehicle(self):
-        raise NotImplementedError
-
 
 class IHangarSpaceReloader(object):
 
@@ -301,7 +299,7 @@ class IHangarSpaceReloader(object):
     def destroy(self):
         raise NotImplementedError
 
-    def changeHangarSpace(self, spaceName, waitingMessage=None, backgroundImage=None):
+    def changeHangarSpace(self, spaceName, visibilityMask, waitingMessage=None, backgroundImage=None):
         raise NotImplementedError
 
     @property

@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/store/browser/shop_helpers.py
 import typing
 from gui import GUI_SETTINGS
@@ -23,6 +23,10 @@ def isSubscriptionEnabled(itemsCache=None):
 
 def getShopURL():
     return _getUrl()
+
+
+def getShopRootUrl():
+    return _getUrl('shopRootUrl')
 
 
 def getBuyMoreGoldUrl():
@@ -61,8 +65,8 @@ def getBuyVehiclesUrl():
     return _getUrl('buyVehiclesUrl')
 
 
-def getVehicleUrl():
-    return _getUrl('buyVehicle')
+def getBuyProductUrl():
+    return _getUrl('buyProduct')
 
 
 def getBonsUrl():
@@ -85,16 +89,8 @@ def getTradeInVehiclesUrl():
     return _getUrl('tradeIn')
 
 
-def getPersonalTradeInVehiclesUrl():
-    return _getUrl('trade_in_personal')
-
-
 def getTradeOffOverlayUrl():
     return _getUrl('tradeOffOverlay')
-
-
-def getPersonalTradeOffOverlayUrl():
-    return _getUrl('personalTradeOffOverlay')
 
 
 def getPremiumVehiclesUrl():
@@ -109,6 +105,10 @@ def getBattlePassCoinProductsUrl():
     return _getUrl('bpcoinProducts')
 
 
+def getBattlePassPointsProductsUrl():
+    return _getUrl('bpProducts')
+
+
 def getBuyCollectibleVehiclesUrl():
     return _getUrl('buyCollectibleVehicle')
 
@@ -118,7 +118,7 @@ def getBlueprintsExchangeUrl():
 
 
 def getPlayerSeniorityAwardsUrl():
-    return _getUrl('psaProducts')
+    return _getUrl('seniorityAwardsProducts')
 
 
 def getSplitPageUrl(params):
@@ -134,14 +134,18 @@ def getTelecomRentVehicleUrl():
     return _getUrl('telecomTankRental')
 
 
-def getBuyRenewableSubscriptionUrl():
-    return _getUrl('buyRenewableSubscription')
+def getWotPlusShopUrl():
+    return _getUrl('buyWotPlus')
+
+
+def getIntegratedAuctionUrl():
+    return _getUrl('integratedAuction')
+
+
+def getEventLootBoxesUrl():
+    return _getUrl('eventLootboxes')
 
 
 def getClientControlledCloseCtx():
     return {'browserParams': makeBrowserParams(isCloseBtnVisible=True), 
        'forcedSkipEscape': True}
-
-
-def getEnvelopesUrl():
-    return _getUrl('envelopes')

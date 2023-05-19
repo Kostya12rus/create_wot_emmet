@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/camouflages.py
 import logging
 from collections import namedtuple, defaultdict
@@ -27,6 +27,7 @@ from gui.shared.gui_items.customization.c11n_items import Customization
 import math_utils
 from helpers import newFakeModel
 from soft_exception import SoftException
+from CurrentVehicle import g_currentVehicle
 from skeletons.gui.shared.gui_items import IGuiItemsFactory
 if typing.TYPE_CHECKING:
     from items.components.shared_components import ProjectionDecalSlotDescription
@@ -66,8 +67,9 @@ ModelAnimatorParams.__new__.__defaults__ = (
  math_utils.createIdentityMatrix(), '', '')
 LoadedModelAnimator = namedtuple('LoadedModelAnimator', ('animator', 'node', 'attachmentPartNode'))
 AttachmentParams = namedtuple('AttachmentParams', ('transform', 'attachNode', 'modelName',
-                                                   'sequenceId', 'attachmentLogic',
-                                                   'initialVisibility', 'partNodeAlias'))
+                                                   'hangarModelName', 'sequenceId',
+                                                   'attachmentLogic', 'initialVisibility',
+                                                   'partNodeAlias'))
 AttachmentParams.__new__.__defaults__ = (
  math_utils.createIdentityMatrix(), '', '', None, '', True, '')
 _isDeferredRenderer = isRendererPipelineDeferred()
@@ -102,7 +104,7 @@ def updateFashions(appearance):
         if outfit and outfit.style and outfit.style.isProgression:
             changeStyleProgression(style=outfit.style, appearance=appearance, level=outfit.progressionLevel)
         if IS_EDITOR:
-            if outfit and outfit.style and outfit.style.modelsSet != appearance.currentModelsSet:
+            if outfit.style is not None and outfit.style.modelsSet != appearance.currentModelsSet:
                 setMaterialsVisibility(appearance, appearance.availableMaterials, False)
         appearance.c11nComponent = appearance.createComponent(Vehicular.C11nComponent, fashions, appearance.compoundModel, outfitData)
         return
@@ -143,6 +145,8 @@ def getOutfitComponent(outfitCD, vehicleDescriptor=None, seasonType=None):
                     outfit = getStyleProgressionOutfit(outfit, outfitComponent.styleProgressionLevel, seasonType)
                     baseOutfitComponent = outfit.pack()
                 baseOutfitComponent.styleProgressionLevel = outfitComponent.styleProgressionLevel
+            if styleDescr.isWithSerialNumber:
+                baseOutfitComponent.serial_number = outfitComponent.serial_number
             if vehicleDescriptor and ItemTags.ADD_NATIONAL_EMBLEM in styleDescr.tags:
                 emblems = createNationalEmblemComponents(vehicleDescriptor)
                 baseOutfitComponent.decals.extend(emblems)
@@ -150,6 +154,7 @@ def getOutfitComponent(outfitCD, vehicleDescriptor=None, seasonType=None):
                 outfitComponent = baseOutfitComponent.applyDiff(outfitComponent)
             else:
                 outfitComponent = baseOutfitComponent
+            outfitComponent = styleDescr.addPartsToOutfit(seasonType, outfitComponent, vehicleDescriptor.makeCompactDescr() if vehicleDescriptor else '')
             if IS_EDITOR:
 
                 def setupAlternateItem(itemType, outfit, sourceOutfit, collectionName):
@@ -184,7 +189,13 @@ def prepareBattleOutfit(outfitCD, vehicleDescriptor, vehicleId):
     outfitComponent = getOutfitComponent(outfitCD, vehicleDescriptor)
     outfit = Outfit(component=outfitComponent, vehicleCD=vehicleCD)
     player = BigWorld.player()
-    forceHistorical = player.playerVehicleID != vehicleId and player.customizationDisplayType < outfit.customizationDisplayType()
+    if player is not None and hasattr(player, 'customizationDisplayType'):
+        localPlayerWantsHistoricallyAccurate = player.customizationDisplayType < outfit.customizationDisplayType()
+        isLocalVehicle = player.playerVehicleID != vehicleId
+    else:
+        localPlayerWantsHistoricallyAccurate = False
+        isLocalVehicle = False
+    forceHistorical = isLocalVehicle and localPlayerWantsHistoricallyAccurate
     if outfit.style and (outfit.style.isProgression or IS_EDITOR):
         progressionOutfit = getStyleProgressionOutfit(outfit, toLevel=outfit.progressionLevel)
         if progressionOutfit is not None:
@@ -195,11 +206,27 @@ def prepareBattleOutfit(outfitCD, vehicleDescriptor, vehicleId):
         return outfit
 
 
+def getCurrentLevelForRewindStyle(outfit):
+    itemsCache = dependency.instance(IItemsCache)
+    inventory = itemsCache.items.inventory
+    intCD = makeIntCompactDescrByID('customizationItem', CustomizationType.STYLE, outfit.style.id)
+    vehDesc = g_currentVehicle.item.descriptor
+    progressData = inventory.getC11nProgressionData(intCD, vehDesc.type.compactDescr)
+    if progressData is not None:
+        return progressData.currentLevel
+    else:
+        return 1
+
+
 def getStyleProgressionOutfit(outfit, toLevel=0, season=None):
     styleProgression = outfit.style.styleProgressions
     allLevels = styleProgression.keys()
     if not season:
         season = _currentMapSeason()
+    style = outfit.style
+    if toLevel == 0 and style.isProgressionRewindEnabled:
+        _logger.info('Get style progression level for the rewind style with id=%d', style.id)
+        toLevel = getCurrentLevelForRewindStyle(outfit)
     if allLevels and toLevel not in allLevels:
         _logger.error('Get style progression outfit: incorrect level given: %d', toLevel)
         toLevel = 1
@@ -552,6 +579,7 @@ def __prepareAnimator(loadedAnimators, animatorName, wrapperToBind, node, attach
     else:
         animator = loadedAnimators.pop(animatorName)
         animator.bindTo(wrapperToBind)
+        animator.setEnabled(False)
         if hasattr(animator, 'setBoolParam'):
             animator.setBoolParam('isDeferred', _isDeferredRenderer)
         return LoadedModelAnimator(animator, node, attachmentPartNode)
@@ -607,7 +635,7 @@ def getAttachments(outfit, vehicleDescr):
 
     def getAttachmentParams(slotParams, slotData, idx):
         item = getItemByCompactDescr(slotData.intCD)
-        return AttachmentParams(transform=__createTransform(slotParams, slotData), attachNode=slotParams.attachNode, modelName=item.modelName, sequenceId=item.sequenceId, attachmentLogic=item.attachmentLogic, initialVisibility=item.initialVisibility, partNodeAlias='attachment' + str(idx) if item.attachmentLogic != 'prefab' else None)
+        return AttachmentParams(transform=__createTransform(slotParams, slotData), attachNode=slotParams.attachNode, modelName=item.modelName, hangarModelName=item.hangarModelName, sequenceId=item.sequenceId, attachmentLogic=item.attachmentLogic, initialVisibility=item.initialVisibility, partNodeAlias='attachment' + str(idx) if item.attachmentLogic != 'prefab' else None)
 
     return __getParams(outfit, vehicleDescr, 'attachment', GUI_ITEM_TYPE.ATTACHMENT, getAttachmentParams)
 
@@ -637,7 +665,7 @@ def _matchTaggedProjectionDecalsToSlots(projectionDecalsMultiSlot, slotsByTagMap
     return True
 
 
-def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMap):
+def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMap, updateSlotId=True):
     slots = {}
     slotsByTags = deepcopy(slotsByTagMap)
     for decal in decals:
@@ -650,7 +678,8 @@ def _findAndMatchProjectionDecalsSlotsByTags(decals, appliedDecals, slotsByTagMa
     slotsList = slots.values()
     if _checkSlotsOrder(slots.values(), appliedDecals):
         for component, slotParams in slots.iteritems():
-            component.slotId = slotParams.slotId
+            if updateSlotId:
+                component.slotId = slotParams.slotId
             _checkAndMirrorProjectionDecal(component, slotParams)
 
         return slotsList
@@ -755,6 +784,29 @@ def __vehicleSlotsByType(vehDesc, slotType):
     return
 
 
+if IS_EDITOR:
+
+    def createVehPartSlotMap(vehDesc):
+        slotsByIdMap = {}
+        for partName in TankPartNames.ALL:
+            partDesc = getattr(vehDesc, partName, None)
+            if partDesc is None:
+                continue
+            for slot in partDesc.slotsAnchors:
+                slotsByIdMap[slot.slotId] = (
+                 partDesc, slot)
+
+            for slot in partDesc.emblemSlots:
+                slotsByIdMap[slot.slotId] = (
+                 partDesc, slot)
+
+        return slotsByIdMap
+
+
+    def createVehSlotsMaps(vehDesc):
+        return __createVehSlotsMaps(vehDesc)
+
+
 def __createVehSlotsMaps(vehDesc):
     slotsByIdMap = {}
     slotsByTagMap = {}
@@ -824,7 +876,7 @@ def __getProjectionDecalScale(component, slotParams=None):
     scale = Math.Vector3(scale)
     if component.scaleFactorId:
         scaleFactors = slotParams.scaleFactors if slotParams is not None else DEFAULT_DECAL_SCALE_FACTORS
-        scaleFactor = scaleFactors[(component.scaleFactorId - 1)]
+        scaleFactor = scaleFactors[component.scaleFactorId - 1]
         scale.x *= scaleFactor
         scale.z *= scaleFactor
     return scale

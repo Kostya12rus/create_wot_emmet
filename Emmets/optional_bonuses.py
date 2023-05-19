@@ -1,13 +1,13 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/optional_bonuses.py
-import copy, random, time
-from collections import defaultdict
-from typing import Dict, Optional
+import copy, random, time, typing
 from account_shared import getCustomizationItem
 from battle_pass_common import NON_VEH_CD
 from soft_exception import SoftException
+if typing.TYPE_CHECKING:
+    from typing import Dict, Optional
 
 def _packTrack(track):
     result = []
@@ -115,6 +115,11 @@ def __mergeEntitlements(total, key, value, isLeaf=False, count=1, *args):
             total['expires'] = entitlementData['expires']
 
 
+def __mergeEntitlementList(total, key, value, isLeaf=False, count=1, *args):
+    entitlementList = total.setdefault(key, {})
+    entitlementList.setdefault('items', []).extend(value.get('items', []) * count)
+
+
 def __mergeCurrencies(total, key, value, isLeaf=False, count=1, *args):
     totalCurrency = total.setdefault(key, {})
     for currencyCode, currencyData in value.iteritems():
@@ -147,6 +152,8 @@ def __mergeDossier(total, key, value, isLeaf=False, count=1, *args):
                 total['value'] += dataValue * count
             total['unique'] = data['unique']
             total['type'] = data['type']
+            if 'actualValue' in data:
+                total['actualValue'] = data['actualValue']
 
 
 def __mergeBlueprints(total, key, value, isLeaf=False, count=1, *args):
@@ -180,8 +187,23 @@ def __mergeBattlePassPoints(total, key, value, isLeaf=False, count=1, *args):
     battlePass['vehicles'][NON_VEH_CD] += value.get('vehicles', {}).get(NON_VEH_CD, 0) * count
 
 
+def __mergeFreePremiumCrew(total, key, value, isLeaf=False, count=1, *args):
+    freePremiumCrewBonus = total.setdefault(key, {})
+    for vehLevel, freePremiumCrewCount in value.iteritems():
+        freePremiumCrewBonus.setdefault(vehLevel, 0)
+        freePremiumCrewBonus[vehLevel] += freePremiumCrewCount * count
+
+
 def __mergeMeta(total, key, value, isLeaf=False, count=1, *args):
     total[key] = value
+
+
+def __mergeNoviceReset(total, key, value, isLeaf=False, count=1, *args):
+    total[key] = value
+
+
+def __mergeDailyQuestReroll(total, key, value, isLeaf, count, *args):
+    total.setdefault(key, set()).update(value)
 
 
 BONUS_MERGERS = {'credits': __mergeValue, 
@@ -190,6 +212,7 @@ BONUS_MERGERS = {'credits': __mergeValue,
    'crystal': __mergeValue, 
    'eventCoin': __mergeValue, 
    'bpcoin': __mergeValue, 
+   'equipCoin': __mergeValue, 
    'freeXP': __mergeValue, 
    'tankmenXP': __mergeValue, 
    'vehicleXP': __mergeValue, 
@@ -215,12 +238,16 @@ BONUS_MERGERS = {'credits': __mergeValue,
    'blueprints': __mergeBlueprints, 
    'enhancements': __mergeEnhancements, 
    'entitlements': __mergeEntitlements, 
+   'entitlementList': __mergeEntitlementList, 
    'currencies': __mergeCurrencies, 
    'rankedDailyBattles': __mergeValue, 
    'rankedBonusBattles': __mergeValue, 
    'dogTagComponents': __mergeDogTag, 
    'battlePassPoints': __mergeBattlePassPoints, 
-   'meta': __mergeMeta}
+   'freePremiumCrew': __mergeFreePremiumCrew, 
+   'meta': __mergeMeta, 
+   'dailyQuestReroll': __mergeDailyQuestReroll, 
+   'noviceReset': __mergeNoviceReset}
 ITEM_INVENTORY_CHECKERS = {'vehicles': lambda account, key: account._inventory.getVehicleInvID(key) != 0 and not account._rent.isVehicleRented(account._inventory.getVehicleInvID(key)), 
    'customizations': lambda account, key: account._customizations20.getItems((key,), 0)[key] > 0, 
    'tokens': lambda account, key: account._quests.hasToken(key)}
@@ -556,14 +583,14 @@ class ProbabilityVisitor(NodeVisitor):
         limitIDs, bonusNodes = values
         acceptor = self.__nodeAcceptor
         shouldVisitNodes = acceptor.getNodesForVisit(limitIDs)
-        probabilitiesStage = acceptor.getCurrentProbabilityStage()
+        probablitiesStage = acceptor.getCurrentProbabilityStage()
         useBonusProbability = acceptor.getUseBonusProbability()
         if shouldVisitNodes:
             check = lambda _, nodeLimitIDs: nodeLimitIDs and nodeLimitIDs.intersection(shouldVisitNodes)
         else:
             check = lambda probability, _: probability > rand
         for i, (probabilities, bonusProbability, nodeLimitIDs, bonusValue) in enumerate(bonusNodes):
-            probability = probabilities[probabilitiesStage]
+            probability = probabilities[probablitiesStage]
             if check(bonusProbability if useBonusProbability else probability, nodeLimitIDs):
                 selectedIdx = i
                 selectedValue = bonusValue
@@ -573,53 +600,47 @@ class ProbabilityVisitor(NodeVisitor):
 
         isAcceptable = acceptor.isAcceptable
         if not isAcceptable(selectedValue):
-            probSum, nodes = range(2)
-            availableBonuses = defaultdict(lambda : {probSum: 0, nodes: []})
-            sumOfPreviousProbabilities = 0.0
+            availableBonusNodes = []
+            sumOfAvailableProbabilities = 0
+            sumOfPreviousProbabilities = 0
             previousOwnProbability = 0.0
             canUsePrevInsteadOfZeroProbability = False
             for index, (probabilities, bonusProbability, _, bonusValue) in enumerate(bonusNodes):
-                ownProbability = bonusProbability if useBonusProbability else probabilities[probabilitiesStage]
+                ownProbability = bonusProbability if useBonusProbability else probabilities[probablitiesStage]
                 if ownProbability != 0.0:
                     ownProbability, sumOfPreviousProbabilities = ownProbability - sumOfPreviousProbabilities, ownProbability
                 if ownProbability != 0.0:
                     canUsePrevInsteadOfZeroProbability = True
                     previousOwnProbability = ownProbability
                     probability = ownProbability
-                elif canUsePrevInsteadOfZeroProbability and previousOwnProbability != 0.0:
-                    probability = previousOwnProbability
                 else:
-                    continue
-                bonusValueProps = bonusValue.get('properties', {})
-                isSameIndex = index == selectedIdx
-                isCompensation = bonusValueProps.get('compensation', False)
-                if not isSameIndex and isCompensation and isAcceptable(bonusValue):
-                    priority = bonusValueProps.get('priority', 0)
-                    availableBonuses[priority][probSum] += probability
-                    availableBonuses[priority][nodes].append((index, probability, bonusValue))
+                    if canUsePrevInsteadOfZeroProbability and previousOwnProbability != 0.0:
+                        probability = previousOwnProbability
+                    else:
+                        continue
+                if index != selectedIdx and bonusValue.get('properties', {}).get('compensation', False) and isAcceptable(bonusValue):
+                    sumOfAvailableProbabilities += probability
+                    availableBonusNodes.append((index, probability, bonusValue))
                     canUsePrevInsteadOfZeroProbability = False
 
-            highPriority = min(availableBonuses) if availableBonuses else 0
-            preferred = availableBonuses[highPriority]
-            if not preferred[nodes]:
+            if not availableBonusNodes:
                 shouldCompensated = selectedValue.get('properties', {}).get('shouldCompensated', False)
                 if not isAcceptable(selectedValue, False) or shouldCompensated:
                     for i in xrange(len(bonusNodes)):
                         self.__trackChoice(False)
 
                     return
-            elif len(preferred[nodes]) == 1:
-                selectedIdx, _, selectedValue = availableBonuses[highPriority][nodes][0]
+            elif len(availableBonusNodes) == 1:
+                selectedIdx, _, selectedValue = availableBonusNodes[0]
+            randomValue = random.random() * sumOfAvailableProbabilities
+            sumOfPreviousProbabilities = 0
+            for bonusNode in availableBonusNodes:
+                sumOfPreviousProbabilities += bonusNode[1]
+                if randomValue < sumOfPreviousProbabilities:
+                    selectedIdx, _, selectedValue = bonusNode
+                    break
             else:
-                randomValue = random.random() * preferred[probSum]
-                sumOfPreviousProbabilities = 0
-                for bonusNode in preferred[nodes]:
-                    sumOfPreviousProbabilities += bonusNode[1]
-                    if randomValue <= sumOfPreviousProbabilities:
-                        selectedIdx, _, selectedValue = bonusNode
-                        break
-                else:
-                    raise SoftException(('Unreachable code, oneof probability bug, random value: {}, available bonus nodes: {}').format(randomValue, preferred[nodes]))
+                raise SoftException(('Unreachable code, oneof probability bug, random value: {}, available bonus nodes: {}').format(randomValue, availableBonusNodes))
 
         for i in xrange(selectedIdx):
             self.__trackChoice(False)

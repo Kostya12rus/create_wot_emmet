@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/dossier/achievements/regular_achvs.py
 from abstract import RegularAchievement
 from abstract.mixins import NoProgressBar
@@ -22,7 +22,7 @@ class HonoredRankAchievement(RegularAchievement):
         super(HonoredRankAchievement, self).__init__('honoredRank', _AB.CLIENT, dossier, value)
 
     def getIcons(self):
-        iconName = self.getIconName()
+        iconName = self._getIconName()
         return {self.ICON_TYPE.IT_180X180: '%s/%s.png' % (self.ICON_PATH_180X180, iconName), 
            self.ICON_TYPE.IT_67X71: '%s/%s.png' % (self.ICON_PATH_67X71, iconName)}
 

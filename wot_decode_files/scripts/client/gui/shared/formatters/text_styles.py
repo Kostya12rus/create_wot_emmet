@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/formatters/text_styles.py
 import types
 from gui import makeHtmlString
@@ -19,6 +19,7 @@ __all__ = (
  'statusAttention',
  'middleTitle',
  'highTitle',
+ 'highTitleRegular',
  'highTitleAccented',
  'highTitleDisabled',
  'disabled',
@@ -59,15 +60,12 @@ __all__ = (
  'grandTitle',
  'grandTitleYellow',
  'grandTitleTK',
- 'nyVehicleTitle',
- 'nyVehicleSmallTitle',
- 'nyVehicleMain',
- 'nyVehicleSmallMain',
+ 'grandTitleRed',
  'textEpic',
  'yellowText',
  'greenText',
- 'nyNotEnoughShardsDialogCostBlock',
- 'nyNotEnoughShardsDialogLevel')
+ 'poiCapturedBoldText',
+ 'poiCapturedRegularText')
 
 def _getStyle(style, ctx=None):
     if ctx is None:
@@ -121,6 +119,14 @@ def stats(text):
     return _formatText('statsText', text)
 
 
+def rewards(text):
+    return _formatText('rewardsText', text)
+
+
+def h15ParSecondary(text):
+    return _formatText('h15ParSecondary', text)
+
+
 def statInfo(text):
     return _formatText('statusInfoText', text)
 
@@ -147,6 +153,10 @@ def middleBonusTitle(text):
 
 def highTitle(text):
     return _formatText('highTitle', text)
+
+
+def highTitleRegular(text):
+    return _formatText('highTitleRegular', text)
 
 
 def highTitleAccented(text):
@@ -261,6 +271,10 @@ def demountKitText(text):
     return _formatText('demountKitText', text)
 
 
+def wotPlusText(text):
+    return _formatText('wotPlusText', text)
+
+
 def credits(text):
     return _formatText('creditsText', text)
 
@@ -273,6 +287,10 @@ def crystal(text):
     return _formatText('crystalText', text)
 
 
+def equipCoin(text):
+    return _formatText('equipCoinText', text)
+
+
 def textEpic(text):
     return _formatText('textEpic', text)
 
@@ -283,6 +301,10 @@ def eventCoin(text):
 
 def bpcoin(text):
     return _formatText('bpcoinText', text)
+
+
+def brcoin(text):
+    return _formatText('creditsText', text)
 
 
 def defRes(text):
@@ -307,10 +329,6 @@ def titleFont(text):
 
 def tutorial(text):
     return _formatText('tutorialText', text)
-
-
-def tutorialBig(text):
-    return _formatText('tutorialTextBig', text)
 
 
 def playerOnline(text):
@@ -417,6 +435,10 @@ def grandTitleTK(text):
     return _formatText('grandTitleTK', text)
 
 
+def grandTitleRed(text):
+    return _formatText('grandTitleRed', text)
+
+
 def failedStatusText(text):
     return _formatText('failedStatusText', text)
 
@@ -429,36 +451,32 @@ def greenText(text):
     return _formatText('greenText', text)
 
 
-def nyVehicleTitle(text):
-    return _formatText('nyVehicleTitle', text)
-
-
-def nyVehicleSmallTitle(text):
-    return _formatText('nyVehicleSmallTitle', text)
-
-
-def nyVehicleMain(text):
-    return _formatText('nyVehicleMain', text)
-
-
-def nyVehicleSmallMain(text):
-    return _formatText('nyVehicleSmallMain', text)
-
-
-def vehicleNameNY(text):
-    return _formatText('vehicleNameNY', text)
-
-
-def nyNotEnoughShardsDialogCostBlock(text):
-    return _formatText('nyNotEnoughShardsDialogCostBlock', text)
-
-
-def nyNotEnoughShardsDialogLevel(text):
-    return _formatText('nyNotEnoughShardsDialogLevel', text)
-
-
 def discountText(text):
     return _formatText('discountText', text)
+
+
+def goldTitle(text):
+    return _formatText('goldTitle', text)
+
+
+def creditsTitle(text):
+    return _formatText('creditsTitle', text)
+
+
+def crystalTitle(text):
+    return _formatText('crystalTitle', text)
+
+
+def expTitle(text):
+    return _formatText('expTitle', text)
+
+
+def poiCapturedBoldText(text):
+    return _formatText('poiCapturedBoldText', text)
+
+
+def poiCapturedRegularText(text):
+    return _formatText('poiCapturedRegularText', text)
 
 
 def getRawStyles(names):
@@ -488,6 +506,10 @@ def concatStylesToMultiLine(*styles):
 
 def concatStylesWithSpace(*styles):
     return (' ').join(map(_processStyle, styles))
+
+
+def concatStylesWithNBSP(*styles):
+    return ('&nbsp;').join(map(_processStyle, styles))
 
 
 class _StylesBuilder(object):

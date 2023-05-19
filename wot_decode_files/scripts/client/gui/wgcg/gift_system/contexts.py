@@ -1,9 +1,8 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/wgcg/gift_system/contexts.py
 import logging, time, typing
-from gui.gift_system.constants import RANDOM_RECEIVER_ID
 from gui.gift_system.wrappers import GiftsWebState, SendGiftResponse
 from gui.wgcg.base.contexts import CommonWebRequestCtx
 from gui.wgcg.settings import WebRequestDataType
@@ -18,8 +17,7 @@ def _packEventWebState(eventData):
            'expireTime': eventData['expiration_time'], 
            'expireDelta': eventData['expiration_delta'], 
            'executionTime': eventData['execution_time'], 
-           'state': eventData['state'], 
-           'common': eventData.get('common', {})}
+           'state': eventData['state']}
         result = makeTupleByDict(GiftsWebState, result)
     except (KeyError, TypeError):
         _logger.exception('Can not _packEventWebState because of invalid eventData')
@@ -53,10 +51,10 @@ class GiftSystemStateCtx(CommonWebRequestCtx):
         if incomeData is None or not isinstance(incomeData, dict):
             return self.getDefDataObj()
         else:
-            return {eventID:_packEventWebState(incomeData.get(str(eventID))) for eventID in self.__reqEventIds}
+            return {eventID: _packEventWebState(incomeData.get(str(eventID))) for eventID in self.__reqEventIds}
 
     def getDefDataObj(self):
-        return {eventID:None for eventID in self.__reqEventIds}
+        return {eventID: None for eventID in self.__reqEventIds}
 
 
 class GiftSystemSendGiftCtx(CommonWebRequestCtx):
@@ -102,12 +100,3 @@ class GiftSystemSendGiftCtx(CommonWebRequestCtx):
            'receiverID': self.__receiverID, 
            'entitlementCode': self.__entitlementCode, 
            'executionTime': int(time.time())}
-
-
-class GiftSystemSendGiftToRandomUserCtx(GiftSystemSendGiftCtx):
-
-    def __init__(self, entitlementCode, metaInfo=None, waitingID=''):
-        super(GiftSystemSendGiftToRandomUserCtx, self).__init__(entitlementCode, RANDOM_RECEIVER_ID, metaInfo, waitingID)
-
-    def getRequestType(self):
-        return WebRequestDataType.GIFT_SYSTEM_SECRET_SANTA_POST

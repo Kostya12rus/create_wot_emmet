@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/ui/vehicle.py
 import random
 from functools import partial
@@ -30,6 +30,7 @@ from helpers import dependency
 from helpers.i18n import makeString as _ms
 from helpers.time_utils import getCurrentLocalServerTimestamp, getDateTimeInLocal, getDateTimeInUTC, getTimeStructInLocal, getTimestampFromISO, utcToLocalDatetime
 from items import ITEM_TYPES, vehicles
+from items.components.c11n_constants import CustomizationNamesToTypes
 from shared_utils import first
 from skeletons.gui.customization import ICustomizationService
 from skeletons.gui.game_control import IEpicBattleMetaGameController, IVehicleComparisonBasket
@@ -43,11 +44,11 @@ REQUIRED_ITEM_FIELDS = {
 REQUIRED_COMPENSATION_FIELDS = {'type', 'value'}
 REQUIRED_CUSTOMCREW_FIELDS = {'extra'}
 REQUIRED_TANKMAN_FIELDS = {
- 'isPremium',
- 'role',
- 'roleLevel',
- 'gId',
- 'nationID',
+ 'isPremium', 
+ 'role', 
+ 'roleLevel', 
+ 'gId', 
+ 'nationID', 
  'vehicleTypeID'}
 DEFAULT_STYLED_VEHICLES = (
  15697,
@@ -342,6 +343,7 @@ class _VehicleStylePreviewSchema(W2CSchema):
     level = Field(required=False, type=int)
     price = Field(required=False, type=dict)
     buy_params = Field(required=False, type=dict)
+    alternate_item = Field(required=False, type=list)
 
 
 class _VehicleMarathonStylePreviewSchema(W2CSchema):
@@ -356,7 +358,7 @@ class _VehicleListStylePreviewSchema(W2CSchema):
     style_id = Field(required=True, type=int)
     vehicle_min_level = Field(required=False, type=int, default=10)
     vehicle_list = Field(required=False, type=(
-     list, NoneType), validator=lambda value, _: _validateVehiclesCDList(value), default=DEFAULT_STYLED_VEHICLES)
+     list, NoneType), validator=(lambda value, _: _validateVehiclesCDList(value)), default=DEFAULT_STYLED_VEHICLES)
     back_btn_descr = Field(required=True, type=basestring)
     back_url = Field(required=False, type=basestring)
     level = Field(required=False, type=int)
@@ -472,9 +474,9 @@ class VehiclePreviewWebApiMixin(object):
             accDossier = self.__itemsCache.items.getAccountDossier()
             vehiclesStats = accDossier.getRandomStats().getVehicles()
             vehicleGetter = self.__itemsCache.items.getItemByCD
-            vehiclesStats = {vehicle:value for vehicle, value in vehiclesStats.iteritems() if vehicleGetter(vehicle).level >= cmd.vehicle_min_level}
+            vehiclesStats = {vehicle: value for vehicle, value in vehiclesStats.iteritems() if vehicleGetter(vehicle).level >= cmd.vehicle_min_level}
             if vehiclesStats:
-                sortedVehicles = sorted(vehiclesStats.items(), key=lambda vStat: vStat[1].battlesCount, reverse=True)
+                sortedVehicles = sorted(vehiclesStats.items(), key=(lambda vStat: vStat[1].battlesCount), reverse=True)
                 styledVehicleCD = sortedVehicles[0][0]
             if not styledVehicleCD:
                 vehiclesPool = AccountSettings.getSettings(STYLE_PREVIEW_VEHICLES_POOL)
@@ -525,9 +527,9 @@ class VehiclePreviewWebApiMixin(object):
             accDossier = self.__itemsCache.items.getAccountDossier()
             vehiclesStats = accDossier.getRandomStats().getVehicles()
             vehicleGetter = self.__itemsCache.items.getItemByCD
-            vehiclesStats = {vehicleCD:value for vehicleCD, value in vehiclesStats.iteritems() if not vehicleGetter(vehicleCD).descriptor.type.isCustomizationLocked and style.mayInstall(vehicleGetter(vehicleCD))}
+            vehiclesStats = {vehicleCD: value for vehicleCD, value in vehiclesStats.iteritems() if not vehicleGetter(vehicleCD).descriptor.type.isCustomizationLocked and style.mayInstall(vehicleGetter(vehicleCD))}
             if vehiclesStats:
-                sortedVehicles = sorted(vehiclesStats.items(), key=lambda vStat: vStat[1].battlesCount, reverse=True)
+                sortedVehicles = sorted(vehiclesStats.items(), key=(lambda vStat: vStat[1].battlesCount), reverse=True)
                 styledVehicleCD = sortedVehicles[0][0] if sortedVehicles else None
             if not styledVehicleCD:
                 criteria = REQ_CRITERIA.INVENTORY | ~REQ_CRITERIA.VEHICLE.IS_OUTFIT_LOCKED | REQ_CRITERIA.VEHICLE.FOR_ITEM(style)
@@ -541,7 +543,7 @@ class VehiclePreviewWebApiMixin(object):
 
     def __getVehiclesForStylePreview(self, criteria=None):
         vehs = self.__itemsCache.items.getVehicles(criteria=criteria).values()
-        return sorted(vehs, key=lambda item: item.level, reverse=True)
+        return sorted(vehs, key=(lambda item: item.level), reverse=True)
 
     def _getVehicleStylePreviewCallback(self, cmd):
         return showHangar
@@ -552,15 +554,17 @@ class VehiclePreviewWebApiMixin(object):
     def _getVehiclePreviewReturnAlias(self, cmd):
         return VIEW_ALIAS.LOBBY_HANGAR
 
-    def _getVehicleStylePreviewReturnAlias(self, cmd):
-        return backport.text(R.strings.vehicle_preview.header.backBtn.descrLabel.dyn(cmd.back_btn_descr or 'hangar')())
-
     def __showStylePreview(self, vehicleCD, cmd):
         styleInfo = self.__c11n.getItemByID(GUI_ITEM_TYPE.STYLE, cmd.style_id)
         vehicle = self.__itemsCache.items.getItemByCD(vehicleCD)
+        outfit = None
+        if cmd.alternate_item:
+            alternateItemTypeName, alternateItemID = cmd.alternate_item
+            outfit = styleInfo.getAlteredOutfit(CustomizationNamesToTypes[alternateItemTypeName.upper()], alternateItemID, vehicle.descriptor.makeCompactDescr())
         if vehicle is not None and not vehicle.isOutfitLocked and styleInfo.mayInstall(vehicle):
             showStyle = _getStylePreviewShowFunc(styleInfo, cmd.price)
-            showStyle(vehicleCD, styleInfo, styleInfo.getDescription(), self._getVehicleStylePreviewCallback(cmd), backBtnDescrLabel=self._getVehicleStylePreviewReturnAlias(cmd), styleLevel=cmd.level, price=cmd.price, buyParams=cmd.buy_params)
+            descrLabelResPath = R.strings.vehicle_preview.header.backBtn.descrLabel
+            showStyle(vehicleCD, styleInfo, styleInfo.getDescription(), self._getVehicleStylePreviewCallback(cmd), backport.text(descrLabelResPath.dyn(cmd.back_btn_descr or 'hangar')()), styleLevel=cmd.level, price=cmd.price, buyParams=cmd.buy_params, outfit=outfit, backPreviewAlias=self._getVehiclePreviewReturnAlias(cmd))
             return True
         else:
             return False

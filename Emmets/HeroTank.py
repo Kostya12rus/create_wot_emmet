@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/HeroTank.py
 import math, random
 from typing import TYPE_CHECKING
@@ -54,6 +54,7 @@ class HeroTank(ClientSelectableCameraVehicle):
 
     def __init__(self):
         self.__heroTankCD = None
+        self.__isHidden = False
         ClientSelectableCameraVehicle.__init__(self)
         return
 
@@ -62,8 +63,10 @@ class HeroTank(ClientSelectableCameraVehicle):
         self._hangarSpace.onHeroTankReady += self._updateHeroTank
         self._heroTankCtrl.onUpdated += self._updateHeroTank
         self._heroTankCtrl.onInteractive += self._updateInteractive
+        self._heroTankCtrl.onHidden += self.__onHidden
 
     def onLeaveWorld(self):
+        self._heroTankCtrl.onHidden -= self.__onHidden
         self._hangarSpace.onHeroTankReady -= self._updateHeroTank
         self._heroTankCtrl.onUpdated -= self._updateHeroTank
         self._heroTankCtrl.onInteractive -= self._updateInteractive
@@ -75,7 +78,7 @@ class HeroTank(ClientSelectableCameraVehicle):
             BigWorld.destroyEntity(self.id)
 
     def recreateVehicle(self, typeDescriptor=None, state=ModelStates.UNDAMAGED, callback=None, outfit=None):
-        if self.__isInPreview():
+        if self.__isInPreview() or self.__isHidden:
             return
         if self.__heroTankCD and not self.__isInPreview():
             self.typeDescriptor = HeroTank.__getVehicleDescriptorByIntCD(self.__heroTankCD)
@@ -119,6 +122,14 @@ class HeroTank(ClientSelectableCameraVehicle):
     @staticmethod
     def __isInPreview():
         return g_currentPreviewVehicle.item and g_currentPreviewVehicle.isHeroTank
+
+    def __onHidden(self, isHidden):
+        if self.__isHidden != isHidden:
+            self.__isHidden = isHidden
+            if self.__isHidden and not self.__isInPreview():
+                self.removeVehicle()
+            elif not self.__isHidden and self._heroTankCtrl.getRandomTankCD():
+                self.recreateVehicle()
 
 
 def debugReloadHero(heroName):

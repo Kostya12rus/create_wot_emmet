@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/common/field_presenters.py
 import re
 from abc import ABCMeta, abstractmethod
@@ -14,7 +14,7 @@ from gui.impl.lobby.account_completion.common import errors
 if typing.TYPE_CHECKING:
     from gui.impl.gen.view_models.views.lobby.account_completion.common.base_field_model import BaseFieldModel
 _EMAIL_PATTERN = re.compile('^[a-z0-9_-]+(\\.[a-z0-9_-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,4}$', re.I)
-_PASSWORD_PATTERN = re.compile('^[a-z0-9_]+$', re.I)
+_PASSWORD_PATTERN = re.compile('^[\\x21-\\x7e]+$', re.I)
 
 class BaseFieldPresenter(object):
     __metaclass__ = ABCMeta

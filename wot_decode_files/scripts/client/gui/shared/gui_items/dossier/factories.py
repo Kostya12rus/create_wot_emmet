@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/dossier/factories.py
 import nations
 from dossiers2.ui.achievements import ACHIEVEMENT_TYPE, getType as getAchieveType, ACHIEVEMENT_BLOCK as _AB, RARE_STORAGE_RECORD, HONORED_RANK_RECORD
@@ -39,7 +39,7 @@ class _AchieveFactory(object):
 
     @classmethod
     def get(cls, achieveClass):
-        return lambda name, block, dossier: cls(achieveClass, name, block, dossier)
+        return (lambda name, block, dossier: cls(achieveClass, name, block, dossier))
 
 
 class _CustomAchieveFactory(_AchieveFactory):
@@ -49,7 +49,7 @@ class _CustomAchieveFactory(_AchieveFactory):
 
     @classmethod
     def get(cls, achieveClass):
-        return lambda name, block, dossier: cls(achieveClass, name, block, dossier)
+        return (lambda name, block, dossier: cls(achieveClass, name, block, dossier))
 
 
 class _BlockAchieveFactory(_AchieveFactory):
@@ -59,7 +59,7 @@ class _BlockAchieveFactory(_AchieveFactory):
 
     @classmethod
     def get(cls, achieveClass):
-        return lambda name, block, dossier: cls(achieveClass, name, block, dossier)
+        return (lambda name, block, dossier: cls(achieveClass, name, block, dossier))
 
 
 class _SequenceAchieveFactory(_AchieveFactory):
@@ -82,7 +82,7 @@ class _SequenceAchieveFactory(_AchieveFactory):
 
     @classmethod
     def get(cls, defaultClass):
-        return lambda name, block, dossier: cls(defaultClass, name, block, dossier)
+        return (lambda name, block, dossier: cls(defaultClass, name, block, dossier))
 
     def isInDossier(self):
         return True
@@ -95,7 +95,7 @@ class _RareAchievesFactory(_SequenceAchieveFactory):
 
     @classmethod
     def get(cls):
-        return lambda rareID, block, dossier: cls(_abstract_achievements.RareAchievement, rareID, block, dossier)
+        return (lambda rareID, block, dossier: cls(_abstract_achievements.RareAchievement, rareID, block, dossier))
 
 
 class _NationAchieveFactory(_AchieveFactory):
@@ -112,7 +112,7 @@ class _NationAchieveFactory(_AchieveFactory):
 
     @classmethod
     def get(cls, achieveClass, nationID=-1):
-        return lambda name, block, dossier: cls(achieveClass, name, nationID, block, dossier)
+        return (lambda name, block, dossier: cls(achieveClass, name, nationID, block, dossier))
 
 
 _ACHIEVEMENTS_BY_BLOCK = {_AB.RARE: _BlockAchieveFactory.get(_abstract_achievements.RareAchievement)}
@@ -230,6 +230,7 @@ _ACHIEVEMENTS_BY_NAME = {(_AB.TOTAL, 'warrior'): _CustomAchieveFactory.get(_as.r
    (_AB.SINGLE, 'twitchPrime4'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'alphaTester'): _AchieveFactory.get(LoyalServiceAchievement), 
    (_AB.SINGLE, 'betaTester'): _AchieveFactory.get(LoyalServiceAchievement), 
+   (_AB.SINGLE, '12YearsOfService'): _AchieveFactory.get(LoyalServiceAchievement), 
    (_AB.SINGLE, '11YearsOfService'): _AchieveFactory.get(LoyalServiceAchievement), 
    (_AB.SINGLE, '10YearsOfService'): _AchieveFactory.get(LoyalServiceAchievement), 
    (_AB.SINGLE, '09YearsOfService'): _AchieveFactory.get(LoyalServiceAchievement), 
@@ -326,6 +327,17 @@ _ACHIEVEMENTS_BY_NAME = {(_AB.TOTAL, 'warrior'): _CustomAchieveFactory.get(_as.r
    (_AB.SINGLE, 'october21'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'november21'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'december21'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'june22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'july22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'august22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'september22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'october22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'november22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'december22'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'january23'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'february23'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'march23'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'april23'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'NY20A1'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'NY20A2'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'NY20A3'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
@@ -346,6 +358,13 @@ _ACHIEVEMENTS_BY_NAME = {(_AB.TOTAL, 'warrior'): _CustomAchieveFactory.get(_as.r
    (_AB.SINGLE, 'BattlePassCommonPr_4'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'BattlePassCommonPr_5'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'BattlePassCommonPr_6'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_7'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_8'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_8ru'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_8quest'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_9'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_NY23'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'BattlePassCommonPr_10'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.TOTAL, 'collectorVehicle'): _NationAchieveFactory.get(_as.nation_specific.VehicleCollectorAchievement), 
    (_AB.SINGLE, 'dedicationMedal1'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'dedicationMedal2'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
@@ -395,7 +414,22 @@ _ACHIEVEMENTS_BY_NAME = {(_AB.TOTAL, 'warrior'): _CustomAchieveFactory.get(_as.r
    (_AB.SINGLE, 'hw2021Medal2'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'NY22_AtmsphrLevel'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
    (_AB.SINGLE, 'NY22_CelebChallenge'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
-   (_AB.TOTAL, 'lunarNY2022Progression'): _AchieveFactory.get(_abstract_achievements.StageAchievement)}
+   (_AB.TOTAL, 'lunarNY2022Progression'): _AchieveFactory.get(_abstract_achievements.StageAchievement), 
+   (_AB.UNIQUE, 'oowTankmanWins'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.UNIQUE, 'oowStrategistWins'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'oowCompetetiveWin'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'oowCBTParticipant'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'wclTournamentParticipant'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'wclParticipant'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'wt2022HunterWins'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'wt2022BossWins'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.TOTAL, 'wt2022SpecBossDefeat'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'comp7Season1'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'hw2022Medal01'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'hw2022Medal02'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'NY23_AtmsphrLevel'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'NY23_CelebChallenge'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement), 
+   (_AB.SINGLE, 'comp7_2023_1'): _AchieveFactory.get(_abstract_achievements.DeprecatedAchievement)}
 for _nID, _ in enumerate(nations.NAMES):
     _ACHIEVEMENTS_BY_NAME[(_AB.TOTAL, 'tankExpert%d' % _nID)] = _NationAchieveFactory.get(_as.nation_specific.TankExpertAchievement, _nID)
     _ACHIEVEMENTS_BY_NAME[(_AB.TOTAL, 'mechanicEngineer%d' % _nID)] = _NationAchieveFactory.get(_as.nation_specific.MechEngineerAchievement, _nID)

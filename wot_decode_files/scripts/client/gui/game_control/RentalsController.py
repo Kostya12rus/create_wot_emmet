@@ -1,12 +1,11 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/RentalsController.py
 from operator import itemgetter
 from sys import maxint
 import copy, typing, BigWorld, Event
 from constants import RentType, SEASON_NAME_BY_TYPE, IS_RENTALS_ENABLED
-from gui.shared.gui_items import GUI_ITEM_TYPE
 from gui.shared.utils.requesters.ItemsRequester import REQ_CRITERIA
 from gui.shared.money import Money
 from helpers import dependency
@@ -37,7 +36,7 @@ class RentalsController(IRentalsController):
 
     def onLobbyInited(self, event):
         if self.isEnabled():
-            self.itemsCache.onSyncCompleted += self.__onSyncCompleted
+            self.itemsCache.onSyncCompleted += self._update
             self.epicController.onUpdated += self._update
             if self.__rentNotifyTimeCallback is None:
                 self.__startRentTimeNotifyCallback()
@@ -57,7 +56,7 @@ class RentalsController(IRentalsController):
         if self.isEnabled():
             self.__clearRentTimeNotifyCallback()
             self.__vehiclesForUpdate = None
-            self.itemsCache.onSyncCompleted -= self.__onSyncCompleted
+            self.itemsCache.onSyncCompleted -= self._update
             self.epicController.onUpdated -= self._update
         return
 
@@ -128,6 +127,8 @@ class RentalsController(IRentalsController):
 
     @staticmethod
     def getDeltaPeriod(delta):
+        if delta == float('inf'):
+            return time_utils.ONE_DAY
         if delta > time_utils.ONE_DAY:
             period = time_utils.ONE_DAY
         elif delta > time_utils.ONE_HOUR:
@@ -145,10 +146,6 @@ class RentalsController(IRentalsController):
                 filteredPackages[packageID] = package
 
         return filteredPackages
-
-    def __onSyncCompleted(self, _, diff):
-        if GUI_ITEM_TYPE.VEHICLE in diff:
-            self._update()
 
     def __startRentTimeNotifyCallback(self):
         if not self.itemsCache.isSynced():

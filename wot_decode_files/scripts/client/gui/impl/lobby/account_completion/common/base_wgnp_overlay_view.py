@@ -1,14 +1,14 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/common/base_wgnp_overlay_view.py
 from abc import ABCMeta, abstractmethod
-import typing, async
+import typing, wg_async
 from gui.impl.gen import R
 from gui.impl.lobby.account_completion.common.base_overlay_view import BaseOverlayView
 from gui.impl.lobby.account_completion.curtain.curtain_view import CurtainWindow
 if typing.TYPE_CHECKING:
-    from async import _Future
+    from wg_async import _Future
     from gui.impl.gen.view_models.views.lobby.account_completion.common.base_wgnp_overlay_view_model import BaseWgnpOverlayViewModel
 
 class BaseWGNPOverlayView(BaseOverlayView):
@@ -36,7 +36,7 @@ class BaseWGNPOverlayView(BaseOverlayView):
         self.viewModel.setTitle(self._TITLE)
         self.viewModel.setSubTitle(self._SUBTITLE)
 
-    @async.async
+    @wg_async.wg_async
     def _confirmClickedHandler(self):
         if not self.isActive:
             return
@@ -44,7 +44,7 @@ class BaseWGNPOverlayView(BaseOverlayView):
         if not self._validateInput():
             return
         self._setWaiting(True)
-        response = yield async.await(self._doRequest())
+        response = yield wg_async.wg_await(self._doRequest())
         if not self.isActive:
             return
         self._setWaiting(False)

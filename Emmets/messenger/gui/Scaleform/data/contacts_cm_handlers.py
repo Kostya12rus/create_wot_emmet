@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/data/contacts_cm_handlers.py
 from gui.Scaleform.daapi.view.lobby.user_cm_handlers import BaseUserCMHandler
 from gui.Scaleform.framework.entities.EventSystemEntity import EventSystemEntity
@@ -8,6 +8,7 @@ from gui.Scaleform.framework.managers.context_menu import AbstractContextMenuHan
 from gui.Scaleform.locale.MENU import MENU
 from gui.Scaleform.locale.MESSENGER import MESSENGER
 from gui.shared import events, EVENT_BUS_SCOPE
+from messenger import normalizeGroupId
 from messenger.m_constants import USER_TAG
 
 class CONTACTS_ACTION_ID(object):
@@ -38,7 +39,7 @@ class SimpleContactsCMHandler(AbstractContextMenuHandler, EventSystemEntity):
          self._makeItem(CONTACTS_ACTION_ID.REMOVE_GROUP, MESSENGER.MESSENGER_CONTACTS_CONTEXTMENU_REMOVEGROUP)]
 
     def _initFlashValues(self, ctx):
-        self.targetGroupName = ctx.targetGroupName
+        self.targetGroupName = normalizeGroupId(ctx.targetGroupName)
 
     def _clearFlashValues(self):
         self.targetGroupName = None
@@ -75,7 +76,7 @@ class PlayerContactsCMHandler(BaseUserCMHandler):
 
     def _initFlashValues(self, ctx):
         super(PlayerContactsCMHandler, self)._initFlashValues(ctx)
-        self.targetGroupName = ctx.targetGroupName
+        self.targetGroupName = normalizeGroupId(ctx.targetGroupName)
         self.showUserNotes = getattr(ctx, 'showUserNotes', True)
 
     def _clearFlashValues(self):

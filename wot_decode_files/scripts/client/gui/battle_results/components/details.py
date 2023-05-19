@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/components/details.py
 import operator
 from constants import IGR_TYPE, PREMIUM_TYPE
@@ -22,7 +22,6 @@ from shared_utils import first
 from skeletons.gui.battle_results import IBattleResultsService
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
-from lunar_ny import ILunarNYController
 
 class _GainResourceInBattleItem(base.StatsItem):
     __slots__ = ('__records', '__method', '__styler')
@@ -205,9 +204,9 @@ class BaseXPBlock(base.StatsBlock):
     __slots__ = ()
 
     def setRecord(self, result, reusable):
-        isPremuim = not reusable.hasAnyPremiumInPostBattle and reusable.canResourceBeFaded
+        isPremium = not reusable.hasAnyPremiumInPostBattle and reusable.canResourceBeFaded
         for records in reusable.personal.getBaseXPRecords():
-            value = style.makeXpLabel(records.getRecord('xpToShow'), canBeFaded=isPremuim)
+            value = style.makeXpLabel(records.getRecord('xpToShow'), canBeFaded=isPremium)
             self.addNextComponent(base.DirectStatsItem('', value))
 
 
@@ -262,7 +261,6 @@ class MoneyDetailsBlock(_EconomicsDetailsBlock):
     __slots__ = ()
     __lobbyContext = dependency.descriptor(ILobbyContext)
     __intermediateTotalRecords = ('credits', 'originalCreditsToDraw', 'originalCreditsToDrawSquad')
-    __lunarNYController = dependency.descriptor(ILunarNYController)
 
     def setRecord(self, result, reusable):
         baseCredits, premiumCredits, goldRecords, additionalRecords = result
@@ -271,12 +269,10 @@ class MoneyDetailsBlock(_EconomicsDetailsBlock):
         showSquadLabels, _ = reusable.getPersonalSquadFlags()
         if showSquadLabels:
             self.__addSquadBonus(baseCredits, premiumCredits)
-        isTotalShown |= self.__addStatsItemIfExists('newYear', baseCredits, premiumCredits, None, 'newYearCreditsFactor')
         isTotalShown |= self.__addStatsItemIfExists('noPenalty', baseCredits, premiumCredits, None, 'achievementCredits')
         isTotalShown |= self.__addStatsItemIfExists('boosters', baseCredits, premiumCredits, None, 'boosterCredits', 'boosterCreditsFactor100')
         isTotalShown |= self.__addStatsItemIfExists('battlePayments', baseCredits, premiumCredits, None, 'orderCreditsFactor100')
         isTotalShown |= self.__addEventsMoney(baseCredits, premiumCredits, goldRecords)
-        isTotalShown |= self.__addLunarMoney(baseCredits, premiumCredits)
         isTotalShown |= self.__addReferralSystemFactor(baseCredits, premiumCredits)
         self._addEmptyRow()
         self.__addViolationPenalty()
@@ -346,8 +342,8 @@ class MoneyDetailsBlock(_EconomicsDetailsBlock):
         column2 = None
         column4 = None
         if self.__lobbyContext.getServerSettings().isRenewableSubGoldReserveEnabled():
-            column2 = style.makeGoldLabel(baseGold, canBeFaded=True)
-            column4 = style.makeGoldLabel(premiumGold, canBeFaded=True)
+            column2 = style.makeGoldLabel(baseGold, canBeFaded=True, isDiff=baseGold > 0)
+            column4 = style.makeGoldLabel(premiumGold, canBeFaded=True, isDiff=premiumGold > 0)
         self._addStatsRow('piggyBankInfo', column1=style.makeCreditsLabel(baseCredits, canBeFaded=not self.hasAnyPremium, isDiff=baseCredits > 0), column2=column2, column3=style.makeCreditsLabel(premiumCredits, canBeFaded=self.hasAnyPremium, isDiff=premiumCredits > 0), column4=column4)
         return
 
@@ -372,19 +368,6 @@ class MoneyDetailsBlock(_EconomicsDetailsBlock):
                 columns['column2'] = style.makeGoldLabel(baseEventGold, canBeFaded=not self.hasAnyPremium)
                 columns['column4'] = style.makeGoldLabel(baseEventGold, canBeFaded=self.hasAnyPremium)
             self._addStatsRow('event', **columns)
-        return result
-
-    def __addLunarMoney(self, baseCredits, premiumCredits):
-        lunarCredits = baseCredits.findRecord('lunarNYCredits')
-        lunarPremiumCredits = premiumCredits.findRecord('lunarNYCredits')
-        result = lunarCredits or lunarPremiumCredits
-        if result:
-            columns = {}
-            if lunarCredits:
-                columns['column1'] = style.makeCreditsLabel(lunarCredits, canBeFaded=not self.hasAnyPremium)
-            if lunarPremiumCredits:
-                columns['column3'] = style.makeCreditsLabel(lunarPremiumCredits, canBeFaded=self.hasAnyPremium)
-            self._addStatsRow('lunarNY', **columns)
         return result
 
     def __addViolationPenalty(self):
@@ -448,14 +431,11 @@ class MoneyDetailsBlock(_EconomicsDetailsBlock):
 
 class XPDetailsBlock(_EconomicsDetailsBlock):
     __slots__ = ()
-    __lunarNYController = dependency.descriptor(ILunarNYController)
 
     def setRecord(self, result, reusable):
         baseXP, premiumXP, baseFreeXP, premiumFreeXP = result
         self.__addBaseXPs(baseXP, premiumXP, baseFreeXP, premiumFreeXP)
-        self.__addLunarXPs(baseXP, premiumXP, baseFreeXP, premiumFreeXP)
         self.__addComplexXPsItemIfExists('noPenalty', baseXP, premiumXP, baseFreeXP, premiumFreeXP, 'achievementXP', 'achievementFreeXP')
-        self.__addNewYearXPs(baseXP, premiumXP, baseFreeXP, premiumFreeXP)
         penaltyKey = 'friendlyFirePenalty'
         if reusable.common.arenaVisitor.gui.isRankedBattle():
             penaltyKey = 'friendlyFireRankedXpPenalty'
@@ -551,20 +531,6 @@ class XPDetailsBlock(_EconomicsDetailsBlock):
                'column4': style.makeFreeXpLabel(premiumFreeXPValue, canBeFaded=premiumCanBeFaded)}
             self._addStatsRow('boosters', **columns)
 
-    def __addNewYearXPs(self, baseXP, premiumXP, baseFreeXP, premiumFreeXP):
-        baseXPValue = baseXP.getRecord('newYearXp') + baseXP.findRecord('newYearXpFactor')
-        premiumXPValue = premiumXP.getRecord('newYearXp') + premiumXP.findRecord('newYearXpFactor')
-        baseFreeXPValue = baseFreeXP.getRecord('newYearFreeXp') + baseFreeXP.findRecord('newYearFreeXpFactor')
-        premiumFreeXPValue = premiumFreeXP.getRecord('newYearFreeXp') + premiumFreeXP.findRecord('newYearFreeXpFactor')
-        if baseXPValue or premiumXPValue or baseFreeXPValue or premiumFreeXPValue:
-            baseCanBeFaded = not self.hasAnyPremium
-            premiumCanBeFaded = self.hasAnyPremium
-            columns = {'column1': style.makeXpLabel(baseXPValue, canBeFaded=baseCanBeFaded), 
-               'column3': style.makeXpLabel(premiumXPValue, canBeFaded=premiumCanBeFaded), 
-               'column2': style.makeFreeXpLabel(baseFreeXPValue, canBeFaded=baseCanBeFaded), 
-               'column4': style.makeFreeXpLabel(premiumFreeXPValue, canBeFaded=premiumCanBeFaded)}
-            self._addStatsRow('vehicleBranch', **columns)
-
     def __addEventXPs(self, baseXP, premiumXP, baseFreeXP, premiumFreeXP):
         baseXPValue = baseXP.findRecord('eventXPList_') + baseXP.findRecord('eventXPFactor100List_')
         premiumXPValue = premiumXP.findRecord('eventXPList_') + premiumXP.findRecord('eventXPFactor100List_')
@@ -578,20 +544,6 @@ class XPDetailsBlock(_EconomicsDetailsBlock):
                'column2': style.makeFreeXpLabel(baseFreeXPValue, canBeFaded=baseCanBeFaded), 
                'column4': style.makeFreeXpLabel(premiumFreeXPValue, canBeFaded=premiumCanBeFaded)}
             self._addStatsRow('event', **columns)
-
-    def __addLunarXPs(self, baseXP, premiumXP, baseFreeXP, premiumFreeXP):
-        xp = baseXP.findRecord('lunarNYXP')
-        premiumXP = premiumXP.findRecord('lunarNYXP')
-        freeXP = baseFreeXP.findRecord('lunarNYFreeXP')
-        premiumFreeXP = premiumFreeXP.findRecord('lunarNYFreeXP')
-        if xp or freeXP or premiumXP or premiumFreeXP:
-            baseCanBeFaded = not self.hasAnyPremium
-            premiumCanBeFaded = self.hasAnyPremium
-            columns = {'column1': style.makeXpLabel(xp, canBeFaded=baseCanBeFaded), 
-               'column2': style.makeFreeXpLabel(freeXP, canBeFaded=baseCanBeFaded), 
-               'column3': style.makeXpLabel(premiumXP, canBeFaded=premiumCanBeFaded), 
-               'column4': style.makeFreeXpLabel(premiumFreeXP, canBeFaded=premiumCanBeFaded)}
-            self._addStatsRow('lunarNY', **columns)
 
     def __addXPsViolationPenalty(self):
         if self.penaltyDetails is not None:
@@ -661,7 +613,7 @@ class XPDetailsBlock(_EconomicsDetailsBlock):
 
     @staticmethod
     def __getFormattedColumnsWithFreeXP(factors):
-        return {('column{}').format(n):style.makeMultiXPFactorValue(factor, useFreeXPStyle=not bool(n % 2)) for n, factor in enumerate(factors, 1)}
+        return {('column{}').format(n): style.makeMultiXPFactorValue(factor, useFreeXPStyle=not bool(n % 2)) for n, factor in enumerate(factors, 1)}
 
 
 class CrystalDetailsBlock(_EconomicsDetailsBlock):
@@ -754,7 +706,7 @@ class PremiumBonusDetailsBlock(base.StatsBlock):
         self.__arenaUniqueID = 0
         self.__isPersonalTeamWin = False
         self.__arenaBonusType = None
-        self.__xpFactor = 0
+        self.__xpFactor = 1
         self.__vehicleCD = None
         self.bonusIcon = ''
         self.description = ''
@@ -772,9 +724,17 @@ class PremiumBonusDetailsBlock(base.StatsBlock):
         self.__arenaUniqueID = reusable.arenaUniqueID
         self.__isPersonalTeamWin = reusable.isPersonalTeamWin()
         self.__arenaBonusType = reusable.common.arenaBonusType
-        self.__xpFactor = reusable.personal.getPremiumXPAddRecords().getFactor('additionalXPFactor10')
+        self.__xpFactor = self.__getAdditionalXPFactor10FromResult(result, reusable)
         _, vehicle = first(reusable.personal.getVehicleItemsIterator())
         self.__vehicleCD = vehicle.intCD
+
+    def __getAdditionalXPFactor10FromResult(self, result, reusable):
+        vehicleId = reusable.vehicles.getVehicleID(reusable.getPlayerInfo().dbID)
+        vehicleInfo = reusable.vehicles.getVehicleInfo(vehicleId)
+        additionalXPFactor10 = result.get(vehicleInfo.intCD, {}).get('additionalXPFactor10', 1)
+        if additionalXPFactor10:
+            return int(additionalXPFactor10 / 10)
+        return 1
 
     def __getIsApplied(self):
         return self.__battleResults.isAddXPBonusApplied(self.__arenaUniqueID)
@@ -813,10 +773,7 @@ class PremiumBonusDetailsBlock(base.StatsBlock):
 
     def __setBlockedByXPToTman(self):
         self.xpValue = ''
-        if self.__battleResults.getVehicleForArena(self.__arenaUniqueID).isXPToTman:
-            textKey = R.strings.battle_results.common.premiumBonus.isXPToTmenEnabled()
-        else:
-            textKey = R.strings.battle_results.common.premiumBonus.isXPToTmenDisabled()
+        textKey = R.strings.battle_results.common.premiumBonus.isXPToTmenChanged()
         self.statusBonusLabel = text_styles.neutral(backport.text(textKey))
         self.statusBonusTooltip = makeTooltip(body=TOOLTIPS.BATTLERESULTS_PREMIUMBONUS_XPTOTMENCHANGED_BODY)
 

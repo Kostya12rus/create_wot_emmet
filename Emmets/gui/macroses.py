@@ -1,11 +1,11 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/macroses.py
 import base64
 from urllib import quote_plus
 import BigWorld, constants
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from helpers import getClientLanguage, dependency
 from helpers.http.url_formatters import addParamsToUrlQuery
 from skeletons.gui.web import IWebController
@@ -145,7 +145,7 @@ def getSyncMacroses():
        'STYLE_PACKAGE_ID': getMarathonStylePackage}
 
 
-@async
+@adisp_async
 def getWgniToken(proxy, args, params, callback):
 
     def _cbWrapper(response):
@@ -163,8 +163,8 @@ def getWgniToken(proxy, args, params, callback):
     return
 
 
-@async
-@process
+@adisp_async
+@adisp_process
 def getTargetURL(proxy, args, params, callback):
     result = args or ''
     if result:
@@ -173,8 +173,8 @@ def getTargetURL(proxy, args, params, callback):
     callback(result)
 
 
-@async
-@process
+@adisp_async
+@adisp_process
 def getUrlParams(proxy, args, params, callback):
     result = args or ''
     params = params or {}

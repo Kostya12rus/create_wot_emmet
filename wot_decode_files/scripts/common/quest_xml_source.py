@@ -1,14 +1,13 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/quest_xml_source.py
 import time, ArenaType, ResMgr, nations
-from items.components.ny_constants import CurrentNYConstants
 from soft_exception import SoftException
 from copy import deepcopy
 from pprint import pformat
 from bonus_readers import readBonusSection, readUTC, timeDataToUTC
-from constants import VEHICLE_CLASS_INDICES, ARENA_BONUS_TYPE, EVENT_TYPE, IGR_TYPE, ATTACK_REASONS, QUEST_RUN_FLAGS, DEFAULT_QUEST_START_TIME, DEFAULT_QUEST_FINISH_TIME, ROLE_LABEL_TO_TYPE
+from constants import VEHICLE_CLASS_INDICES, ARENA_BONUS_TYPE, EVENT_TYPE, IGR_TYPE, ATTACK_REASONS, QUEST_RUN_FLAGS, DEFAULT_QUEST_START_TIME, DEFAULT_QUEST_FINISH_TIME, ROLE_LABEL_TO_TYPE, ACCOUNT_ATTR, QUESTS_SUPPORTED_EXCLUDE_TAGS
 from debug_utils import LOG_WARNING
 from dossiers2.custom.layouts import accountDossierLayout, vehicleDossierLayout, StaticSizeBlockBuilder, BinarySetDossierBlockBuilder
 from dossiers2.custom.records import RECORD_DB_IDS
@@ -158,6 +157,9 @@ class Source(object):
             if conditions and conditions.has_key('common'):
                 condition = conditions['common']
                 self.__readBattleResultsConditionList(conditionReaders, condition, commonNode)
+            if conditions and conditions.has_key('description'):
+                description = conditions['description']
+                mainNode.questClientConditions.append(('description', self.__readMetaSection(description)))
             daily = commonNode.getChildNode('daily')
             info['isDaily'] = daily is not None
             weekly = commonNode.getChildNode('weekly')
@@ -169,6 +171,7 @@ class Source(object):
             bonusLimit = commonNode.getChildNode('bonusLimit')
             cumulative = commonNode.getChildNode('cumulative')
             cumulativeExt = commonNode.getChildNode('cumulativeExt')
+            cumulativeSum = commonNode.getChildNode('cumulativeSum')
             vehicleKills = commonNode.getChildNode('vehicleKills')
             battles = commonNode.getChildNode('battles')
             battleCount = battles.getChildNode('count').getFirstChildValue() if battles else None
@@ -177,15 +180,15 @@ class Source(object):
                 bonusLimitNode.addChild(1 if eventType in EVENT_TYPE.ONE_BONUS_QUEST else MAX_BONUS_LIMIT)
                 commonNode.addChild(bonusLimitNode)
             if eventType in EVENT_TYPE.LIKE_BATTLE_QUESTS:
-                if (cumulative or cumulativeExt or unit or vehicleKills) and inrow:
-                    raise SoftException('battleQuest: Unexpected tags (vehicleKills, cumulative, cumulativeExtunit/cumulative, unit/cumulativeExt) with inrow')
-                if not (cumulative or cumulativeExt or unit or vehicleKills or bonusLimit or battles) and (daily or weekly or groupBy):
-                    raise SoftException('battleQuest: daily, weekly and groupBy should be used with cumulative, cumulativeExt, unit, vehicleKills, bonusLimit or battles tags')
+                if (cumulative or cumulativeExt or cumulativeSum or unit or vehicleKills) and inrow:
+                    raise SoftException('battleQuest: Unexpected tags (vehicleKills, cumulative, cumulativeExtcumulativeSum, unit/cumulative, unit/cumulativeExt) with inrow')
+                if not (cumulative or cumulativeExt or cumulativeSum or unit or vehicleKills or bonusLimit or battles) and (daily or weekly or groupBy):
+                    raise SoftException('battleQuest: daily, weekly and groupBy should be used with cumulative, cumulativeExt, cumulativeSum, unit, vehicleKills, bonusLimit or battles tags')
                 if battles and not battleCount:
                     raise SoftException('Invalid battles section')
             elif eventType in EVENT_TYPE.LIKE_TOKEN_QUESTS:
-                if cumulative or cumulativeExt or unit or vehicleKills or groupBy or battles:
-                    raise SoftException('tokenQuest: Unexpected tags (cumulative, cumulativeExt, unit, vehicleKills, groupBy, battles)')
+                if cumulative or cumulativeExt or cumulativeSum or unit or vehicleKills or groupBy or battles:
+                    raise SoftException('tokenQuest: Unexpected tags (cumulative, cumulativeExt, cumulativeSum, unit, vehicleKills, groupBy, battles)')
                 if not bonusLimit and (daily or weekly):
                     raise SoftException('tokenQuest: daily or weekly should be used with bonusLimit tag')
             mainNode.bonus = readBonusSection(availableBonuses, questSection['bonus'], eventType)
@@ -297,8 +300,7 @@ class Source(object):
            'peripheryIDs': {int(p) for p in onlyForPeripheriesList.split()} if onlyForPeripheriesList else set(), 
            'runFlags': runFlags, 
            'showPostBattleStat': questSection.readBool('showPostBattleStat', False), 
-           'saveBonusHistory': questSection.readBool('saveBonusHistory', False), 
-           'sendBonusHistory': questSection.readBool('sendBonusHistory', False)}
+           'saveBonusHistory': questSection.readBool('saveBonusHistory', False)}
         if eventType == EVENT_TYPE.MOTIVE_QUEST:
             extraSubsectionsNames = ('advice', 'requirements', 'congratulation')
             for subsectionName in extraSubsectionsNames:
@@ -325,6 +327,8 @@ class Source(object):
             info['shopButton'] = questSection.readString('shopButton', 'hide')
         if questSection.has_key('notificationText'):
             info['notificationText'] = self.__readMetaSection(questSection['notificationText'])
+        if eventType == EVENT_TYPE.TOKEN_QUEST:
+            info['delayed'] = questSection.readBool('delayed', False)
         return info
 
     def __readGroupContent(self, questSection):
@@ -346,18 +350,22 @@ class Source(object):
            'consume': self.__readCondition_consume, 
            'inClan': self.__readListOfInts, 
            'vehiclesUnlocked': self.__readBattleResultsConditionList, 
+           'vehiclesLocked': self.__readBattleResultsConditionList, 
            'vehiclesOwned': self.__readBattleResultsConditionList, 
+           'vehiclesUnlockedAndOwned': self.__readBattleResultsConditionList, 
            'classes': self.__readVehicleFilter_classes, 
            'levels': self.__readVehicleFilter_levels, 
            'nations': self.__readVehicleFilter_nations, 
            'types': self.__readVehicleFilter_types, 
            'roles': self.__readVehicleFilter_roles, 
+           'excludeTags': self.__readVehicleFilter_excludeTags, 
            'dossier': self.__readBattleResultsConditionList, 
            'record': self.__readCondition_dossierRecord, 
            'average': self.__readCondition_int, 
            'GR': self.__readBattleResultsConditionList, 
            'igrType': self.__readCondition_IGRType, 
            'premium': self.__readCondition_bool, 
+           'special': self.__readCondition_bool, 
            'premiumPlus': self.__readCondition_bool, 
            'premiumVip': self.__readCondition_bool, 
            'isPremiumQuestsEnabled': self.__readCondition_bool, 
@@ -367,17 +375,30 @@ class Source(object):
            'weekly': self.__readCondition_true, 
            'bonusLimit': self.__readCondition_int, 
            'isTutorialCompleted': self.__readCondition_bool, 
-           'isLinkedSetEnabled': self.__readCondition_bool, 
+           'isBattleMattersEnabled': self.__readCondition_bool, 
+           'isWinbackQuestsEnabled': self.__readCondition_bool, 
            'isSteamAllowed': self.__readCondition_bool, 
            'totalBattles': self.__readBattleResultsConditionList, 
+           'lastLogout': self.__readBattleResultsConditionList, 
+           'relativeToUTC': self.__readBattleResultsConditionList, 
            'accountPrimaryTypes': self.__readListOfInts, 
-           'accountSecondaryTypes': self.__readListOfInts}
+           'accountSecondaryTypes': self.__readListOfInts, 
+           'accountAttributes': self.__readListAccountAttributes, 
+           'externalData': self.__readBattleResultsConditionList, 
+           'externalDataItem': self.__readBattleResultsConditionList, 
+           'source': self.__readCondition_string, 
+           'paramName': self.__readCondition_string, 
+           'mapsTraining': self.__readBattleResultsConditionList, 
+           'mapsCompleted': self.__readBattleResultsConditionList, 
+           'scenariosCompleted': self.__readBattleResultsConditionList, 
+           'difficulty': self.__readCondition_int}
         if eventType in EVENT_TYPE.LIKE_BATTLE_QUESTS:
             condition_readers.update({'value': self.__readCondition_bool, 
                'win': self.__readConditionComplex_true, 
                'isAlive': self.__readConditionComplex_true, 
                'isSquad': self.__readCondition_bool, 
                'clanMembership': self.__readCondition_string, 
+               'unitSize': self.__readCondition_int, 
                'allAlive': self.__readCondition_true, 
                'aliveCnt': self.__readCondition_int, 
                'achievements': self.__readCondition_achievements, 
@@ -434,11 +455,14 @@ class Source(object):
                'correspondedModification': self.__readConditionComplex_true, 
                'correspondedProjectionDecal': self.__readConditionComplex_true, 
                'correspondedPersonalNumber': self.__readConditionComplex_true, 
+               'customization': self.__readBattleResultsConditionList, 
+               'styleId': self.__readCondition_int, 
+               'correspondedEquipment': self.__readCondition_correspondedEquipment, 
                'unit': self.__readBattleResultsConditionList, 
                'results': self.__readBattleResultsConditionList, 
                'key': self.__readCondition_keyResults, 
                'max': self.__readCondition_int, 
-               'total': self.__readCondition_int, 
+               'total': self.__readCondition_false, 
                'compareWithMaxHealth': self.__readCondition_true, 
                'plus': self.__readBattleResultsConditionList, 
                'exceptUs': self.__readCondition_true, 
@@ -454,6 +478,7 @@ class Source(object):
                'groupName': self.__readCondition_groupBy, 
                'cumulative': self.__readCondition_cumulative, 
                'cumulativeExt': self.__readBattleResultsConditionList, 
+               'cumulativeSum': self.__readCondition_cumulativeSum, 
                'crits': self.__readBattleResultsConditionList, 
                'destroyed': self.__readBattleResultsConditionList, 
                'tankman': self.__readBattleResultsConditionList, 
@@ -461,7 +486,9 @@ class Source(object):
                'crit': self.__readBattleResultsConditionList, 
                'critName': self.__readCritName, 
                'unregularAmmo': self.__readCondition_true, 
-               'isNotLeaver': self.__readCondition_true})
+               'isNotLeaver': self.__readCondition_true, 
+               'isFirstBlood': self.__readConditionComplex_true, 
+               'winAloneAgainstVehicleCount': self.__readCondition_int})
         if eventType in (EVENT_TYPE.BATTLE_QUEST, EVENT_TYPE.PERSONAL_QUEST):
             condition_readers.update({'red': self.__readListOfInts, 
                'silver': self.__readListOfInts, 
@@ -480,12 +507,20 @@ class Source(object):
 
     def __getAvailableBonuses(self, eventType):
         bonusTypes = {
-         'meta', 'gold', 'credits', 'crystal', 'freeXP', 'item', 'equipment', 'slots', 'berths',
-         'premium', 'premium_plus', 'premium_vip', 'token', 'goodie', 'vehicle', 'dossier', 'tankmen',
-         'customizations', 'vehicleChoice', 'crewSkin', 'blueprint', 'blueprintAny', 'enhancement',
-         'eventCoin', 'bpcoin', 'entitlement', 'rankedDailyBattles', 'rankedBonusBattles',
-         'dogTagComponent', 'battlePassPoints', 'currency', CurrentNYConstants.TOY_FRAGMENTS,
-         CurrentNYConstants.FILLERS, CurrentNYConstants.TOY_BONUS, CurrentNYConstants.ANY_OF, 'charm'}
+         'meta', 'gold', 'credits', 'crystal', 'freeXP', 'item', 
+         'equipment', 'slots', 'berths', 
+         'premium', 
+         'premium_plus', 'premium_vip', 'token', 'goodie', 'vehicle', 
+         'dossier', 'tankmen', 
+         'customizations', 
+         'vehicleChoice', 'crewSkin', 'blueprint', 'blueprintAny', 
+         'enhancement', 
+         'eventCoin', 'bpcoin', 'entitlement', 
+         'rankedDailyBattles', 'rankedBonusBattles', 'equipCoin', 
+         'dogTagComponent', 
+         'battlePassPoints', 'currency', 'freePremiumCrew', 'entitlementList', 
+         'dailyQuestReroll', 
+         'noviceReset'}
         if eventType in (EVENT_TYPE.BATTLE_QUEST, EVENT_TYPE.PERSONAL_QUEST, EVENT_TYPE.NT_QUEST):
             bonusTypes.update(('xp', 'tankmenXP', 'xpFactor', 'creditsFactor', 'freeXPFactor',
                                'tankmenXPFactor'))
@@ -511,26 +546,25 @@ class Source(object):
                 name = module
             if node.name == 'guns':
                 nationModules = vehicles.g_cache.guns(nationID)
+            elif node.name == 'engines':
+                nationModules = vehicles.g_cache.engines(nationID)
+            elif node.name == 'turrets':
+                nationModules = vehicles.g_cache.turrets(nationID)
+            elif node.name == 'chassis':
+                nationModules = vehicles.g_cache.chassis(nationID)
+            elif node.name == 'radios':
+                nationModules = vehicles.g_cache.radios(nationID)
+            elif node.name == 'optionalDevice':
+                idx = vehicles.g_cache.optionalDeviceIDs()[name]
+                modules.add(vehicles.g_cache.optionalDevices()[idx].compactDescr)
+                break
             else:
-                if node.name == 'engines':
-                    nationModules = vehicles.g_cache.engines(nationID)
-                elif node.name == 'turrets':
-                    nationModules = vehicles.g_cache.turrets(nationID)
-                elif node.name == 'chassis':
-                    nationModules = vehicles.g_cache.chassis(nationID)
-                elif node.name == 'radios':
-                    nationModules = vehicles.g_cache.radios(nationID)
-                elif node.name == 'optionalDevice':
-                    idx = vehicles.g_cache.optionalDeviceIDs()[name]
-                    modules.add(vehicles.g_cache.optionalDevices()[idx].compactDescr)
+                raise SoftException('Unknown tag %s' % node.name)
+            for descr in nationModules.itervalues():
+                if descr.name == name:
+                    modules.add(descr.compactDescr)
                     break
-                else:
-                    raise SoftException('Unknown tag %s' % node.name)
-                for descr in nationModules.itervalues():
-                    if descr.name == name:
-                        modules.add(descr.compactDescr)
-                        break
-
+            else:
                 raise SoftException('Unknown module(%s) %s' % (node.name, module))
 
         node.addChild(modules)
@@ -544,6 +578,32 @@ class Source(object):
         else:
             raise SoftException('Unknown consumables(%s)' % node.name)
         node.addChild(modules)
+
+    def __readCondition_correspondedEquipment(self, _, section, node):
+        equipment = set()
+        for name, sub in section.items():
+            if name in ('title', 'description'):
+                node.questClientConditions.append((name, self.__readMetaSection(sub)))
+                continue
+            if name in ('hideInGui', ):
+                node.questClientConditions.append((name, True))
+                continue
+            if name in ('tags', ):
+                tags = set(sub.readString('', '').split())
+                if not tags:
+                    raise SoftException('Empty tags for corresponded equipment is not allowed')
+                equipment = {equipment.compactDescr for idx, equipment in vehicles.g_cache.equipments().iteritems() if tags == tags & equipment.tags}
+                if not equipment:
+                    raise SoftException(('No corresponded equipments for tags {}').format(tags))
+                continue
+            if name in ('ignoreBoostersCompatibility', ):
+                currentNode = XMLNode(name)
+                currentNode.addChild(True)
+                node.addChild(currentNode)
+
+        equipmentNode = XMLNode('equipment')
+        equipmentNode.addChild(equipment)
+        node.addChild(equipmentNode)
 
     def __readCritName(self, _, section, node):
         critName = section.asString
@@ -576,6 +636,26 @@ class Source(object):
             node.addChild(results)
 
         return
+
+    def __readCondition_cumulativeSum(self, conditionReaders, section, node):
+        for name, sub in section.items():
+            if name == 'description':
+                node.questClientConditions.append(('description', self.__readMetaSection(sub)))
+                break
+
+        for name, sub in section.items():
+            if name in ('meta', 'title', 'description'):
+                continue
+            subNode = XMLNode(name)
+            if name == 'sum':
+                for _name, _sub in sub.items():
+                    if _name not in getBattleResultsNames():
+                        raise SoftException("Unsupported misc variable '%s'" % _name)
+                    subNode.addChild(_name)
+
+            if name in ('greater', 'equal', 'less', 'lessOrEqual', 'greaterOrEqual'):
+                conditionReaders[name](conditionReaders, sub, subNode)
+            node.addChild(subNode)
 
     def __readBattleResultsConditionList(self, conditionReaders, section, node):
         for name, sub in section.items():
@@ -657,6 +737,9 @@ class Source(object):
     def __readCondition_true(self, _, section, node):
         node.addChild(True)
 
+    def __readCondition_false(self, _, section, node):
+        node.addChild(False)
+
     def __readCondition_bool(self, _, section, node):
         node.addChild(section.asBool)
 
@@ -669,8 +752,11 @@ class Source(object):
     def __readCondition_DateTimeOrFloat(self, _, section, node):
         try:
             value = timeDataToUTC(section.asString, None)
-        except SoftException:
-            value = section.asFloat
+        except SoftException as e:
+            try:
+                value = section.asFloat
+            except ValueError:
+                raise e
 
         node.addChild(value)
         return
@@ -752,6 +838,24 @@ class Source(object):
         roles = set([ ROLE_LABEL_TO_TYPE[role] for role in section.asString.split() ])
         node.addChild(roles)
 
+    def __readVehicleFilter_excludeTags(self, _, section, node):
+        tags = set(section.asString.split())
+        diff = tags.difference(QUESTS_SUPPORTED_EXCLUDE_TAGS)
+        if diff:
+            raise SoftException('Unsupported vehicle exclude tags %s' % diff)
+        node.addChild(tags)
+
+    def __readListAccountAttributes(self, _, section, node):
+        attrs = 0
+        for attr in section.asString.split():
+            val = getattr(ACCOUNT_ATTR, attr, None)
+            if val is None:
+                raise SoftException(('Unknown attribute name: {}').format(attr))
+            attrs += val
+
+        node.addChild(attrs)
+        return
+
     def __readMetaSection(self, section):
         if section is None:
             return {}
@@ -761,3 +865,17 @@ class Source(object):
                 meta[local.strip()] = sub.readString('', '').strip()
 
             return meta
+
+
+def collectSections(root):
+    sections = []
+    pqSection = ResMgr.openSection(root)
+    if pqSection is not None:
+        for k, s in pqSection.items():
+            sectionPath = root + '/' + k
+            if k.endswith('.xml'):
+                sections.append(sectionPath)
+            elif s is not None:
+                sections.extend(collectSections(sectionPath))
+
+    return sections

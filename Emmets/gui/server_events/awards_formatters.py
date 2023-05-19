@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/awards_formatters.py
 import logging
 from collections import namedtuple
@@ -68,6 +68,7 @@ AWARD_IMAGES = {AWARDS_SIZES.SMALL: {Currency.CREDITS: RES_ICONS.MAPS_ICONS_QUES
                         Currency.CRYSTAL: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_CRYSTAL, 
                         Currency.EVENT_COIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_EVENTCOIN, 
                         Currency.BPCOIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_BPCOIN, 
+                        Currency.EQUIP_COIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_EQUIPCOIN, 
                         'creditsFactor': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_CREDITS, 
                         'freeXP': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_FREEEXP, 
                         'freeXPFactor': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_FREEEXP, 
@@ -81,6 +82,7 @@ AWARD_IMAGES = {AWARDS_SIZES.SMALL: {Currency.CREDITS: RES_ICONS.MAPS_ICONS_QUES
                       Currency.CRYSTAL: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_CRYSTAL, 
                       Currency.EVENT_COIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_EVENTCOIN, 
                       Currency.BPCOIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_BPCOIN, 
+                      Currency.EQUIP_COIN: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_EQUIPCOIN, 
                       'creditsFactor': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_CREDITS, 
                       'freeXP': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_FREEXP, 
                       'freeXPFactor': RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_BIG_FREEXP, 
@@ -109,6 +111,7 @@ TEXT_FORMATTERS = {Currency.CREDITS: text_styles.credits,
    Currency.CRYSTAL: text_styles.crystal, 
    Currency.EVENT_COIN: text_styles.eventCoin, 
    Currency.BPCOIN: text_styles.bpcoin, 
+   Currency.EQUIP_COIN: text_styles.equipCoin, 
    'creditsFactor': _getMultiplierFormatter(text_styles.credits), 
    'freeXP': text_styles.expText, 
    'freeXPFactor': _getMultiplierFormatter(text_styles.expText), 
@@ -140,6 +143,7 @@ def getDefaultFormattersMap():
        Currency.CRYSTAL: simpleBonusFormatter, 
        Currency.EVENT_COIN: simpleBonusFormatter, 
        Currency.BPCOIN: simpleBonusFormatter, 
+       Currency.EQUIP_COIN: simpleBonusFormatter, 
        'freeXP': simpleBonusFormatter, 
        'xp': simpleBonusFormatter, 
        'tankmenXP': simpleBonusFormatter, 
@@ -193,19 +197,6 @@ def getEventBoardsFormattersMap():
     return mapping
 
 
-def getLinkedSetFormattersMap():
-    tokenBonusFormatter = LinkedSetTokenBonusFormatter()
-    mapping = getDefaultFormattersMap()
-    mapping.update({'battleToken': tokenBonusFormatter, 
-       'tokens': tokenBonusFormatter, 
-       'items': LinkedSetItemsBonusFormatter(), 
-       PREMIUM_ENTITLEMENTS.BASIC: LinkedSetPremiumDaysBonusFormatter(), 
-       PREMIUM_ENTITLEMENTS.PLUS: LinkedSetPremiumDaysBonusFormatter(), 
-       'vehicles': LinkedSetVehiclesBonusFormatter(), 
-       'customizations': LinkedSetCustomizationsBonusFormatter()})
-    return mapping
-
-
 def getEpicBattleFormattersMap():
     mapping = getDefaultFormattersMap()
     mapping.update({'abilityPts': EpicAbilityPtsFormatter(), 
@@ -235,14 +226,6 @@ def getPackRentVehiclesFormattersMap():
 def getLootboxesFormatterMap():
     mapping = getDefaultFormattersMap()
     mapping.update({'vehicles': RentVehiclesBonusFormatter()})
-    return mapping
-
-
-def getSeniorityFormatterMap():
-    mapping = getLootboxesFormatterMap()
-    mapping.update({PREMIUM_ENTITLEMENTS.BASIC: SeniorityPremiumDaysBonusFormatter(), 
-       PREMIUM_ENTITLEMENTS.PLUS: SeniorityPremiumDaysBonusFormatter(), 
-       'customizations': SeniorityCustomizationsBonusFormatter()})
     return mapping
 
 
@@ -310,10 +293,6 @@ def getEpicViewAwardPacker():
     return AwardsPacker(getEpicSetFormattersMap())
 
 
-def getLinkedSetAwardPacker():
-    return AwardsPacker(getLinkedSetFormattersMap())
-
-
 def getEventBoardsAwardPacker():
     return AwardsPacker(getEventBoardsFormattersMap())
 
@@ -324,10 +303,6 @@ def getPackRentVehiclesAwardPacker():
 
 def getLootboxesAwardsPacker():
     return AwardsPacker(getLootboxesFormatterMap())
-
-
-def getSeniorityAwardsPacker():
-    return AwardsPacker(getSeniorityFormatterMap())
 
 
 def getPostBattleAwardsPacker():
@@ -708,19 +683,12 @@ class BattlePassPremiumDaysBonusFormatter(SimpleBonusFormatter):
         return result
 
 
-class LinkedSetPremiumDaysBonusFormatter(PremiumDaysBonusFormatter):
+class SeniorityPremiumDaysBonusFormatter(PremiumDaysBonusFormatter):
+    __PREMIUM_DAYS_ICONS = (1, 2, 3, 7, 14, 30, 90, 180, 360)
 
     def _format(self, bonus):
         return [
          PreformattedBonus(label=self._getLabel(bonus), bonusName=bonus.getName(), userName=self._getUserName(bonus), images=self._getImages(bonus), tooltip=bonus.getTooltip(), isCompensation=self._isCompensation(bonus))]
-
-    @classmethod
-    def _getLabel(cls, bonus):
-        return formatTimeLabel(bonus.getValue() * time_utils.HOURS_IN_DAY)
-
-
-class SeniorityPremiumDaysBonusFormatter(LinkedSetPremiumDaysBonusFormatter):
-    __PREMIUM_DAYS_ICONS = (1, 2, 3, 7, 14, 30, 90, 180, 360)
 
     @classmethod
     def _getLabel(cls, bonus):
@@ -780,7 +748,10 @@ class TokenBonusFormatter(SimpleBonusFormatter):
         tokenBase = R.strings.tooltips.quests.bonuses.token
         eventTokenBase = tokenBase.dyn(complexToken.styleID)
         bodyResID = eventTokenBase.body() if eventTokenBase() != INVALID_RES_ID else tokenBase.body()
-        tooltip = makeTooltip(backport.text(tokenBase.header(), userName=userName), backport.text(bodyResID))
+        description = self.eventsCache.prefetcher.getTokenDetailedInfo(complexToken.styleID)
+        if description is None:
+            description = backport.text(bodyResID)
+        tooltip = makeTooltip(userName, description if description else None)
         return PreformattedBonus(bonusName=bonus.getName(), images=self._getTokenImages(complexToken.styleID), label=self._formatBonusLabel(token.count), userName=self._getUserName(complexToken.styleID), labelFormatter=self._getLabelFormatter(bonus), tooltip=tooltip, align=LABEL_ALIGN.RIGHT, isCompensation=self._isCompensation(bonus))
 
     def _formatResource(self, token, bonus):
@@ -815,7 +786,7 @@ class TokenBonusFormatter(SimpleBonusFormatter):
     def __getBattleBonusX5Images():
         images = {}
         for size in AWARDS_SIZES.ALL():
-            bonusBattleTaskRes = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn('bonus_battle_task')
+            bonusBattleTaskRes = R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn('battle_bonus_x5')
             images[size] = backport.image(bonusBattleTaskRes()) if bonusBattleTaskRes else None
 
         return images
@@ -842,7 +813,7 @@ class RankedPointFormatter(TokenBonusFormatter):
         return PreformattedBonus(label=self._formatBonusLabel(token.count), userName=self._getUserName(bonus), labelFormatter=self._getLabelFormatter(bonus), images=self.__getImages(tokenID), tooltip=makeTooltip(header=backport.text(R.strings.tooltips.rankedBattleView.scorePoint.header()), body=backport.text(R.strings.tooltips.rankedBattleView.scorePoint.body())), align=self._getLabelAlign(bonus), isCompensation=self._isCompensation(bonus))
 
     def __getImages(self, tokenID):
-        return {size:backport.image(self.__getImagePath(tokenID, size)()) for size in AWARDS_SIZES.ALL() if self.__getImagePath(tokenID, size)}
+        return {size: backport.image(self.__getImagePath(tokenID, size)()) for size in AWARDS_SIZES.ALL() if self.__getImagePath(tokenID, size)}
 
     @staticmethod
     def __getImagePath(tokenID, size):
@@ -871,13 +842,13 @@ class RankedSelectableAwardFormatter(TokenBonusFormatter):
         for tokenID, token in bonus.getTokens().iteritems():
             if self.__offersDP.getOfferByToken(tokenID) is not None:
                 return self.__offersDP.getAmountOfGiftsGenerated(tokenID, token.count)
-            return int(tokenID.split(':')[(-1)])
+            return int(tokenID.split(':')[-1])
 
         return 0
 
     def __getImages(self):
         imagesRoot = R.images.gui.maps.icons.quests.bonuses
-        return {size:backport.image(imagesRoot.dyn(size).dyn('deluxe_gift')()) for size in AWARDS_SIZES.ALL()}
+        return {size: backport.image(imagesRoot.dyn(size).dyn('deluxe_gift')()) for size in AWARDS_SIZES.ALL()}
 
 
 class EpicAbilityPtsFormatter(SimpleBonusFormatter):
@@ -936,12 +907,6 @@ class TmanTemplateBonusFormatter(SimpleBonusFormatter):
              tokenID], isSpecial=True)
 
 
-class LinkedSetTokenBonusFormatter(TokenBonusFormatter):
-
-    def _formatBonusLabel(self, count):
-        return ('x{}').format(count)
-
-
 class CustomizationUnlockFormatter(TokenBonusFormatter):
     c11n = dependency.descriptor(ICustomizationService)
     __TOKEN_POSTFIX = ':camouflage'
@@ -949,7 +914,7 @@ class CustomizationUnlockFormatter(TokenBonusFormatter):
 
     def _format(self, bonus):
         tokens = bonus.getTokens()
-        unlockTokenID = findFirst(lambda ID: ID.endswith(self.__TOKEN_POSTFIX), tokens.keys())
+        unlockTokenID = findFirst((lambda ID: ID.endswith(self.__TOKEN_POSTFIX)), tokens.keys())
         if unlockTokenID is not None:
             camouflages = self.c11n.getCamouflages(criteria=REQ_CRITERIA.CUSTOMIZATION.UNLOCKED_BY(unlockTokenID))
             branch = bonus.getContext().get('branch')
@@ -959,7 +924,7 @@ class CustomizationUnlockFormatter(TokenBonusFormatter):
                 tooltip = makeTooltip(TOOLTIPS.PERSONALMISSIONS_AWARDS_CAMOUFLAGE_ALLIANCE_HEADER, TOOLTIPS.PERSONALMISSIONS_AWARDS_CAMOUFLAGE_ALLIANCE_BODY)
             else:
                 tooltip = None
-            images = {size:RES_ICONS.getBonusIcon(size, self.__ICON_NAME) for size in AWARDS_SIZES.ALL()}
+            images = {size: RES_ICONS.getBonusIcon(size, self.__ICON_NAME) for size in AWARDS_SIZES.ALL()}
             result = [
              PreformattedBonus(bonusName=bonus.getName(), label=formatCountLabel(len(camouflages)), align=LABEL_ALIGN.RIGHT, images=images, isSpecial=False, tooltip=tooltip)]
         else:
@@ -1133,13 +1098,6 @@ class RentVehiclesBonusFormatter(VehiclesBonusFormatter):
         return rentArgs
 
 
-class LinkedSetVehiclesBonusFormatter(VehiclesBonusFormatter):
-
-    @classmethod
-    def _getVehicleLabel(cls, bonus, vehicle, vehInfo):
-        return formatTimeLabel(bonus.getRentDays(vehInfo) * time_utils.HOURS_IN_DAY)
-
-
 class DossierBonusFormatter(SimpleBonusFormatter):
 
     def _format(self, bonus):
@@ -1178,7 +1136,7 @@ class LoyalServiceBonusFormatter(DossierBonusFormatter):
 
     def _format(self, bonus):
         result = super(LoyalServiceBonusFormatter, self)._format(bonus)
-        result.sort(key=lambda preFormattedBonus: int(not (PostProcessTags.IS_PREFIX_BADGE in preFormattedBonus.postProcessTags or PostProcessTags.IS_SUFFIX_BADGE in preFormattedBonus.postProcessTags)))
+        result.sort(key=(lambda preFormattedBonus: int(not (PostProcessTags.IS_PREFIX_BADGE in preFormattedBonus.postProcessTags or PostProcessTags.IS_SUFFIX_BADGE in preFormattedBonus.postProcessTags))))
         return result
 
     @classmethod
@@ -1329,19 +1287,6 @@ class RankedCustomizationsBonusFormatter(CustomizationsBonusFormatter):
         return result
 
 
-class SeniorityCustomizationsBonusFormatter(CustomizationsBonusFormatter):
-
-    @classmethod
-    def _getUserName(cls, c11nItem):
-        return i18n.makeString(c11nItem.userName)
-
-
-class LinkedSetCustomizationsBonusFormatter(CustomizationsBonusFormatter):
-
-    def _formatBonusLabel(self, count):
-        return ('x{}').format(count)
-
-
 class OperationCustomizationsBonusFormatter(CustomizationsBonusFormatter):
 
     def _format(self, bonus):
@@ -1400,9 +1345,9 @@ class InstructionEpicBattleBonusFormatter(SimpleBonusFormatter):
 
         giftsCount = 0
         for bonusOffer in bonusOffers:
-            gift = bonusOffer.getFirstGift()
-            if gift is not None:
-                giftsCount += gift.giftCount
+            if bonusOffer and hasattr(bonusOffer, 'getFirstGift'):
+                gift = bonusOffer.getFirstGift()
+                giftsCount += gift.giftCount if gift is not None else 0
 
         return giftsCount
 
@@ -1461,7 +1406,7 @@ class GoodiesBonusFormatter(SimpleBonusFormatter):
     def _getImages(cls, booster):
         result = {}
         for size in AWARDS_SIZES.ALL():
-            result[size] = RES_ICONS.getBonusIcon(size, booster.boosterGuiType)
+            result[size] = RES_ICONS.getBonusIcon(size, booster.getFullNameForResource())
 
         return result
 
@@ -1472,7 +1417,7 @@ class GoodiesBonusFormatter(SimpleBonusFormatter):
 
     @classmethod
     def _getUserName(cls, booster):
-        return booster.fullUserName
+        return booster.userName
 
 
 class GoodiesEpicBonusFormatter(GoodiesBonusFormatter):
@@ -1488,7 +1433,7 @@ class GoodiesEpicBonusFormatter(GoodiesBonusFormatter):
 
     @classmethod
     def _getImages(cls, booster):
-        return cls._getIcon(booster.boosterGuiType)
+        return cls._getIcon(booster.getFullNameForResource())
 
     @classmethod
     def _getDemountKitImages(cls, demountKit):
@@ -1499,7 +1444,7 @@ class ItemsBonusFormatter(SimpleBonusFormatter):
 
     def _format(self, bonus):
         result = []
-        for item, count in sorted(bonus.getItems().items(), key=lambda i: i[0]):
+        for item, count in sorted(bonus.getItems().items(), key=(lambda i: i[0])):
             if item is not None and count:
                 result.append(PreformattedBonus(bonusName=bonus.getName(), images=self._getImages(item), isSpecial=True, label=self._formatBonusLabel(count), labelFormatter=self._getLabelFormatter(bonus), userName=self._getUserName(item), specialAlias=self.getTooltip(item), specialArgs=[
                  item.intCD], align=LABEL_ALIGN.RIGHT, isCompensation=self._isCompensation(bonus), highlightType=self._getHighlightType(item), overlayType=self._getOverlayType(item), highlightIcon=self._getHighlightIcon(item), overlayIcon=self._getOverlayIcon(item)))
@@ -1574,12 +1519,6 @@ class ItemsEpicBonusFormatter(ItemsBonusFormatter):
     def _getImages(cls, item):
         size = EPIC_AWARD_SIZE
         return {size: RES_ICONS.getBonusIcon(size, item.getGUIEmblemID())}
-
-
-class LinkedSetItemsBonusFormatter(ItemsBonusFormatter):
-
-    def _formatBonusLabel(self, count):
-        return ('x{}').format(count)
 
 
 class EpicItemsBonusFormatter(ItemsBonusFormatter):

@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/reusable/records.py
 import operator
 from ValueReplay import ValueReplay
@@ -60,8 +60,6 @@ class ReplayRecord(ResultRecord):
 
     def _getFactor(self):
         name = self._name.lower()
-        if name.endswith('factor1000') or name.endswith('factors1000'):
-            return 1000
         if name.endswith('factor100') or name.endswith('factors100'):
             return 100
         if name.endswith('factor10') or name.endswith('factors10'):
@@ -103,15 +101,6 @@ _SUPPORTED_OPS = {ValueReplay.SET: ReplayRecord,
 
 class ReplayRecords(ResultRecord):
     __slots__ = ('_records', )
-    __NEW_YEAR_MAP = {'eventFreeXPList_ny22battle##xp_freeXP': 'newYearFreeXp', 
-       'eventFreeXPFactor100List_ny22battle##xp_freeXP': 'newYearFreeXpFactor', 
-       'eventXPList_ny22battle##xp_freeXP': 'newYearXp', 
-       'eventXPFactor100List_ny22battle##xp_freeXP': 'newYearXpFactor', 
-       'eventCreditsList_ny22battle##credits_gold': 'newYearCredits', 
-       'eventCreditsFactor1000List_ny22battle##credits_gold': 'newYearCreditsFactor'}
-    __LUNAR_NY_MAP = {'eventXPFactor100List_lunarNewYearBattle##xp_freeXP': 'lunarNYXP', 
-       'eventFreeXPFactor100List_lunarNewYearBattle##xp_freeXP': 'lunarNYFreeXP', 
-       'eventCreditsFactor1000List_lunarNewYearBattle##credits_gold': 'lunarNYCredits'}
 
     def __init__(self, replay, *last):
         super(ReplayRecords, self).__init__()
@@ -157,19 +146,7 @@ class ReplayRecords(ResultRecord):
     def _addRecord(self, op, name, value, diff):
         if op in _SUPPORTED_OPS:
             clazz = _SUPPORTED_OPS[op]
-            nyName = self.__remapForNewYear(name)
-            nyName = self.__remapForLunarNY(nyName)
-            self._records[nyName] = clazz(nyName, value, diff)
-
-    def __remapForNewYear(self, name):
-        if name in self.__NEW_YEAR_MAP:
-            return self.__NEW_YEAR_MAP[name]
-        return name
-
-    def __remapForLunarNY(self, name):
-        if name in self.__LUNAR_NY_MAP:
-            return self.__LUNAR_NY_MAP[name]
-        return name
+            self._records[name] = clazz(name, value, diff)
 
 
 class RecordsIterator(ResultRecord):
@@ -189,7 +166,7 @@ class RecordsIterator(ResultRecord):
             if self._indexes:
                 idx = self._indexes.pop(0)
                 return idx or self
-            return self._seq[(idx - 1)]
+            return self._seq[idx - 1]
 
         raise StopIteration()
 

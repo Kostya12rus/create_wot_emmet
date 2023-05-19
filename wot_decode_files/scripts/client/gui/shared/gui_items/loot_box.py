@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/loot_box.py
 from enum import Enum
 from gui.impl import backport
@@ -20,16 +20,13 @@ class NewYearCategories(CONST_CONTAINER):
     CHRISTMAS = 'Christmas'
     ORIENTAL = 'Oriental'
     FAIRYTALE = 'Fairytale'
-    SPECIAL = 'Special'
-    SETTINGS = (
-     NEWYEAR, CHRISTMAS, ORIENTAL, FAIRYTALE)
 
 
 class EventCategories(CONST_CONTAINER):
     EVENT = 'Event'
 
 
-class EventLootBoxes(CONST_CONTAINER):
+class WTLootBoxes(CONST_CONTAINER):
     WT_HUNTER = 'wt_hunter'
     WT_BOSS = 'wt_boss'
     WT_SPECIAL = 'wt_special'
@@ -41,13 +38,23 @@ class LunarNYLootBoxTypes(Enum):
     SPECIAL = 'lunar_special'
 
 
+class EventLootBoxes(CONST_CONTAINER):
+    PREMIUM = 'event_premium'
+    COMMON = 'event_common'
+
+
 ALL_LUNAR_NY_LOOT_BOX_TYPES = ('lunar_base', 'lunar_simple', 'lunar_special')
 LUNAR_NY_LOOT_BOXES_CATEGORIES = 'LunarNY'
 SENIORITY_AWARDS_LOOT_BOXES_TYPE = 'seniorityAwards'
-GUI_ORDER = (
- NewYearLootBoxes.COMMON, NewYearLootBoxes.PREMIUM)
-CATEGORIES_GUI_ORDER = (NewYearCategories.NEWYEAR, NewYearCategories.CHRISTMAS,
- NewYearCategories.ORIENTAL, NewYearCategories.FAIRYTALE)
+EVENT_LOOT_BOXES_CATEGORY = 'eventLootBoxes'
+GUI_ORDER_NY = (
+ NewYearLootBoxes.COMMON,
+ NewYearLootBoxes.PREMIUM)
+CATEGORIES_GUI_ORDER_NY = (
+ NewYearCategories.NEWYEAR,
+ NewYearCategories.CHRISTMAS,
+ NewYearCategories.ORIENTAL,
+ NewYearCategories.FAIRYTALE)
 
 class LootBox(GUIItem):
     __slots__ = ('__id', '__invCount', '__type', '__category', '__historyName', '__guaranteedFrequency',
@@ -110,7 +117,5 @@ class LootBox(GUIItem):
         for limitName, limit in limitsCfg.iteritems():
             if 'useBonusProbabilityAfter' in limit:
                 return (limitName, limit['useBonusProbabilityAfter'] + 1)
-            if 'guaranteedFrequency' in limit:
-                return (limitName, limit['guaranteedFrequency'])
 
         return (None, 0)

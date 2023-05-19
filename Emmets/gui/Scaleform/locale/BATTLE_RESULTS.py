@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/BATTLE_RESULTS.py
 from debug_utils import LOG_WARNING
 
@@ -31,6 +31,7 @@ class BATTLE_RESULTS(object):
     FINISH_REASON_9 = '#battle_results:finish/reason/9'
     FINISH_REASON_10WIN = '#battle_results:finish/reason/10win'
     FINISH_REASON_10LOSE = '#battle_results:finish/reason/10lose'
+    FINISH_CLARIFICATION_FINISHALLPLAYERSLEFT = '#battle_results:finish/clarification/finishAllPlayersLeft'
     FINISH_OVERTIME_WIN = '#battle_results:finish/overtime/win'
     FINISH_OVERTIME_LOSE = '#battle_results:finish/overtime/lose'
     COMMON_MAINFINISHREASONTITLE = '#battle_results:common/mainFinishReasonTitle'
@@ -38,6 +39,7 @@ class BATTLE_RESULTS(object):
     COMMON_XPMULTIPLIERSIGN = '#battle_results:common/xpMultiplierSign'
     COMMON_BATTLEEFFICIENCY_TITLE = '#battle_results:common/battleEfficiency/title'
     COMMON_BATTLEEFFICIENCYWITHOUTOREDERS_TITLE = '#battle_results:common/battleEfficiencyWithoutOreders/title'
+    COMMON_BATTLEEFFICIENCYWITHSKILLS_TITLE = '#battle_results:common/battleEfficiencyWithSkills/title'
     COMMON_BATTLEEFFICIENCY_ALLIES = '#battle_results:common/battleEfficiency/allies'
     COMMON_BATTLEEFFICIENCY_NONE = '#battle_results:common/battleEfficiency/none'
     COMMON_BATTLEEFFICIENCY_TECHNIQUE = '#battle_results:common/battleEfficiency/technique'
@@ -62,6 +64,7 @@ class BATTLE_RESULTS(object):
     COMMON_FITTING_PURCHASE = '#battle_results:common/fitting/purchase'
     COMMON_RESEARCHPREDICTION = '#battle_results:common/researchPrediction'
     COMMON_NEWSKILLPREDICTION = '#battle_results:common/newSkillPrediction'
+    COMMON_CREWMEMBER_NEWFREESKILL = '#battle_results:common/crewMember/newFreeSkill'
     COMMON_CREWMEMBER_NEWSKILL = '#battle_results:common/crewMember/newSkill'
     COMMON_CREWMEMBER_DESCRIPTION = '#battle_results:common/crewMember/description'
     COMMON_NOPROGRESS = '#battle_results:common/noProgress'
@@ -125,6 +128,7 @@ class BATTLE_RESULTS(object):
     COMMON_VEHICLESTATE_DEAD5 = '#battle_results:common/vehicleState/dead5'
     COMMON_VEHICLESTATE_DEAD6 = '#battle_results:common/vehicleState/dead6'
     COMMON_VEHICLESTATE_DEAD7 = '#battle_results:common/vehicleState/dead7'
+    COMMON_VEHICLESTATE_DEAD13 = '#battle_results:common/vehicleState/dead13'
     COMMON_VEHICLESTATE_DEAD27 = '#battle_results:common/vehicleState/dead27'
     COMMON_VEHICLESTATE_PREMATURELEAVE = '#battle_results:common/vehicleState/prematureLeave'
     COMMON_DETAILS_NOPREMTITLE = '#battle_results:common/details/noPremTitle'
@@ -150,8 +154,7 @@ class BATTLE_RESULTS(object):
     COMMON_PREMIUMBONUS_EXPIREDBATTLERESULT = '#battle_results:common/premiumBonus/expiredBattleResult'
     COMMON_PREMIUMBONUS_TANKSTATECHANGED = '#battle_results:common/premiumBonus/tankStateChanged'
     COMMON_PREMIUMBONUS_TANKMENSTATECHANGED = '#battle_results:common/premiumBonus/tankmenStateChanged'
-    COMMON_PREMIUMBONUS_ISXPTOTMENENABLED = '#battle_results:common/premiumBonus/isXPToTmenEnabled'
-    COMMON_PREMIUMBONUS_ISXPTOTMENDISABLED = '#battle_results:common/premiumBonus/isXPToTmenDisabled'
+    COMMON_PREMIUMBONUS_ISXPTOTMENCHANGED = '#battle_results:common/premiumBonus/isXPToTmenChanged'
     COMMON_PREMIUMBONUS_BONUSLEFT = '#battle_results:common/premiumBonus/bonusLeft'
     COMMON_PREMIUMBONUS_APPLIEDBONUS = '#battle_results:common/premiumBonus/appliedBonus'
     COMMON_PREMIUMBONUS_APPLYBONUSBTN = '#battle_results:common/premiumBonus/applyBonusBtn'
@@ -218,6 +221,7 @@ class BATTLE_RESULTS(object):
     TEAM_STATS_LABELS_SHOTS = '#battle_results:team/stats/labels_shots'
     TEAM_STATS_LABELS_HITS = '#battle_results:team/stats/labels_hits'
     TEAM_STATS_LABELS_EXPLOSIONHITS = '#battle_results:team/stats/labels_explosionHits'
+    TEAM_STATS_LABELS_FLAMEEXPLOSIONHITS = '#battle_results:team/stats/labels_flameExplosionHits'
     TEAM_STATS_LABELS_DAMAGEDEALT = '#battle_results:team/stats/labels_damageDealt'
     TEAM_STATS_LABELS_SNIPERDAMAGEDEALT = '#battle_results:team/stats/labels_sniperDamageDealt'
     TEAM_STATS_LABELS_DESTRUCTIBLESDAMAGEDEALT = '#battle_results:team/stats/labels_destructiblesDamageDealt'
@@ -248,6 +252,10 @@ class BATTLE_RESULTS(object):
     TEAM_STATS_LABELS_FLAGS = '#battle_results:team/stats/labels_flags'
     TEAM_STATS_LABELS_DEATHS = '#battle_results:team/stats/labels_deaths'
     TEAM_STATS_MILEAGE = '#battle_results:team/stats/mileage'
+    TEAM_STATS_LABELS_DAMAGEDEALTBYSKILLS = '#battle_results:team/stats/labels_damageDealtBySkills'
+    TEAM_STATS_LABELS_HEALED = '#battle_results:team/stats/labels_healed'
+    TEAM_STATS_LABELS_CAPTUREDPOINTSOFINTEREST = '#battle_results:team/stats/labels_capturedPointsOfInterest'
+    TEAM_STATS_LABELS_ROLESKILLUSED = '#battle_results:team/stats/labels_roleSkillUsed'
     TEAM_STATS_CLOSE = '#battle_results:team/stats/close'
     TEAM_RANKHEADER_HEADER = '#battle_results:team/rankHeader/header'
     TEAM_RANKHEADER_BODY = '#battle_results:team/rankHeader/body'
@@ -286,6 +294,7 @@ class BATTLE_RESULTS(object):
     DETAILS_CALCULATIONS_EVENT = '#battle_results:details/calculations/event'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_DESERTER = '#battle_results:details/calculations/fairPlayViolation/deserter'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EPIC_DESERTER = '#battle_results:details/calculations/fairPlayViolation/epic_deserter'
+    DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_COMP7_DESERTER = '#battle_results:details/calculations/fairPlayViolation/comp7_deserter'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_AFK = '#battle_results:details/calculations/fairPlayViolation/afk'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_SUICIDE = '#battle_results:details/calculations/fairPlayViolation/suicide'
     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EVENT_DESERTER = '#battle_results:details/calculations/fairPlayViolation/event_deserter'
@@ -349,7 +358,6 @@ class BATTLE_RESULTS(object):
     CUSTOMIZATIONPROGRESS_DESCR = '#battle_results:customizationProgress/descr'
     CUSTOMIZATIONPROGRESS_AWARD_RECEIVED = '#battle_results:customizationProgress/award/received'
     CUSTOMIZATIONPROGRESS_AWARD_NEWLEVEL = '#battle_results:customizationProgress/award/newLevel'
-    REPLAYBTNLABEL = '#battle_results:replayBtnLabel'
     DETAILS_TIME_LBL_ENUM = (
      DETAILS_TIME_LBL_OBJECTIVESREACHED,
      DETAILS_TIME_LBL_OBJECTIVESDESTROYED,
@@ -371,6 +379,7 @@ class BATTLE_RESULTS(object):
      DETAILS_CALCULATIONS_EVENT,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_DESERTER,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EPIC_DESERTER,
+     DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_COMP7_DESERTER,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_AFK,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_SUICIDE,
      DETAILS_CALCULATIONS_FAIRPLAYVIOLATION_EVENT_DESERTER,
@@ -408,6 +417,7 @@ class BATTLE_RESULTS(object):
      TEAM_STATS_LABELS_SHOTS,
      TEAM_STATS_LABELS_HITS,
      TEAM_STATS_LABELS_EXPLOSIONHITS,
+     TEAM_STATS_LABELS_FLAMEEXPLOSIONHITS,
      TEAM_STATS_LABELS_DAMAGEDEALT,
      TEAM_STATS_LABELS_SNIPERDAMAGEDEALT,
      TEAM_STATS_LABELS_DESTRUCTIBLESDAMAGEDEALT,
@@ -437,6 +447,10 @@ class BATTLE_RESULTS(object):
      TEAM_STATS_LABELS_TIMESDESTROYED,
      TEAM_STATS_LABELS_FLAGS,
      TEAM_STATS_LABELS_DEATHS,
+     TEAM_STATS_LABELS_DAMAGEDEALTBYSKILLS,
+     TEAM_STATS_LABELS_HEALED,
+     TEAM_STATS_LABELS_CAPTUREDPOINTSOFINTEREST,
+     TEAM_STATS_LABELS_ROLESKILLUSED,
      TEAM_STATS_LABELS_DESTROYRECOVERYRATIO,
      TEAM_STATS_LABELS_ATKOBJECTIVES,
      TEAM_STATS_LABELS_DEFOBJECTIVES)
@@ -457,6 +471,7 @@ class BATTLE_RESULTS(object):
      COMMON_VEHICLESTATE_DEAD5,
      COMMON_VEHICLESTATE_DEAD6,
      COMMON_VEHICLESTATE_DEAD7,
+     COMMON_VEHICLESTATE_DEAD13,
      COMMON_VEHICLESTATE_DEAD27)
 
     @classmethod

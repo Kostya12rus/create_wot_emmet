@@ -1,20 +1,20 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/arena_components/advanced_chat_component.py
 import logging
 from collections import OrderedDict, defaultdict, namedtuple
 from functools import partial
 from enum import Enum
 import BigWorld
-from PlayerEvents import g_playerEvents
-from account_helpers.settings_core.settings_constants import BattleCommStorageKeys
+from ..PlayerEvents import g_playerEvents
+from ..account_helpers.settings_core.settings_constants import BattleCommStorageKeys
 from arena_component_system.client_arena_component_system import ClientArenaComponent
 from battleground.location_point_manager import g_locationPointManager
 from chat_commands_consts import ReplyState, _COMMAND_NAME_TRANSFORM_MARKER_TYPE, BATTLE_CHAT_COMMAND_NAMES, _DEFAULT_ACTIVE_COMMAND_TIME, _DEFAULT_SPG_AREA_COMMAND_TIME, MarkerType, ONE_SHOT_COMMANDS_TO_REPLIES, COMMAND_RESPONDING_MAPPING
-from constants import ARENA_BONUS_TYPE
-from gui.battle_control import avatar_getter
-from gui.battle_control.battle_constants import VEHICLE_VIEW_STATE
+from ..constants import ARENA_BONUS_TYPE
+from ..gui.battle_control import avatar_getter
+from ..gui.battle_control.battle_constants import VEHICLE_VIEW_STATE
 from helpers import dependency, i18n, CallbackDelayer
 from messenger import MessengerEntry
 from messenger.m_constants import MESSENGER_COMMAND_TYPE, USER_ACTION_ID
@@ -86,6 +86,8 @@ class AdvancedChatComponent(ClientArenaComponent):
         if player is None:
             return
         else:
+            if player.isDestroyed:
+                return
             if not player.userSeesWorld():
                 g_playerEvents.onAvatarReady += self.__onAvatarReady
                 return
@@ -93,7 +95,8 @@ class AdvancedChatComponent(ClientArenaComponent):
                 return
             componentSystem = self._componentSystem()
             if componentSystem is not None:
-                player.base.messenger_onActionByClient_chat2(_ACTIONS.REINIT_BATTLE_CHAT, 0, messageArgs())
+                if player.isPlayer:
+                    player.base.messenger_onActionByClient_chat2(_ACTIONS.REINIT_BATTLE_CHAT, 0, messageArgs())
             self.__addEventListeners()
             return
 
@@ -148,7 +151,7 @@ class AdvancedChatComponent(ClientArenaComponent):
             return
         else:
             if targetID in self._chatCommands[targetMarkerType]:
-                return self._chatCommands[targetMarkerType][targetID].values()[(-1)]
+                return self._chatCommands[targetMarkerType][targetID].values()[-1]
             return
 
     def isTargetAllyCommittedToMe(self, targetID):
@@ -296,12 +299,13 @@ class AdvancedChatComponent(ClientArenaComponent):
                 if cmdMarkerType == MarkerType.VEHICLE_MARKER_TYPE and cmdTargetID != playerVehID:
                     chatStats[cmdTargetID] = (
                      actionMarker, TARGET_CHAT_CMD_FLAG)
-            elif typeOfUpdate == ChatCommandChange.CHAT_CMD_WAS_REPLIED and not isPlayerSender and cmdTargetID == playerVehID:
-                isOneShot = False
-                chatStats = {senderVehID: (
-                               actionMarker, PLAYER_IS_CHAT_CMD_TARGET_FLAG)}
-            elif isOneShot and not isPlayerSender:
-                chatStats = {senderVehID: (actionMarker, EMPTY_CHAT_CMD_FLAG)}
+            else:
+                if typeOfUpdate == ChatCommandChange.CHAT_CMD_WAS_REPLIED and not isPlayerSender and cmdTargetID == playerVehID:
+                    isOneShot = False
+                    chatStats = {senderVehID: (
+                                   actionMarker, PLAYER_IS_CHAT_CMD_TARGET_FLAG)}
+                elif isOneShot and not isPlayerSender:
+                    chatStats = {senderVehID: (actionMarker, EMPTY_CHAT_CMD_FLAG)}
         if cmdTargetID != -1 and self.isTargetAllyCommittedToMe(cmdTargetID) and not isOneShot and chatStats is not None and cmdTargetID in chatStats.keys() and chatStats[cmdTargetID][1] == TARGET_CHAT_CMD_FLAG:
             del chatStats[cmdTargetID]
         if chatStats is not None:
@@ -663,19 +667,20 @@ class AdvancedChatComponent(ClientArenaComponent):
                 actionID = BATTLE_CHAT_COMMANDS_BY_NAMES[newAction].id
                 command = BattleCommandFactory.createByAction(actionID=actionID, args=protoData)
                 self.__handleRegularCommand(command)
-            elif replyToActionName == BATTLE_CHAT_COMMAND_NAMES.GOING_THERE or replyToActionName in _CHAT_CMD_CREATE_IF_NO_ORIGINAL_COMMAND_BASES:
-                cmdGoingThere = g_mutedMessages.pop(targetID)
-                protoData = cmdGoingThere.getCommandData()
-                protoData['int64Arg1'] = replierVehicleID
-                if replyToActionName == BATTLE_CHAT_COMMAND_NAMES.GOING_THERE:
-                    actionID = BATTLE_CHAT_COMMANDS_BY_NAMES[replyToActionName].id
-                else:
-                    newAction = _CHAT_CMD_CREATE_IF_NO_ORIGINAL_COMMAND_BASES[replyToActionName]
-                    actionID = BATTLE_CHAT_COMMANDS_BY_NAMES[newAction].id
-                command = BattleCommandFactory.createByAction(actionID=actionID, args=protoData)
-                self.__handleRegularCommand(command)
             else:
-                _logger.debug('Reply to action name, no action needed (%s)', replyToActionName)
+                if replyToActionName == BATTLE_CHAT_COMMAND_NAMES.GOING_THERE or replyToActionName in _CHAT_CMD_CREATE_IF_NO_ORIGINAL_COMMAND_BASES:
+                    cmdGoingThere = g_mutedMessages.pop(targetID)
+                    protoData = cmdGoingThere.getCommandData()
+                    protoData['int64Arg1'] = replierVehicleID
+                    if replyToActionName == BATTLE_CHAT_COMMAND_NAMES.GOING_THERE:
+                        actionID = BATTLE_CHAT_COMMANDS_BY_NAMES[replyToActionName].id
+                    else:
+                        newAction = _CHAT_CMD_CREATE_IF_NO_ORIGINAL_COMMAND_BASES[replyToActionName]
+                        actionID = BATTLE_CHAT_COMMANDS_BY_NAMES[newAction].id
+                    command = BattleCommandFactory.createByAction(actionID=actionID, args=protoData)
+                    self.__handleRegularCommand(command)
+                else:
+                    _logger.debug('Reply to action name, no action needed (%s)', replyToActionName)
         else:
             self.__addReplyToCommandList(replierVehicleID, targetID, repliedToActionID)
 

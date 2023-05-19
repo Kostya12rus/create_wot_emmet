@@ -1,21 +1,17 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/gift_system/wrappers.py
 from collections import namedtuple
 from functools import wraps
 OpenedGiftData = namedtuple('OpenedGiftData', 'senderID, metaInfo')
 GiftsHistoryData = namedtuple('GiftsHistoryData', ('aggregated', 'detailed'))
 GiftsWebState = namedtuple('GiftsWebState', ('sendLimit', 'expireTime', 'expireDelta',
-                                             'executionTime', 'state', 'common'))
+                                             'executionTime', 'state'))
 IncomeSysMessage = namedtuple('IncomeSysMessage', ('eventID', 'senderID', 'giftItemID',
                                                    'meta', 'executionTime'))
 SendGiftResponse = namedtuple('SendGiftResponse', ('state', 'receiverID', 'outCount',
                                                    'entitlementCode', 'meta', 'executionTime'))
-GiftStorageData = namedtuple('GiftStorageData', ('senderID', 'giftsCount', 'firstGiftID'))
-CountGiftHistoryData = namedtuple('CountGiftHistoryData', ('envelopesReceived', 'lootboxID'))
-SelectGiftHistoryData = namedtuple('SelectGiftHistoryData', ('senderID', 'envelopesReceived',
-                                                             'envelopesSend', 'goldReceived'))
 
 def ifMessagesEnabled(method):
 

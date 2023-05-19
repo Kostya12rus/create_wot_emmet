@@ -1,23 +1,31 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/money.py
 from collections import namedtuple
+from typing import TYPE_CHECKING
 from shared_utils import CONST_CONTAINER
 from soft_exception import SoftException
+if TYPE_CHECKING:
+    from typing import Optional, Any, Union, Dict, Tuple, Iterable, Literal, Callable, List
+    CURRENCY_TYPE = Literal[('credits', 'gold', 'crystal', 'eventCoin', 'bpcoin')]
+    CURRENCIES_TYPE = Tuple[(int, int, int, int, int)]
+    CURRENCIES_NAMES_TYPE = Tuple[(CURRENCY_TYPE, CURRENCY_TYPE, CURRENCY_TYPE, CURRENCY_TYPE, CURRENCY_TYPE)]
+    OPTIONAL_NUMBER_TYPE = Optional[float]
 
 class Currency(CONST_CONTAINER):
-    FREE_XP = 'freeXP'
     CREDITS = 'credits'
     GOLD = 'gold'
     CRYSTAL = 'crystal'
     EVENT_COIN = 'eventCoin'
     BPCOIN = 'bpcoin'
+    BRCOIN = 'brcoin'
+    FREE_XP = 'freeXP'
+    EQUIP_COIN = 'equipCoin'
     ALL = (
-     CREDITS, GOLD, CRYSTAL, EVENT_COIN, BPCOIN)
-    EXTENDED = ALL + (FREE_XP,)
+     CREDITS, GOLD, CRYSTAL, EVENT_COIN, BPCOIN, EQUIP_COIN)
     BY_WEIGHT = (
-     GOLD, CRYSTAL, CREDITS, EVENT_COIN, BPCOIN)
+     GOLD, CRYSTAL, CREDITS, EVENT_COIN, BPCOIN, EQUIP_COIN)
     GUI_ALL = (
      CRYSTAL, GOLD, CREDITS)
     _CURRENCY_EXTERNAL_MAP = {CREDITS: 'credits', 
@@ -25,8 +33,8 @@ class Currency(CONST_CONTAINER):
        CRYSTAL: 'crystal', 
        EVENT_COIN: 'event_coin', 
        BPCOIN: 'bpcoin', 
-       FREE_XP: 'free_xp'}
-    _CURRENCY_INTERNAL_MAP = {external:internal for internal, external in _CURRENCY_EXTERNAL_MAP.iteritems()}
+       EQUIP_COIN: 'equipCoin'}
+    _CURRENCY_INTERNAL_MAP = {external: internal for internal, external in _CURRENCY_EXTERNAL_MAP.iteritems()}
 
     @classmethod
     def currencyExternalName(cls, currencyName):
@@ -38,7 +46,7 @@ class Currency(CONST_CONTAINER):
 
     @classmethod
     def convertExternal(cls, **kwargs):
-        return {Currency.currencyInternalName(currency):value for currency, value in kwargs.iteritems()}
+        return {Currency.currencyInternalName(currency): value for currency, value in kwargs.iteritems()}
 
 
 __Money = namedtuple('_Money', Currency.ALL)
@@ -55,6 +63,7 @@ _GOLD = Currency.GOLD
 _CRYSTAL = Currency.CRYSTAL
 _EVENT_COIN = Currency.EVENT_COIN
 _BPCOIN = Currency.BPCOIN
+_EQUIP_COIN = Currency.EQUIP_COIN
 
 class Money(object):
     __slots__ = ('_values', )
@@ -62,7 +71,7 @@ class Money(object):
     UNDEFINED = None
     WEIGHT = Currency.BY_WEIGHT
 
-    def __init__(self, credits=None, gold=None, crystal=None, eventCoin=None, bpcoin=None, *args, **kwargs):
+    def __init__(self, credits=None, gold=None, crystal=None, eventCoin=None, bpcoin=None, equipCoin=None, *args, **kwargs):
         super(Money, self).__init__()
         values = self._values = {}
         if credits is not None:
@@ -75,6 +84,8 @@ class Money(object):
             values[_EVENT_COIN] = eventCoin
         if bpcoin is not None:
             values[_BPCOIN] = bpcoin
+        if equipCoin is not None:
+            values[_EQUIP_COIN] = equipCoin
         return
 
     def __getitem__(self, index):
@@ -117,13 +128,13 @@ class Money(object):
         return self.__sub__(other)
 
     def __mul__(self, n):
-        return self.__convert(lambda c, v, o: v * o, n)
+        return self.__convert((lambda c, v, o: v * o), n)
 
     def __rmul__(self, n):
         return self.__mul__(n)
 
     def __div__(self, n):
-        return self.__convert(lambda c, v, o: float(v) / o, n)
+        return self.__convert((lambda c, v, o: float(v) / o), n)
 
     def __rdiv__(self, n):
         return self.__div__(n)
@@ -229,6 +240,15 @@ class Money(object):
 
         return
 
+    @property
+    def equipCoin(self):
+        try:
+            return self._values[_EQUIP_COIN]
+        except KeyError:
+            return
+
+        return
+
     @classmethod
     def makeFrom(cls, currency, value):
         return cls.UNDEFINED.replace(currency, value)
@@ -239,7 +259,7 @@ class Money(object):
 
     @classmethod
     def extractMoneyDict(cls, data):
-        return {c:data[c] for c in cls.ALL if c in data}
+        return {c: data[c] for c in cls.ALL if c in data}
 
     @classmethod
     def makeMoney(cls, data):
@@ -254,13 +274,17 @@ class Money(object):
 
     @classmethod
     def makeFromMoneyTuple(cls, moneyTuple):
-        setValues = {cls.ALL[index]:v for index, v in enumerate(moneyTuple) if v != 0}
+        setValues = {cls.ALL[index]: v for index, v in enumerate(moneyTuple) if v != 0}
         return cls(**setValues)
 
     def get(self, currency, default=None):
         if currency in self._values:
             return self._values[currency]
         return default
+
+    @property
+    def currencies(self):
+        return self.ALL
 
     def replace(self, currency, value):
         copy = self._values.copy()
@@ -315,16 +339,16 @@ class Money(object):
         return currency or _CREDITS
 
     def toNonNegative(self):
-        return self.apply(lambda v: max(0, v))
+        return self.apply((lambda v: max(0, v)))
 
     def toAbs(self):
         return self.apply(abs)
 
     def toDict(self):
-        return {c:v for c, v in self._values.iteritems()}
+        return {c: v for c, v in self._values.iteritems()}
 
     def toSignDict(self):
-        return {c:v for c, v in self._values.iteritems() if v != 0 if v != 0}
+        return {c: v for c, v in self._values.iteritems() if v != 0}
 
     def toDictsList(self):
         return [
@@ -336,7 +360,7 @@ class Money(object):
              c, self._values.get(c))
 
     def apply(self, formatter):
-        return self.__convert(lambda c, v, o: formatter(v), None)
+        return self.__convert((lambda c, v, o: formatter(v)), None)
 
     def getShortage(self, price):
         shortage = self.UNDEFINED
@@ -379,7 +403,7 @@ class Money(object):
         return cls(**values)
 
     def __convert(self, function, other):
-        kwargs = {c:function(c, v, other) for c, v in self._values.iteritems()}
+        kwargs = {c: function(c, v, other) for c, v in self._values.iteritems()}
         return self._copy(**kwargs)
 
     def __getCurrenciesIterator(self, byWeight=True):
@@ -395,9 +419,43 @@ MONEY_ZERO_GOLD = Money(gold=0)
 MONEY_ZERO_CRYSTAL = Money(crystal=0)
 MONEY_ZERO_EVENT_COIN = Money(eventCoin=0)
 MONEY_ZERO_BPCOIN = Money(bpcoin=0)
-ZERO_MONEY = Money(**{c:0 for c in Currency.ALL})
+ZERO_MONEY = Money(**{c: 0 for c in Currency.ALL})
 _CurrencyCollection = namedtuple('CurrencyCollection', Currency.ALL)
 _CurrencyCollection.__new__.__defaults__ = len(Currency.ALL) * (None,)
+
+class DynamicMoney(Money):
+
+    def __init__(self, *args, **kwargs):
+        super(DynamicMoney, self).__init__(*args, **kwargs)
+        if kwargs:
+            extended = {key: value for key, value in kwargs.iteritems() if key not in self._values}
+            self._values.update(extended)
+            currencies = tuple(extended.keys())
+            self.ALL = Currency.ALL + currencies
+            self.WEIGHT = Currency.BY_WEIGHT + currencies
+
+    def isCompound(self):
+        return self.isCompound() and self.isDynCompound()
+
+    def isDynCompound(self):
+        consist = [ currency for currency in self._values if currency not in Currency.ALL and self.get(currency, 0) != 0
+                  ]
+        return len(consist) > 1
+
+    def isSpecCompound(self, currencies):
+        consist = [ currency for currency in currencies if self.isSet(currency) ]
+        return len(consist) > 1
+
+    def toMoneyTuple(self):
+        raise SoftException('Conversion of ExtendedMoney to old style _Money is not supported')
+
+
+DynamicMoney.UNDEFINED = DynamicMoney()
+DYNAMIC_MONEY_ZERO_CREDITS = DynamicMoney(credits=0)
+DYNAMIC_MONEY_ZERO_GOLD = DynamicMoney(gold=0)
+DYNAMIC_MONEY_ZERO_CRYSTAL = DynamicMoney(crystal=0)
+DYNAMIC_MONEY_ZERO_EVENT_COIN = DynamicMoney(eventCoin=0)
+DYNAMIC_MONEY_ZERO_BPCOIN = DynamicMoney(bpcoin=0)
 
 class CurrencyCollection(_CurrencyCollection):
 
@@ -419,7 +477,7 @@ class CurrencyCollection(_CurrencyCollection):
              c, self.get(c))
 
     def toDict(self):
-        return {c:v for c, v in self.iteritems()}
+        return {c: v for c, v in self.iteritems()}
 
     def __iter__(self):
         for c in Currency.ALL:

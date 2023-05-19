@@ -1,11 +1,12 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/__init__.py
 import typing, nations
 from items import _xml
 from constants import IS_CLIENT, ITEM_DEFS_PATH
 from soft_exception import SoftException
+from intervals import Interval
 if IS_CLIENT:
     import ResMgr
     from helpers import i18n
@@ -13,6 +14,12 @@ else:
     from realm_utils import ResMgr
 _g_itemTypes = None
 UNDEFINED_ITEM_CD = 0
+
+class ITEM_ID_RANGES:
+    WOT = Interval(0, 31000)
+    MT = Interval(31001, 65535)
+
+
 ITEM_TYPE_NAMES = ('_reserved', 'vehicle', 'vehicleChassis', 'vehicleTurret', 'vehicleGun',
                    'vehicleEngine', 'vehicleFuelTank', 'vehicleRadio', 'tankman',
                    'optionalDevice', 'shell', 'equipment', 'customizationItem', 'crewSkin',
@@ -85,6 +92,8 @@ class ItemsPrices(object):
                 info['eventCoin'] = prices[3]
             if len(prices) > 4:
                 info['bpcoin'] = prices[4]
+            if len(prices) > 5:
+                info['equipCoin'] = prices[5]
             self._itemsPriceInfo[descriptor] = info
         elif isinstance(prices, dict):
             self._itemsPriceInfo[descriptor] = prices
@@ -100,6 +109,9 @@ class ItemsPrices(object):
     def __len__(self):
         return len(self._itemsPriceInfo)
 
+    def __eq__(self, obj):
+        return isinstance(obj, ItemsPrices) and obj._itemsPriceInfo == self._itemsPriceInfo
+
     def get(self, key, defaultValue=None):
         if key in self._itemsPriceInfo:
             return self.__getitem__(key)
@@ -112,8 +124,11 @@ class ItemsPrices(object):
         for d, p in other.iteritems():
             self.__setitem__(d, p)
 
+    def copy(self):
+        return ItemsPrices(self._itemsPriceInfo)
+
     def getSpecialItemPrices(self, currencyCode):
-        return {compDescr:prices for compDescr, prices in self._itemsPriceInfo.iteritems() if currencyCode in prices}
+        return {compDescr: prices for compDescr, prices in self._itemsPriceInfo.iteritems() if currencyCode in prices}
 
     @staticmethod
     def _tuplePrice(priceInfo):
@@ -143,6 +158,20 @@ class ItemsPrices(object):
         for k, v in self._itemsPriceInfo.iteritems():
             if k in otherStorage and otherStorage[k] != v:
                 result[k] = v
+
+        return ItemsPrices(result)
+
+    def override(self, other, itemToPriceGroup=None):
+        myStorage = self._itemsPriceInfo
+        otherStorage = other._itemsPriceInfo if other else {}
+        result = {}
+        for compDescr, priceInfo in myStorage.iteritems():
+            if compDescr in otherStorage:
+                result[compDescr] = otherStorage[compDescr]
+            elif compDescr in itemToPriceGroup and itemToPriceGroup[compDescr] in otherStorage:
+                result[compDescr] = otherStorage[itemToPriceGroup[compDescr]]
+            else:
+                result[compDescr] = priceInfo
 
         return ItemsPrices(result)
 
@@ -200,6 +229,8 @@ def getTypeOfCompactDescr(compactDescr):
         itemTypeID = ord(compactDescr[0]) & 15
         if itemTypeID == 0:
             itemTypeID = ord(compactDescr[1])
+        elif itemTypeID in SIMPLE_ITEM_TYPE_INDICES:
+            itemTypeID = itemTypeID - 2
     if itemTypeID >= len(ITEM_TYPE_NAMES):
         raise SoftException("value is not a 'compact descriptor'")
     return itemTypeID

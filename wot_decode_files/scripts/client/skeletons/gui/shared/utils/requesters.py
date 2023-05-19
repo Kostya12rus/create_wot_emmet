@@ -1,15 +1,18 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/skeletons/gui/shared/utils/requesters.py
 import typing
 if typing.TYPE_CHECKING:
+    from typing import Dict, Generator, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
     from collections import OrderedDict
-    from gui.shared.money import Money
+    from gui.shared.gui_items.dossier.achievements.abstract import RegularAchievement
+    from gui.shared.gui_items.gui_item_economics import ItemPrice
+    from gui.shared.money import Money, DynamicMoney
+    from gui.shared.utils.requesters import InventoryRequester
     from gui.veh_post_progression.models.ext_money import ExtendedMoney
     from post_progression_common import VehicleState
     from items.vehicles import VehicleType
-    from gui.gift_system.wrappers import GiftStorageData
 
 class IRequester(object):
 
@@ -96,6 +99,9 @@ class IInventoryRequester(IRequester):
     def getItems(self, itemTypeIdx, dataIdx=None):
         raise NotImplementedError
 
+    def getC11nSerialNumber(self, itemCD):
+        raise NotImplementedError
+
     def getFreeSlots(self, vehiclesSlots):
         raise NotImplementedError
 
@@ -121,6 +127,9 @@ class IInventoryRequester(IRequester):
         raise NotImplementedError
 
     def getIventoryVehiclesCDs(self):
+        raise NotImplementedError
+
+    def getInvIDsIterator(self):
         raise NotImplementedError
 
 
@@ -155,6 +164,10 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def equipCoin(self):
+        raise NotImplementedError
+
+    @property
     def bpcoin(self):
         raise NotImplementedError
 
@@ -180,6 +193,10 @@ class IStatsRequester(IRequester):
 
     @property
     def actualBpcoin(self):
+        raise NotImplementedError
+
+    @property
+    def actualEquipCoin(self):
         raise NotImplementedError
 
     @property
@@ -355,6 +372,14 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def isSsrPlayEnabled(self):
+        raise NotImplementedError
+
+    @property
+    def comp7(self):
+        raise NotImplementedError
+
+    @property
     def tutorialsCompleted(self):
         raise NotImplementedError
 
@@ -376,6 +401,9 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     def getMoneyExt(self, vehCD):
+        raise NotImplementedError
+
+    def getDynamicMoney(self):
         raise NotImplementedError
 
     def getWeeklyVehicleCrystals(self, vehCD):
@@ -451,6 +479,9 @@ class IShopCommonStats(object):
 
     @property
     def paidDeluxeRemovalCost(self):
+        raise NotImplementedError
+
+    def getPaidModernizedRemovalCost(self, level):
         raise NotImplementedError
 
     @property
@@ -597,6 +628,10 @@ class IShopCommonStats(object):
     def demountKits(self):
         raise NotImplementedError
 
+    @property
+    def recertificationForms(self):
+        raise NotImplementedError
+
     def getPremiumPacketCost(self, days):
         raise NotImplementedError
 
@@ -621,10 +656,6 @@ class IShopCommonStats(object):
     def getEmblemCost(self, days=0):
         raise NotImplementedError
 
-    @property
-    def tradeIn(self):
-        raise NotImplementedError
-
 
 class IShopRequester(IShopCommonStats, IRequester):
 
@@ -637,8 +668,7 @@ class IShopRequester(IShopCommonStats, IRequester):
     def getTankmanCostWithDefaults(self):
         raise NotImplementedError
 
-    @property
-    def tankmanCostWithGoodyDiscount(self):
+    def getTankmanCostWithGoodyDiscount(self, vehLevel):
         raise NotImplementedError
 
     @property
@@ -692,7 +722,7 @@ class IShopRequester(IShopCommonStats, IRequester):
     def getVehicleSlotsItemPrice(self, currentSlotsCount):
         raise NotImplementedError
 
-    def getTankmanCostItemPrices(self):
+    def getTankmanCostItemPrices(self, vehLevel):
         raise NotImplementedError
 
     def getNotInShopProgressionLvlItems(self):
@@ -703,6 +733,10 @@ class IGoodiesRequester(IRequester):
 
     @property
     def goodies(self):
+        raise NotImplementedError
+
+    @property
+    def pr2ConversionResult(self):
         raise NotImplementedError
 
     def getActiveClanReserves(self):
@@ -808,6 +842,13 @@ class IBattleRoyaleRequester(IRequester):
     def topCount(self):
         raise NotImplementedError
 
+    @property
+    def testDriveExpired(self):
+        raise NotImplementedError
+
+    def getStats(self, arenaBonusType, playerDatabaseID=None):
+        raise NotImplementedError
+
 
 class IBadgesRequester(IRequester):
 
@@ -858,7 +899,7 @@ class IBlueprintsRequester(IRequester):
     def getBlueprintData(self, vehicleCD, vehicleLevel):
         raise NotImplementedError
 
-    def getBlueprintDiscount(self, vehicleCD, vehicleLevel):
+    def getBlueprintDiscount(self, vehicleCD, vehicleLevel, potentialFilledCount=0):
         raise NotImplementedError
 
     def getRequiredCountAndDiscount(self, vehicleCD, vLevel):
@@ -928,9 +969,6 @@ class ITokensRequester(IRequester):
         raise NotImplementedError
 
     def getAttemptsAfterGuaranteedRewards(self, box):
-        raise NotImplementedError
-
-    def getLootBoxesStats(self):
         raise NotImplementedError
 
     def getLootBoxes(self):
@@ -1088,23 +1126,72 @@ class IOffersRequester(IRequester):
         raise NotImplementedError
 
 
+class IBattlePassRequester(IRequester):
+
+    def getSeasonID(self):
+        raise NotImplementedError
+
+    def getState(self):
+        raise NotImplementedError
+
+    def getActiveChapterID(self):
+        raise NotImplementedError
+
+    def getPointsForVehicle(self, vehicleID, default=0):
+        raise NotImplementedError
+
+    def getChapterStats(self):
+        raise NotImplementedError
+
+    def getCurrentLevelByChapterID(self, chapterID):
+        raise NotImplementedError
+
+    def getPointsByChapterID(self, chapterID):
+        raise NotImplementedError
+
+    def getNonChapterPoints(self):
+        raise NotImplementedError
+
+
 class IGiftSystemRequester(IRequester):
 
     @property
     def isHistoryReady(self):
         raise NotImplementedError
 
-    def getGiftFromStorage(self, giftTypeID, offset=0, limit=0):
+
+class IGameRestrictionsRequester(IRequester):
+
+    @property
+    def session(self):
         raise NotImplementedError
 
-    def getGiftStorageGroupedCount(self, giftTypeID):
+    @property
+    def hasSessionLimit(self):
         raise NotImplementedError
 
-    def getGiftStorageDataCount(self, giftTypeID):
+    def getKickAt(self):
         raise NotImplementedError
 
-    def findGiftBySenderID(self, giftTypeID, receiverID):
+    @property
+    def settings(self):
         raise NotImplementedError
 
-    def sortGiftStorage(self, giftTypeID):
+
+class IResourceWellRequester(IRequester):
+
+    def getCurrentPoints(self):
+        raise NotImplementedError
+
+    def getBalance(self):
+        raise NotImplementedError
+
+    def getReward(self):
+        raise NotImplementedError
+
+
+class IArmoryYardRequester(IRequester):
+
+    @property
+    def data(self):
         raise NotImplementedError

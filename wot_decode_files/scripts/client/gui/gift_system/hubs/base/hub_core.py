@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/gift_system/hubs/base/hub_core.py
 import typing
 from Event import Event, EventManager
@@ -51,9 +51,6 @@ class IGiftEventHub(object):
     def getSettings(self):
         raise NotImplementedError
 
-    def onBootcampFinished(self):
-        pass
-
     def processHistory(self, history):
         raise NotImplementedError
 
@@ -63,12 +60,15 @@ class IGiftEventHub(object):
     def processWebState(self, webState):
         raise NotImplementedError
 
+    def reset(self):
+        pass
+
     def updateSettings(self, eventSettings):
         raise NotImplementedError
 
 
 class GiftEventBaseHub(IGiftEventHub):
-    __slots__ = ('onEventHubsCreated', '_eventManager', '_settings', '_isHistoryReceived',
+    __slots__ = ('onHubUpdated', '_eventManager', '_settings', '_isHistoryReceived',
                  '_isWebStateReceived', '_gifter', '_keeper', '_messenger', '_stamper')
 
     def __init__(self, eventSettings, isMessagesAllowed):
@@ -119,10 +119,6 @@ class GiftEventBaseHub(IGiftEventHub):
     def getSettings(self):
         return self._settings
 
-    def onBootcampFinished(self):
-        self._isHistoryReceived = False
-        self._isWebStateReceived = False
-
     def processMessage(self, incomeData):
         self._messenger.pushIncomeMessage(incomeData)
         self._keeper.processIncomeMessage(incomeData)
@@ -143,6 +139,14 @@ class GiftEventBaseHub(IGiftEventHub):
         self._isWebStateReceived = True
         self.onHubUpdated(HubUpdateReason.WEB_STATE, webState)
         return
+
+    def reset(self):
+        self._isHistoryReceived = False
+        self._isWebStateReceived = False
+        self._gifter.reset()
+        self._keeper.reset()
+        self._messenger.reset()
+        self._stamper.reset()
 
     def updateSettings(self, eventSettings):
         if self._settings == eventSettings:

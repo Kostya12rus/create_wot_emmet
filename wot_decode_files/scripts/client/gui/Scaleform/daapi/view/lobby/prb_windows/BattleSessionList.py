@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/prb_windows/BattleSessionList.py
 import typing
-from adisp import process
+from adisp import adisp_process
 from constants import PREBATTLE_TYPE
 from gui.Scaleform.daapi.view.lobby.prb_windows.PrebattlesListWindow import PrebattlesListWindow
 from gui.Scaleform.daapi.view.meta.BattleSessionListMeta import BattleSessionListMeta
@@ -63,7 +63,7 @@ class BattleSessionList(PrebattlesListWindow, BattleSessionListMeta):
     def __hideWindow(self, _):
         self.destroy()
 
-    @process
+    @adisp_process
     def __requestToJoin(self, prbID, prbType):
         yield self.prbDispatcher.join(JoinBattleSessionCtx(prbID, prbType, 'prebattle/join'))
 
@@ -91,5 +91,5 @@ class BattleSessionList(PrebattlesListWindow, BattleSessionListMeta):
         peripheryName = self.lobbyContext.getPeripheryName(battleSession.peripheryID, checkAnother=False, useShortName=True)
         if peripheryName is None:
             peripheryName = ''
-        startTimeString = formatters.getShortPrebattleStartTimeString(battleSession.startTime)
+        startTimeString = formatters.getPrebattleStartTimeString(battleSession.startTime)
         return backport.text(R.strings.prebattle.title.battleSession.clanBattle.startTime(), startTime=startTimeString, peripheryName=peripheryName, arenaName=arenaName)

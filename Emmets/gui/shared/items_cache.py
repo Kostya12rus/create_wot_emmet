@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/items_cache.py
 from Event import Event
-from adisp import async
+from adisp import adisp_async
 from debug_utils import LOG_DEBUG
 from PlayerEvents import g_playerEvents
 from gui.shared.utils.requesters import ItemsRequester
@@ -26,6 +26,7 @@ from gui.shared.utils.requesters.game_restrictions_requester import GameRestrict
 from gui.shared.utils.requesters.resource_well_requester import ResourceWellRequester
 from gui.shared.utils.requesters.session_stats_requester import SessionStatsRequester
 from gui.shared.utils.requesters.gift_system_requester import GiftSystemRequester
+from gui.shared.utils.requesters.ArmoryYardRequester import ArmoryYardRequester
 from gui.shared.compat_vehicles_cache import CompatVehiclesCache
 from helpers import dependency
 from skeletons.festivity_factory import IFestivityFactory
@@ -41,7 +42,7 @@ class ItemsCache(IItemsCache):
     def __init__(self):
         super(ItemsCache, self).__init__()
         goodies = GoodiesRequester()
-        self.__items = ItemsRequester.ItemsRequester(InventoryRequester(), StatsRequester(), DossierRequester(), goodies, ShopRequester(goodies), RecycleBinRequester(), VehicleRotationRequester(), RankedRequester(), BattleRoyaleRequester(), BadgesRequester(), EpicMetaGameRequester(), TokensRequester(), dependency.instance(IFestivityFactory).getRequester(), BlueprintsRequester(), SessionStatsRequester(), AnonymizerRequester(), BattlePassRequester(), GiftSystemRequester(), GameRestrictionsRequester(), ResourceWellRequester())
+        self.__items = ItemsRequester.ItemsRequester(InventoryRequester(), StatsRequester(), DossierRequester(), goodies, ShopRequester(goodies), RecycleBinRequester(), VehicleRotationRequester(), RankedRequester(), BattleRoyaleRequester(), BadgesRequester(), EpicMetaGameRequester(), TokensRequester(), dependency.instance(IFestivityFactory).getRequester(), ArmoryYardRequester(), BlueprintsRequester(), SessionStatsRequester(), AnonymizerRequester(), BattlePassRequester(), GiftSystemRequester(), GameRestrictionsRequester(), ResourceWellRequester())
         self.__compatVehiclesCache = CompatVehiclesCache()
         self.__waitForSync = False
         self.__syncFailed = False
@@ -78,7 +79,7 @@ class ItemsCache(IItemsCache):
     def compatVehiclesCache(self):
         return self.__compatVehiclesCache
 
-    @async
+    @adisp_async
     def update(self, updateReason, diff=None, notify=True, callback=None):
         if diff is None or self.__syncFailed:
             self.__invalidateFullData(updateReason, notify, callback)
@@ -104,7 +105,7 @@ class ItemsCache(IItemsCache):
     def _onCenterIsLongDisconnected(self, isLongDisconnected):
         self.items.dossiers.onCenterIsLongDisconnected(isLongDisconnected)
 
-    def __invalidateData(self, updateReason, diff, notify=True, callback=lambda *args: None):
+    def __invalidateData(self, updateReason, diff, notify=True, callback=(lambda *args: None)):
         self.__waitForSync = True
         wasSyncFailed = self.__syncFailed
         self.__syncFailed = False
@@ -127,7 +128,7 @@ class ItemsCache(IItemsCache):
 
         self.__items.request()(cbWrapper)
 
-    def __invalidateFullData(self, updateReason, notify=True, callback=lambda *args: None):
+    def __invalidateFullData(self, updateReason, notify=True, callback=(lambda *args: None)):
         self.__waitForSync = True
         wasSyncFailed = self.__syncFailed
         self.__syncFailed = False

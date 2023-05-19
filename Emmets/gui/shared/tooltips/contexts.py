@@ -1,11 +1,10 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/contexts.py
 from collections import namedtuple
 import typing, constants, gui, nations
 from CurrentVehicle import g_currentVehicle, g_currentPreviewVehicle
-from arena_bonus_type_caps import ARENA_BONUS_TYPE_CAPS
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import getFragmentType
 from constants import ARENA_BONUS_TYPE, ARENA_GUI_TYPE
@@ -21,7 +20,7 @@ from gui.battle_pass.battle_pass_helpers import getOfferTokenByGift
 from gui.server_events import recruit_helper
 from gui.shared.formatters import text_styles
 from gui.shared.gui_items import GUI_ITEM_TYPE
-from gui.shared.gui_items.Tankman import getTankmanSkill, SabatonTankmanSkill, TankmanSkill, OffspringTankmanSkill, YhaTankmanSkill
+from gui.shared.gui_items.Tankman import getTankmanSkill
 from gui.shared.gui_items.dossier import factories, loadDossier
 from gui.shared.items_parameters import params_helper, bonus_helper
 from gui.shared.items_parameters.formatters import NO_BONUS_SIMPLIFIED_SCHEME
@@ -29,11 +28,11 @@ from gui.shared.tooltips import TOOLTIP_COMPONENT
 from gui.shared.utils.requesters.blueprints_requester import getFragmentNationID
 from helpers import dependency
 from helpers.i18n import makeString
+from items import vehicles
 from rent_common import RENT_TYPE_TO_DURATION
 from shared_utils import findFirst, first
-from skeletons.gui.game_control import IRankedBattlesController, IBattlePassController
+from skeletons.gui.game_control import IRankedBattlesController, IBattlePassController, IComp7Controller
 from skeletons.gui.goodies import IGoodiesCache
-from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.offers import IOffersDataProvider
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
@@ -238,7 +237,7 @@ class ReferralProgramBadgeContext(BadgeContext):
 class AwardContext(DefaultContext):
     itemsCache = dependency.descriptor(IItemsCache)
 
-    def __init__(self, fieldsToExclude=None):
+    def __init__(self, fieldsToExclude=None, simplifiedOnly=True):
         super(AwardContext, self).__init__(fieldsToExclude)
         self._tmanRoleLevel = None
         self._rentExpiryTime = None
@@ -246,6 +245,7 @@ class AwardContext(DefaultContext):
         self._rentWinsLeft = None
         self._seasonRent = None
         self._isSeniority = False
+        self._simplifiedOnly = simplifiedOnly
         return
 
     def buildItem(self, intCD, tmanCrewLevel=None, rentExpiryTime=None, rentBattles=None, rentWins=None, rentSeason=None, rentCycle=None, isSeniority=False):
@@ -275,7 +275,7 @@ class AwardContext(DefaultContext):
 
     def getParamsConfiguration(self, item):
         value = super(AwardContext, self).getParamsConfiguration(item)
-        value.simplifiedOnly = True
+        value.simplifiedOnly = self._simplifiedOnly
         value.externalCrewParam = True
         return value
 
@@ -293,21 +293,39 @@ class AwardContext(DefaultContext):
 
 class ExtendedAwardContext(AwardContext):
 
-    def __init__(self, fieldsToExclude=None):
+    def __init__(self, fieldsToExclude=None, showBuyPrice=False, showUnlockPrice=False, isAwardWindow=True):
         super(ExtendedAwardContext, self).__init__(fieldsToExclude)
         self._showCrew = False
         self._showVehicleSlot = False
+        self._allModulesAvailable = False
+        self._showBuyPrice = showBuyPrice
+        self._showUnlockPrice = showUnlockPrice
+        self._isAwardWindow = isAwardWindow
 
-    def buildItem(self, intCD, tmanCrewLevel=None, rentExpiryTime=None, rentBattles=None, rentWins=None, rentSeason=None, showCrew=False, _showVehicleSlot=False):
+    def buildItem(self, intCD, tmanCrewLevel=None, rentExpiryTime=None, rentBattles=None, rentWins=None, rentSeason=None, showCrew=False, showVehicleSlot=False, allModulesAvailable=False):
         self._showCrew = showCrew
-        self._showVehicleSlot = _showVehicleSlot
+        self._showVehicleSlot = showVehicleSlot
+        self._allModulesAvailable = allModulesAvailable
         return super(ExtendedAwardContext, self).buildItem(intCD, tmanCrewLevel, rentExpiryTime, rentBattles, rentWins, rentSeason)
 
     def getParams(self):
         params = super(ExtendedAwardContext, self).getParams()
         params['showCrew'] = self._showCrew
         params['showVehicleSlot'] = self._showVehicleSlot
+        params['allModulesAvailable'] = self._allModulesAvailable
         return params
+
+    def getStatsConfiguration(self, item):
+        result = super(ExtendedAwardContext, self).getStatsConfiguration(item)
+        result.buyPrice = self._showBuyPrice
+        result.unlockPrice = self._showUnlockPrice
+        result.isAwardWindow = self._isAwardWindow
+        return result
+
+    def getStatusConfiguration(self, item):
+        result = super(ExtendedAwardContext, self).getStatusConfiguration(item)
+        result.isAwardWindow = self._isAwardWindow
+        return result
 
 
 class SeniorityAwardContext(ExtendedAwardContext):
@@ -316,6 +334,32 @@ class SeniorityAwardContext(ExtendedAwardContext):
         super(SeniorityAwardContext, self).__init__(fieldsToExclude)
         self._showCrew = True
         self._showVehicleSlot = True
+
+
+class WinbackDiscountContext(ExtendedAwardContext):
+
+    def __init__(self, fieldsToExclude=None):
+        super(WinbackDiscountContext, self).__init__(fieldsToExclude=fieldsToExclude, showBuyPrice=True, showUnlockPrice=True, isAwardWindow=False)
+        self._blueprintsFragmentsCount = 0
+        self._customPrice = None
+        self._hideStatus = True
+        self._showDiscount = True
+        return
+
+    def buildItem(self, intCD, tmanCrewLevel=None, rentExpiryTime=None, rentBattles=None, rentWins=None, rentSeason=None, showCrew=False, showVehicleSlot=False, allModulesAvailable=False, blueprintsFragmentsCount=0, customPrice=None, hideStatus=True, showDiscount=True):
+        self._blueprintsFragmentsCount = blueprintsFragmentsCount
+        self._customPrice = customPrice
+        self._hideStatus = hideStatus
+        self._showDiscount = showDiscount
+        return super(WinbackDiscountContext, self).buildItem(intCD, tmanCrewLevel, rentExpiryTime, rentBattles, rentWins, rentSeason, showCrew, showVehicleSlot, allModulesAvailable)
+
+    def getParams(self):
+        params = super(WinbackDiscountContext, self).getParams()
+        params['blueprintFragmentsCount'] = self._blueprintsFragmentsCount
+        params['customPrice'] = self._customPrice
+        params['hideStatus'] = self._hideStatus
+        params['showDiscount'] = self._showDiscount
+        return params
 
 
 class ShopContext(AwardContext):
@@ -432,17 +476,6 @@ class CarouselContext(InventoryContext):
 
     def buildItem(self, intCD):
         return self.itemsCache.items.getItemByCD(int(intCD))
-
-
-class FunRandomCarouselContext(CarouselContext):
-    __lobbyContext = dependency.descriptor(ILobbyContext)
-
-    def getStatsConfiguration(self, item):
-        value = super(FunRandomCarouselContext, self).getStatsConfiguration(item)
-        config = self.__lobbyContext.getServerSettings().getCrystalRewardConfig()
-        value.showEarnCrystals = config.isCrystalEarnPossible(ARENA_BONUS_TYPE.FUN_RANDOM)
-        value.dailyXP = ARENA_BONUS_TYPE_CAPS.checkAny(ARENA_BONUS_TYPE.FUN_RANDOM, ARENA_BONUS_TYPE_CAPS.DAILY_MULTIPLIED_XP)
-        return value
 
 
 class PotapovQuestsChainContext(ToolTipContext):
@@ -925,28 +958,12 @@ class PersonalCaseContext(ToolTipContext):
     def __init__(self, fieldsToExclude=None):
         super(PersonalCaseContext, self).__init__(TOOLTIP_COMPONENT.PERSONAL_CASE, fieldsToExclude)
 
-    def buildItem(self, skillID, tankmanID):
+    def buildItem(self, skillID, tankmanID, *args, **kwargs):
         tankman = self.itemsCache.items.getTankman(int(tankmanID))
-        skill = findFirst(lambda x: x.name == skillID, tankman.skills)
+        skill = findFirst((lambda x: x.name == skillID), tankman.skills)
         if skill is None:
             skill = getTankmanSkill(skillID, tankman=tankman)
         return skill
-
-
-class PreviewCaseContext(ToolTipContext):
-    itemsCache = dependency.descriptor(IItemsCache)
-
-    def __init__(self, fieldsToExclude=None):
-        super(PreviewCaseContext, self).__init__(TOOLTIP_COMPONENT.PERSONAL_CASE, fieldsToExclude)
-
-    def buildItem(self, skillID):
-        if skillID == 'sabaton_brotherhood':
-            return SabatonTankmanSkill('brotherhood')
-        if skillID == 'offspring_brotherhood':
-            return OffspringTankmanSkill('brotherhood')
-        if skillID == 'yha_brotherhood':
-            return YhaTankmanSkill('brotherhood')
-        return TankmanSkill(skillID)
 
 
 class CrewSkinContext(ToolTipContext):
@@ -1396,3 +1413,27 @@ class BattlePassGiftTokenContext(ToolTipContext):
 
     def getParams(self):
         return {'isOfferEnabled': self.__battlePassController.isOfferEnabled() and self.__hasOffer}
+
+
+class Comp7RoleSkillBattleContext(ToolTipContext):
+    __comp7Controller = dependency.descriptor(IComp7Controller)
+
+    def __init__(self):
+        super(Comp7RoleSkillBattleContext, self).__init__(TOOLTIP_COMPONENT.FULL_STATS)
+
+    def buildItem(self, roleName):
+        return self.__comp7Controller.getRoleEquipment(roleName)
+
+
+class Comp7RoleSkillLobbyContext(ToolTipContext):
+
+    def __init__(self):
+        super(Comp7RoleSkillLobbyContext, self).__init__(TOOLTIP_COMPONENT.HANGAR)
+
+    def buildItem(self, equipmentName):
+        cache = vehicles.g_cache
+        equipmentID = cache.equipmentIDs().get(equipmentName)
+        if equipmentID is not None:
+            return cache.equipments().get(equipmentID)
+        else:
+            return

@@ -1,9 +1,9 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/badges_controller.py
 import Event, constants
-from adisp import process
+from adisp import adisp_process
 from gui import SystemMessages
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.shared.gui_items.processors.common import BadgesSelector
@@ -43,9 +43,8 @@ class BadgesController(IBadgesController, Notifiable):
         self.__clear()
 
     def onLobbyStarted(self, ctx):
-        badges = self.itemsCache.items.getBadges()
-        self.__initCurrentBadges(badges)
-        self.__badgesProcessing(badges)
+        self.__initCurrentBadges()
+        self.__badgesProcessing()
         g_clientUpdateManager.addCallbacks({'badges': self.__updateBadges})
         self.itemsCache.onSyncCompleted += self.__onSyncCompleted
 
@@ -71,9 +70,8 @@ class BadgesController(IBadgesController, Notifiable):
         if self.__pendingBadges is not None:
             return
         else:
-            badges = self.itemsCache.items.getBadges()
-            self.__initCurrentBadges(badges)
-            self.__badgesProcessing(badges)
+            self.__initCurrentBadges()
+            self.__badgesProcessing()
             self.onUpdated()
             return
 
@@ -81,10 +79,10 @@ class BadgesController(IBadgesController, Notifiable):
         if updateReason in (CACHE_SYNC_REASON.DOSSIER_RESYNC, CACHE_SYNC_REASON.CLIENT_UPDATE):
             self.__updateBadges()
 
-    def __initCurrentBadges(self, badges):
+    def __initCurrentBadges(self):
         self.__currentSelectedPrefix = None
         self.__currentSelectedSuffix = None
-        for badge in badges.itervalues():
+        for badge in self.itemsCache.items.getBadges().itervalues():
             if badge.isSelected:
                 if badge.isPrefixLayout() and badge.isAchieved:
                     self.__currentSelectedPrefix = badge
@@ -120,21 +118,20 @@ class BadgesController(IBadgesController, Notifiable):
             self.startNotification()
             return
 
-    @process
+    @adisp_process
     def __selectOnServer(self):
         result = yield BadgesSelector(self.__pendingBadges).request()
         if result and result.userMsg:
             SystemMessages.pushMessage(result.userMsg, type=result.sysMsgType)
         else:
-            badges = self.itemsCache.items.getBadges()
-            self.__initCurrentBadges(badges)
+            self.__initCurrentBadges()
         self.__pendingBadges = None
         self.onUpdated()
         return
 
-    def __badgesProcessing(self, badges):
+    def __badgesProcessing(self):
         currentSelectedPrefix = self.__currentSelectedPrefix
-        for badge in badges.itervalues():
+        for badge in self.itemsCache.items.getBadges().itervalues():
             if self.__tutorStorage is not None and badge.isNew() and badge.isAchieved:
                 if badge.isPrefixLayout():
                     self.__tutorStorage.setValue(GLOBAL_FLAG.HAVE_NEW_BADGE, True)

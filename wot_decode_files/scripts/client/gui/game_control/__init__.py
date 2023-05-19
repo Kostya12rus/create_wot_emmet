@@ -1,10 +1,14 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/__init__.py
+from typing import TYPE_CHECKING
 import constants
-from skeletons.festivity_factory import IFestivityFactory
+from gui.shared.system_factory import collectGameControllers
 from shared_utils import CONST_CONTAINER
+from skeletons.festivity_factory import IFestivityFactory
+if TYPE_CHECKING:
+    from helpers.dependency import DependencyManager
 
 class CalendarInvokeOrigin(CONST_CONTAINER):
     ACTION = 'action'
@@ -40,12 +44,9 @@ def getGameControllersConfig(manager):
     from gui.game_control.veh_comparison_basket import VehComparisonBasket as _VehComparison
     from gui.game_control.wallet import WalletController as _Wallet
     from gui.game_control.trade_in import TradeInController as _TradeIn
-    from gui.game_control.personal_trade_in import PersonalTradeInController as _PersonalTradeIn
     from gui.game_control.quests_controller import QuestsController as _Quests
     from gui.game_control.ranked_battles_controller import RankedBattlesController as _Ranked
     from gui.game_control.hangar_loading_controller import HangarLoadingController as _HangarLoading
-    from gui.game_control.battle_royale_controller import BattleRoyaleController as _BattleRoyale
-    from gui.game_control.battle_royale_tournament_controller import BattleRoyaleTournamentController as _BRTournament
     from gui.game_control.epic_mode_controller import EpicModeController as _Epic
     from gui.game_control.bootcamp_controller import BootcampController as _Bootcamp
     from gui.game_control.hero_tank_controller import HeroTankController as _HeroTankController
@@ -68,28 +69,35 @@ def getGameControllersConfig(manager):
     from gui.game_control.mapbox_controller import MapboxController
     from gui.game_control.overlay import OverlayController as _OverlayController
     from gui.game_control.account_completion import SteamCompletionController as _SteamCompletionController, DemoAccCompletionController as _DemoAccCompletionController
+    from gui.game_control.comp7_controller import Comp7Controller as _Comp7Ctrl
     from gui.game_control.veh_post_progression_controller import VehiclePostProgressionController
-    from gui.game_control.seniority_awards_controller import SeniorityAwardsController as _SeniorityAwardsController
-    from gui.game_control.wot_plus_controller import WotPlusNotificationController
+    from gui.game_control.wot_plus_controller import WotPlusController
     from gui.game_control.telecom_rentals_controller import TelecomRentalsNotificationController
     from gui.game_control.event_battles_controller import EventBattlesController
     from gui.game_control.gift_system_controller import GiftSystemController
-    from gui.game_control.wo_controller import WOController as _WOController
-    from lunar_ny import ILunarNYController
-    from lunar_ny.lunar_ny_controller import LunarNYController
-    from skeletons import new_year as _NYInterface
-    from new_year.ny_jukebox_controller import JukeboxController as _JukeboxController
-    from new_year.celebrity.celebrity_scene_ctrl import CelebritySceneController as _CelebritySceneController
-    from new_year.craft_machine_controller import NewYearCraftMachineController as _NewYearCraftMachineController
+    from gui.game_control.seniority_awards_controller import SeniorityAwardsController as _SeniorityAwardsController
+    from gui.game_control.rts_battles_controller import RTSBattlesController
+    from gui.game_control.resource_well_controller import ResourceWellController
+    from gui.game_control.collective_goal_entry_point_controller import CollectiveGoalEntryPointController
+    from gui.game_control.collective_goal_marathons_controller import CollectiveGoalMarathonsController
+    from gui.game_control.extension_stubs.fun_random_controller import FunRandomController
+    from gui.game_control.hangar_switch_controller import HangarSpaceSwitchController
+    from gui.game_control.event_lootboxes_controller import EventLootBoxesController
+    from gui.entitlements.entitlements_controller import EntitlementsController
+    from gui.game_control.winback_controller import WinbackController
+    from gui.game_control.daily_quests_intro_presenter import DailyQuestsIntroPresenter
+    from gui.game_control.collections_controller import CollectionsSystemController
     tracker = GameStateTracker()
     tracker.init()
     manager.addInstance(_interface.IGameStateTracker, tracker, finalizer='fini')
 
-    def _config(interface, controller):
+    def _config(interface, controller, replace=False):
         tracker.addController(controller)
         controller.init()
-        manager.addInstance(interface, controller, finalizer='fini')
+        method = manager.replaceInstance if replace else manager.addInstance
+        method(interface, controller, finalizer='fini')
 
+    _config(_interface.ISeniorityAwardsController, _SeniorityAwardsController())
     _config(_interface.IFestivityController, manager.getService(IFestivityFactory).getController())
     _config(_interface.IReloginController, _Relogin())
     _config(_interface.IAOGASController, _AOGAS())
@@ -112,8 +120,8 @@ def getGameControllersConfig(manager):
     _config(_interface.IClanLockController, _ClanLocks())
     _config(_interface.IVehicleComparisonBasket, _VehComparison())
     _config(_interface.ITradeInController, _TradeIn())
-    _config(_interface.IPersonalTradeInController, _PersonalTradeIn())
     _config(_interface.IQuestsController, _Quests())
+    _config(_interface.IHangarSpaceSwitchController, HangarSpaceSwitchController())
     _config(_interface.IBootcampController, _Bootcamp())
     _config(_interface.IRankedBattlesController, _Ranked())
     _config(_interface.IEpicModeController, _Epic())
@@ -121,10 +129,7 @@ def getGameControllersConfig(manager):
     _config(_interface.IPlatoonController, _PlatoonController())
     _config(_interface.IMarathonEventsController, _MarathonEventsController())
     _config(_interface.ICalendarController, _Calendar())
-    _config(_interface.IWOController, _WOController())
     _config(_interface.IEpicBattleMetaGameController, _EpicMeta())
-    _config(_interface.IBattleRoyaleController, _BattleRoyale())
-    _config(_interface.IBattleRoyaleTournamentController, _BRTournament())
     _config(_interface.IManualController, _ManualController())
     _config(_interface.IReferralProgramController, _ReferralController())
     _config(_interface.ISpecialSoundCtrl, _SpecialSoundCtrl())
@@ -136,6 +141,8 @@ def getGameControllersConfig(manager):
         _config(_interface.IChinaController, _NoChina())
     _config(_interface.IMapboxController, MapboxController())
     _config(_interface.IEventBattlesController, EventBattlesController())
+    _config(_interface.IFunRandomController, FunRandomController())
+    _config(_interface.IComp7Controller, _Comp7Ctrl())
     _config(_interface.ISeasonsController, _Seasons())
     _config(_interface.IBadgesController, _Badges())
     _config(_interface.IAnonymizerController, _Anonymizer())
@@ -149,11 +156,16 @@ def getGameControllersConfig(manager):
     _config(_interface.ISteamCompletionController, _SteamCompletionController())
     _config(_interface.IDemoAccCompletionController, _DemoAccCompletionController())
     _config(_interface.IVehiclePostProgressionController, VehiclePostProgressionController())
-    _config(_interface.ISeniorityAwardsController, _SeniorityAwardsController())
-    _config(_interface.IWotPlusNotificationController, WotPlusNotificationController())
+    _config(_interface.IWotPlusController, WotPlusController())
     _config(_interface.ITelecomRentalsNotificationController, TelecomRentalsNotificationController())
     _config(_interface.IGiftSystemController, GiftSystemController())
-    _config(ILunarNYController, LunarNYController())
-    _config(_NYInterface.IJukeboxController, _JukeboxController())
-    _config(_NYInterface.ICelebritySceneController, _CelebritySceneController())
-    _config(_NYInterface.INewYearCraftMachineController, _NewYearCraftMachineController())
+    _config(_interface.IRTSBattlesController, RTSBattlesController())
+    _config(_interface.IResourceWellController, ResourceWellController())
+    _config(_interface.IEventLootBoxesController, EventLootBoxesController())
+    _config(_interface.IEntitlementsController, EntitlementsController())
+    _config(_interface.ICollectionsSystemController, CollectionsSystemController())
+    _config(_interface.IWinbackController, WinbackController())
+    _config(_interface.IDailyQuestIntroPresenter, DailyQuestsIntroPresenter())
+    _config(_interface.ICollectiveGoalEntryPointController, CollectiveGoalEntryPointController())
+    _config(_interface.ICollectiveGoalMarathonsController, CollectiveGoalMarathonsController())
+    collectGameControllers(_config)

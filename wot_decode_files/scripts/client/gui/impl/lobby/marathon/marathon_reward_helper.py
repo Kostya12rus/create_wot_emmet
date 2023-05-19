@@ -1,14 +1,13 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/marathon/marathon_reward_helper.py
 from collections import namedtuple
 import re
 from gui.impl.gen import R
-from gui.impl.pub.notification_commands import WindowNotificationCommand
 from gui.shared.gui_items import Vehicle
 from helpers import dependency, int2roman
-from skeletons.gui.impl import IGuiLoader, INotificationWindowController
+from skeletons.gui.impl import IGuiLoader
 from skeletons.gui.shared import IItemsCache
 SpecialRewardData = namedtuple('SpecialRewardData', ('sourceName', 'congratsSourceId',
                                                      'vehicleName', 'vehicleLvl',
@@ -27,11 +26,10 @@ def formatEliteVehicle(isElite, typeName):
 
 
 def loadedViewPredicate(layoutID):
-    return lambda view: view.layoutID == layoutID
+    return (lambda view: view.layoutID == layoutID)
 
 
-@dependency.replace_none_kwargs(notificationMgr=INotificationWindowController)
-def showMarathonReward(vehicleCD, videoShownKey, notificationMgr=None):
+def showMarathonReward(vehicleCD, videoShownKey):
     from gui.impl.lobby.marathon.marathon_reward_view import MarathonRewardViewWindow
     uiLoader = dependency.instance(IGuiLoader)
     itemsCache = dependency.instance(IItemsCache)
@@ -46,7 +44,7 @@ def showMarathonReward(vehicleCD, videoShownKey, notificationMgr=None):
             if uiLoader.windowsManager.findViews(loadedViewPredicate(viewID)):
                 return
             window = MarathonRewardViewWindow(specialRewardData)
-            notificationMgr.append(WindowNotificationCommand(window))
+            window.load()
     return
 
 

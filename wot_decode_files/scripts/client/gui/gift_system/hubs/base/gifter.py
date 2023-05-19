@@ -1,10 +1,10 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/gift_system/hubs/base/gifter.py
 import typing
 from account_helpers import isLongDisconnectedFromCenter
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from gui.gift_system.constants import GifterResponseState
 from gui.gift_system.hubs.subsystems import BaseHubSubsystem
 from gui.wgcg.gift_system.contexts import GiftSystemSendGiftCtx
@@ -21,8 +21,8 @@ class IGiftEventGifter(BaseHubSubsystem):
     def getRequestRestriction(self):
         raise NotImplementedError
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def sendGift(self, entitlementCode, receiverID, metaInfo, callback):
         raise NotImplementedError
 
@@ -57,11 +57,11 @@ class GiftEventBaseGifter(IGiftEventGifter):
                 return GifterResponseState.REQUEST_IN_PROGRESS
             return
 
-    @async
-    @process
+    @adisp_async
+    @adisp_process
     def sendGift(self, entitlementCode, receiverID, metaInfo, callback=None):
         requestCtx = GiftSystemSendGiftCtx(entitlementCode, receiverID, metaInfo)
-        responseData = yield self._doExternalRequest(requestCtx)
+        responseData = yield self.__doExternalRequest(requestCtx)
         if callback is not None:
             callback(responseData)
         return
@@ -69,14 +69,9 @@ class GiftEventBaseGifter(IGiftEventGifter):
     def _isRequestsEnabled(self):
         return self._settings.isEnabled
 
-    def _getWebResultState(self, result):
-        if result.isSuccess():
-            return GifterResponseState.WEB_SUCCESS
-        return GifterResponseState.WEB_FAILURE
-
-    @async
-    @process
-    def _doExternalRequest(self, requestCtx, callback):
+    @adisp_async
+    @adisp_process
+    def __doExternalRequest(self, requestCtx, callback):
         clientRestriction = self.getRequestRestriction()
         if clientRestriction is not None:
             callback(requestCtx.getDataObj(clientRestriction))
@@ -84,7 +79,7 @@ class GiftEventBaseGifter(IGiftEventGifter):
         else:
             self.__requestCtx = requestCtx
             result = yield self.__webController.sendRequest(requestCtx)
-            resultState = self._getWebResultState(result)
+            resultState = GifterResponseState.WEB_SUCCESS if result.isSuccess() else GifterResponseState.WEB_FAILURE
             resultData = requestCtx.getDataObj(resultState, result.data)
             self.__requestCtx = None
             callback(resultData)

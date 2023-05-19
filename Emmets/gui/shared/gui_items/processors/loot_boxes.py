@@ -1,6 +1,6 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/processors/loot_boxes.py
 import logging, BigWorld
 from gui import SystemMessages
@@ -31,7 +31,7 @@ class LootBoxOpenProcessor(Processor):
 
     def _request(self, callback):
         _logger.debug('Make server request to open loot box by id: %r, count: %d', self.__lootBox, self.__count)
-        BigWorld.player().tokens.openLootBox(self.__lootBox.getID(), self.__count, lambda code, errStr, ext: self._response(code, callback, ctx=ext, errStr=errStr))
+        BigWorld.player().tokens.openLootBox(self.__lootBox.getID(), self.__count, (lambda code, errStr, ext: self._response(code, callback, ctx=ext, errStr=errStr)))
 
     def __preformatCompensationValue(self, rewardsList):
         for rewards in rewardsList:
@@ -68,4 +68,4 @@ class LootBoxGetInfoProcessor(Processor):
     def _request(self, callback):
         lootboxIDs = [ item.getID() for item in self.__lootBoxes ]
         _logger.debug('Make server request to get info about loot boxes by ids %r', lootboxIDs)
-        BigWorld.player().tokens.getInfoLootBox(lootboxIDs, lambda code, errStr, ext: self._response(code, callback, ctx=ext, errStr=errStr))
+        BigWorld.player().tokens.getInfoLootBox(lootboxIDs, (lambda code, errStr, ext: self._response(code, callback, ctx=ext, errStr=errStr)))

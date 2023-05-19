@@ -1,17 +1,15 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/pub/fullscreen_manager.py
 import logging, weakref, typing
 from frameworks.state_machine import SingleStateObserver
 from frameworks.wulf import WindowLayer, WindowStatus
-from gui.impl.gen import R
 from helpers import dependency
 from skeletons.gameplay import GameplayStateID, IGameplayLogic
 from skeletons.gui.impl import IGuiLoader, IFullscreenManager, INotificationWindowController
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.framework.entities.sf_window import SFWindow
-from gui.impl.lobby.platoon.view.platoon_welcome_view import SelectionWindow
 if typing.TYPE_CHECKING:
     from frameworks.wulf import Window
 _logger = logging.getLogger(__name__)
@@ -24,9 +22,6 @@ class FullscreenManager(IFullscreenManager):
     __gui = dependency.descriptor(IGuiLoader)
     __gameplay = dependency.descriptor(IGameplayLogic)
     __notificationMgr = dependency.descriptor(INotificationWindowController)
-    _NOT_BRAKING_VIEWS = (
-     R.views.lobby.new_year.views.NyLootBoxMainView(),
-     R.views.lobby.loot_box.views.loot_box_entry_video_view.LootBoxEntryVideoView())
 
     def __init__(self):
         super(FullscreenManager, self).__init__()
@@ -62,12 +57,9 @@ class FullscreenManager(IFullscreenManager):
         windowsToClose = []
         for window in windows:
             if window != newWindow and (window.layer > layer or window.layer == layer) and not self.__isParent(window, newWindow) and self.__isAllowed(newWindow):
-                if window.canBeClosed():
-                    windowsToClose.append(window)
-                else:
-                    _logger.info("Window %r hasn't been destroyed by opening window %r", window, newWindow)
+                windowsToClose.append(window)
 
-        if (not windows or windowsToClose) and not self.__notificationMgr.hasWindow(newWindow) and self.__requiresPostpone(newWindow):
+        if (not windows or windowsToClose) and not self.__notificationMgr.hasWindow(newWindow) and self.__isAllowed(newWindow) and not self.__notificationMgr.isExecuting():
             _logger.info('Notification queue postpones by opening window %r', newWindow)
             self.__notificationMgr.postponeActive()
         for window in windowsToClose:
@@ -88,14 +80,6 @@ class FullscreenManager(IFullscreenManager):
         return window.layer == WindowLayer.FULLSCREEN_WINDOW and window.windowStatus in (
          WindowStatus.LOADING, WindowStatus.LOADED)
 
-    @classmethod
-    def __requiresPostpone(cls, window):
-        if not cls.__isAllowed(window):
-            return False
-        if window.content and window.content.layoutID in cls._NOT_BRAKING_VIEWS:
-            return False
-        return True
-
     @staticmethod
     def __isAllowed(window):
         if isinstance(window, SFWindow):
@@ -104,8 +88,6 @@ class FullscreenManager(IFullscreenManager):
                 if alias.startswith(priority):
                     return False
 
-        if isinstance(window, SelectionWindow):
-            return False
         return True
 
 

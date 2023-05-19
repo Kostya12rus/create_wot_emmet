@@ -1,13 +1,17 @@
-# uncompyle6 version 3.8.0
-# Python bytecode 2.7 (62211)
-# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
+# uncompyle6 version 3.9.0
+# Python bytecode version base 2.7 (62211)
+# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/components/vehicle_custom_effects_settings.py
 import CGF, Vehicular
-from CustomEffectManager import CustomEffectManager
-from cgf_script.component_meta_class import CGFComponent, ComponentProperty, CGFMetaTypes
+from cgf_script.component_meta_class import ComponentProperty, CGFMetaTypes, registerComponent
 from cgf_script.managers_registrator import onAddedQuery, autoregister
+from constants import IS_CGF_DUMP
+if not IS_CGF_DUMP:
+    from CustomEffectManager import CustomEffectManager
 
-class VehicleCustomEffectsSettings(CGFComponent):
+@registerComponent
+class VehicleCustomEffectsSettings(object):
+    domain = CGF.DomainOption.DomainClient
     category = 'Vehicle'
     editorTitle = 'Vehicle Custom Effects Settings'
     disableDefaultChassis = ComponentProperty(type=CGFMetaTypes.BOOL, value=False, editorName='Disable Default Chassis Effects')
@@ -16,7 +20,7 @@ class VehicleCustomEffectsSettings(CGFComponent):
     additionalEngineSoundNPC = ComponentProperty(type=CGFMetaTypes.STRING, value='', editorName='Additional Engine Sound NPC')
 
 
-@autoregister(presentInAllWorlds=True, presentInEditor=True)
+@autoregister(presentInAllWorlds=True, domain=CGF.DomainOption.DomainClient | CGF.DomainOption.DomainEditor)
 class VehicleCustomEffectsManager(CGF.ComponentManager):
 
     @onAddedQuery(VehicleCustomEffectsSettings, CGF.GameObject)
