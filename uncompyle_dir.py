@@ -27,7 +27,6 @@ def decompile_dir(dir_wot_pak: pathlib.Path, count_thread=10):
 def remove_pyc_file(dir_wot_pak: pathlib.Path):
     pyc_files = [os.path.join(dir_path, filename) for dir_path, _, filenames in os.walk(dir_wot_pak) for filename in filenames if filename.endswith('.pyc')]
     progress = tqdm(pyc_files, f"Удаление файлов .pyc", total=len(pyc_files), unit='файлов')
-    for filenames in progress.iterable:
+    for filenames in progress:
         os.remove(filenames)
-        progress.update()
     progress.close()
