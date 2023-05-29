@@ -2,18 +2,14 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/messages/vehicle_errors.py
-import typing
 from debug_utils import LOG_DEBUG
 from gui.Scaleform.daapi.view.battle.shared.messages import fading_messages
-if typing.TYPE_CHECKING:
-    from items.vehicles import VehicleDescriptor
 
 class VehicleErrorMessages(fading_messages.FadingMessages):
 
     def __init__(self):
         super(VehicleErrorMessages, self).__init__('VehicleErrorsPanel', 'vehicle_errors_panel.xml')
         self.__ignoreKeys = ()
-        self._keyReplacers = {'cantShootNoAmmo': self.__noAmmoReplacer}
 
     @property
     def ignoreKeys(self):
@@ -42,13 +38,4 @@ class VehicleErrorMessages(fading_messages.FadingMessages):
 
     def __onShowVehicleErrorByKey(self, key, args=None, extra=None):
         if key not in self.__ignoreKeys:
-            if key in self._keyReplacers:
-                key = self._keyReplacers[key](key, args)
             self.showMessage(key, args, extra)
-
-    @staticmethod
-    def __noAmmoReplacer(key, args):
-        typeDescriptor = args['typeDescriptor']
-        if typeDescriptor.isFlamethrower:
-            key = 'cantShootNoFlameAmmo'
-        return key

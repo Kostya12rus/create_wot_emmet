@@ -6,7 +6,7 @@ import zipfile
 import shutil
 import uncompyle_dir
 
-# GameVersion Lesta v.1.20.1.0 #1636 1932638
+# GameVersion Wargaming v.1.20.1.1 #163 1922147
 
 thread_decode = 25  # Самое лучшее значение 20, чем выше, тем больше нагрузка на ЦП
 # Процесор 4 ядра 8 потоков

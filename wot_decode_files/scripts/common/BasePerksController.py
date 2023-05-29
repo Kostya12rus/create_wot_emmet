@@ -223,12 +223,13 @@ class BasePerksController(object):
                     if perkID not in changedPerks:
                         continue
                     self.dropAllPerkModifiers(scope, perkID)
-                    isReadyForUse = self._planHolder.isReadyForUse
-                    if isReadyForUse:
-                        plan = self._planHolder.getPlan(scope, perkID)
+                    plan = self._planHolder.getPlan(scope, perkID)
+                    if plan is not None:
                         plan.stop()
                         plan.setContextArgs(perkData.args)
                         plan.start()
+                    else:
+                        LOG_WARNING(('[PerksController] No plan for perkID:{0} vehicleID:{1} after applySelectedSetup ').format(perkID, self.vehicleID))
 
         self._scopedPerks = newScopedPerks
         return

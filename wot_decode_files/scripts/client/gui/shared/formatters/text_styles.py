@@ -19,7 +19,6 @@ __all__ = (
  'statusAttention',
  'middleTitle',
  'highTitle',
- 'highTitleRegular',
  'highTitleAccented',
  'highTitleDisabled',
  'disabled',
@@ -153,10 +152,6 @@ def middleBonusTitle(text):
 
 def highTitle(text):
     return _formatText('highTitle', text)
-
-
-def highTitleRegular(text):
-    return _formatText('highTitleRegular', text)
 
 
 def highTitleAccented(text):

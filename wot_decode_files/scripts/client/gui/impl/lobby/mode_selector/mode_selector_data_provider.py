@@ -86,6 +86,11 @@ class ModeSelectorDataProvider(IGlobalListener):
         else:
             return
 
+    def forceRefresh(self):
+        self._clearItems()
+        self.__createItems(self.__getItems())
+        self._updateItems()
+
     def onPrbEntitySwitched(self):
         items = self.__getItems()
         self.__createItems(items)
@@ -96,12 +101,7 @@ class ModeSelectorDataProvider(IGlobalListener):
         self._updateItems()
 
     def _onCardChangeHandler(self, *args, **kwargs):
-        self._updateItemsForce()
-
-    def _updateItemsForce(self):
-        self._clearItems()
-        self.__createItems(self.__getItems())
-        self._updateItems()
+        self.forceRefresh()
 
     def _clearItems(self):
         for key in self._items:

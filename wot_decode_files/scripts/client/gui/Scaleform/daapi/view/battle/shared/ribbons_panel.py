@@ -83,7 +83,9 @@ _BATTLE_EVENTS_SETTINGS_TO_BATTLE_EFFICIENCY_TYPES = {BATTLE_EVENTS.ENEMY_HP_DAM
    BATTLE_EVENTS.ENEMIES_STUN: (
                               _BET.STUN,), 
    BATTLE_EVENTS.ENEMY_ASSIST_STUN: (
-                                   _BET.ASSIST_STUN,)}
+                                   _BET.ASSIST_STUN,), 
+   BATTLE_EVENTS.CREW_PERKS: (
+                            _BET.PERK,)}
 
 def _getVehicleData(arenaDP, vehArenaID):
     vTypeInfoVO = arenaDP.getVehicleInfo(vehArenaID).vehicleType

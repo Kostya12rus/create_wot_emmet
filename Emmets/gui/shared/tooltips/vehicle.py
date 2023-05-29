@@ -655,10 +655,10 @@ class CommonStatsBlockConstructor(VehicleTooltipBlockConstructor):
                                       TURBOSHAFT_SPEED_MODE_SPEED, 'chassisRotationSpeed'), 
        VEHICLE_CLASS_NAME.HEAVY_TANK: (
                                      'avgDamage', 'avgPiercingPower', 'hullArmor', 'turretArmor', DUAL_GUN_CHARGE_TIME), 
-       VEHICLE_CLASS_NAME.SPG: ('avgDamage', 'stunMaxDuration', 'reloadTimeSecs', 'aimingTime', 'explosionRadius'), 
+       VEHICLE_CLASS_NAME.SPG: ('avgDamage', 'stunMinDuration', 'stunMaxDuration', 'reloadTimeSecs', 'aimingTime',
+ 'explosionRadius'), 
        VEHICLE_CLASS_NAME.AT_SPG: ('avgPiercingPower', 'shotDispersionAngle', 'avgDamagePerMinute', 'speedLimits', 'chassisRotationSpeed',
  'switchTime'), 
-       'roles': {constants.ROLE_TYPE.SPG_FLAME: ('avgDamage', 'flameMaxDistance', 'stunMaxDuration', 'enginePowerPerTon', 'speedLimits')}, 
        'default': ('speedLimits', 'enginePower', 'chassisRotationSpeed')}
     __CONDITIONAL_PARAMS = (
      (
@@ -696,11 +696,7 @@ class CommonStatsBlockConstructor(VehicleTooltipBlockConstructor):
         return params
 
     def __getShownParameters(self, paramsDict):
-        if self.vehicle.role in self.PARAMS['roles']:
-            paramsToDisplay = self.PARAMS['roles'][self.vehicle.role]
-        else:
-            paramsToDisplay = self.PARAMS.get(self.vehicle.type, 'default')
-        return chain([ p for p in paramsToDisplay if p in paramsDict ], [ p for group in self.__CONDITIONAL_PARAMS if group[0] in paramsDict for p in group[1] ])
+        return chain([ p for p in self.PARAMS.get(self.vehicle.type, 'default') if p in paramsDict ], [ p for group in self.__CONDITIONAL_PARAMS if group[0] in paramsDict for p in group[1] ])
 
 
 class VehicleAdditionalItems(VehicleTooltipBlockConstructor):

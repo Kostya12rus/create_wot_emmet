@@ -61,7 +61,7 @@ class ConfirmedItem(object):
     def getOptItemDescKey(self):
         if self.canUseDemountKit():
             return 'itemWithDemountKit'
-        return 'item'
+        return 'itemDeluxe'
 
     def getLevel(self):
         return 0

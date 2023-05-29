@@ -91,10 +91,6 @@ class EmblemSlot(BaseSlot):
     def applyToFabric(self):
         return self.descriptor.applyToFabric
 
-    @property
-    def planeProjection(self):
-        return self.descriptor.planeProjection
-
 
 class BaseCustomizationSlot(BaseSlot):
 

@@ -79,6 +79,7 @@ def getDefaultBonusPackersMap():
        Currency.CRYSTAL: simpleBonusPacker, 
        Currency.GOLD: simpleBonusPacker, 
        Currency.BPCOIN: simpleBonusPacker, 
+       Currency.EQUIP_COIN: simpleBonusPacker, 
        constants.PREMIUM_ENTITLEMENTS.BASIC: simpleBonusPacker, 
        constants.PREMIUM_ENTITLEMENTS.PLUS: simpleBonusPacker, 
        'currencies': CurrenciesBonusUIPacker, 
@@ -193,7 +194,7 @@ class TokenBonusUIPacker(BaseBonusUIPacker):
     @classmethod
     def _getToolTip(cls, bonus):
         bonusTokens = bonus.getTokens()
-        tooltipPackers = cls.__getTooltipsPackers()
+        tooltipPackers = cls._getTooltipsPackers()
         result = []
         for tokenID, _ in bonusTokens.iteritems():
             complexToken = parseComplexToken(tokenID)
@@ -241,7 +242,7 @@ class TokenBonusUIPacker(BaseBonusUIPacker):
         return ''
 
     @classmethod
-    def __getTooltipsPackers(cls):
+    def _getTooltipsPackers(cls):
         return {BATTLE_BONUS_X5_TOKEN: TokenBonusFormatter.getBattleBonusX5Tooltip, 
            COMPLEX_TOKEN: cls.__getComplexToolTip, 
            YEAR_POINTS_TOKEN: cls.__getRankedPointToolTip}
@@ -278,10 +279,7 @@ class TokenBonusUIPacker(BaseBonusUIPacker):
     def __getComplexToolTip(cls, complexToken):
         webCache = cls._eventsCache.prefetcher
         userName = i18n.makeString(webCache.getTokenInfo(complexToken.styleID))
-        description = webCache.getTokenDetailedInfo(complexToken.styleID)
-        if description is None:
-            description = backport.text(R.strings.tooltips.quests.bonuses.token.body())
-        tooltip = makeTooltip(userName, description if description else None)
+        tooltip = makeTooltip(i18n.makeString(TOOLTIPS.QUESTS_BONUSES_TOKEN_HEADER, userName=userName), i18n.makeString(TOOLTIPS.QUESTS_BONUSES_TOKEN_BODY))
         return tooltip
 
     @classmethod

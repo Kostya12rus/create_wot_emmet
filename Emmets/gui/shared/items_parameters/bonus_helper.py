@@ -32,7 +32,9 @@ def isSituationalBonus(bonusName, bonusType='', paramName=''):
     return bonusName in _SITUATIONAL_BONUSES
 
 
-_SITUATIONAL_BONUSES = ('camouflageNet', 'stereoscope', 'removedRpmLimiter')
+_SITUATIONAL_BONUSES = ('camouflageNet', 'stereoscope', 'removedRpmLimiter', 'radioman_inventor',
+                        'radioman_retransmitter')
+CREW_MASTERY_BONUSES = ('radioman_inventor', 'radioman_retransmitter')
 _PARTIALLY_SITUATIONAL_BONUSES = {'lastEffortBattleBooster': KPI.Name.RADIOMAN_ACTIVITY_TIME_AFTER_VEHICLE_DESTROY}
 
 def _removeCamouflageModifier(vehicle, bonusID):

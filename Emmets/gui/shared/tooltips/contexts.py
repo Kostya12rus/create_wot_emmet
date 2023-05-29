@@ -237,7 +237,7 @@ class ReferralProgramBadgeContext(BadgeContext):
 class AwardContext(DefaultContext):
     itemsCache = dependency.descriptor(IItemsCache)
 
-    def __init__(self, fieldsToExclude=None, simplifiedOnly=True):
+    def __init__(self, fieldsToExclude=None):
         super(AwardContext, self).__init__(fieldsToExclude)
         self._tmanRoleLevel = None
         self._rentExpiryTime = None
@@ -245,7 +245,6 @@ class AwardContext(DefaultContext):
         self._rentWinsLeft = None
         self._seasonRent = None
         self._isSeniority = False
-        self._simplifiedOnly = simplifiedOnly
         return
 
     def buildItem(self, intCD, tmanCrewLevel=None, rentExpiryTime=None, rentBattles=None, rentWins=None, rentSeason=None, rentCycle=None, isSeniority=False):
@@ -275,7 +274,7 @@ class AwardContext(DefaultContext):
 
     def getParamsConfiguration(self, item):
         value = super(AwardContext, self).getParamsConfiguration(item)
-        value.simplifiedOnly = self._simplifiedOnly
+        value.simplifiedOnly = True
         value.externalCrewParam = True
         return value
 

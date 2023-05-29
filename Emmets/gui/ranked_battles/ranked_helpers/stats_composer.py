@@ -20,17 +20,20 @@ class RankedBattlesStatsComposer(object):
 
     @property
     def amountBattles(self):
-        if self.divisionsStats is not None:
-            return sum(division.get('battles', 0) for division in self.divisionsStats.itervalues())
-        else:
-            return self.__getSeasonDossier().getBattlesCount()
+        return self.__getSeasonDossier().getBattlesCount()
 
     @property
     def amountBattlesInLeagues(self):
-        if self.divisionsStats is not None and self.__settings is not None:
-            return sum(self.divisionsStats.get(divisionID, {}).get('battles', 0) for divisionID, division in self.__settings.divisions.iteritems() if division['isLeague'])
+        result = 0
+        if self.divisionsStats is not None and self.__settings is not None and self.amountBattles is not None:
+            for divisionID, division in self.__settings.divisions.iteritems():
+                if not division['isLeague']:
+                    result += self.divisionsStats.get(divisionID, {}).get('battles', 0)
+
+            result = max(0, self.amountBattles - result)
         else:
-            return
+            result = None
+        return result
 
     @property
     def amountSteps(self):
@@ -76,11 +79,7 @@ class RankedBattlesStatsComposer(object):
 
     @property
     def currentSeasonEfficiency(self):
-        if self.amountBattles:
-            efficiency = float(self.__getSeasonDossier().getStepsCount()) / self.amountBattles
-        else:
-            efficiency = None
-        return EfficiencyStamp(efficiency, time.time())
+        return EfficiencyStamp(self.__getSeasonDossier().getStepsEfficiency(), time.time())
 
     @property
     def currentSeasonEfficiencyDiff(self):

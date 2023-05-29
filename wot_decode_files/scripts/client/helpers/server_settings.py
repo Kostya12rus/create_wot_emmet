@@ -350,13 +350,12 @@ class RankedBattlesConfig(namedtuple('RankedBattlesConfig', ('isEnabled', 'perip
  'divisions', 'bonusBattlesMultiplier', 'expectedSeasons', 'yearAwardsMarks',
  'rankGroups', 'qualificationBattles', 'yearLBSize', 'leaguesBonusBattles',
  'forbiddenClassTags', 'forbiddenVehTypes', 'shopState', 'yearLBState',
- 'yearRewardState', 'leagueRewardEnabled', 'seasonRatingPageUrl',
- 'yearRatingPageUrl', 'infoPageUrl', 'introPageUrl',
- 'seasonGapPageUrl', 'shopPageUrl', 'hasSpecialSeason'))):
+ 'yearRewardState', 'seasonRatingPageUrl', 'yearRatingPageUrl', 'infoPageUrl',
+ 'introPageUrl', 'seasonGapPageUrl', 'shopPageUrl', 'hasSpecialSeason'))):
     __slots__ = ()
 
     def __new__(cls, **kwargs):
-        defaults = dict(isEnabled=False, peripheryIDs={}, winnerRankChanges=(), loserRankChanges=(), minXP=0, unburnableRanks={}, unburnableStepRanks={}, minLevel=0, maxLevel=0, accRanks=0, accSteps=(), cycleFinishSeconds=0, primeTimes={}, seasons={}, cycleTimes=(), shields={}, divisions={}, bonusBattlesMultiplier=0, expectedSeasons=0, yearAwardsMarks=(), rankGroups=(), qualificationBattles=0, yearLBSize=0, leaguesBonusBattles=(), forbiddenClassTags=(), forbiddenVehTypes=(), shopState=SwitchState.DISABLED, yearLBState=SwitchState.DISABLED, yearRewardState=SwitchState.ENABLED, leagueRewardEnabled=True, seasonRatingPageUrl='', yearRatingPageUrl='', infoPageUrl='', introPageUrl='', seasonGapPageUrl='', shopPageUrl='', hasSpecialSeason=False)
+        defaults = dict(isEnabled=False, peripheryIDs={}, winnerRankChanges=(), loserRankChanges=(), minXP=0, unburnableRanks={}, unburnableStepRanks={}, minLevel=0, maxLevel=0, accRanks=0, accSteps=(), cycleFinishSeconds=0, primeTimes={}, seasons={}, cycleTimes=(), shields={}, divisions={}, bonusBattlesMultiplier=0, expectedSeasons=0, yearAwardsMarks=(), rankGroups=(), qualificationBattles=0, yearLBSize=0, leaguesBonusBattles=(), forbiddenClassTags=(), forbiddenVehTypes=(), shopState=SwitchState.DISABLED, yearLBState=SwitchState.DISABLED, yearRewardState=SwitchState.ENABLED, seasonRatingPageUrl='', yearRatingPageUrl='', infoPageUrl='', introPageUrl='', seasonGapPageUrl='', shopPageUrl='', hasSpecialSeason=False)
         defaults.update(kwargs)
         return super(RankedBattlesConfig, cls).__new__(cls, **defaults)
 
@@ -957,55 +956,6 @@ class _BattleMattersConfig(namedtuple('_BattleMattersConfig', (
         return cls()
 
 
-class _CollectiveGoalEntryPointConfig(namedtuple('_CollectiveGoalConfig', (
- 'isEnabled',
- 'startTime',
- 'finishTime',
- 'marathonPrefix',
- 'hermodChannelName',
- 'marathonName',
- 'goalType',
- 'goalDescription',
- 'rulesCaption'))):
-    __slots__ = ()
-
-    def __new__(cls, **kwargs):
-        defaults = dict(isEnabled=False, startTime=None, finishTime=None, marathonPrefix=None, hermodChannelName=None, marathonName=None, goalType=None, goalDescription=None, rulesCaption=None)
-        defaults.update(kwargs)
-        return super(_CollectiveGoalEntryPointConfig, cls).__new__(cls, **defaults)
-
-    def replace(self, data):
-        allowedFields = self._fields
-        dataToUpdate = dict((k, v) for k, v in data.iteritems() if k in allowedFields)
-        return self._replace(**dataToUpdate)
-
-    @classmethod
-    def defaults(cls):
-        return cls()
-
-
-class _CollectiveGoalMarathonsConfig(namedtuple('_CollectiveGoalMarathonsConfig', (
- 'isEnabled',
- 'startTime',
- 'finishTime',
- 'url'))):
-    __slots__ = ()
-
-    def __new__(cls, **kwargs):
-        defaults = dict(isEnabled=False, startTime=None, finishTime=None, url=None)
-        defaults.update(kwargs)
-        return super(_CollectiveGoalMarathonsConfig, cls).__new__(cls, **defaults)
-
-    def replace(self, data):
-        allowedFields = self._fields
-        dataToUpdate = dict((k, v) for k, v in data.iteritems() if k in allowedFields)
-        return self._replace(**dataToUpdate)
-
-    @classmethod
-    def defaults(cls):
-        return cls()
-
-
 class PeripheryRoutingConfig(namedtuple('_PeripheryRoutingConfig', ('isEnabled', 'peripheryRoutingGroups'))):
     __slots__ = ()
 
@@ -1199,30 +1149,6 @@ class _EventLootBoxesConfig(object):
          self.__startDateInUTC, self.__finishDateInUTC)
 
 
-class ArmoryYardConfig(namedtuple('ArmoryYardConfig', (
- 'isEnabled', 'isPaused', 'seasons', 'animations', 'cycleTimes', 'tokenBase', 'receivedRewardTokenPostfix',
- 'stageTokenPostfix', 'currencyTokenPostfix', 'tokenCost', 'rewards', 'introVideoLink', 'infoPageLink',
- 'activeHoursCountdown', 'announcementCountdown'))):
-    __slots__ = ()
-
-    def __new__(cls, **kwargs):
-        defaults = dict(isEnabled=False, isPaused=False, seasons={}, animations={}, cycleTimes={}, tokenBase='', receivedRewardTokenPostfix='', stageTokenPostfix='', currencyTokenPostfix='', tokenCost={}, rewards={}, introVideoLink='', infoPageLink='', activeHoursCountdown=0, announcementCountdown=0)
-        defaults.update(kwargs)
-        return super(ArmoryYardConfig, cls).__new__(cls, **defaults)
-
-    def asDict(self):
-        return self._asdict()
-
-    def replace(self, data):
-        allowedFields = self._fields
-        dataToUpdate = dict((k, v) for k, v in data.iteritems() if k in allowedFields)
-        return self._replace(**dataToUpdate)
-
-    @classmethod
-    def defaults(cls):
-        return cls()
-
-
 class ServerSettings(object):
 
     def __init__(self, serverSettings):
@@ -1260,8 +1186,6 @@ class ServerSettings(object):
         self.__giftSystemConfig = GiftSystemConfig()
         self.__resourceWellConfig = ResourceWellConfig()
         self.__battleMattersConfig = _BattleMattersConfig()
-        self.__collectiveGoalEntryPointConfig = _CollectiveGoalEntryPointConfig()
-        self.__collectiveGoalMarathonsConfig = _CollectiveGoalMarathonsConfig()
         self.__peripheryRoutingConfig = PeripheryRoutingConfig()
         self.__comp7Config = Comp7Config()
         self.__comp7RanksConfig = Comp7PrestigeRanksConfig()
@@ -1375,10 +1299,6 @@ class ServerSettings(object):
             self.__resourceWellConfig = makeTupleByDict(ResourceWellConfig, self.__serverSettings[Configs.RESOURCE_WELL.value])
         if Configs.BATTLE_MATTERS_CONFIG.value in self.__serverSettings:
             self.__battleMattersConfig = makeTupleByDict(_BattleMattersConfig, self.__serverSettings[Configs.BATTLE_MATTERS_CONFIG.value])
-        if Configs.COLLECTIVE_GOAL_ENTRY_POINT_CONFIG.value in self.__serverSettings:
-            self.__collectiveGoalEntryPointConfig = makeTupleByDict(_CollectiveGoalEntryPointConfig, self.__serverSettings[Configs.COLLECTIVE_GOAL_ENTRY_POINT_CONFIG.value])
-        if Configs.COLLECTIVE_GOAL_MARATHONS_CONFIG.value in self.__serverSettings:
-            self.__collectiveGoalMarathonsConfig = makeTupleByDict(_CollectiveGoalMarathonsConfig, self.__serverSettings[Configs.COLLECTIVE_GOAL_MARATHONS_CONFIG.value])
         if Configs.PERIPHERY_ROUTING_CONFIG.value in self.__serverSettings:
             self.__peripheryRoutingConfig = makeTupleByDict(PeripheryRoutingConfig, self.__serverSettings[Configs.PERIPHERY_ROUTING_CONFIG.value])
         if Configs.COMP7_CONFIG.value in self.__serverSettings:
@@ -1412,10 +1332,6 @@ class ServerSettings(object):
             self.__winbackConfig = makeTupleByDict(WinbackConfig, self.__serverSettings[Configs.WINBACK_CONFIG.value])
         else:
             self.__winbackConfig = WinbackConfig.defaults()
-        if Configs.ARMORY_YARD_CONFIG.value in self.__serverSettings:
-            self.__armoryYardSettings = makeTupleByDict(ArmoryYardConfig, self.__serverSettings[Configs.ARMORY_YARD_CONFIG.value])
-        else:
-            self.__armoryYardSettings = ArmoryYardConfig.defaults()
         self.onServerSettingsChange(serverSettings)
 
     def update(self, serverSettingsDiff):
@@ -1515,12 +1431,6 @@ class ServerSettings(object):
             self.__serverSettings[key] = serverSettingsDiff[key]
         if Configs.WINBACK_CONFIG.value in serverSettingsDiff:
             self.__updateWinbackConfig(serverSettingsDiff)
-        if Configs.COLLECTIVE_GOAL_ENTRY_POINT_CONFIG.value in serverSettingsDiff:
-            self.__updateCollectiveGoalEntryPointConfig(serverSettingsDiff)
-        if Configs.COLLECTIVE_GOAL_MARATHONS_CONFIG.value in serverSettingsDiff:
-            self.__updateCollectiveGoalMarathonsConfig(serverSettingsDiff)
-        if Configs.ARMORY_YARD_CONFIG.value in serverSettingsDiff:
-            self.__updateArmoryYard(serverSettingsDiff)
         self.__updatePersonalReserves(serverSettingsDiff)
         self.__updateEventLootBoxesConfig(serverSettingsDiff)
         if Configs.COLLECTIONS_CONFIG.value in serverSettingsDiff:
@@ -1662,14 +1572,6 @@ class ServerSettings(object):
         return self.__battleMattersConfig
 
     @property
-    def collectiveGoalEntryPointConfig(self):
-        return self.__collectiveGoalEntryPointConfig
-
-    @property
-    def collectiveGoalMarathonsConfig(self):
-        return self.__collectiveGoalMarathonsConfig
-
-    @property
     def peripheryRoutingConfig(self):
         return self.__peripheryRoutingConfig
 
@@ -1688,10 +1590,6 @@ class ServerSettings(object):
     @property
     def winbackConfig(self):
         return self.__winbackConfig
-
-    @property
-    def armoryYard(self):
-        return self.__armoryYardSettings
 
     def isEpicBattleEnabled(self):
         return self.epicBattles.isEnabled
@@ -2137,12 +2035,6 @@ class ServerSettings(object):
     def __updateBattleMatters(self, targetSettings):
         self.__battleMattersConfig = self.__battleMattersConfig.replace(targetSettings[Configs.BATTLE_MATTERS_CONFIG.value])
 
-    def __updateCollectiveGoalEntryPointConfig(self, diff):
-        self.__collectiveGoalEntryPointConfig = self.__collectiveGoalEntryPointConfig.replace(diff[Configs.COLLECTIVE_GOAL_ENTRY_POINT_CONFIG.value])
-
-    def __updateCollectiveGoalMarathonsConfig(self, diff):
-        self.__collectiveGoalMarathonsConfig = self.__collectiveGoalMarathonsConfig.replace(diff[Configs.COLLECTIVE_GOAL_MARATHONS_CONFIG.value])
-
     def __updatePeripheryRoutingConfig(self, diff):
         self.__peripheryRoutingConfig = self.__peripheryRoutingConfig.replace(diff[Configs.PERIPHERY_ROUTING_CONFIG.value])
 
@@ -2174,9 +2066,6 @@ class ServerSettings(object):
 
     def __updateWinbackConfig(self, diff):
         self.__winbackConfig = self.__winbackConfig.replace(diff[Configs.WINBACK_CONFIG.value])
-
-    def __updateArmoryYard(self, diff):
-        self.__armoryYardSettings = self.__armoryYardSettings.replace(diff[Configs.ARMORY_YARD_CONFIG.value])
 
 
 def serverSettingsChangeListener(*configKeys):

@@ -588,9 +588,6 @@ class Equipment(Artefact):
         if 'builtin' not in self.tags:
             inventoryCallback(self.compactDescr)
 
-    def isActivatable(self):
-        return False
-
     def doesDependOnOptionalDevice(self):
         return False
 
@@ -672,24 +669,7 @@ class RotationMechanisms(StaticOptionalDevice):
         self.wheelCenterRotationFwdSpeed = LevelsFactor.readTypelessLevelsFactor(xmlCtx, section, 'wheelCenterRotationFwdSpeed')
 
 
-class ActivatableEquipment(Equipment):
-    __slots__ = ('activeSeconds', 'activeDamageFactor')
-
-    def __init__(self):
-        super(ActivatableEquipment, self).__init__()
-        self.activeSeconds = None
-        self.activeDamageFactor = component_constants.ZERO_FLOAT
-        return
-
-    def _readConfig(self, xmlCtx, section):
-        self.activeSeconds = _xml.readIntOrNone(xmlCtx, section, 'activeSeconds')
-        self.activeDamageFactor = _xml.readFloat(xmlCtx, section, 'activeDamageFactor', 0.0)
-
-    def isActivatable(self):
-        return self.activeSeconds is not None
-
-
-class Extinguisher(ActivatableEquipment):
+class Extinguisher(Equipment):
     __slots__ = ('fireStartingChanceFactor', 'autoactivate')
 
     def __init__(self):
@@ -698,7 +678,6 @@ class Extinguisher(ActivatableEquipment):
         self.autoactivate = False
 
     def _readConfig(self, xmlCtx, section):
-        super(Extinguisher, self)._readConfig(xmlCtx, section)
         if not section.has_key('fireStartingChanceFactor'):
             self.fireStartingChanceFactor = 1.0
         else:
@@ -743,7 +722,7 @@ class Stimulator(Equipment):
         self.crewLevelIncrease = _xml.readFloat(xmlCtx, section, 'crewLevelIncrease', component_constants.ZERO_FLOAT)
 
 
-class Repairkit(ActivatableEquipment):
+class Repairkit(Equipment):
     __slots__ = ('repairAll', 'bonusValue')
 
     def __init__(self):
@@ -752,7 +731,6 @@ class Repairkit(ActivatableEquipment):
         self.bonusValue = component_constants.ZERO_FLOAT
 
     def _readConfig(self, xmlCtx, section):
-        super(Repairkit, self)._readConfig(xmlCtx, section)
         self.repairAll = section.readBool('repairAll', False)
         self.bonusValue = _xml.readFraction(xmlCtx, section, 'bonusValue')
 
@@ -1597,15 +1575,17 @@ class PedantBattleBooster(SkillEquipment):
 
 
 class LastEffortBattleBooster(SkillEquipment):
-    __slots__ = ('durationPerLevel', )
+    __slots__ = ('durationPerLevel', 'chanceToHitPerLevel')
 
     def __init__(self):
         super(LastEffortBattleBooster, self).__init__()
         self.durationPerLevel = component_constants.ZERO_FLOAT
+        self.chanceToHitPerLevel = component_constants.ZERO_FLOAT
 
     def _readConfig(self, xmlCtx, section):
         super(LastEffortBattleBooster, self)._readConfig(xmlCtx, section)
         self.durationPerLevel = _xml.readNonNegativeFloat(xmlCtx, section, 'durationPerLevel')
+        self.chanceToHitPerLevel = _xml.readFloat(xmlCtx, section, 'chanceToHitPerLevel')
 
     def updateCrewSkill(self, a):
         if not a.isBoosterApplicable():
@@ -1614,7 +1594,7 @@ class LastEffortBattleBooster(SkillEquipment):
             a.level = MAX_SKILL_LEVEL
             a.isActive = True
         else:
-            a.skillConfig = a.skillConfig.recreate(self.durationPerLevel)
+            a.skillConfig = a.skillConfig.recreate(self.durationPerLevel, self.chanceToHitPerLevel)
 
 
 class _OptionalDeviceFilter(object):

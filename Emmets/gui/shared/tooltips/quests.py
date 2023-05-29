@@ -47,11 +47,8 @@ class _StringTokenBonusFormatter(TokenBonusFormatter):
     def _formatComplexToken(self, complexToken, token, bonus):
         rTokenAlias = R.strings.tooltips.quests.bonuses.token
         userName = self._getUserName(complexToken.styleID)
-        description = self.eventsCache.prefetcher.getTokenDetailedInfo(complexToken.styleID)
-        if description is None:
-            description = backport.text(rTokenAlias.body())
-        tooltip = makeTooltip(userName, description if description else None)
-        return PreformattedBonus(bonusName=bonus.getName(), images=self._getTokenImages(complexToken.styleID), label=self._formatBonusLabel(token.count), userName=userName, labelFormatter=self._getLabelFormatter(bonus), tooltip=tooltip, align=LABEL_ALIGN.RIGHT, isCompensation=self._isCompensation(bonus))
+        tooltip = makeTooltip(backport.text(rTokenAlias.header(), userName=userName), backport.text(rTokenAlias.body()))
+        return PreformattedBonus(bonusName=bonus.getName(), images=self._getTokenImages(complexToken.styleID), label=self._formatBonusLabel(token.count), userName=backport.text(rTokenAlias.header(), userName=userName), labelFormatter=self._getLabelFormatter(bonus), tooltip=tooltip, align=LABEL_ALIGN.RIGHT, isCompensation=self._isCompensation(bonus))
 
 
 class QuestsPreviewTooltipData(BlocksTooltipData):
@@ -103,6 +100,7 @@ class QuestsPreviewTooltipData(BlocksTooltipData):
         requestCriteria |= ~REQ_CRITERIA.VEHICLE.EXPIRED_RENT
         requestCriteria |= ~REQ_CRITERIA.VEHICLE.EVENT_BATTLE
         requestCriteria |= ~REQ_CRITERIA.VEHICLE.BATTLE_ROYALE
+        requestCriteria |= ~REQ_CRITERIA.VEHICLE.HIDDEN_IN_HANGAR
         vehicles = self.__itemsCache.items.getVehicles(requestCriteria).values() or []
         getCurrentModeQuestsForVehicle = self._questController.getCurrentModeQuestsForVehicle
         return any([ bool(getCurrentModeQuestsForVehicle(veh, True)) for veh in vehicles ])

@@ -3,7 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/ingame_help.py
 import Keys
-from account_helpers.settings_core.settings_constants import CONTROLS, GRAPHICS
+from account_helpers.settings_core.settings_constants import CONTROLS
 from gui.Scaleform.daapi.view.meta.IngameDetailsHelpWindowMeta import IngameDetailsHelpWindowMeta
 from gui.Scaleform.daapi.view.meta.IngameHelpWindowMeta import IngameHelpWindowMeta
 from gui.Scaleform.genConsts.BATTLE_VIEW_ALIASES import BATTLE_VIEW_ALIASES
@@ -59,7 +59,6 @@ class IngameHelpWindow(IngameHelpWindowMeta, BattleGUIKeyHandler):
 
     def _populate(self):
         super(IngameHelpWindow, self)._populate()
-        self.as_setColorBlindS(self.settingsCore.getSetting(GRAPHICS.COLOR_BLIND))
         if self.app is not None:
             self.app.registerGuiKeyHandler(self)
         vo = dict((key, value) for key, value in getChangedKeysInfo(self.settingsCore))

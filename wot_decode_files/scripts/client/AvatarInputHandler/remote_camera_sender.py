@@ -5,7 +5,7 @@
 import weakref, BigWorld
 from aih_constants import CTRL_MODES
 from AvatarInputHandler.commands.input_handler_command import InputHandlerCommand
-from AvatarInputHandler.control_modes import ArcadeControlMode, SniperControlMode, DualGunControlMode, StrategicControlMode, ArtyControlMode, FlamethrowerControlMode
+from AvatarInputHandler.control_modes import ArcadeControlMode, SniperControlMode, DualGunControlMode, StrategicControlMode, ArtyControlMode
 from BigWorld import ArcadeAimingSystem, SniperAimingSystem, DualGunAimingSystem, StrategicAimingSystem, ArtyAimingSystem
 from AvatarInputHandler.MapCaseMode import MapCaseControlModeBase
 from system_events import g_systemEvents
@@ -20,7 +20,6 @@ class RemoteCameraSender(InputHandlerCommand):
         g_systemEvents.onBeforeSend -= self.__sendCameraData
 
     def __sendCameraData(self):
-        from BigWorld import FlameArtyAimingSystem
         player = BigWorld.player()
         if player.isObserver() or not player.arena.hasObservers:
             return
@@ -30,7 +29,7 @@ class RemoteCameraSender(InputHandlerCommand):
         else:
             ctrl = self.__aih.ctrl
             aimingSystem = ctrl.camera.aimingSystem
-            if isinstance(ctrl, ArcadeControlMode) and isinstance(aimingSystem, ArcadeAimingSystem) or isinstance(ctrl, SniperControlMode) and isinstance(aimingSystem, SniperAimingSystem) or isinstance(ctrl, ArtyControlMode) and isinstance(aimingSystem, ArtyAimingSystem) or isinstance(ctrl, DualGunControlMode) and isinstance(aimingSystem, DualGunAimingSystem) or isinstance(ctrl, StrategicControlMode) and isinstance(aimingSystem, StrategicAimingSystem) or isinstance(ctrl, MapCaseControlModeBase) and isinstance(aimingSystem, ArcadeAimingSystem) or isinstance(ctrl, FlamethrowerControlMode) and isinstance(aimingSystem, FlameArtyAimingSystem):
+            if isinstance(ctrl, ArcadeControlMode) and isinstance(aimingSystem, ArcadeAimingSystem) or isinstance(ctrl, SniperControlMode) and isinstance(aimingSystem, SniperAimingSystem) or isinstance(ctrl, ArtyControlMode) and isinstance(aimingSystem, ArtyAimingSystem) or isinstance(ctrl, DualGunControlMode) and isinstance(aimingSystem, DualGunAimingSystem) or isinstance(ctrl, StrategicControlMode) and isinstance(aimingSystem, StrategicAimingSystem) or isinstance(ctrl, MapCaseControlModeBase) and isinstance(aimingSystem, ArcadeAimingSystem):
                 ctrlModeName = self.__aih.ctrlModeName
                 shotPoint = aimingSystem.getShotPoint()
                 zoom = aimingSystem.getZoom()

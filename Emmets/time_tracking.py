@@ -2,12 +2,12 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/time_tracking.py
-from constants import SERVER_TICK_LENGTH, IS_CLIENT, IS_BOT, IS_CGF_DUMP
+from constants import SERVER_TICK_LENGTH, IS_CLIENT, IS_BOT, IS_CGF_DUMP, IS_VS_EDITOR
 from debug_utils import LOG_WARNING
 import sys
 from time import time
 from functools import wraps
-if not IS_CLIENT and not IS_BOT and not IS_CGF_DUMP:
+if not IS_CLIENT and not IS_BOT and not IS_CGF_DUMP and not IS_VS_EDITOR:
     from insights.measurements import incrTickOverspends
 DEFAULT_TIME_LIMIT = 0.02
 DEFAULT_TICK_LENGTH = SERVER_TICK_LENGTH

@@ -2,8 +2,9 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/events.py
-import logging, typing
+import logging
 from collections import namedtuple
+import typing
 from gui.shared.event_bus import SharedEvent
 from shared_utils import CONST_CONTAINER
 if typing.TYPE_CHECKING:
@@ -15,7 +16,7 @@ __all__ = ('ArgsEvent', 'ComponentEvent', 'LoadViewEvent', 'LoadGuiImplViewEvent
            'HangarCustomizationEvent', 'GameEvent', 'BootcampEvent', 'ViewEventType',
            'OpenLinkEvent', 'ChannelManagementEvent', 'PreBattleChannelEvent', 'AmmunitionSetupViewEvent',
            'HasCtxEvent', 'DogTagsEvent', 'FullscreenModeSelectorEvent', 'ModeSelectorPopoverEvent',
-           'ModeSelectorLoadedEvent', 'ModeSubSelectorEvent', 'ArmoryYardEvent')
+           'ModeSelectorLoadedEvent', 'ModeSubSelectorEvent')
 _logger = logging.getLogger(__name__)
 
 class HasCtxEvent(SharedEvent):
@@ -817,7 +818,5 @@ class CollectionsEvent(HasCtxEvent):
     BATTLE_PASS_ENTRY_POINT_VISITED = 'battlePassEntryPointVisited'
 
 
-class ArmoryYardEvent(HasCtxEvent):
-    STAGE_FINISHED = 'ayStageFinished'
-    DESTROY_ARMORY_YARD_MAIN_VIEW = 'armoryYardEvents/destroyMainView'
-    SHOW_ARMORY_YARD_BUY_VIEW = 'armoryYardEvents/showBuyView'
+class CosmicEvent(SharedEvent):
+    OPEN_COSMIC = 'openCosmic'

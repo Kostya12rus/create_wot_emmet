@@ -55,9 +55,6 @@ class _QuestsCache(object):
     def __init__(self, quests):
         self.__quests = quests
 
-    def __contains__(self, questID):
-        return questID in self.__quests
-
     def getAllQuests(self):
         return self.__quests.values()
 

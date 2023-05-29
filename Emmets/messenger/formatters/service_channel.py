@@ -76,7 +76,7 @@ from messenger.formatters.service_channel_helpers import EOL, MessageData, getCu
 from nations import NAMES
 from shared_utils import BoundMethodWeakref, first
 from skeletons.gui.battle_matters import IBattleMattersController
-from skeletons.gui.game_control import IBattlePassController, IBattleRoyaleController, ICollectionsSystemController, IEpicBattleMetaGameController, IFunRandomController, IMapboxController, IRankedBattlesController, IResourceWellController, IWinbackController, IWotPlusController
+from skeletons.gui.game_control import IBattlePassController, IBattleRoyaleController, ICollectionsSystemController, IEpicBattleMetaGameController, IFunRandomController, IMapboxController, IRankedBattlesController, IResourceWellController, IWinbackController
 from skeletons.gui.goodies import IGoodiesCache
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.offers import IOffersDataProvider
@@ -3965,25 +3965,19 @@ class ProgressiveRewardFormatter(WaitItemsSyncFormatter):
 
 class PiggyBankSmashedFormatter(ServiceChannelFormatter):
     _piggyBankTemplate = b'PiggyBankSmashedMessage'
-    _piggyBankWotPlusTemplate = b'PiggyBankWotPlusSmashedMessage'
     _goldReserveTemplate = b'GoldReserveSmashedMessage'
     _currenciesTemplate = b'CurrenciesReservesSmashedMessage'
-    __wotPlusController = dependency.descriptor(IWotPlusController)
 
     def format(self, message, *args):
         if not message.data:
             return []
         credits_ = message.data.get(b'credits')
         gold = message.data.get(b'gold')
-        if self.__wotPlusController.isWotPlusEnabled():
-            piggyBankTemplate = self._piggyBankWotPlusTemplate
-        else:
-            piggyBankTemplate = self._piggyBankTemplate
         if credits_ and not gold:
             ctx = {b'credits': backport.getIntegralFormat(credits_)}
-            formatted = g_settings.msgTemplates.format(piggyBankTemplate, ctx)
+            formatted = g_settings.msgTemplates.format(self._piggyBankTemplate, ctx)
             return [
-             MessageData(formatted, self._getGuiSettings(message, piggyBankTemplate))]
+             MessageData(formatted, self._getGuiSettings(message, self._piggyBankTemplate))]
         if gold and not credits_:
             ctx = {b'gold': backport.getGoldFormat(gold)}
             formatted = g_settings.msgTemplates.format(self._goldReserveTemplate, ctx)

@@ -2,7 +2,6 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/components/vehicles.py
-import typing
 from constants import DEATH_REASON_ALIVE
 from epic_constants import EPIC_BATTLE_TEAM_ID
 from gui.Scaleform.genConsts.RANKEDBATTLES_ALIASES import RANKEDBATTLES_ALIASES
@@ -23,10 +22,8 @@ from messenger.m_constants import USER_TAG
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.game_control import IRankedBattlesController
 from skeletons.gui.lobby_context import ILobbyContext
-from items import vehicles
-from gui.battle_results.reusable.shared import VehicleSummarizeInfo
-if typing.TYPE_CHECKING:
-    from gui.battle_results.reusable.shared import VehicleDetailedInfo
+_STAT_VALUES_VO_REPLACER = {'damageAssisted': 'damageAssistedSelf', 
+   'damageAssistedStun': 'damageAssistedStunSelf'}
 _STAT_STUN_FIELD_NAMES = ('damageAssistedStun', 'stunNum', 'stunDuration')
 
 def _getStunFilter():
@@ -35,29 +32,6 @@ def _getStunFilter():
     if not lobbyContext.getServerSettings().spgRedesignFeatures.isStunEnabled():
         filters += _STAT_STUN_FIELD_NAMES
     return filters
-
-
-class FieldsReplacer(object):
-    _STAT_VALUES_VO_REPLACER = {'damageAssisted': 'damageAssistedSelf', 
-       'damageAssistedStun': 'damageAssistedStunSelf'}
-
-    def __init__(self, result, isPersonal):
-        self.replacerFields = {}
-        if isPersonal:
-            self.replacerFields.update(self._STAT_VALUES_VO_REPLACER)
-        isWithFlamethrower = isinstance(result, VehicleSummarizeInfo) and any(data.vehicle is not None and vehicles.isFlamethrower(data.vehicle.intCD) for data in result.vehicles)
-        if isWithFlamethrower or result.vehicle is not None and vehicles.isFlamethrower(result.vehicle.intCD):
-            self.replacerFields['explosionHits'] = 'flameExplosionHits'
-        return
-
-    def __contains__(self, key):
-        return key in self.replacerFields
-
-    def __getitem__(self, key):
-        return self.replacerFields[key]
-
-    def __eq__(self, cmpDict):
-        return self.replacerFields == cmpDict
 
 
 class TeamPlayerNameBlock(shared.PlayerNameBlock):
@@ -252,14 +226,12 @@ class RegularVehicleStatValuesBlock(base.StatsBlock):
                  'noDamageDirectHitsReceived', 'explosionHitsReceived', 'damageBlockedByArmor',
                  'teamHitsDamage', 'spotted', 'damagedKilled', 'damageAssisted',
                  'damageAssistedStun', 'stunNum', 'stunDuration', 'capturePoints',
-                 'mileage', '__rawDamageAssistedStun', '__rawStunNum', '__fieldsReplacer')
+                 'mileage', '__rawDamageAssistedStun', '__rawStunNum')
     lobbyContext = dependency.descriptor(ILobbyContext)
 
     def __init__(self, meta=None, field='', *path):
         super(RegularVehicleStatValuesBlock, self).__init__(meta, field, *path)
         self._filters = set()
-        self.__fieldsReplacer = None
-        return
 
     def setPersonal(self, flag):
         self._isPersonal = flag
@@ -270,7 +242,6 @@ class RegularVehicleStatValuesBlock(base.StatsBlock):
     def setRecord(self, result, reusable):
         self.__rawDamageAssistedStun = result.damageAssistedStun
         self.__rawStunNum = result.stunNum
-        self.__fieldsReplacer = FieldsReplacer(result, self._isPersonal)
         if self.__rawStunNum == 0:
             self.addFilters(_STAT_STUN_FIELD_NAMES)
         self.shots = style.getIntegralFormatIfNoEmpty(result.shots)
@@ -300,8 +271,8 @@ class RegularVehicleStatValuesBlock(base.StatsBlock):
             if field in list(self._filters):
                 continue
             value = component.getVO()
-            if field in self.__fieldsReplacer:
-                field = self.__fieldsReplacer[field]
+            if self._isPersonal and field in _STAT_VALUES_VO_REPLACER:
+                field = _STAT_VALUES_VO_REPLACER[field]
             vo.append(style.makeStatValue(field, value))
 
         return vo
@@ -336,13 +307,11 @@ class EpicVehicleStatValuesBlock(base.StatsBlock):
                  'teamHitsDamage', 'spotted', 'damagedKilled', 'damageAssisted',
                  'equipmentDamageAssisted', 'damageAssistedStun', 'stunNum', 'capturePoints',
                  'timesDestroyed', 'teamSpecificStat', '__rawDamageAssistedStun',
-                 '__rawStunNum', '__fieldsReplacer')
+                 '__rawStunNum')
 
     def __init__(self, meta=None, field='', *path):
         super(EpicVehicleStatValuesBlock, self).__init__(meta, field, *path)
         self._filters = set()
-        self.__fieldsReplacer = None
-        return
 
     def setPersonal(self, flag):
         self._isPersonal = flag
@@ -353,7 +322,6 @@ class EpicVehicleStatValuesBlock(base.StatsBlock):
     def setRecord(self, result, reusable):
         self.timesDestroyed = str(result.deathCount)
         self._team = result.player.team
-        self.__fieldsReplacer = FieldsReplacer(result, self._isPersonal)
         if self._team == EPIC_BATTLE_TEAM_ID.TEAM_ATTACKER:
             self.teamSpecificStat = ('{0}/{1}').format(result.numCaptured, result.numDestroyed)
         else:
@@ -394,8 +362,8 @@ class EpicVehicleStatValuesBlock(base.StatsBlock):
             if field == 'teamSpecificStat':
                 field = _TEAM_SPECIFIC_STAT_REPLACE[self._team]
             value = component.getVO()
-            if field in self.__fieldsReplacer:
-                field = self.__fieldsReplacer[field]
+            if self._isPersonal and field in _STAT_VALUES_VO_REPLACER:
+                field = _STAT_VALUES_VO_REPLACER[field]
             vo.append(style.makeStatValue(field, value))
 
         return vo

@@ -2,8 +2,6 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/ModuleInfoWindow.py
-from gui.impl import backport
-from gui.impl.gen import R
 from gui.Scaleform.daapi.view.meta.ModuleInfoMeta import ModuleInfoMeta
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.locale.MENU import MENU
@@ -17,7 +15,6 @@ from helpers.i18n import makeString as _ms
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
-from constants import SHELL_TYPES
 
 class ModuleInfoWindow(ModuleInfoMeta):
     itemsCache = dependency.descriptor(IItemsCache)
@@ -53,12 +50,7 @@ class ModuleInfoWindow(ModuleInfoMeta):
             dataProvider = ModuleBlockTooltipData(context=contexts.ModuleInfoContext())
         data = dataProvider.buildToolTip(*tooltipArgs)
         if itemTypeID == GUI_ITEM_TYPE.SHELL:
-            if module.type == SHELL_TYPES.FLAME:
-                titleArr = [
-                 module.userType, backport.text(R.strings.item_types.shell.kinds.FLAME()), module.userName]
-            else:
-                titleArr = [
-                 module.userType, module.longUserName, _ms(MENU.MODULEINFO_TITLE)]
+            titleArr = [module.userType, module.longUserName, _ms(MENU.MODULEINFO_TITLE)]
         else:
             titleArr = [
              module.longUserName, _ms(MENU.MODULEINFO_TITLE)]

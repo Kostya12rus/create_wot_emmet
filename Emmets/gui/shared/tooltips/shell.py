@@ -3,12 +3,10 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/shell.py
 from debug_utils import LOG_ERROR
-from constants import SHELL_TYPES
 from gui.Scaleform.genConsts.BLOCKS_TOOLTIP_TYPES import BLOCKS_TOOLTIP_TYPES
 from gui.Scaleform.locale.MENU import MENU
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
-from gui.Scaleform.locale.ITEM_TYPES import ITEM_TYPES
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.shared.formatters import text_styles
@@ -79,10 +77,9 @@ class ShellBlockToolTipData(BlocksTooltipData):
             if compatibleBlocks:
                 items.append(formatters.packBuildUpBlockData(compatibleBlocks, padding=formatters.packPadding(left=leftPadding, bottom=8)))
         if showBasicData:
-            shot = _ms(ITEM_TYPES.ALTSHOT_NAME if shell.type == SHELL_TYPES.FLAME else ITEM_TYPES.SHOT_NAME).lower()
-            boldText = text_styles.neutral(_ms(TOOLTIPS.SHELL_BASIC_DESCRIPTION_BOLD, shot=shot))
+            boldText = text_styles.neutral(TOOLTIPS.SHELL_BASIC_DESCRIPTION_BOLD)
             items.append(formatters.packBuildUpBlockData([
-             formatters.packTextBlockData(text_styles.standard(_ms(TOOLTIPS.SHELL_BASIC_DESCRIPTION, bold=boldText, shot=shot)), padding=lrPaddings)], padding=formatters.packPadding(right=rightPadding)))
+             formatters.packTextBlockData(text_styles.standard(_ms(TOOLTIPS.SHELL_BASIC_DESCRIPTION, bold=boldText)), padding=lrPaddings)], padding=formatters.packPadding(right=rightPadding)))
         return items
 
 
@@ -107,30 +104,17 @@ class ShellTooltipBlockConstructor(object):
 
 
 class HeaderBlockConstructor(ShellTooltipBlockConstructor):
-    DEFAULT_FORMATTER = 'default'
 
     def construct(self):
         shell = self.shell
         formattedParameters = params_formatters.getFormattedParamsList(shell.descriptor, self._params)
         paramName = ModuleTooltipBlockConstructor.CALIBER
         paramValue = dict(formattedParameters).get(paramName)
-        formatterType = shell.type if shell.type in _PARAMS_FORMATTERS_BY_KIND else self.DEFAULT_FORMATTER
-        headerText = formatters.packTitleDescBlock(title=text_styles.highTitle(shell.userName), desc=text_styles.concatStylesToMultiLine(text_styles.main(backport.text(R.strings.item_types.shell.kinds.dyn(shell.type)())), _PARAMS_FORMATTERS_BY_KIND[formatterType](paramName, paramValue)), padding=formatters.packPadding(left=-15), descPadding=formatters.packPadding(top=4), gap=-4)
+        headerText = formatters.packTitleDescBlock(title=text_styles.highTitle(shell.userName), desc=text_styles.concatStylesToMultiLine(text_styles.main(backport.text(R.strings.item_types.shell.kinds.dyn(shell.type)())), params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue)), padding=formatters.packPadding(left=-15), descPadding=formatters.packPadding(top=4), gap=-4)
         headerImage = formatters.packImageBlockData(img=shell.getBonusIcon(size='big'), align=BLOCKS_TOOLTIP_TYPES.ALIGN_CENTER, padding=formatters.packPadding(right=30, top=-5, bottom=-5))
         return [
          headerText, headerImage]
 
-    @staticmethod
-    def emptyFormatter(paramName, paramValue):
-        return ''
-
-    @staticmethod
-    def formatParam(paramName, paramValue):
-        return params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue)
-
-
-_PARAMS_FORMATTERS_BY_KIND = {SHELL_TYPES.FLAME: HeaderBlockConstructor.emptyFormatter, 
-   HeaderBlockConstructor.DEFAULT_FORMATTER: HeaderBlockConstructor.formatParam}
 
 class PriceBlockConstructor(ShellTooltipBlockConstructor):
 
@@ -281,12 +265,9 @@ class CommonStatsBlockConstructor(_BaseCommonStatsBlockConstructor):
                     block.append(self._packParameterBlock(backport.text(R.strings.menu.moduleInfo.params.dyn(paramName)()), paramValue, paramUnits))
 
             if piercingPowerTable != NO_DATA:
+                title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
                 if isDistanceDependent and tableData:
                     title = _ms(MENU.MODULEINFO_PARAMS_PIERCINGDISTANCE_FOOTNOTE, minDist=tableData[0][1], maxDist=tableData[-1][1])
-                elif self.shell.type == SHELL_TYPES.FLAME:
-                    title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTEFLAME)
-                else:
-                    title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
                 block.append(formatters.packTitleDescBlock(title=text_styles.standard(title), padding=topPadding))
         return block
 

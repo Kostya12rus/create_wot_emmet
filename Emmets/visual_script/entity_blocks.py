@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/visual_script/entity_blocks.py
 import BigWorld, weakref, Math, items
+from constants import IS_CLIENT
 from visual_script.block import Meta, Block, InitParam, buildStrKeysValue, EDITOR_TYPE
 from visual_script.slot_types import SLOT_TYPE, arrayOf
 from visual_script.misc import ASPECT, errorVScript
@@ -152,7 +153,12 @@ class IsEntityOfType(Block, EntityMeta):
         return 'Is Entity ' + self._type
 
     def _execute(self):
-        self._res.setValue(self._entity.getValue().className == self._type)
+        entity = self._entity.getValue()
+        if IS_CLIENT:
+            className = entity.__class__.__name__
+        else:
+            className = entity.className
+        self._res.setValue(className == self._type)
 
 
 class BoardEntity(Block, EntityMeta):

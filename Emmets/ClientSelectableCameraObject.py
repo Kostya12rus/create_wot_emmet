@@ -205,7 +205,6 @@ class ClientSelectableCameraObject(ClientSelectableObject, CallbackDelayer, Time
         self.__goalPosition = hangarCamera.position
         self.__startFovIfDynamic()
         self.__camera.enable(startMatrix)
-        BigWorld.camera().spaceID = self.hangarSpace.space.camera.spaceID
         self.__startPosition = self.__camera.getWorldMatrix().translation
         self.__startYaw = normalizeAngle(self.__camera.getWorldMatrix().yaw)
         self.__startPitch = self.__camera.getWorldMatrix().pitch
@@ -240,10 +239,6 @@ class ClientSelectableCameraObject(ClientSelectableObject, CallbackDelayer, Time
         return
 
     def __update(self):
-        if not self.__camera.isEnabled():
-            self.stopCallback(self.__update)
-            self._finishCameraMovement(False)
-            return
         isUpdateSkipped = Waiting.isVisible()
         if isUpdateSkipped or self.__wasPreviousUpdateSkipped:
             self.__wasPreviousUpdateSkipped = isUpdateSkipped
@@ -278,11 +273,10 @@ class ClientSelectableCameraObject(ClientSelectableObject, CallbackDelayer, Time
             return math_utils.easeOutQuad(time, easedInValue - startValue, self.__easeInDuration) + startValue
         return angleCalculation(currentPosition, goalPosition)
 
-    def _finishCameraMovement(self, recoverCamera=True):
+    def _finishCameraMovement(self):
         self.setState(CameraMovementStates.ON_OBJECT)
         self.__camera.disable()
-        if recoverCamera:
-            BigWorld.camera(self.hangarSpace.space.camera)
+        BigWorld.camera(self.hangarSpace.space.camera)
         self.__startFov = None
         self.__goalFov = None
         self.__curTime = None

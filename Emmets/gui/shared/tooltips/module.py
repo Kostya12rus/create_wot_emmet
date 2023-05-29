@@ -146,26 +146,25 @@ class ModuleTooltipBlockConstructor(object):
     TURBOSHAFT_ENGINE_MODULE_PARAM = 'turboshaftEngine'
     ROCKET_ACCELERATION_ENGINE_MODULE_PARAM = 'rocketAcceleration'
     COOLDOWN_SECONDS = 'cooldownSeconds'
-    ACTIVE_SECONDS = 'activeSeconds'
     RELOAD_COOLDOWN_SECONDS = 'reloadCooldownSeconds'
     CALIBER = 'caliber'
     MODULE_PARAMS = {GUI_ITEM_TYPE.CHASSIS: ('maxLoad', 'rotationSpeed', 'maxSteeringLockAngle', 'vehicleChassisRepairSpeed', 'chassisRepairTime'), 
        GUI_ITEM_TYPE.TURRET: ('armor', 'rotationSpeed', 'circularVisionRadius'), 
        GUI_ITEM_TYPE.GUN: (
                          'avgDamageList', 'avgPiercingPower', RELOAD_TIME_SECS_PROP_NAME, RELOAD_TIME_PROP_NAME,
-                         'avgDamagePerMinute', 'stunMaxDurationList', 'dispertionRadius',
+                         'avgDamagePerMinute', 'stunMinDurationList', 'stunMaxDurationList', 'dispertionRadius',
                          'maxShotDistance', AIMING_TIME_PROP_NAME), 
        GUI_ITEM_TYPE.ENGINE: ('enginePower', 'fireStartingChance'), 
        GUI_ITEM_TYPE.RADIO: ('radioDistance', ), 
        CLIP_GUN_MODULE_PARAM: (
-                             'avgDamageList', 'avgPiercingPower', SHELLS_COUNT_PROP_NAME, 'shellsBurstCount', 'shellsFlameBurstCount',
+                             'avgDamageList', 'avgPiercingPower', SHELLS_COUNT_PROP_NAME,
                              SHELL_RELOADING_TIME_PROP_NAME, RELOAD_MAGAZINE_TIME_PROP_NAME,
-                             'avgDamagePerMinute', 'stunMaxDurationList', 'flameMaxDistance',
+                             'avgDamagePerMinute', 'stunMinDurationList', 'stunMaxDurationList',
                              'dispertionRadius', 'maxShotDistance', AIMING_TIME_PROP_NAME), 
        AUTO_RELOAD_GUN_MODULE_PARAM: (
                                     'avgDamageList', 'avgPiercingPower', SHELLS_COUNT_PROP_NAME,
                                     SHELL_RELOADING_TIME_PROP_NAME, AUTO_RELOAD_PROP_NAME,
-                                    'stunMaxDurationList', 'dispertionRadius',
+                                    'stunMinDurationList', 'stunMaxDurationList', 'dispertionRadius',
                                     'maxShotDistance', AIMING_TIME_PROP_NAME), 
        DUAL_GUN_MODULE_PARAM: (
                              'avgDamageList', 'avgPiercingPower', RELOAD_TIME_SECS_PROP_NAME,
@@ -208,10 +207,6 @@ class HeaderBlockConstructor(ModuleTooltipBlockConstructor):
                 descList.append(params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue))
             elif module.itemTypeID == GUI_ITEM_TYPE.EQUIPMENT:
                 descParts = []
-                if module.descriptor.isActivatable():
-                    paramName = ModuleTooltipBlockConstructor.ACTIVE_SECONDS
-                    paramValue = params_formatters.formatParameter(paramName, module.descriptor.activeSeconds)
-                    descParts.append(params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue))
                 cooldownSeconds = module.descriptor.cooldownSeconds
                 if cooldownSeconds:
                     paramName = ModuleTooltipBlockConstructor.COOLDOWN_SECONDS
@@ -568,22 +563,19 @@ class CommonStatsBlockConstructor(ModuleTooltipBlockConstructor):
                 title = None
                 if module.itemTypeID == GUI_ITEM_TYPE.GUN:
                     if extraInfo:
-                        if module.isFlameGun():
-                            title = R.strings.menu.moduleInfo.flameGunLabel()
+                        if module.isClipGun(vDescr):
+                            title = R.strings.menu.moduleInfo.clipGunLabel()
                         else:
-                            if module.isClipGun(vDescr):
-                                title = R.strings.menu.moduleInfo.clipGunLabel()
-                            else:
-                                if module.isAutoReloadable(vDescr):
-                                    hasBoost = False
-                                    for gun in vDescr.type.getGuns():
-                                        if gun.compactDescr == module.intCD:
-                                            hasBoost = gun.autoreloadHasBoost
+                            if module.isAutoReloadable(vDescr):
+                                hasBoost = False
+                                for gun in vDescr.type.getGuns():
+                                    if gun.compactDescr == module.intCD:
+                                        hasBoost = gun.autoreloadHasBoost
 
-                                    resource = R.strings.menu.moduleInfo.autoReloadGunLabel
-                                    title = resource.dyn('boost')() if hasBoost and resource.dyn('boost') else resource()
-                                elif module.isDualGun(vDescr):
-                                    title = R.strings.menu.moduleInfo.dualGunLabel()
+                                resource = R.strings.menu.moduleInfo.autoReloadGunLabel
+                                title = resource.dyn('boost')() if hasBoost and resource.dyn('boost') else resource()
+                            elif module.isDualGun(vDescr):
+                                title = R.strings.menu.moduleInfo.dualGunLabel()
                 elif module.itemTypeID == GUI_ITEM_TYPE.CHASSIS:
                     if module.isHydraulicChassis():
                         if module.isWheeledChassis():

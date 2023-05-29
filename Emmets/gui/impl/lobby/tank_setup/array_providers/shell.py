@@ -2,7 +2,6 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/array_providers/shell.py
-import typing
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.shell_slot_model import ShellSlotModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.shell_specification_model import ShellSpecificationModel
 from gui.impl.lobby.tank_setup.array_providers.base import VehicleBaseArrayProvider
@@ -12,11 +11,8 @@ from gui.shared.items_parameters.formatters import MEASURE_UNITS, formatParamete
 from post_progression_common import TankSetupGroupsId
 from helpers import dependency, i18n
 from skeletons.gui.shared import IItemsCache
-if typing.TYPE_CHECKING:
-    from gui.shared.gui_items.vehicle_modules import Shell
-    from gui.impl.lobby.tank_setup.array_providers.base import BaseVehSectionContext
 _SHELLS_INFO_PARAMS = ('avgDamage', 'avgPiercingPower', 'shotSpeed', 'explosionRadius',
-                       'flameMaxDistance', 'stunMaxDuration')
+                       'stunDurationList')
 
 class ShellProvider(VehicleBaseArrayProvider):
     __slots__ = ('_interactor', )
@@ -80,11 +76,11 @@ class ShellProvider(VehicleBaseArrayProvider):
     def _fillSpecification(self, model, item):
         specifications = model.getSpecifications()
         specifications.clear()
-        shellParam = params_helper.getParameters(item, self._getVehicle().descriptor)
         for paramName in _SHELLS_INFO_PARAMS:
             specificationModel = ShellSpecificationModel()
             specificationModel.setParamName(paramName)
             specificationModel.setMetricValue(i18n.makeString(MEASURE_UNITS.get(paramName, '')))
+            shellParam = params_helper.getParameters(item, self._getVehicle().descriptor)
             specificationModel.setValue(formatParameter(paramName, shellParam.get(paramName)) or '')
             specifications.addViewModel(specificationModel)
 

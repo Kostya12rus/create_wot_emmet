@@ -89,6 +89,8 @@ from skeletons.gui.shared.utils import IHangarSpace
 from skeletons.gui.sounds import ISoundsController
 from skeletons.gui.system_messages import ISystemMessages
 if typing.TYPE_CHECKING:
+    from typing import Tuple, Union, Dict, Literal
+    from messenger.proto.bw.wrappers import _ServiceChannelData
     from comp7_ranks_common import Comp7Division
     from gui.platform.catalog_service.controller import _PurchaseDescriptor
     from gui.server_events.event_items import TokenQuest
@@ -258,9 +260,6 @@ class AwardController(IAwardController, IGlobalListener):
         app = self.appLoader.getApp()
         handler = _NonOverlappingViewsLifecycleHandler(postponeAwardsCallback=self.__postponeAwards, handlePostponedCallback=self.handlePostponed)
         self.__viewLifecycleWatcher.start(app.containerManager, [handler])
-
-    def addMonitoredDynamicViewKey(self, viewKey):
-        self.__viewLifecycleWatcher.addMonitoredDynamicViewKey(viewKey)
 
     def onPlayerStateChanged(self, entity, roster, accountInfo):
         self.handlePostponed()

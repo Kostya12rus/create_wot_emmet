@@ -575,7 +575,7 @@ class PersonalCaseDataProvider(object):
             isWotPlusEnabled = self._wotPlusCtrl.isWotPlusEnabled()
             isNewSubscriptionsEnabled = serverSettings.isWotPlusNewSubscriptionEnabled()
             hasWotPlus = self._wotPlusCtrl.isEnabled()
-            secondIcon = RES_ICONS.MAPS_ICONS_CREWHEADER_ACCELERATED_CREW_TRAINING if isWotPlusEnabled else RES_ICONS.MAPS_ICONS_LIBRARY_TMAN_ACC_TRAINING_20X20
+            secondIcon = RES_ICONS.MAPS_ICONS_CREWHEADER_INACTIVE_ACCELERATED_CREW_TRAINING
             callbackInfo = {'achievements': packedAchieves, 
                'stats': tmanDossier.getStats(self.itemsCache.items.getTankman(self.tmanInvID)), 
                'firstMsg': self.__makeStandardText(MENU.CONTEXTMENU_PERSONALCASE_STATS_FIRSTINFO), 
@@ -602,6 +602,7 @@ class PersonalCaseDataProvider(object):
         criteria |= ~(REQ_CRITERIA.SECRET | ~REQ_CRITERIA.INVENTORY_OR_UNLOCKED)
         criteria |= ~REQ_CRITERIA.VEHICLE.BATTLE_ROYALE
         criteria |= ~REQ_CRITERIA.VEHICLE.MAPS_TRAINING
+        criteria |= ~REQ_CRITERIA.VEHICLE.HIDDEN_IN_HANGAR
         if not constants.IS_IGR_ENABLED:
             criteria |= ~REQ_CRITERIA.VEHICLE.IS_PREMIUM_IGR
         if constants.IS_DEVELOPMENT:

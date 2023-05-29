@@ -531,7 +531,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         if self.vehicle is not None:
             self.__consistentMatrices.notifyVehicleChanged(self)
             ctrl = self.guiSessionProvider.shared.vehicleState
-            if self.vehicle.stunInfo.stunFinishTime > 0.0 and (self.isObserver() or ctrl.isInPostmortem):
+            if self.vehicle.stunInfo > 0.0 and (self.isObserver() or ctrl.isInPostmortem):
                 self.vehicle.updateStunInfo()
             if self.__dualGunHelper is not None:
                 self.__dualGunHelper.reset()
@@ -840,7 +840,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                 if cmdMap.isFired(CommandMapping.CMD_VOICECHAT_MUTE, key):
                     self.bwProto.voipController.setMicrophoneMute(not isDown)
                     return True
-                if not isGuiEnabled and self.guiSessionProvider.shared.drrScale.handleKey(key, isDown):
+                if not isGuiEnabled and self.guiSessionProvider.shared.drrScale is not None and self.guiSessionProvider.shared.drrScale.handleKey(key, isDown):
                     return True
                 if cmdMap.isFiredList((CommandMapping.CMD_MINIMAP_SIZE_DOWN,
                  CommandMapping.CMD_MINIMAP_SIZE_UP,
@@ -934,13 +934,13 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             return
         self.target = entity
         isVehicle = entity.__class__.__name__ == 'Vehicle'
-        entityInFocusType = ENTITY_IN_FOCUS_TYPE.VEHICLE if isVehicle else ENTITY_IN_FOCUS_TYPE.DESTRUCTIBLE_ENTITY
-        self.guiSessionProvider.shared.feedback.setTargetInFocus(entity.id, True, entityInFocusType)
         if self.inputHandler.isGuiVisible and entity.isAlive():
             TriggersManager.g_manager.activateTrigger(TRIGGER_TYPE.AIM_AT_VEHICLE, vehicleId=entity.id)
             entity.drawEdge()
             if isVehicle and self.__maySeeOtherVehicleDamagedDevices:
                 self.cell.monitorVehicleDamagedDevices(entity.id)
+        entityInFocusType = ENTITY_IN_FOCUS_TYPE.VEHICLE if isVehicle else ENTITY_IN_FOCUS_TYPE.DESTRUCTIBLE_ENTITY
+        self.guiSessionProvider.shared.feedback.setTargetInFocus(entity.id, True, entityInFocusType)
 
     def reload(self):
         self.__reloadGUI()
@@ -1138,7 +1138,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         self.guiSessionProvider.invalidateVehicleState(VEHICLE_VIEW_STATE.HEALTH, health, vehicleID)
         if not wasAlive and isAlive:
             self.__disableRespawnMode = True
-            self.guiSessionProvider.movingToRespawnBase()
+            self.guiSessionProvider.movingToRespawnBase(self.vehicle)
             if self.vehicle:
                 self.vehicle.ownVehicle.initialUpdate(force=True)
         if not isAlive and wasAlive:
@@ -1913,35 +1913,38 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         self.base.setDevelopmentFeature(0, 'server_marker', enable, '')
 
     def autoAim(self, target=None, magnetic=False):
-        if target is None:
-            vehID = 0
-        elif not isinstance(target, Vehicle.Vehicle):
-            vehID = 0
-        elif target.id == self.__autoAimVehID:
-            vehID = 0
-        elif target.publicInfo['team'] == self.team:
-            vehID = 0
-        elif not target.isAlive():
-            vehID = 0
+        if ARENA_BONUS_TYPE_CAPS.checkAny(self.arenaBonusType, ARENA_BONUS_TYPE_CAPS.DISABLE_AUTO_AIM):
+            return
         else:
-            vehID = target.id
-        if self.__autoAimVehID != vehID:
-            self.__autoAimVehID = vehID
-            self.cell.autoAim(vehID, magnetic)
-            if vehID != 0:
-                self.inputHandler.setAimingMode(True, AIMING_MODE.TARGET_LOCK)
-                self.gunRotator.clientMode = False
-                self.onLockTarget(AimSound.TARGET_LOCKED, True)
-                TriggersManager.g_manager.activateTrigger(TRIGGER_TYPE.AUTO_AIM_AT_VEHICLE, vehicleId=vehID)
+            if target is None:
+                vehID = 0
+            elif not isinstance(target, Vehicle.Vehicle):
+                vehID = 0
+            elif target.id == self.__autoAimVehID:
+                vehID = 0
+            elif target.publicInfo['team'] == self.team:
+                vehID = 0
+            elif not target.isAlive():
+                vehID = 0
             else:
-                self.inputHandler.setAimingMode(False, AIMING_MODE.TARGET_LOCK)
-                self.gunRotator.clientMode = True
-                self.__aimingInfo[0] = BigWorld.time()
-                minShotDisp = self.vehicleTypeDescriptor.gun.shotDispersionAngle
-                self.__aimingInfo[1] = self.gunRotator.dispersionAngle / minShotDisp
-                self.onLockTarget(AimSound.TARGET_UNLOCKED, True)
-                TriggersManager.g_manager.deactivateTrigger(TRIGGER_TYPE.AUTO_AIM_AT_VEHICLE)
-        return
+                vehID = target.id
+            if self.__autoAimVehID != vehID:
+                self.__autoAimVehID = vehID
+                self.cell.autoAim(vehID, magnetic)
+                if vehID != 0:
+                    self.inputHandler.setAimingMode(True, AIMING_MODE.TARGET_LOCK)
+                    self.gunRotator.clientMode = False
+                    self.onLockTarget(AimSound.TARGET_LOCKED, True)
+                    TriggersManager.g_manager.activateTrigger(TRIGGER_TYPE.AUTO_AIM_AT_VEHICLE, vehicleId=vehID)
+                else:
+                    self.inputHandler.setAimingMode(False, AIMING_MODE.TARGET_LOCK)
+                    self.gunRotator.clientMode = True
+                    self.__aimingInfo[0] = BigWorld.time()
+                    minShotDisp = self.vehicleTypeDescriptor.gun.shotDispersionAngle
+                    self.__aimingInfo[1] = self.gunRotator.dispersionAngle / minShotDisp
+                    self.onLockTarget(AimSound.TARGET_UNLOCKED, True)
+                    TriggersManager.g_manager.deactivateTrigger(TRIGGER_TYPE.AUTO_AIM_AT_VEHICLE)
+            return
 
     def __gunDamagedSound(self):
         if BattleReplay.g_replayCtrl.isRecording:
@@ -1994,7 +1997,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             canShoot, error = self.guiSessionProvider.shared.ammo.canShoot(isRepeat)
             if not canShoot:
                 if not isRepeat and error in self.__cantShootCriticals:
-                    self.showVehicleError(self.__cantShootCriticals[error], args={'typeDescriptor': self.getVehicleDescriptor()})
+                    self.showVehicleError(self.__cantShootCriticals[error])
                 return
             if self.__gunReloadCommandWaitEndTime > BigWorld.time():
                 return
