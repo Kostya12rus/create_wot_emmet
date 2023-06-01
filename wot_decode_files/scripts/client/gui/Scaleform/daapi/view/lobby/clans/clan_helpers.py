@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/clans/clan_helpers.py
+import typing
 from constants import ClansConfig
 from helpers import dependency
 from skeletons.gui.lobby_context import ILobbyContext
@@ -14,3 +15,19 @@ def getClanQuestURL(lobbyContext=None):
 @dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
 def getCraftMachineURL(lobbyContext=None):
     return lobbyContext.getServerSettings().getClansConfig().get(ClansConfig.CRAFT_MACHINE_URL)
+
+
+@dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
+def getStrongholdEventEnabled(lobbyContext=None):
+    return lobbyContext.getServerSettings().getClansConfig().get(ClansConfig.STRONGHOLD_EVENT_ENABLED)
+
+
+@dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
+def getStrongholdEventUrl(lobbyContext=None):
+    return lobbyContext.getServerSettings().getClansConfig().get(ClansConfig.STRONGHOLD_EVENT_URL)
+
+
+@dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
+def getStrongholdEventBattleModeSettings(lobbyContext=None):
+    return lobbyContext.getServerSettings().getClansConfig().get(ClansConfig.STRONGHOLD_EVENT_BATTLE_MODE, ('',
+                                                                                                            0))

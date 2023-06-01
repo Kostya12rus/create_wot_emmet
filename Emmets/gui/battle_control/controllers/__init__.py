@@ -3,7 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/__init__.py
 import PlayerEvents
-from gui.shared.system_factory import collectBattleControllerRepo, collectSharedControllerRepo
+from gui.shared.system_factory import collectBattleControllerRepo
 from gui.battle_control.controllers.repositories import BattleSessionSetup
 from gui.battle_control.controllers.repositories import SharedControllersLocator
 from gui.battle_control.controllers.repositories import DynamicControllersLocator
@@ -14,10 +14,7 @@ __all__ = ('createShared', 'createDynamic', 'BattleSessionSetup', 'SharedControl
            'DynamicControllersLocator', '_ControllersRepository')
 
 def createShared(setup):
-    repository, inited = collectSharedControllerRepo(setup.arenaVisitor.gui.guiType, setup)
-    if not inited:
-        repository = SharedControllersRepository.create(setup)
-    return SharedControllersLocator(repository=repository)
+    return SharedControllersLocator(SharedControllersRepository.create(setup))
 
 
 def createDynamic(setup):

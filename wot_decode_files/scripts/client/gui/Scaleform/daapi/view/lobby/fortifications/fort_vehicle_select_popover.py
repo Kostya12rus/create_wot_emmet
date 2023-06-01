@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/fortifications/fort_vehicle_select_popover.py
+from constants import QUEUE_TYPE
 from gui import makeHtmlString
 from gui.Scaleform import MENU
 from gui.Scaleform import getButtonsAssetPath
@@ -13,6 +14,7 @@ from gui.Scaleform.locale.FORTIFICATIONS import FORTIFICATIONS
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
 from gui.Scaleform.locale.VEH_COMPARE import VEH_COMPARE
+from gui.clans.stronghold_event_requester import FrozenVehiclesConstants
 from gui.prb_control.entities.base.unit.listener import IUnitListener
 from gui.shared.events import CSVehicleSelectEvent, StrongholdEvent
 from gui.shared.formatters import text_styles
@@ -37,7 +39,6 @@ def convertState(vState):
 
 def getVehicleCriteria(levelsRange, inHangar=False):
     req = REQ_CRITERIA.VEHICLE.LEVELS(levelsRange) | ~REQ_CRITERIA.SECRET | ~REQ_CRITERIA.VEHICLE.EVENT_BATTLE
-    req |= ~REQ_CRITERIA.VEHICLE.HIDDEN_IN_HANGAR
     if inHangar:
         req |= REQ_CRITERIA.INVENTORY
     return req
@@ -139,6 +140,10 @@ class FortVehicleSelectPopover(FortVehicleSelectPopoverMeta, VehicleSelectorBase
         else:
             checkSelectedFunc = lambda vo: False
         vState, _ = vehicle.getState()
+        isFrozen = False
+        if self.prbEntity is not None and self.prbEntity.getQueueType() == QUEUE_TYPE.STRONGHOLD_UNITS:
+            frozenVehicles = self.prbEntity.getEventFrozenVehicles()
+            isFrozen = frozenVehicles is not None and (frozenVehicles == FrozenVehiclesConstants.ALL_VEHICLES_FROZEN or vehicle.intCD in frozenVehicles)
         return {'dbID': vehicle.intCD, 
            'level': vehicle.level, 
            'shortUserName': vehicle.shortUserName, 
@@ -149,10 +154,11 @@ class FortVehicleSelectPopover(FortVehicleSelectPopoverMeta, VehicleSelectorBase
            'selected': checkSelectedFunc(vehicle), 
            'inHangar': False, 
            'isMultiSelect': self._isMultiSelect, 
-           'isReadyToFight': vehicle.isReadyToFight, 
+           'isReadyToFight': vehicle.isReadyToFight and not isFrozen, 
            'enabled': vehicle.isReadyToFight, 
+           'isFrozen': isFrozen, 
            'tooltip': makeTooltip('#tooltips:vehicleStatus/%s/header' % vState, '#tooltips:vehicleStatus/body'), 
-           'state': convertState(vState)}
+           'state': 'frozenVehicle' if isFrozen and vehicle.isReadyToFight else convertState(vState)}
 
     def _isSelected(self, entry):
         return entry.intCD in self._selectedVehicles

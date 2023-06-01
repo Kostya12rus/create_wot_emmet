@@ -2,12 +2,14 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/items_parameters/comparator.py
-import collections, sys
+import collections, sys, typing
 from constants import BonusTypes
 from gui.shared.gui_items import KPI
 from gui.shared.items_parameters import params_cache
 from shared_utils import first
 from gui.shared.utils import WHEELED_SWITCH_ON_TIME, WHEELED_SWITCH_OFF_TIME, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_INVISIBILITY_STILL_FACTOR, TURBOSHAFT_INVISIBILITY_MOVING_FACTOR, CHASSIS_REPAIR_TIME, TURBOSHAFT_SWITCH_TIME, DUAL_GUN_RATE_TIME
+if typing.TYPE_CHECKING:
+    from gui.shared.items_parameters.params import _PenaltyInfo
 BACKWARD_QUALITY_PARAMS = frozenset([
  'aimingTime',
  'autoReloadTime',
@@ -104,6 +106,9 @@ class ItemsComparator(object):
     def getExtendedData(self, paramName):
         return getParamExtendedData(paramName, self._currentParams.get(paramName), self._otherParams.get(paramName), self._getPenaltiesAndBonuses(paramName))
 
+    def getPenalties(self, _):
+        return []
+
     def _getPenaltiesAndBonuses(self, _):
         return ([], [], {}, [])
 
@@ -119,6 +124,9 @@ class VehiclesComparator(ItemsComparator):
     def hasBonusOfType(self, bnsType):
         return any(i == bnsType for _, i in self.__bonuses)
 
+    def getPenalties(self, paramName):
+        return self.__penalties.get(paramName, [])
+
     def _getPenaltiesAndBonuses(self, paramName):
         penalties = self.__penalties.get(paramName, [])
         allPossibleParamBonuses = self.__getPossibleParamBonuses(paramName)
@@ -127,7 +135,7 @@ class VehiclesComparator(ItemsComparator):
         return (possibleBonuses, currentParamBonuses, inactive, penalties)
 
     def __getPossibleParamBonuses(self, paramName):
-        paramBonuses = set(params_cache.g_paramsCache.getBonuses().get(paramName, []))
+        paramBonuses = params_cache.g_paramsCache.getBonuses().get(paramName, [])
         allPossibleParamBonuses = set()
         for bonusName, bonusGroup in paramBonuses:
             if (

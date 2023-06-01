@@ -135,6 +135,9 @@ class _DamageExtra(object):
     def isDeathZone(self):
         return self.isAttackReason(ATTACK_REASON.DEATH_ZONE)
 
+    def isStaticDeathZone(self):
+        return self.isAttackReason(ATTACK_REASON.STATIC_DEATH_ZONE)
+
     def isProtectionZone(self, primary=True):
         if primary:
             return self.isAttackReason(ATTACK_REASON.ARTILLERY_PROTECTION) or self.isAttackReason(ATTACK_REASON.ARTILLERY_SECTOR)
@@ -303,6 +306,9 @@ class _CritsExtra(object):
     def isDeathZone(self):
         return self.isAttackReason(ATTACK_REASON.DEATH_ZONE)
 
+    def isStaticDeathZone(self):
+        return self.isAttackReason(ATTACK_REASON.STATIC_DEATH_ZONE)
+
     def isProtectionZone(self, primary=True):
         if primary:
             return self.isAttackReason(ATTACK_REASON.ARTILLERY_PROTECTION) or self.isAttackReason(ATTACK_REASON.ARTILLERY_SECTOR)
@@ -385,7 +391,6 @@ class PlayerFeedbackEvent(_FeedbackEvent):
                 role = ROLE_TYPE_TO_LABEL[additionalData.get('role') or ROLE_TYPE.NOT_DEFINED]
             return PlayerFeedbackEvent(feedbackEventType, battleEventData['eventType'], battleEventData['targetID'], battleEventData['count'], role, extra)
         else:
-            _logger.error('Battle Event Type not found %i', battleEventType)
             return
 
     def getBattleEventType(self):

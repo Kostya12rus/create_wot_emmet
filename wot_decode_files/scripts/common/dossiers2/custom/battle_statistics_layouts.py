@@ -446,3 +446,7 @@ MAX_COMP7_BLOCK_LAYOUT = MAX_AND_BEST_VEHICLE_BLOCK_LAYOUT + [
  'maxHealthRepair', 'maxHealthRepairVehicle', 
  'maxWinSeries', 
  'maxSquadWinSeries']
+MAX_15x15_BLOCK_LAYOUT = MAX_BLOCK_LAYOUT + [
+ 'maxAssisted', 'maxDamageBlockedByArmor']
+MAX_15x15_AND_BEST_VEHICLE_BLOCK_LAYOUT = MAX_AND_BEST_VEHICLE_BLOCK_LAYOUT + [
+ 'maxAssisted', 'maxAssistedVehicle', 'maxDamageBlockedByArmor', 'maxDamageBlockedByArmorVehicle']

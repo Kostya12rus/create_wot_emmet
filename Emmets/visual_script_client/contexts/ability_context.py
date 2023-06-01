@@ -2,12 +2,12 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/visual_script_client/contexts/ability_context.py
-from visual_script_client.contexts.vehicle_context import VehicleContextClient
+from visual_script_client.contexts.vehicle_context import VehicleContext
 from visual_script.context import vse_event_out, vse_set_property, vse_get_property
 from visual_script.misc import ASPECT
 from visual_script.slot_types import SLOT_TYPE
 
-class AbilityContextClient(VehicleContextClient):
+class AbilityContextClient(VehicleContext):
 
     def __init__(self, vehicle, equipmentName=None):
         super(AbilityContextClient, self).__init__(vehicle)

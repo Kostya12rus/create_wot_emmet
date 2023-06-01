@@ -2,9 +2,8 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/minimap/component.py
-import logging, weakref, BigWorld, GUI, Math, SoundGroups
+import logging, weakref, GUI, Math, SoundGroups
 from AvatarInputHandler import AvatarInputHandler
-from arena_bonus_type_caps import ARENA_BONUS_TYPE_CAPS as BONUS_CAPS
 from gui.Scaleform.daapi.view.battle.shared.map_zones.minimap import MapZonesEntriesPlugin
 from gui.Scaleform.daapi.view.battle.shared.minimap import settings, plugins
 from gui.Scaleform.daapi.view.meta.MinimapMeta import MinimapMeta
@@ -177,9 +176,6 @@ class MinimapComponent(MinimapMeta, IMinimapComponent):
            'area_markers': plugins.AreaMarkerEntriesPlugin, 
            'spgShot': plugins.EnemySPGShotPlugin, 
            'map_zones': MapZonesEntriesPlugin}
-        arenaBonusType = BigWorld.player().arenaBonusType
-        if arenaBonusType and BONUS_CAPS.checkAny(arenaBonusType, BONUS_CAPS.DEATHZONES):
-            setup['deathzones'] = plugins.DeathZonesMinimapPlugin
         return setup
 
     def _createFlashComponent(self):

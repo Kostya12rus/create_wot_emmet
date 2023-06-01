@@ -323,6 +323,9 @@ class IVehicleCountController(IArenaVehiclesController, ViewComponentsController
     def updateAttachedVehicle(self, vehicleID):
         raise NotImplementedError
 
+    def updateLives(self, lives):
+        raise NotImplementedError
+
 
 class IPrebattleSetupsController(IArenaPeriodController, IArenaLoadController, ViewComponentsController):
 
@@ -383,7 +386,7 @@ class IPrebattleSetupsController(IArenaPeriodController, IArenaLoadController, V
 
 class IAppearanceCacheController(IArenaVehiclesController):
 
-    def getAppearance(self, vId, vInfo, callback=None, strCD=None):
+    def getAppearance(self, vId, vInfo, callback=None, strCD=None, needLoad=True):
         raise NotImplementedError
 
     def reloadAppearance(self, vId, vInfo, callback=None, strCD=None, oldStrCD=None):

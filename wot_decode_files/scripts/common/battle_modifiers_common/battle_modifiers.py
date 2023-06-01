@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/battle_modifiers_common/battle_modifiers.py
 from ResMgr import DataSection
+from constants import AOI
 from typing import TYPE_CHECKING, Optional, Any, Tuple, Union
 if TYPE_CHECKING:
     from items.vehicles import VehicleType
@@ -74,7 +75,8 @@ class BattleParams(object):
     ARMOR_SPALLS_CONE_ANGLE = 60
     ARMOR_SPALLS_DAMAGE_ABSORPTION = 61
     MODE_CREDITS_FACTOR = 62
-    DIVING_DESTRUCTION_DELAY = 63
+    INVISIBILITY_FACTOR_AT_SHOT = 63
+    VEHICLE_AOI_RADIUS = 64
     ALL = None
     MAX = None
 
@@ -83,6 +85,16 @@ BattleParams.ALL = set(v for k, v in BattleParams.__dict__.iteritems() if not k.
                                                                                                               'ALL',
                                                                                                               'MAX'))
 BattleParams.MAX = max(BattleParams.ALL)
+
+class ConstantsSet(object):
+    __slots__ = ('VEHICLE_CIRCULAR_AOI_RADIUS', 'VEHICLE_CIRCULAR_AOI_RADIUS_HYSTERESIS_MARGIN')
+
+    def __init__(self):
+        self.VEHICLE_CIRCULAR_AOI_RADIUS = AOI.VEHICLE_CIRCULAR_AOI_RADIUS
+        self.VEHICLE_CIRCULAR_AOI_RADIUS_HYSTERESIS_MARGIN = AOI.VEHICLE_CIRCULAR_AOI_RADIUS_HYSTERESIS_MARGIN
+
+
+CONSTANTS_ORIGINAL = ConstantsSet()
 
 class BattleModifiers(object):
 
@@ -129,6 +141,18 @@ class BattleModifiers(object):
     def retrieveBattleDescr(descr):
         return ()
 
+    @staticmethod
+    def getConstantsOriginal():
+        return CONSTANTS_ORIGINAL
+
+    @staticmethod
+    def clearVehicleModifications():
+        pass
+
+    @staticmethod
+    def clearConstantsModifications():
+        pass
+
     def domain(self):
         return 0
 
@@ -137,6 +161,12 @@ class BattleModifiers(object):
 
     def id(self):
         return 0
+
+    def getVehicleModification(self, vehType):
+        return vehType
+
+    def getConstantsModification(self):
+        return CONSTANTS_ORIGINAL
 
 
 class ModifiersContext(object):
@@ -211,24 +241,6 @@ class ModifiersContext(object):
     @gun.setter
     def gun(self, gun):
         self.__gun = gun
-
-
-class VehicleModificationCache(object):
-
-    def __init__(self, layerCount=0):
-        pass
-
-    def get(self, vehType, battleModifiers):
-        return vehType
-
-    def clear(self):
-        pass
-
-
-_modificationCache = VehicleModificationCache()
-
-def getModificationCache():
-    return _modificationCache
 
 
 def getGlobalModifiers():

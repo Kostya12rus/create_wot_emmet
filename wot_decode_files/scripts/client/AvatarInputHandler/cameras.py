@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarInputHandler/cameras.py
-import math, BigWorld, Math, math_utils
+import math, BigWorld, Math, Event, math_utils
 
 class ImpulseReason(object):
     MY_SHOT = 0
@@ -288,6 +288,7 @@ class FovExtended(object):
         self.__horizontalFov = value
         self.__verticalFov = FovExtended.lookupVerticalFov(value)
         self.setFovByMultiplier(self.__multiplier)
+        self.onSetFovSettingEvent()
 
     horizontalFov = property((lambda self: self.__horizontalFov), __setHorizontalFov)
 
@@ -301,6 +302,7 @@ class FovExtended(object):
         self.__enabled = True
         BigWorld.addWatcher('Render/Fov(horizontal, deg)', (lambda : self.__horizontalFov))
         BigWorld.addWatcher('Render/Fov(vertical, deg)', (lambda : math.degrees(self.__verticalFov)))
+        self.onSetFovSettingEvent = Event.Event()
         self.horizontalFov = 90
         self.defaultVerticalFov = FovExtended.lookupVerticalFov(self.horizontalFov)
         from gui import g_guiResetters

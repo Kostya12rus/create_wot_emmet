@@ -2,9 +2,8 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/events.py
-import logging
+import logging, typing
 from collections import namedtuple
-import typing
 from gui.shared.event_bus import SharedEvent
 from shared_utils import CONST_CONTAINER
 if typing.TYPE_CHECKING:
@@ -233,6 +232,9 @@ class ShowDialogEvent(SharedEvent):
 
 class LoginEvent(SharedEvent):
     CANCEL_LGN_QUEUE = 'cancelLoginQueue'
+    LOGIN_VIEW_READY = 'loginViewReady'
+    DISCONNECTION_STARTED = 'disconnectionStarted'
+    CONNECTION_FAILED = 'connectionFailed'
 
     def __init__(self, eventType, alias='', isSuccess=False, errorMsg=''):
         super(LoginEvent, self).__init__(eventType=eventType)
@@ -256,6 +258,7 @@ class LoginEventEx(LoginEvent):
 class BCLoginEvent(SharedEvent):
     CLOSE_WINDOW = 'closeBCLoginQueue'
     CANCEL_WAITING = 'cancelWaitingBCLoginQueue'
+    HIDE_GAME_LOADING = 'hideGameLoadingBCLoginQueue'
 
     def __init__(self, eventType, title=None, message=None, cancelLabel=None):
         super(BCLoginEvent, self).__init__(eventType=eventType)
@@ -405,12 +408,14 @@ class TutorialEvent(SharedEvent):
     ON_TRIGGER_ACTIVATED = 'onTriggerActivated'
     ON_ANIMATION_COMPLETE = 'onAnimationComplete'
     SIMPLE_WINDOW_PROCESSED = 'simpleWindowProcessed'
+    UPDATE_TUTORIAL_HINTS = 'updateTutorialHints'
+    IMPORTANT_HINT_SHOWING = 'importantHintShowing'
     OVERRIDE_HANGAR_MENU_BUTTONS = 'overrideHangarMenuButtons'
     OVERRIDE_HEADER_MENU_BUTTONS = 'overrideHeaderMenuButtons'
     SET_HANGAR_HEADER_ENABLED = 'setHangarHeaderEnabled'
     OVERRIDE_BATTLE_SELECTOR_HINT = 'overrideBattleSelectorHint'
 
-    def __init__(self, eventType, settingsID='', targetID='', reloadIfRun=False, initialChapter=None, restoreIfRun=False, isStopForced=False, isAfterBattle=False, state=False):
+    def __init__(self, eventType, settingsID='', targetID='', reloadIfRun=False, initialChapter=None, restoreIfRun=False, isStopForced=False, isAfterBattle=False, state=False, arguments=''):
         super(TutorialEvent, self).__init__(eventType)
         self.settingsID = settingsID
         self.targetID = targetID
@@ -420,6 +425,7 @@ class TutorialEvent(SharedEvent):
         self.isStopForced = isStopForced
         self.isAfterBattle = isAfterBattle
         self.componentState = state
+        self.arguments = arguments
 
     def getState(self):
         return {'reloadIfRun': self.reloadIfRun, 
@@ -677,6 +683,7 @@ class AirDropEvent(HasCtxEvent):
     AIR_DROP_LANDED = 'onAirDropLanded'
     AIR_DROP_LOOP_ENTERED = 'onAirDropLootEntered'
     AIR_DROP_LOOP_LEFT = 'onAirDropLootLeft'
+    AIR_DROP_NXT_SPAWNED = 'onAirDropNxtSpawned'
 
 
 class ProfilePageEvent(HasCtxEvent):
@@ -691,11 +698,6 @@ class ProfileStatisticEvent(HasCtxEvent):
 class ProfileTechniqueEvent(HasCtxEvent):
     SELECT_BATTLE_TYPE = 'onProfileTechniqueEventBattleTypeSelect'
     DISPOSE = 'onProfileTechniqueEventDispose'
-
-
-class HangarCameraManagerEvent(HasCtxEvent):
-    ON_CREATE = 'hangarCameraManagerEvent/onCreate'
-    ON_DESTROY = 'hangarCameraManagerEvent/onDestroy'
 
 
 class BattlePassEvent(HasCtxEvent):
@@ -818,5 +820,7 @@ class CollectionsEvent(HasCtxEvent):
     BATTLE_PASS_ENTRY_POINT_VISITED = 'battlePassEntryPointVisited'
 
 
-class CosmicEvent(SharedEvent):
-    OPEN_COSMIC = 'openCosmic'
+class Achievements20Event(HasCtxEvent):
+    LAYOUT_CHANGED = 'layoutChanged'
+    CLOSE_SUMMARY_VIEW = 'closeSummaryView'
+    CLOSE_EDIT_VIEW = 'closeEditView'
