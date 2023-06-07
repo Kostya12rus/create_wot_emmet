@@ -6,7 +6,7 @@ import logging, typing, Event
 from frameworks.wulf import ViewSettings, ViewFlags
 from gui.browser import BrowserViewWebHandlers
 from gui.impl.pub import ViewImpl
-from gui.impl.gen.view_models.common.browser_model import BrowserModel, BrowserState, PageState
+from gui.impl.gen.view_models.common.browser_model import BrowserModel, BrowserState, PageState, TetxureState
 from gui.impl.gen import R
 from helpers import dependency
 from adisp import adisp_process
@@ -41,6 +41,7 @@ class Browser(ViewImpl[TViewModel]):
         self.onBrowserObtained = Event.Event(self.__eventManager)
         self.getViewModel().setBrowserState(BrowserState.INITIALIZATION)
         self.getViewModel().setPageState(PageState.INITIALIZATION)
+        self.getViewModel().setTexState(TetxureState.INITIALIZATION)
         if preload and self.__url:
             self.__loadBrowser()
         return
@@ -69,7 +70,9 @@ class Browser(ViewImpl[TViewModel]):
          (
           self.getViewModel().focus, self.__onFocus),
          (
-          self.getViewModel().unfocus, self.__onUnfocus))
+          self.getViewModel().unfocus, self.__onUnfocus),
+         (
+          self.getViewModel().reload, self.__onReload))
 
     def _finalize(self):
         self.__browserCtrl.onBrowserAdded -= self.__onBrowserAddedHandler
@@ -81,6 +84,7 @@ class Browser(ViewImpl[TViewModel]):
             self.__browser.onLoadEnd -= self.__onLoadEnd
             self.__browser.onTitleChange -= self.__onTitleChange
             self.__browser.onJsHostQuery -= self.__onJsHostQuery
+            self.__browser.onTextureStateChanged -= self.__onTextureStateChanged
         if self.__browserId:
             self.__browserCtrl.delBrowser(self.__browserId)
         self.__eventManager.clear()
@@ -103,6 +107,7 @@ class Browser(ViewImpl[TViewModel]):
         self.__browser.onLoadEnd += self.__onLoadEnd
         self.__browser.onTitleChange += self.__onTitleChange
         self.__browser.onJsHostQuery += self.__onJsHostQuery
+        self.__browser.onTextureStateChanged += self.__onTextureStateChanged
         with self.getViewModel().transaction() as (model):
             model.setId(self.__browserId)
             if self.__browser.isNavigationComplete:
@@ -133,6 +138,12 @@ class Browser(ViewImpl[TViewModel]):
             return
         self.__browser.unfocus()
 
+    def __onReload(self):
+        if not self.__browser:
+            _logger.error('Browser not created')
+            return
+        self.__browser.refresh()
+
     def __onLoadStart(self, url):
         self.getViewModel().setPageState(PageState.LOADING)
 
@@ -153,3 +164,6 @@ class Browser(ViewImpl[TViewModel]):
 
     def __onJsHostQuery(self, command):
         self.__webCommandHandler.handleCommand(command)
+
+    def __onTextureStateChanged(self, isOk):
+        self.getViewModel().setTexState(TetxureState.LOADED if isOk else TetxureState.FAILED)

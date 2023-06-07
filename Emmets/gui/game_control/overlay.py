@@ -28,6 +28,7 @@ class OverlayController(IOverlayController):
     def __init__(self):
         self._selectableObjectsPrevState = []
         self._stateOn = False
+        self._stateInProgess = False
         self._backgroundAlpha = 1
         self._optimizationEnabled = True
         self._globalBlur = GUI.WGUIBackgroundBlur()
@@ -46,15 +47,17 @@ class OverlayController(IOverlayController):
 
     @wg_async
     def waitShow(self):
+        self._stateInProgess = True
         if self._canShow():
             return
         yield wg_await(self._showEvent.wait())
 
     @property
     def isActive(self):
-        return self._stateOn
+        return self._stateOn or self._stateInProgess
 
     def setOverlayState(self, state):
+        self._stateInProgess = False
         if self._stateOn != state:
             self._stateOn = state
             self._changeGUIVisibility()

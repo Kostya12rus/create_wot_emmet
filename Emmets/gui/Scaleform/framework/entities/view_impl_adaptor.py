@@ -2,14 +2,15 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/entities/view_impl_adaptor.py
-import typing, BigWorld
+import logging, typing, BigWorld
 from frameworks.wulf import WindowStatus, WindowSettings, Window
 from gui.Scaleform.framework import ScopeTemplates
-from gui.Scaleform.framework.entities.DisposableEntity import DisposableEntity
+from gui.Scaleform.framework.entities.DisposableEntity import DisposableEntity, EntityState
 from gui.Scaleform.framework.entities.View import ViewKey
 from gui.Scaleform.framework.entities.view_interface import ViewInterface
 from gui.Scaleform.framework.settings import UIFrameworkImpl
 from soft_exception import SoftException
+_logger = logging.getLogger(__name__)
 
 class ViewImplAdaptor(DisposableEntity, ViewInterface):
     __slots__ = ('__window', '__loadID', '__scope', '__key', '__layer')
@@ -93,6 +94,8 @@ class ViewImplAdaptor(DisposableEntity, ViewInterface):
             return self.__window.windowStatus == WindowStatus.LOADED
 
     def setView(self, view, parent=None):
+        if self.__window is not None:
+            _logger.exception('View has been already set! %r new value: %r', self, view)
         self.__layer = view.layer
         self.__key = ViewKey(view.layoutID, view.uniqueID)
         settings = WindowSettings()
@@ -101,6 +104,7 @@ class ViewImplAdaptor(DisposableEntity, ViewInterface):
         settings.layer = self.__layer
         self.__window = Window(settings)
         self.__window.onStatusChanged += self.__onStatusChanged
+        return
 
     def loadView(self):
         if self.__loadID is not None:
@@ -126,6 +130,8 @@ class ViewImplAdaptor(DisposableEntity, ViewInterface):
 
     def __onStatusChanged(self, state):
         if state == WindowStatus.LOADED:
+            if self.getState() == EntityState.CREATED:
+                _logger.exception('View already created: %r', self)
             self.create()
         elif state == WindowStatus.DESTROYED:
             if self.__window is not None:

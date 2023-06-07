@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/style_preview.py
-import logging
+import logging, typing
 from CurrentVehicle import g_currentPreviewVehicle
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -20,7 +20,6 @@ from gui.shared.gui_items.customization.c11n_items import getGroupFullNameResour
 from helpers import dependency
 from preview_selectable_logic import PreviewSelectableLogic
 from skeletons.gui.game_control import IHeroTankController
-from skeletons.gui.shared import IItemsCache
 from skeletons.gui.shared.utils import IHangarSpace
 from uilogging.shop.loggers import ShopVehicleStylePreviewMetricsLogger, ShopVehicleStylePreviewFlowLogger
 _SHOW_CLOSE_BTN = False
@@ -30,7 +29,6 @@ _logger = logging.getLogger(__name__)
 class VehicleStylePreview(LobbySelectableView, VehicleBasePreviewMeta):
     __background_alpha__ = 0.0
     __metaclass__ = event_bus_handlers.EventBusListener
-    __itemsCache = dependency.descriptor(IItemsCache)
     __hangarSpace = dependency.descriptor(IHangarSpace)
     __heroTanksControl = dependency.descriptor(IHeroTankController)
     _COMMON_SOUND_SPACE = STYLE_PREVIEW_SOUND_SPACE
@@ -79,10 +77,7 @@ class VehicleStylePreview(LobbySelectableView, VehicleBasePreviewMeta):
            'backBtnDescrLabel': self.__backBtnDescrLabel, 
            'showCloseBtn': _SHOW_CLOSE_BTN, 
            'showBackButton': _SHOW_BACK_BTN})
-        self.as_setAdditionalInfoS({'objectSubtitle': text_styles.main(backport.text(getGroupFullNameResourceID(self._style.groupID))), 
-           'objectTitle': self._style.userName, 
-           'descriptionTitle': backport.text(R.strings.tooltips.vehiclePreview.historicalReference.title()), 
-           'descriptionText': self.__styleDescr})
+        self.as_setAdditionalInfoS(self._getAdditionalInfoVO())
         if self.__backPreviewAlias and self.__backPreviewAlias == VIEW_ALIAS.LOBBY_STORE:
             self.__uiFlowLogger.logOpenPreview()
             self.__uiMetricsLogger.onViewOpen()
@@ -107,6 +102,12 @@ class VehicleStylePreview(LobbySelectableView, VehicleBasePreviewMeta):
 
     def _createSelectableLogic(self):
         return PreviewSelectableLogic()
+
+    def _getAdditionalInfoVO(self):
+        return {'objectSubtitle': text_styles.main(backport.text(getGroupFullNameResourceID(self._style.groupID))), 
+           'objectTitle': self._style.userName, 
+           'descriptionTitle': backport.text(R.strings.tooltips.vehiclePreview.historicalReference.title()), 
+           'descriptionText': self.__styleDescr}
 
     def __onVehicleLoading(self, ctxEvent):
         isVehicleLoadingStarted = ctxEvent.ctx['started']

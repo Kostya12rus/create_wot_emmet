@@ -2297,8 +2297,8 @@ class FLAvatarStealthRadar(Equipment, SharedCooldownConsumableConfigReader, Cool
 
 class MineParams(object):
     __slots__ = ('triggerRadius', 'triggerHeight', 'triggerDepth', 'influenceType',
-                 'lifetime', 'damage', 'shell', 'shellLowDamage', 'destroyMyMinesOverlappingAlliedMines',
-                 'resistAllyDamage', 'directDetectionTypes')
+                 'lifetime', 'activationDelay', 'damage', 'shell', 'shellLowDamage',
+                 'destroyMyMinesOverlappingAlliedMines', 'resistAllyDamage', 'directDetectionTypes')
 
     def __init__(self):
         self.triggerRadius = 1.0
@@ -2318,6 +2318,7 @@ class MineParams(object):
         return ('motParams ({}, {}, {}, {}, {}, {}, {}, {})').format(self.triggerRadius, self.triggerHeight, self.triggerDepth, self.influenceType, self.lifetime, self.damage, self.shell, self.shellLowDamage)
 
     def _readConfig(self, xmlCtx, section):
+        self.activationDelay = section.readInt('activationDelay', 0)
         self.triggerRadius = _xml.readPositiveFloat(xmlCtx, section, 'triggerRadius')
         self.triggerHeight = _xml.readPositiveFloat(xmlCtx, section, 'triggerHeight')
         self.triggerDepth = _xml.readNonNegativeFloat(xmlCtx, section, 'triggerDepth', 0.0)

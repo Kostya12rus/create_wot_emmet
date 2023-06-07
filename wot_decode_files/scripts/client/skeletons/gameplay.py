@@ -10,8 +10,6 @@ class GameplayStateID(object):
     BATTLE_REPLAY = 'game.replay'
     ACCOUNT = 'online.account'
     AVATAR = 'online.avatar'
-    GAME_LOADING = 'offline.game_loading'
-    INTRO_VIDEO = 'offline.intro_video'
     LOGIN = 'offline.login'
     ACCOUNT_ENTERING = 'account.entering'
     ACCOUNT_SHOW_GUI = 'account.show_gui'
@@ -30,10 +28,6 @@ class GameplayStateID(object):
     BATTLE_REPLAY_REWIND = 'replay.rewind'
     BATTLE_REPLAY_FINISHED = 'replay.finished'
     BATTLE_REPLAY_NEXT = 'replay.next'
-
-
-class GUIEventID(object):
-    INTRO_VIDEO_FINISHED = 'gui.intro_video.finished'
 
 
 class PlayerEventID(object):

@@ -3,9 +3,9 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/visual_script/qa_blocks.py
 import BigWorld
-from block import Block, Meta, InitParam, buildStrKeysValue, EDITOR_TYPE, makeResEditorData
+from block import Block, Meta, InitParam, buildStrKeysValue, makeResEditorData
 from slot_types import SLOT_TYPE, arrayOf
-from misc import ASPECT, BLOCK_MODE
+from misc import ASPECT, BLOCK_MODE, EDITOR_TYPE
 from constants import IS_DEVELOPMENT
 
 class QAMeta(Meta):

@@ -20,7 +20,8 @@ _LootEffect = namedtuple('_LootEffect', ('path_fwd', 'path'))
 _LootModel = namedtuple('_LootModel', ('name', 'border'))
 _Loot = namedtuple('_Loot', ('model', 'effect', 'pickupEffect'))
 _MinesEffects = namedtuple('_MinesEffects', ('plantEffect', 'idleEffect', 'destroyEffect',
-                                             'blowUpEffectName'))
+                                             'placeMinesEffect', 'blowUpEffectName',
+                                             'activationEffect'))
 _BerserkerEffects = namedtuple('_BerserkerEffects', ('turretEffect', 'hullEffect',
                                                      'transformPath'))
 MIN_OVER_TERRAIN_HEIGHT = 0
@@ -182,6 +183,14 @@ class _BerserkerTurretEffect(_SimpleEffect):
     _SECTION_NAME = 'berserkerTurretEffect'
 
 
+class _VehicleRespawnEffect(object):
+    _SECTION_NAME = 'VehicleRespawn'
+
+    def __init__(self, dataSection):
+        super(_VehicleRespawnEffect, self).__init__()
+        self.effectPrefabPath = dataSection[self._SECTION_NAME].readString('prefab')
+
+
 class DynObjectsBase(object):
 
     def __init__(self):
@@ -260,7 +269,7 @@ class _EpicBattleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
 
     def init(self, dataSection):
         if not self._initialized:
-            self.__minesEffects = _MinesEffects(plantEffect=_MinesPlantEffect(dataSection), idleEffect=_EpicMinesIdleEffect(dataSection), destroyEffect=_MinesDestroyEffect(dataSection), blowUpEffectName='epicMinesBlowUpEffect')
+            self.__minesEffects = _MinesEffects(plantEffect=_MinesPlantEffect(dataSection), idleEffect=_EpicMinesIdleEffect(dataSection), destroyEffect=_MinesDestroyEffect(dataSection), placeMinesEffect='epicMinesDecalEffect', blowUpEffectName='epicMinesBlowUpEffect', activationEffect='epicMinesActivationDecalEffect')
             super(_EpicBattleDynObjects, self).init(dataSection)
 
     def getMinesEffect(self):
@@ -277,6 +286,7 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
         self.__repairPoint = None
         self.__botDeliveryEffect = None
         self.__botClingDeliveryEffect = None
+        self.__vehicleRespawnEffect = None
         self.__botDeliveryMarker = None
         self.__dropPlane = None
         self.__airDrop = None
@@ -295,14 +305,17 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
             self.__botDeliveryEffect = _BattleRoyaleBotDeliveryEffect(dataSection)
             self.__botClingDeliveryEffect = _BattleRoyaleBotClingDeliveryEffect(dataSection)
             self.__botDeliveryMarker = _BattleRoyaleBotDeliveryMarkerArea(dataSection)
-            self.__minesEffects = _MinesEffects(plantEffect=_MinesPlantEffect(dataSection), idleEffect=_MinesIdleEffect(dataSection), destroyEffect=_MinesDestroyEffect(dataSection), blowUpEffectName='minesBlowUpEffect')
+            self.__minesEffects = _MinesEffects(plantEffect=_MinesPlantEffect(dataSection), idleEffect=_MinesIdleEffect(dataSection), destroyEffect=_MinesDestroyEffect(dataSection), placeMinesEffect='minesDecalEffect', blowUpEffectName='minesBlowUpEffect', activationEffect=None)
             self.__berserkerEffects = _BerserkerEffects(turretEffect=_BerserkerTurretEffect(dataSection), hullEffect=_BerserkerHullEffect(dataSection), transformPath=dataSection.readString('berserkerTransformPath'))
+            self.__vehicleRespawnEffect = _VehicleRespawnEffect(dataSection)
+            CGF.cacheGameObjects([self.__vehicleRespawnEffect.effectPrefabPath], False)
             prerequisites = set()
             self.__dropPlane = _createDropPlane(dataSection['dropPlane'], prerequisites)
             self.__airDrop = _createAirDrop(dataSection['airDrop'], prerequisites)
             self.__loots = _createLoots(dataSection, dataSection['lootTypes'], prerequisites)
             BigWorld.loadResourceListBG(list(prerequisites), makeCallbackWeak(self.__onResourcesLoaded))
             super(_BattleRoyaleDynObjects, self).init(dataSection)
+        return
 
     def getVehicleUpgradeEffect(self):
         return self.__vehicleUpgradeEffect
@@ -339,6 +352,9 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
 
     def getBerserkerEffects(self):
         return self.__berserkerEffects
+
+    def getVehicleRespawnEffect(self):
+        return self.__vehicleRespawnEffect
 
     def clear(self):
         pass

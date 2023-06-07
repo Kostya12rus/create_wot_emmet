@@ -3,13 +3,8 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/visual_script/block.py
 from typing import List, Any, Sequence
-from misc import ASPECT, BLOCK_MODE
+from misc import ASPECT, BLOCK_MODE, EDITOR_TYPE
 from itertools import imap
-
-class EDITOR_TYPE(object):
-    STR_KEY_SELECTOR = 1
-    ENUM_SELECTOR = 2
-
 
 def buildStrKeysValue(*args):
     return (';').join(args)

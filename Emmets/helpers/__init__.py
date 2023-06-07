@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/__init__.py
-import types, BigWorld, ResMgr, Settings, i18n, constants
+import types, BigWorld, ResMgr, i18n, constants
 from debug_utils import LOG_CURRENT_EXCEPTION
 from soft_exception import SoftException
 VERSION_FILE_PATH = '../version.xml'
@@ -103,37 +103,6 @@ def getFullClientVersion():
     else:
         version = i18n.makeString(sec.readString('appname')) + ' ' + sec.readString('version')
         return version
-
-
-def isShowStartupVideo():
-    from gui import GUI_SETTINGS
-    if not GUI_SETTINGS.guiEnabled:
-        return False
-    else:
-        p = Settings.g_instance.userPrefs
-        if p is not None:
-            if p.readInt(Settings.KEY_SHOW_STARTUP_MOVIE, 1) == 1:
-                if GUI_SETTINGS.compulsoryIntroVideos:
-                    return True
-                return isIntroVideoSettingChanged(p)
-            return False
-        return True
-
-
-def isIntroVideoSettingChanged(userPrefs=None):
-    userPrefs = userPrefs if userPrefs is not None else Settings.g_instance.userPrefs
-    import account_shared
-    mainVersion = account_shared.getClientMainVersion()
-    lastVideoVersion = userPrefs.readString(Settings.INTRO_VIDEO_VERSION, '')
-    return lastVideoVersion != mainVersion
-
-
-def writeIntroVideoSetting():
-    userPrefs = Settings.g_instance.userPrefs
-    if userPrefs is not None:
-        import account_shared
-        userPrefs.writeString(Settings.INTRO_VIDEO_VERSION, account_shared.getClientMainVersion())
-    return
 
 
 def newFakeModel():
