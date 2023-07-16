@@ -476,13 +476,13 @@ _SINGLE_ACHIEVEMENTS_VALUES = [
  'january23', 'february23', 
  'march23', 'april23', 'may23', 
  'june23', 
- 'prime_gaming_reserved_11', 'prime_gaming_reserved_12', 
- 'comp7Season1', 
- 'hw2022Medal01', 'hw2022Medal02', '12YearsOfService', 
- 'NY23_AtmsphrLevel', 
- 'NY23_CelebChallenge', 'BattlePassCommonPr_NY23', 
- 'BattlePassCommonPr_10', 
- 'comp7_2023_1', 'Cosmic_MartianStalker', 'Cosmic_SpaceTrace', 
+ 'july23', 'prime_gaming_reserved_12', 
+ 'comp7Season1', 'hw2022Medal01', 
+ 'hw2022Medal02', '12YearsOfService', 
+ 'NY23_AtmsphrLevel', 'NY23_CelebChallenge', 
+ 'BattlePassCommonPr_NY23', 
+ 'BattlePassCommonPr_10', 'comp7_2023_1', 'Cosmic_MartianStalker', 
+ 'Cosmic_SpaceTrace', 
  'BattlePassCommonPr_11']
 _singleAchievementsPopUps = [
  'titleSniper', 'invincible', 'diehard', 'handOfDeath', 
@@ -567,14 +567,14 @@ _singleAchievementsPopUps = [
  'january23', 
  'february23', 'march23', 'april23', 
  'may23', 'june23', 
- 'prime_gaming_reserved_11', 
- 'prime_gaming_reserved_12', 'comp7Season1', 
- 'hw2022Medal01', 'hw2022Medal02', 
- '12YearsOfService', 'NY23_AtmsphrLevel', 
- 'NY23_CelebChallenge', 
- 'BattlePassCommonPr_NY23', 'BattlePassCommonPr_10', 
- 'comp7_2023_1', 
- 'Cosmic_MartianStalker', 'Cosmic_SpaceTrace', 'BattlePassCommonPr_11']
+ 'july23', 
+ 'prime_gaming_reserved_12', 'comp7Season1', 'hw2022Medal01', 
+ 'hw2022Medal02', 
+ '12YearsOfService', 'NY23_AtmsphrLevel', 'NY23_CelebChallenge', 
+ 'BattlePassCommonPr_NY23', 
+ 'BattlePassCommonPr_10', 'comp7_2023_1', 
+ 'Cosmic_MartianStalker', 'Cosmic_SpaceTrace', 
+ 'BattlePassCommonPr_11']
 _singleAchievementsBlockBuilder = BinarySetDossierBlockBuilder('singleAchievements', _SINGLE_ACHIEVEMENTS_VALUES, SINGLE_ACHIEVEMENTS_DEPENDENCIES, _singleAchievementsPopUps)
 FORT_ACHIEVEMENTS_BLOCK_LAYOUT = [
  'conqueror', 'fireAndSword', 'crusher', 'counterblow', 'kampfer', 'soldierOfFortune']

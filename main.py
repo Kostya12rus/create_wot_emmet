@@ -6,7 +6,7 @@ import zipfile
 import shutil
 import uncompyle_dir
 
-# Wargaming v.1.21.0.0 #179
+# Wargaming v.1.21.0.0 #184
 
 thread_decode = 25  # Самое лучшее значение 20, чем выше, тем больше нагрузка на ЦП
 # Процесор 4 ядра 8 потоков
