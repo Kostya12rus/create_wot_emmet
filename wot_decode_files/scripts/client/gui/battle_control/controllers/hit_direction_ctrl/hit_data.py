@@ -2,11 +2,14 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/hit_direction_ctrl/hit_data.py
+import math
 from gui.battle_control.battle_constants import HIT_FLAGS
 from constants import ATTACK_REASON_INDICES, ATTACK_REASON
 from shared_utils import BitmaskHelper
 from helpers import i18n
 from gui.Scaleform.locale.INGAME_GUI import INGAME_GUI
+_HIT_YAW_MIN_SMOOTHING = math.radians(1.0)
+_HIT_YAW_MAX_SMOOTHING = 2 * math.pi - _HIT_YAW_MIN_SMOOTHING
 _NONE_PLAYER_ATTACK_REASON_TAG = {ATTACK_REASON_INDICES['artillery_protection']: (
                                                  INGAME_GUI.ATTACKREASON_ARTILLERYPROTECTION, 'artillery'), 
    ATTACK_REASON_INDICES['artillery_sector']: (
@@ -35,7 +38,9 @@ class SimpleHitData(object):
             return ''
 
     def extend(self, hitData):
-        self.__yaw = hitData.getYaw()
+        newYaw = hitData.getYaw()
+        if _HIT_YAW_MIN_SMOOTHING <= abs(self.__yaw - newYaw) <= _HIT_YAW_MAX_SMOOTHING:
+            self.__yaw = newYaw
 
 
 class HitData(SimpleHitData):

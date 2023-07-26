@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/resource_well.py
-import cPickle
+import json
 from functools import partial
 import typing, AccountCommands
 from gui.resource_well.resource_well_constants import RESOURCE_WELL_PDATA_KEY
@@ -47,7 +47,7 @@ class ResourceWell(object):
             proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID, errorStr)
         else:
             proxy = None
-        resourcesStr = cPickle.dumps(resources)
+        resourcesStr = json.dumps(resources)
         self.__commandsProxy.perform(AccountCommands.CMD_RESOURCE_WELL_PUT, [reward, resourcesStr], proxy)
         return
 

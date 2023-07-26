@@ -4,6 +4,7 @@
 # Embedded file name: scripts/client/gui/shared/tooltips/common.py
 import cPickle, logging, math
 from collections import namedtuple, defaultdict
+from gui.impl.lobby.debut_boxes.tooltips.debut_boxes_badge_tooltip_view import DebutBoxesBadgeTooltipView
 from gui.impl.lobby.personal_reserves.tooltips.personal_reserves_tooltip_view import PersonalReservesTooltipView
 from gui.impl.pub import ToolTipWindow
 from helpers.i18n import makeString
@@ -1448,6 +1449,15 @@ class SquadBonusTooltipWindowData(ToolTipBaseData):
 
     def getDisplayableData(self, *args, **kwargs):
         return DecoratedTooltipWindow(SquadBonusTooltipContent())
+
+
+class DebutBoxesBadgeTooltipContentWindowData(ToolTipBaseData):
+
+    def __init__(self, context):
+        super(DebutBoxesBadgeTooltipContentWindowData, self).__init__(context, TOOLTIPS_CONSTANTS.DEBUT_BOXES_BADGE)
+
+    def getDisplayableData(self, intCD, *args, **kwargs):
+        return DecoratedTooltipWindow(DebutBoxesBadgeTooltipView(intCD), useDecorator=False)
 
 
 class VehiclePointsTooltipContentWindowData(ToolTipBaseData):

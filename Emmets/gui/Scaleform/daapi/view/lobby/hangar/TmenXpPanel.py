@@ -2,9 +2,12 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/TmenXpPanel.py
-from debug_utils import LOG_DEBUG
-from gui.Scaleform.daapi.view.meta.TmenXpPanelMeta import TmenXpPanelMeta
+import logging
 from CurrentVehicle import g_currentVehicle
+from gui.hangar_presets.hangar_gui_helpers import ifComponentAvailable
+from gui.Scaleform.daapi.view.meta.TmenXpPanelMeta import TmenXpPanelMeta
+from gui.Scaleform.genConsts.HANGAR_CONSTS import HANGAR_CONSTS
+_logger = logging.getLogger(__name__)
 
 class TmenXpPanel(TmenXpPanelMeta):
 
@@ -17,11 +20,12 @@ class TmenXpPanel(TmenXpPanelMeta):
         g_currentVehicle.onChanged -= self._onVehicleChange
         super(TmenXpPanel, self)._dispose()
 
+    @ifComponentAvailable(HANGAR_CONSTS.TANK_MEN_XP)
     def _onVehicleChange(self):
         vehicle = g_currentVehicle.item
         if vehicle is None:
             self.as_setTankmenXpPanelS(False)
-            LOG_DEBUG('Do not show TMenXPPanel: No current vehicle')
+            _logger.debug('Do not show TMenXPPanel: No current vehicle')
             return
         else:
             self.as_setTankmenXpPanelS(vehicle.isXPToTman)

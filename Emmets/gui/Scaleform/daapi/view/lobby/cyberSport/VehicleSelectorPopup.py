@@ -3,7 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/cyberSport/VehicleSelectorPopup.py
 from account_helpers.AccountSettings import AccountSettings
-from constants import VEHICLE_CLASSES
+from constants import VEHICLE_CLASSES, BATTLE_MODE_VEHICLE_TAGS
 from gui.Scaleform.daapi.view.lobby.vehicle_selector_base import VehicleSelectorBase
 from gui.Scaleform.daapi.view.lobby.rally.vo_converters import makeVehicleVO
 from gui.Scaleform.daapi.view.meta.VehicleSelectorPopupMeta import VehicleSelectorPopupMeta
@@ -73,7 +73,7 @@ class VehicleSelectorPopup(VehicleSelectorPopupMeta, VehicleSelectorBase):
 
     def updateData(self):
         if not self.getFilters().get('compatibleOnly', True) or self._vehicles is None:
-            vehicleVOs = self._updateData(self.itemsCache.items.getVehicles(REQ_CRITERIA.INVENTORY | ~REQ_CRITERIA.VEHICLE.BATTLE_ROYALE))
+            vehicleVOs = self._updateData(self.itemsCache.items.getVehicles(REQ_CRITERIA.INVENTORY | ~REQ_CRITERIA.VEHICLE.HAS_ANY_TAG(BATTLE_MODE_VEHICLE_TAGS)))
         else:
             vehicleVOs = self._updateData(self._vehicles)
         if self.__selectedVehicles is not None:

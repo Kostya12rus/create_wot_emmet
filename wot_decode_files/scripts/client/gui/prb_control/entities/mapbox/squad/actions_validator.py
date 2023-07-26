@@ -13,12 +13,6 @@ from helpers import dependency
 from skeletons.gui.game_control import IMapboxController
 from gui.periodic_battles.models import PrimeTimeStatus
 
-class _MapboxVehicleValidator(SquadVehiclesValidator):
-
-    def _isValidMode(self, vehicle):
-        return not vehicle.isEvent
-
-
 class _MapboxStateValidator(UnitStateValidator):
 
     def _validate(self):
@@ -43,7 +37,7 @@ class MapboxSquadActionsValidator(SquadActionsValidator):
     def _createVehiclesValidator(self, entity):
         return ActionsValidatorComposite(entity, validators=[
          BalancedSquadVehiclesValidator(entity),
-         _MapboxVehicleValidator(entity),
+         SquadVehiclesValidator(entity),
          SPGForbiddenSquadVehiclesValidator(entity),
          ScoutForbiddenSquadVehiclesValidator(entity)])
 

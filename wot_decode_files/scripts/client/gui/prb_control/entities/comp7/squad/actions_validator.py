@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/comp7/squad/actions_validator.py
 import typing
+from constants import BATTLE_MODE_VEH_TAGS_EXCEPT_COMP7
 from gui.prb_control.entities.base.actions_validator import ActionsValidatorComposite, BaseActionsValidator
 from gui.prb_control.entities.base.squad.actions_validator import SquadActionsValidator, SquadVehiclesValidator
 from gui.prb_control.entities.base.unit.actions_validator import UnitSlotsValidator, CommanderValidator, UnitPlayerValidator
@@ -16,7 +17,7 @@ if typing.TYPE_CHECKING:
     from gui.prb_control.items import PlayerUnitInfo
 
 class _Comp7VehiclesValidator(SquadVehiclesValidator):
-    pass
+    _BATTLE_MODE_VEHICLE_TAGS = BATTLE_MODE_VEH_TAGS_EXCEPT_COMP7
 
 
 class _UnitSlotsValidator(UnitSlotsValidator):

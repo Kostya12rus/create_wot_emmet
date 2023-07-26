@@ -3,7 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/MemoryCriticalController.py
 from functools import partial
-import BigWorld, Event, WWISE
+import BigWorld, Event
 from debug_utils import LOG_NOTE, LOG_CURRENT_EXCEPTION, LOG_ERROR, LOG_WARNING
 
 class MemoryCriticalController(object):
@@ -66,7 +66,6 @@ class MemoryCriticalController(object):
             self.__postponeLogMemCritEvent(memCriticalEvent)
         if self.__needReboot:
             return
-        WWISE.WW_onMemoryCritical()
         self.__selfCheckInProgress = False
         self.__needReboot = True
         self.__loweredSettings = [ t for t in BigWorld.graphicsSettings() if t[0] == 'TEXTURE_QUALITY'

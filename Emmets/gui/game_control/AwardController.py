@@ -60,7 +60,7 @@ from gui.server_events.events_helpers import isACEmailConfirmationQuest, isDaily
 from gui.server_events.finders import CHAMPION_BADGES_BY_BRANCH, CHAMPION_BADGE_AT_OPERATION_ID, PM_FINAL_TOKEN_QUEST_IDS_BY_OPERATION_ID, getBranchByOperationId
 from gui.shared import EVENT_BUS_SCOPE, events, g_eventBus
 from gui.shared import event_dispatcher
-from gui.shared.event_dispatcher import showBadgeInvoiceAwardWindow, showBattlePassAwardsWindow, showBattlePassVehicleAwardWindow, showDedicationRewardWindow, showEliteWindow, showMultiAwardWindow, showProgressionRequiredStyleUnlockedWindow, showProgressiveItemsRewardWindow, showProgressiveRewardAwardWindow, showRankedSeasonCompleteView, showRankedSelectableReward, showRankedYearAwardWindow, showRankedYearLBAwardWindow, showResourceWellAwardWindow, showSeniorityRewardAwardWindow, showBlankGiftWindow
+from gui.shared.event_dispatcher import showBadgeInvoiceAwardWindow, showBattlePassAwardsWindow, showBattlePassVehicleAwardWindow, showDedicationRewardWindow, showEliteWindow, showMultiAwardWindow, showProgressionRequiredStyleUnlockedWindow, showProgressiveItemsRewardWindow, showProgressiveRewardAwardWindow, showRankedSeasonCompleteView, showRankedSelectableReward, showRankedYearAwardWindow, showRankedYearLBAwardWindow, showResourceWellAwardWindow, showSeniorityRewardAwardWindow, showBlankGiftWindow, showCollectionAwardsWindow
 from gui.shared.events import PersonalMissionsEvent
 from gui.shared.gui_items.dossier.factories import getAchievementFactory
 from gui.shared.system_factory import registerAwardControllerHandlers, collectAwardControllerHandlers
@@ -78,7 +78,7 @@ from shared_utils import first, findFirst
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.battle_matters import IBattleMattersController
-from skeletons.gui.game_control import IAwardController, IBattlePassController, IBootcampController, ILimitedUIController, IMapboxController, IRankedBattlesController, IWotPlusController, ISeniorityAwardsController, IWinbackController
+from skeletons.gui.game_control import IAwardController, IBattlePassController, IBootcampController, ILimitedUIController, IMapboxController, IRankedBattlesController, IWotPlusController, ISeniorityAwardsController, IWinbackController, ICollectionsSystemController
 from skeletons.gui.goodies import IGoodiesCache
 from skeletons.gui.impl import IGuiLoader, INotificationWindowController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -810,6 +810,8 @@ class MotiveQuestsWindowHandler(ServiceChannelHandler):
 
 
 class BattleQuestsAutoWindowHandler(MultiTypeServiceChannelHandler):
+    _BRANCHES_SHOW_ORDER = {personal_missions.PM_BRANCH.PERSONAL_MISSION_2: 1, 
+       personal_missions.PM_BRANCH.REGULAR: 2}
 
     def __init__(self, awardCtrl):
         super(BattleQuestsAutoWindowHandler, self).__init__((
@@ -832,7 +834,7 @@ class BattleQuestsAutoWindowHandler(MultiTypeServiceChannelHandler):
                     quest = _getBlueprintActualBonus(blueprintDict, quest)
                     completedQuests[questID] = (quest, ctx)
 
-        values = sorted(completedQuests.values(), key=(lambda v: v[0].getID()))
+        values = sorted(completedQuests.values(), key=self.__questShowOrderKey)
         for quest, context in values:
             if isDailyQuest(str(quest.getID())):
                 continue
@@ -852,6 +854,15 @@ class BattleQuestsAutoWindowHandler(MultiTypeServiceChannelHandler):
     def _getContext(uniqueQuestID, completedQuests, completedQuestUniqueIDs):
         return (
          uniqueQuestID, {})
+
+    def __questShowOrderKey(self, completedQuest):
+        quest, _ = completedQuest
+        questId = quest.getID()
+        missionsCache = personal_missions.g_cache
+        if missionsCache.hasMission(questId):
+            branchType = missionsCache.questByPotapovQuestID(questId).branch
+            return self._BRANCHES_SHOW_ORDER.get(branchType, questId)
+        return questId
 
 
 class PersonalMissionAutoWindowHandler(BattleQuestsAutoWindowHandler):
@@ -934,7 +945,7 @@ class PersonalMissionOperationAwardHandler(BattleQuestsAutoWindowHandler):
                     pqType = personal_missions.g_cache.questByUniqueQuestID(uniqueQuestID)
                     if pqType.isFinal:
                         self.__openedOperationsAwards.add((pqType.id, pqType.tileID))
-                for operationID, prefix in PM_FINAL_TOKEN_QUEST_IDS_BY_OPERATION_ID.iteritems():
+                for operationID, prefix in self.__getFinalTokenQuestIdsByOperationId():
                     if uniqueQuestID in self.__CHAMPION_BADGES_IDS:
                         return True
                     if uniqueQuestID.startswith(prefix):
@@ -955,7 +966,7 @@ class PersonalMissionOperationAwardHandler(BattleQuestsAutoWindowHandler):
         _, message = ctx
         completedQuestIDs = message.data.get('completedQuestIDs', set())
         allQuests = self.eventsCache.getHiddenQuests()
-        for operationId, prefix in PM_FINAL_TOKEN_QUEST_IDS_BY_OPERATION_ID.iteritems():
+        for operationId, prefix in self.__getFinalTokenQuestIdsByOperationId():
             quests = []
             for uniqueQuestID in completedQuestIDs:
                 if (uniqueQuestID.startswith(prefix) or self.__isChampionBadgeQuest(uniqueQuestID, operationId)) and uniqueQuestID in allQuests:
@@ -991,6 +1002,9 @@ class PersonalMissionOperationAwardHandler(BattleQuestsAutoWindowHandler):
         operations = [ data[1] for data in self.__openedOperationsAwards ]
         if opID not in operations and opID in self.__delayedWindows:
             quests_events.showPersonalMissionsOperationAwardsScreen(self.__delayedWindows.pop(opID))
+
+    def __getFinalTokenQuestIdsByOperationId(self):
+        return sorted(PM_FINAL_TOKEN_QUEST_IDS_BY_OPERATION_ID.items(), key=(lambda v: self._BRANCHES_SHOW_ORDER.get(getBranchByOperationId(v[0]))))
 
 
 class PersonalMissionOperationUnlockedHandler(BattleQuestsAutoWindowHandler):
@@ -1803,6 +1817,26 @@ class WinbackQuestHandler(MultiTypeServiceChannelHandler):
         return qIDs
 
 
+class CollectionsRewardHandler(ServiceChannelHandler):
+    __collections = dependency.descriptor(ICollectionsSystemController)
+
+    def __init__(self, awardCtrl):
+        super(CollectionsRewardHandler, self).__init__(SYS_MESSAGE_TYPE.collectionsReward.index(), awardCtrl)
+
+    def _needToShowAward(self, ctx):
+        if not super(CollectionsRewardHandler, self)._needToShowAward(ctx):
+            return False
+        _, message = ctx
+        data = message.data
+        isFinal = data['requiredCount'] == self.__collections.getMaxProgressItemCount(data['collectionId'])
+        return isFinal
+
+    def _showAward(self, ctx):
+        _, message = ctx
+        data = message.data
+        showCollectionAwardsWindow(data['collectionId'], [data['reward']], isFinal=True)
+
+
 registerAwardControllerHandlers((
  BattleQuestsAutoWindowHandler,
  PunishWindowHandler,
@@ -1843,4 +1877,5 @@ registerAwardControllerHandlers((
  BattleMattersQuestsHandler,
  ResourceWellRewardHandler,
  Comp7RewardHandler,
- WinbackQuestHandler))
+ WinbackQuestHandler,
+ CollectionsRewardHandler))

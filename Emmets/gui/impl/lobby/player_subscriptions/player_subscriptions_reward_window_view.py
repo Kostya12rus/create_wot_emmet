@@ -138,7 +138,7 @@ class PlayerSubscriptionRewardWindowView(ViewImpl):
             return []
 
     def __onCloseButtonClick(self):
-        self.destroy()
+        self.destroyWindow()
 
     def __onChoseButtonClick(self):
         offer = self.__getOffer()

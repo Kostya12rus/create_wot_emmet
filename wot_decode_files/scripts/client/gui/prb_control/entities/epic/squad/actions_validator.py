@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/epic/squad/actions_validator.py
+from constants import BATTLE_MODE_VEH_TAGS_EXCEPT_EPIC
 from CurrentVehicle import g_currentVehicle
 from gui.prb_control.entities.base.actions_validator import ActionsValidatorComposite
 from gui.prb_control.entities.base.squad.actions_validator import SquadActionsValidator, SquadVehiclesValidator
@@ -14,9 +15,7 @@ from skeletons.gui.game_control import IEpicBattleMetaGameController
 from gui.prb_control.entities.base.unit.actions_validator import CommanderValidator
 
 class _EpicVehiclesValidator(SquadVehiclesValidator):
-
-    def _isValidMode(self, vehicle):
-        return not vehicle.isEvent
+    _BATTLE_MODE_VEHICLE_TAGS = BATTLE_MODE_VEH_TAGS_EXCEPT_EPIC
 
 
 class _EpicBalancedSquadVehiclesValidator(BalancedSquadVehiclesValidator):

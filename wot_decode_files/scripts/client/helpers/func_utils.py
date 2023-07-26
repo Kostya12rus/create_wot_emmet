@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/func_utils.py
+import logging
 from collections import namedtuple
 from functools import partial
 from time import sleep, time
@@ -10,6 +11,7 @@ from BWUtil import AsyncReturn
 from PlayerEvents import g_playerEvents
 from wg_async import wg_async, wg_await, AsyncScope, AsyncEvent, BrokenPromiseError
 from debug_utils import LOG_DEBUG
+_logger = logging.getLogger(__name__)
 FLASH_IMG_PREFIX = 'img://'
 
 def callback(delay, obj, methodName, *args):
@@ -155,3 +157,12 @@ def cooldownCallerDecorator(cooldown, paramsMerger):
 
 def replaceImgPrefix(path):
     return path.replace(FLASH_IMG_PREFIX, '')
+
+
+@wg_async
+def waitEventAndCall(event, func):
+    try:
+        yield wg_await(event.wait())
+        func()
+    except BrokenPromiseError:
+        _logger.debug('%s has not been called. AsyncEvent scope has been destroyed', func.__name__ if hasattr(func, __name__) else func)

@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/base/unit/actions_validator.py
+from constants import BATTLE_MODE_VEHICLE_TAGS
 from CurrentVehicle import g_currentPreviewVehicle
 from gui.prb_control.entities.base.actions_validator import BaseActionsValidator, ActionsValidatorComposite
 from gui.prb_control.items import ValidationResult
@@ -33,6 +34,7 @@ class UnitPlayerValidator(BaseActionsValidator):
 
 
 class UnitVehiclesValidator(BaseActionsValidator):
+    _BATTLE_MODE_VEHICLE_TAGS = BATTLE_MODE_VEHICLE_TAGS
 
     def _validate(self):
         if g_currentPreviewVehicle.isPresent():
@@ -66,7 +68,7 @@ class UnitVehiclesValidator(BaseActionsValidator):
             return super(UnitVehiclesValidator, self)._validate()
 
     def _isValidMode(self, vehicle):
-        return not vehicle.isEvent and not vehicle.isOnlyForEpicBattles and not vehicle.isOnlyForBattleRoyaleBattles
+        return not vehicle.isEvent and not bool(vehicle.tags & self._BATTLE_MODE_VEHICLE_TAGS)
 
     def _isVehicleSuitableForMode(self, vehicle):
         if not self._isValidMode(vehicle):

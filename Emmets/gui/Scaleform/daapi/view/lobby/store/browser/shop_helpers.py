@@ -142,10 +142,6 @@ def getIntegratedAuctionUrl():
     return _getUrl('integratedAuction')
 
 
-def getEventLootBoxesUrl():
-    return _getUrl('eventLootboxes')
-
-
 def getShowcaseUrl():
     return _getUrl('showcase')
 
@@ -153,7 +149,3 @@ def getShowcaseUrl():
 def getClientControlledCloseCtx():
     return {'browserParams': makeBrowserParams(isCloseBtnVisible=True), 
        'forcedSkipEscape': True}
-
-
-def getSteelHunterProductsUrl():
-    return _getUrl('shProducts')

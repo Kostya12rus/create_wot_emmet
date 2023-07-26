@@ -3,11 +3,26 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/vehicle_view_states.py
 from gui.prb_control import prbDispatcherProperty
+from gui.shared.system_factory import registerVehicleViewState, collectVehicleViewStates
+from shared_utils import findFirst
 
 class IVehicleViewState(object):
     __slots__ = ()
 
+    @classmethod
+    def isSuitableVehicle(cls, vehicle):
+        raise NotImplementedError
+
     def isLocked(self):
+        raise NotImplementedError
+
+    def isEliteShown(self):
+        raise NotImplementedError
+
+    def isLevelShown(self):
+        raise NotImplementedError
+
+    def isRoleShown(self):
         raise NotImplementedError
 
     def isUIShown(self):
@@ -19,19 +34,41 @@ class IVehicleViewState(object):
     def isMaintenanceEnabled(self):
         raise NotImplementedError
 
+    def isMaintenanceVisible(self):
+        raise NotImplementedError
+
     def isCustomizationEnabled(self):
         raise NotImplementedError
 
-    def getCustomizationTooltip(self):
+    def isCustomizationVisible(self):
+        raise NotImplementedError
+
+    def isOnlyForEventBattles(self):
         raise NotImplementedError
 
     def isOptionalDevicesOpsEnabled(self):
         raise NotImplementedError
 
+    def getCustomizationTooltip(self):
+        raise NotImplementedError
+
 
 class NoPresentViewState(IVehicleViewState):
 
+    @classmethod
+    def isSuitableVehicle(cls, vehicle):
+        return False
+
     def isLocked(self):
+        return False
+
+    def isEliteShown(self):
+        return False
+
+    def isLevelShown(self):
+        return False
+
+    def isRoleShown(self):
         return False
 
     def isUIShown(self):
@@ -43,7 +80,13 @@ class NoPresentViewState(IVehicleViewState):
     def isMaintenanceEnabled(self):
         return False
 
+    def isMaintenanceVisible(self):
+        return False
+
     def isCustomizationEnabled(self):
+        return False
+
+    def isCustomizationVisible(self):
         return False
 
     def isOnlyForEventBattles(self):
@@ -58,12 +101,18 @@ class NoPresentViewState(IVehicleViewState):
 
 class SelectedViewState(IVehicleViewState):
     __slots__ = ('_locked', '_isInHangar', '_isBroken', '_isDisabledInRent', '_isOnlyForEventBattles',
-                 '_isOutfitLocked', '_isCustomizationEnabled')
+                 '_isOutfitLocked', '_isCustomizationEnabled', '_isEliteShown', '_isLevelShown',
+                 '_isRoleShown', '_isMaintenanceVisible')
 
     def __init__(self, vehicle):
         super(SelectedViewState, self).__init__()
+        self._isEliteShown = self._isLevelShown = self._isRoleShown = True
         self._resolveVehicleState(vehicle)
         self._resolvePrbState()
+
+    @classmethod
+    def isSuitableVehicle(cls, vehicle):
+        return True
 
     @prbDispatcherProperty
     def prbDispatcher(self):
@@ -72,24 +121,17 @@ class SelectedViewState(IVehicleViewState):
     def getCustomizationTooltip(self):
         return ''
 
-    def _resolveVehicleState(self, vehicle):
-        self._isInHangar = vehicle.isInHangar() and not vehicle.isDisabled()
-        self._isBroken = vehicle.isBroken()
-        self._isDisabledInRent = vehicle.isDisabledInRent()
-        self._isOnlyForEventBattles = vehicle.isOnlyForEventBattles()
-        self._isOutfitLocked = vehicle.isOutfitLocked()
-        self._isCustomizationEnabled = vehicle.isCustomizationEnabled()
-
-    def _resolvePrbState(self):
-        self._locked = False
-        if self.prbDispatcher is not None:
-            permission = self.prbDispatcher.getGUIPermissions()
-            if permission is not None:
-                self._locked = not permission.canChangeVehicle()
-        return
-
     def isLocked(self):
         return self._locked
+
+    def isEliteShown(self):
+        return self._isEliteShown
+
+    def isLevelShown(self):
+        return self._isLevelShown
+
+    def isRoleShown(self):
+        return self._isRoleShown
 
     def isUIShown(self):
         return True
@@ -100,8 +142,14 @@ class SelectedViewState(IVehicleViewState):
     def isMaintenanceEnabled(self):
         return not self._locked and self._isInHangar
 
+    def isMaintenanceVisible(self):
+        return self._isMaintenanceVisible
+
     def isCustomizationEnabled(self):
         return self._isCustomizationEnabled
+
+    def isCustomizationVisible(self):
+        return True
 
     def isOnlyForEventBattles(self):
         return self._isOnlyForEventBattles
@@ -109,9 +157,30 @@ class SelectedViewState(IVehicleViewState):
     def isOptionalDevicesOpsEnabled(self):
         return self.isMaintenanceEnabled() and not self._isBroken
 
+    def _resolveVehicleState(self, vehicle):
+        self._isInHangar = vehicle.isInHangar() and not vehicle.isDisabled()
+        self._isBroken = vehicle.isBroken()
+        self._isDisabledInRent = vehicle.isDisabledInRent()
+        self._isOnlyForEventBattles = vehicle.isOnlyForEventBattles()
+        self._isOutfitLocked = vehicle.isOutfitLocked()
+        self._isCustomizationEnabled = vehicle.isCustomizationEnabled()
+        self._isMaintenanceVisible = True
+
+    def _resolvePrbState(self):
+        self._locked = False
+        if self.prbDispatcher is not None:
+            permission = self.prbDispatcher.getGUIPermissions()
+            if permission is not None:
+                self._locked = not permission.canChangeVehicle()
+        return
+
 
 class PremiumIGRViewState(SelectedViewState):
     __slots__ = ('_isDisabledInPremIGR', )
+
+    @classmethod
+    def isSuitableVehicle(cls, vehicle):
+        return vehicle.isPremiumIGR()
 
     def isMaintenanceEnabled(self):
         return super(PremiumIGRViewState, self).isMaintenanceEnabled() and not self._isDisabledInPremIGR
@@ -128,12 +197,12 @@ class PremiumIGRViewState(SelectedViewState):
         return
 
 
+registerVehicleViewState(PremiumIGRViewState)
+
 def createState4CurrentVehicle(vehicle):
     if vehicle.isPresent():
-        if vehicle.isPremiumIGR():
-            state = PremiumIGRViewState(vehicle)
-        else:
-            state = SelectedViewState(vehicle)
+        viewStates = collectVehicleViewStates()
+        state = findFirst((lambda s: s.isSuitableVehicle(vehicle)), viewStates, SelectedViewState)(vehicle)
     else:
         state = NoPresentViewState()
     return state

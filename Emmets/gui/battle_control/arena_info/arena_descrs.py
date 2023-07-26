@@ -47,6 +47,9 @@ class IArenaGuiDescription(object):
     def getFrameLabel(self):
         raise NotImplementedError
 
+    def getBattleTypeIconPath(self, sizeFolder='c_136x136'):
+        raise NotImplementedError
+
     def getLegacyFrameLabel(self):
         raise NotImplementedError
 
@@ -123,6 +126,12 @@ class DefaultArenaGuiDescription(IArenaGuiDescription):
 
     def getFrameLabel(self):
         return 'neutral'
+
+    def getBattleTypeIconPath(self, sizeFolder='c_136x136'):
+        iconRes = R.images.gui.maps.icons.battleTypes.dyn(sizeFolder).dyn(self.getFrameLabel())
+        if iconRes.exists():
+            return backport.image(iconRes())
+        return ''
 
     def getLegacyFrameLabel(self):
         return self._visitor.getArenaGuiType() + 1
@@ -211,6 +220,9 @@ class ArenaWithL10nDescription(IArenaGuiDescription):
 
     def isBaseExists(self):
         return self._decorated.isBaseExists()
+
+    def getBattleTypeIconPath(self, sizeFolder='c_136x136'):
+        return self._decorated.getBattleTypeIconPath(sizeFolder=sizeFolder)
 
     def getTypeName(self, isInBattle=True):
         return self._decorated.getTypeName(isInBattle)

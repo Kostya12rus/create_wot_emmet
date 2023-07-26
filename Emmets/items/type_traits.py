@@ -7,11 +7,11 @@ from typing import *
 
 def allowEqualNone(eq):
 
-    def wrap(lhs, rhs):
+    def wrap(lhs, rhs, *args):
         if lhs is None or rhs is None:
             return lhs == rhs
         else:
-            return eq(lhs, rhs)
+            return eq(lhs, rhs, *args)
 
     return wrap
 

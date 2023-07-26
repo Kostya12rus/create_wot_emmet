@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/processors/offers.py
-import cPickle, logging
+import json, logging
 from functools import partial
 import BigWorld
 from AccountCommands import RES_SUCCESS, RES_FAILURE
@@ -85,7 +85,7 @@ class ReceiveMultipleOfferGiftsProcessor(Processor):
     def _request(self, callback):
         _logger.debug('Make server request to receive offers gifts. Choices: %s', self.__chosenGifts)
         Waiting.show('loadContent')
-        choices = cPickle.dumps(self.__chosenGifts)
+        choices = json.dumps(self.__chosenGifts)
         BigWorld.player().receiveMultipleOfferGifts(choices, (lambda requestID, resultID, errStr, ext=None: self._response(resultID, callback, ctx=ext, errStr=errStr)))
         return
 

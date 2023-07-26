@@ -2,7 +2,10 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/cond_formatters/tooltips.py
+from battle_pass_common import BATTLE_PASS_RANDOM_QUEST_TOKEN_PREFIX
 from constants import EVENT_TYPE
+from gui.impl import backport
+from gui.impl.gen import R
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
 from gui.server_events.cond_formatters import packText, getSeparator, requirements
 from gui.server_events.cond_formatters.formatters import ConditionFormatter, ConditionsFormatter
@@ -10,7 +13,6 @@ from gui.server_events.cond_formatters.requirements import prepareAccountConditi
 from gui.server_events.conditions import GROUP_TYPE
 from gui.shared.formatters import text_styles
 from helpers import dependency
-from helpers.i18n import makeString as _ms
 from skeletons.gui.server_events import IEventsCache
 from soft_exception import SoftException
 
@@ -101,11 +103,21 @@ class _TokenRequirementFormatter(ConditionFormatter):
     eventsCache = dependency.descriptor(IEventsCache)
 
     @classmethod
+    def _getSpecialTokenText(cls, condition):
+        if condition.getID().startswith(BATTLE_PASS_RANDOM_QUEST_TOKEN_PREFIX):
+            return backport.text(R.strings.tooltips.quests.condition.battlepass.token())
+        else:
+            return
+
+    @classmethod
     def format(cls, condition, event, styler=reqStyle):
         style = styler(condition.isAvailable())
         result = []
         if event.getType() not in EVENT_TYPE.LIKE_BATTLE_QUESTS + EVENT_TYPE.LIKE_TOKEN_QUESTS:
             return result
-        tokensNeedCount = condition.getNeededCount()
-        return [
-         packText(style(_ms(TOOLTIPS.QUESTS_UNAVAILABLE_TOKEN, tokenName=text_styles.neutral(condition.getUserName()), count=tokensNeedCount)))]
+        else:
+            msg = cls._getSpecialTokenText(condition)
+            if msg is None:
+                msg = backport.text(R.strings.tooltips.quests.unavailable.token(), tokenName=text_styles.neutral(condition.getUserName()), count=condition.getNeededCount())
+            return [
+             packText(style(msg))]

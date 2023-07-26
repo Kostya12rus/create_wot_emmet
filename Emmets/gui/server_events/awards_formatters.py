@@ -14,7 +14,6 @@ from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
 from gui.Scaleform.settings import ICONS_SIZES
 from gui.impl import backport
-from gui.impl.backport import createTooltipData
 from gui.impl.gen import R
 from gui.impl.gen_utils import INVALID_RES_ID
 from gui.ranked_battles.constants import YEAR_POINTS_TOKEN
@@ -65,7 +64,6 @@ class LABEL_ALIGN(CONST_CONTAINER):
 PACK_RENT_VEHICLES_BONUS = 'packRentVehicleBonus'
 BATTLE_BONUS_X5_TOKEN = 'battle_bonus_x5'
 GOLD_MISSION = 'goldmission'
-BR_PROGRESSION_TOKEN = 'img:battle_royale:progression'
 AWARD_IMAGES = {AWARDS_SIZES.SMALL: {Currency.CREDITS: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_CREDITS, 
                         Currency.GOLD: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_GOLD, 
                         Currency.CRYSTAL: RES_ICONS.MAPS_ICONS_QUESTS_BONUSES_SMALL_CRYSTAL, 
@@ -155,6 +153,8 @@ def getDefaultFormattersMap():
        'freeXPFactor': simpleBonusFormatter, 
        'tankmenXPFactor': simpleBonusFormatter, 
        'dailyXPFactor': simpleBonusFormatter, 
+       'groups': EmptyFormatter(), 
+       'collectionItem': EmptyFormatter(), 
        PREMIUM_ENTITLEMENTS.BASIC: PremiumDaysBonusFormatter(), 
        PREMIUM_ENTITLEMENTS.PLUS: PremiumDaysBonusFormatter(), 
        'vehicles': VehiclesBonusFormatter(), 
@@ -473,6 +473,12 @@ class AwardFormatter(object):
         return
 
 
+class EmptyFormatter(AwardFormatter):
+
+    def _format(self, bonus):
+        return []
+
+
 class SimpleBonusFormatter(AwardFormatter):
 
     def _format(self, bonus):
@@ -705,7 +711,7 @@ class TokenBonusFormatter(SimpleBonusFormatter):
 
     @staticmethod
     def getBattleBonusX5Tooltip(*args):
-        return createTooltipData(makeTooltip(header=backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.header()), body=backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.body())))
+        return makeTooltip(header=backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.header()), body=backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.body()))
 
     def _format(self, bonus):
         result = []
@@ -719,22 +725,15 @@ class TokenBonusFormatter(SimpleBonusFormatter):
     def _getFormattedBonus(self, tokenID, token, bonus):
         formatted = None
         complexToken = parseComplexToken(tokenID)
-        if tokenID.startswith(BR_PROGRESSION_TOKEN):
-            return self._formatBRComplexToken(complexToken, token, bonus)
-        else:
-            if complexToken.isDisplayable:
-                formatted = self._formatComplexToken(complexToken, token, bonus)
-            elif tokenID.startswith(LOOTBOX_TOKEN_PREFIX):
-                formatted = self._formatLootBoxToken(tokenID, token, bonus)
-            elif tokenID.startswith(BATTLE_BONUS_X5_TOKEN):
-                formatted = self._formatBattleBonusToken(token, bonus)
-            elif tokenID.startswith(RESOURCE_TOKEN_PREFIX):
-                formatted = self._formatResource(token, bonus)
-            return formatted
-
-    def _formatBRComplexToken(self, complexToken, token, bonus):
-        formatted = self._formatComplexToken(complexToken, token, bonus)
-        return formatted._replace(tooltip=self.__getBRProgressionTooltip())
+        if complexToken.isDisplayable:
+            formatted = self._formatComplexToken(complexToken, token, bonus)
+        elif tokenID.startswith(LOOTBOX_TOKEN_PREFIX):
+            formatted = self._formatLootBoxToken(tokenID, token, bonus)
+        elif tokenID.startswith(BATTLE_BONUS_X5_TOKEN):
+            formatted = self._formatBattleBonusToken(token, bonus)
+        elif tokenID.startswith(RESOURCE_TOKEN_PREFIX):
+            formatted = self._formatResource(token, bonus)
+        return formatted
 
     def _formatBonusLabel(self, count):
         return formatCountLabel(count)
@@ -782,7 +781,7 @@ class TokenBonusFormatter(SimpleBonusFormatter):
             return
         images = {}
         for size in AWARDS_SIZES.ALL():
-            images[size] = RES_ICONS.getLootBoxBonusIcon(size, lootBox.getType())
+            images[size] = RES_ICONS.getLootBoxBonusIcon(size, lootBox.getIconName())
 
         return PreformattedBonus(label=self._formatBonusLabel(token.count), userName=lootBox.getUserName(), labelFormatter=self._getLabelFormatter(bonus), images=images, tooltip=makeTooltip(header=lootBox.getUserName(), body=''), align=self._getLabelAlign(bonus), isCompensation=self._isCompensation(bonus))
 
@@ -800,11 +799,6 @@ class TokenBonusFormatter(SimpleBonusFormatter):
             images[size] = backport.image(bonusBattleTaskRes()) if bonusBattleTaskRes else None
 
         return images
-
-    @staticmethod
-    def __getBRProgressionTooltip():
-        tokenBase = R.strings.battle_royale_progression.quests.bonuses.progressionToken
-        return makeTooltip(backport.text(tokenBase.header()), backport.text(tokenBase.body()))
 
 
 class RankedPointFormatter(TokenBonusFormatter):
