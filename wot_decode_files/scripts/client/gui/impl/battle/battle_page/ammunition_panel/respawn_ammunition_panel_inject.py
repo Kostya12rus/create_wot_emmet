@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/battle/battle_page/ammunition_panel/respawn_ammunition_panel_inject.py
+import BigWorld
 from gui.battle_control.controllers.respawn_ctrl import IRespawnView
 from gui.battle_control.controllers.epic_respawn_ctrl import IEpicRespawnView
 from gui.battle_control.gui_vehicle_builder import VehicleBuilder
@@ -84,10 +85,14 @@ class EpicRespawnAmmunitionPanelInject(RespawnAmmunitionPanelInject, IEpicRespaw
 
     def _updateGuiVehicle(self, vehicleInfo, setupIndexes):
         super(EpicRespawnAmmunitionPanelInject, self)._updateGuiVehicle(vehicleInfo, setupIndexes)
-        battleAbilities = self.__getBattleAbilities(vehicleInfo.battleAbilities)
+        ammoViews = BigWorld.player().ammoViews
+        idx = ammoViews['vehTypeCompDescrs'].index(self._vehicle.intCD)
+        abilities = ammoViews['compDescrs'][idx] if len(ammoViews['compDescrs']) > idx else vehicleInfo.battleAbilities
+        battleAbilities = self.__getBattleAbilities(abilities)
         self._vehicle.battleAbilities.setLayout(*battleAbilities)
         self._vehicle.battleAbilities.setInstalled(*battleAbilities)
 
     def __getBattleAbilities(self, abilitiesCDs):
         amountOfSlots = self.__epicController.getNumAbilitySlots(self._vehicle.typeDescr)
-        return [ BattleAbility(abilityCD) for abilityCD in abilitiesCDs ] + [None] * (amountOfSlots - len(abilitiesCDs))
+        battleAbility = list(BattleAbility(abilityCD) if abilityCD else None for abilityCD in abilitiesCDs)
+        return battleAbility + [None] * (amountOfSlots - len(battleAbility))

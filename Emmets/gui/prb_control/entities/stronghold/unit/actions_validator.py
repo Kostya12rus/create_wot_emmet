@@ -2,6 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/stronghold/unit/actions_validator.py
+from constants import BATTLE_MODE_VEH_TAGS_EXCEPT_CLAN
 from gui.prb_control import prb_getters
 from gui.prb_control.entities.base.squad.actions_validator import UnitActionsValidator
 from gui.prb_control.entities.base.unit.actions_validator import UnitVehiclesValidator, CommanderValidator, UnitStateValidator, UnitPlayerValidator
@@ -9,7 +10,7 @@ from gui.prb_control.items import ValidationResult
 from gui.prb_control.settings import UNIT_RESTRICTION
 
 class StrongholdVehiclesValidator(UnitVehiclesValidator):
-    pass
+    _BATTLE_MODE_VEHICLE_TAGS = BATTLE_MODE_VEH_TAGS_EXCEPT_CLAN
 
 
 class StrongholdUnitSlotsValidator(CommanderValidator):

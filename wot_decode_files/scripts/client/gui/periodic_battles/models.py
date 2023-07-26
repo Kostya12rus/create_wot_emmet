@@ -2,13 +2,14 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/periodic_battles/models.py
-import logging, typing
-from enum import Enum
+import logging
 from functools import partial
+import typing
+from enum import Enum
 from gui.impl import backport
 from gui.impl.gen import R
-from gui.shared.utils.decorators import ReprInjector
 from gui.shared.formatters import text_styles
+from gui.shared.utils.decorators import ReprInjector
 from gui.shared.utils.functions import makeTooltip
 from helpers import time_utils
 from shared_utils import collapseIntervals, findFirst, first, CONST_CONTAINER

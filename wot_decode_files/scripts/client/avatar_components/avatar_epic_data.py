@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/avatar_components/avatar_epic_data.py
 import BigWorld, CommandMapping, Event, constants
+from ReservesEvents import randomReservesEvents
 from aih_constants import CTRL_MODE_NAME
 from arena_component_system.sector_base_arena_component import ID_TO_BASENAME, _MISSION_SECTOR_ID_MAPPING
 from avatar_helpers import getBestShotResultSound
@@ -39,6 +40,10 @@ class AvatarEpicData(object):
         if constants.IS_DEVELOPMENT:
             self.__devEvtManager = Event.EventManager()
             self.onFrontLineInfoUpdated = Event.Event(self.__devEvtManager)
+
+    def onRandomReserveOffer(self, offer, level, slotIdx):
+        LOG_DEBUG_DEV('onRandomReserveOffer::', offer, level, slotIdx)
+        randomReservesEvents.onShowPanel(offer, level, slotIdx)
 
     def handleKey(self, isDown, key, mods):
         cmdMap = CommandMapping.g_instance
@@ -173,6 +178,10 @@ class AvatarEpicData(object):
     def onCrewRoleFactorAndRankUpdate(self, newFactor, allyVehID, allyNewRank):
         playerDataComponent = BigWorld.player().arena.componentSystem.playerDataComponent
         playerDataComponent.onCrewRolesFactorUpdated(newFactor, allyVehID, allyNewRank)
+
+    def syncPurchasedAbilities(self, purchasedAbilities):
+        playerDataComponent = BigWorld.player().arena.componentSystem.playerDataComponent
+        playerDataComponent.setPurchasedAbilities(purchasedAbilities)
 
     def onRankUpdate(self, newRank):
         playerDataComponent = BigWorld.player().arena.componentSystem.playerDataComponent

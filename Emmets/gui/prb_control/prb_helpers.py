@@ -5,6 +5,7 @@
 import logging
 from gui.shared.badges import buildBadge
 from gui.shared.gui_items.badge import BadgeLayouts
+from gui.shared.system_factory import collectModeNameKwargsByPrbType, collectModeNameKwargsByQueueType
 from helpers import dependency
 from skeletons.gui.shared import IItemsCache
 _logger = logging.getLogger(__name__)
@@ -62,3 +63,8 @@ class BadgesHelper(object):
             return None
         else:
             return self.__badgesRawData[1]
+
+
+def getModeNameKwargs(entityType, isQueue=True):
+    collector = collectModeNameKwargsByQueueType if isQueue else collectModeNameKwargsByPrbType
+    return collector(entityType) or {}

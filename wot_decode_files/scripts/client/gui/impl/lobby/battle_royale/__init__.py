@@ -2,4 +2,4 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_royale/__init__.py
-pass
+BATTLE_ROYALE_LOCK_SOURCE_NAME = 'BATTLE_ROYALE_RESULTS_LOGIC'

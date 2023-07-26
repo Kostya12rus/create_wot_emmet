@@ -106,6 +106,10 @@ class ISharedControllersLocator(object):
     def mapZones(self):
         raise NotImplementedError
 
+    @property
+    def autoShootGunCtrl(self):
+        raise NotImplementedError
+
 
 class IDynamicControllersLocator(object):
     __slots__ = ()
@@ -180,6 +184,10 @@ class IDynamicControllersLocator(object):
 
     @property
     def battleNotifier(self):
+        raise NotImplementedError
+
+    @property
+    def soundPlayers(self):
         raise NotImplementedError
 
     @property
@@ -590,6 +598,12 @@ class IBattleContext(object):
         raise NotImplementedError
 
     def getArenaFrameLabel(self):
+        raise NotImplementedError
+
+    def getBattleTypeIconPathBig(self):
+        raise NotImplementedError
+
+    def getBattleTypeIconPathSmall(self):
         raise NotImplementedError
 
     def getGuiEventType(self):

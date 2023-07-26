@@ -2,25 +2,37 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/prefetcher.py
-import json, itertools, weakref, BigWorld, ResMgr
+import json, itertools, weakref, typing
+from collections import namedtuple
+import BigWorld, ResMgr
 from wg_async import wg_async, wg_await, await_callback, AsyncScope, AsyncSemaphore
 from constants import DailyQuestDecorationMap, EVENT_TYPE
 from debug_utils import LOG_WARNING
 from gui import GUI_SETTINGS
-from gui.Scaleform.locale.MENU import MENU
+from gui.impl.gen import R
+from gui.impl import backport
 from gui.Scaleform.locale.QUESTS import QUESTS
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
-from gui.server_events.formatters import TOKEN_SIZES, DECORATION_SIZES
+from gui.server_events.formatters import TOKEN_SIZES, DECORATION_SIZES, parseComplexToken
 from gui.server_events.events_helpers import isMarathon, isDailyQuest, isPremium
 from gui.shared.utils import mapTextureToTheMemory, getImageSize
 from helpers import getClientLanguage, dependency
-from helpers.i18n import makeString as ms
 from skeletons.gui.lobby_context import ILobbyContext
 from soft_exception import SoftException
+if typing.TYPE_CHECKING:
+    from gui.server_events.event_items import Quest
 _DEFAULT_TOKENS_STYLES = [ title.split('/')[-1] for title in QUESTS.TOKEN_DEFAULT_ENUM
                          ]
 _DEFAULT_DECORATIONS = [ title.split('_')[-1].replace('.png', '') for title in RES_ICONS.MAPS_ICONS_MISSIONS_DECORATIONS_DECORATION_ENUM
                        ]
+
+def _getTokensFromAccountReqs(quest):
+    return (parseComplexToken(t.getID()) for t in quest.accountReqs.getTokens())
+
+
+def _getTokensFromBonuses(quest):
+    return (parseComplexToken(t) for t in itertools.chain.from_iterable(b.getValue().keys() for b in quest.getBonuses('tokens')))
+
 
 class SubRequester(object):
 
@@ -88,11 +100,11 @@ class TokenImagesSubRequester(SubRequester):
     def pickup(self, styleID, size):
         ticket = (
          styleID, size)
-        if styleID in _DEFAULT_TOKENS_STYLES:
-            return RES_ICONS.getTokenImage(size, styleID)
         content = self._storage.get(ticket)
         if content:
             return ('img://{}').format(mapTextureToTheMemory(content))
+        if styleID in _DEFAULT_TOKENS_STYLES:
+            return RES_ICONS.getTokenImage(size, styleID)
         return RES_ICONS.getTokenUndefinedImage(size)
 
     def _handler(self, ticket, content):
@@ -109,9 +121,9 @@ class TokenImagesSubRequester(SubRequester):
              EVENT_TYPE.BATTLE_QUEST,
              EVENT_TYPE.PERSONAL_QUEST):
                 continue
-            for token in quest.accountReqs.getTokens():
-                styleID = token.getStyleID()
-                if token.isDisplayable() and styleID not in _DEFAULT_TOKENS_STYLES and styleID not in tickets:
+            for token in itertools.chain(_getTokensFromAccountReqs(quest), _getTokensFromBonuses(quest)):
+                styleID = token.styleID
+                if token.isDisplayable and styleID not in tickets:
                     tickets.append(styleID)
 
         return itertools.product(tickets, TOKEN_SIZES.ALL())
@@ -121,14 +133,20 @@ class TokenImagesSubRequester(SubRequester):
         return fileserver.getMissionsTokenImageUrl
 
 
+_TokenInfoData = namedtuple('_TokenInfoData', ['title', 'description'])
+
 class TokenInfoSubRequester(SubRequester):
 
     def pickup(self, styleID):
         ticket = (
          styleID,)
-        if styleID in _DEFAULT_TOKENS_STYLES:
-            return QUESTS.getTokenTitle(styleID)
-        return self._storage.get(ticket) or QUESTS.TOKEN_UNDEFINED
+        storageData = self._storage.get(ticket, None)
+        if storageData is not None:
+            return storageData
+        else:
+            if styleID in _DEFAULT_TOKENS_STYLES:
+                return _TokenInfoData(title=backport.text(R.strings.quests.token.default.dyn(styleID)()), description=None)
+            return _TokenInfoData(title=backport.text(R.strings.quests.token.undefined()), description=None)
 
     def _handler(self, ticket, content):
         section = ResMgr.DataSection()
@@ -137,9 +155,12 @@ class TokenInfoSubRequester(SubRequester):
         for item in tokens.values():
             tokenID = item['id'].asString
             string = item['title'].asString
+            description = item.readString('description') if item.has_key('description') else None
             ticket = (
              tokenID,)
-            self._storage[ticket] = ms(MENU.QUOTE, string=string)
+            self._storage[ticket] = _TokenInfoData(title=string, description=description)
+
+        return
 
     def _tickets(self):
         for quest in self._eventsCache.getQuests().itervalues():
@@ -147,9 +168,8 @@ class TokenInfoSubRequester(SubRequester):
              EVENT_TYPE.BATTLE_QUEST,
              EVENT_TYPE.PERSONAL_QUEST):
                 continue
-            for token in quest.accountReqs.getTokens():
-                styleID = token.getStyleID()
-                if token.isDisplayable() and styleID not in _DEFAULT_TOKENS_STYLES:
+            for token in itertools.chain(_getTokensFromAccountReqs(quest), _getTokensFromBonuses(quest)):
+                if token.isDisplayable:
                     return [
                      (
                       getClientLanguage(),)]
@@ -288,7 +308,10 @@ class Prefetcher(object):
         return self._requesters['decoration'].pickup(decorationID, size)
 
     def getTokenInfo(self, styleID):
-        return self._requesters['tokenInfo'].pickup(styleID)
+        return self._requesters['tokenInfo'].pickup(styleID).title
+
+    def getTokenDetailedInfo(self, styleID):
+        return self._requesters['tokenInfo'].pickup(styleID).description
 
     def isTokenOnSale(self, tokenWebID):
         return self._requesters['tokenSale'].pickup(tokenWebID)

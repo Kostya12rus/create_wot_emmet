@@ -4,6 +4,7 @@
 # Embedded file name: scripts/client/gui/game_control/battle_pass_controller.py
 import bisect, logging
 from collections import namedtuple
+from copy import deepcopy
 from itertools import groupby
 from Event import Event, EventManager
 from PlayerEvents import g_playerEvents
@@ -16,7 +17,6 @@ from gui.battle_pass.battle_pass_helpers import getOfferTokenByGift, getPointsIn
 from gui.battle_pass.state_machine.delegator import BattlePassRewardLogic
 from gui.battle_pass.state_machine.machine import BattlePassStateMachine
 from gui.shared.gui_items.processors.battle_pass import BattlePassActivateChapterProcessor
-from gui.shared.money import Money
 from gui.shared.utils.scheduled_notifications import SimpleNotifier
 from helpers import dependency, time_utils
 from helpers.events_handler import EventsHandler
@@ -178,7 +178,7 @@ class BattlePassController(IBattlePassController, EventsHandler):
         return self.__getConfig().isExtraChapter(chapterID)
 
     def getBattlePassCost(self, chapterID):
-        return Money(**self.__getConfig().getbattlePassCost(chapterID))
+        return deepcopy(self.__getConfig().getbattlePassCost(chapterID))
 
     def getChapterExpiration(self, chapterID):
         if self.isExtraChapter(chapterID):

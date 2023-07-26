@@ -2,4 +2,6 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/ammunition_panel/__init__.py
-pass
+from gui.shared.system_factory import registerAmmunitionPanelView
+from gui.impl.lobby.tank_setup.comp7.ammunition_panel import Comp7AmmunitionPanelView
+registerAmmunitionPanelView(Comp7AmmunitionPanelView)
