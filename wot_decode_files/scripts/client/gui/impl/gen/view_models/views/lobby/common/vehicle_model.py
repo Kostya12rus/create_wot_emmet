@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/common/vehicle_model.py
 from frameworks.wulf import ViewModel
 
@@ -22,8 +22,11 @@ class VehicleModel(ViewModel):
     HEAVY_TANK = 'heavyTank'
     SPG = 'SPG'
     AT_SPG = 'AT-SPG'
+    PREMIUM_TAG = 'premium'
+    PREMIUM_IGR_TAG = 'premiumIGR'
+    WOT_PLUS_TAG = 'wotPlus'
 
-    def __init__(self, properties=7, commands=0):
+    def __init__(self, properties=9, commands=0):
         super(VehicleModel, self).__init__(properties=properties, commands=commands)
 
     def getName(self):
@@ -56,17 +59,29 @@ class VehicleModel(ViewModel):
     def setIsPremium(self, value):
         self._setBool(4, value)
 
-    def getNation(self):
+    def getTags(self):
         return self._getString(5)
 
-    def setNation(self, value):
+    def setTags(self, value):
         self._setString(5, value)
 
+    def getNation(self):
+        return self._getString(6)
+
+    def setNation(self, value):
+        self._setString(6, value)
+
+    def getRoleKey(self):
+        return self._getString(7)
+
+    def setRoleKey(self, value):
+        self._setString(7, value)
+
     def getVehicleCD(self):
-        return self._getNumber(6)
+        return self._getNumber(8)
 
     def setVehicleCD(self, value):
-        self._setNumber(6, value)
+        self._setNumber(8, value)
 
     def _initialize(self):
         super(VehicleModel, self)._initialize()
@@ -75,5 +90,7 @@ class VehicleModel(ViewModel):
         self._addNumberProperty('tier', 0)
         self._addStringProperty('type', '')
         self._addBoolProperty('isPremium', False)
+        self._addStringProperty('tags', '')
         self._addStringProperty('nation', '')
+        self._addStringProperty('roleKey', '')
         self._addNumberProperty('vehicleCD', 0)

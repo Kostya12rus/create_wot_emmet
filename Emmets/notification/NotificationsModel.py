@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/notification/NotificationsModel.py
 import Event
 from notification.NotificationsCollection import NotificationsCollection
@@ -87,9 +87,11 @@ class NotificationsModel(object):
 
     def setup(self):
         self.__collection.default()
+        self.__collection.onNotificationRemoved += self.__onNotificationRemoved
         self.__listeners.start(self)
 
     def cleanUp(self):
+        self.__collection.onNotificationRemoved -= self.__onNotificationRemoved
         self.__collection.clear()
         self.__listeners.stop()
         self.__counter.resetUnreadCount()
@@ -98,3 +100,6 @@ class NotificationsModel(object):
         self.onNotificationReceived.clear()
         self.onNotifiedMessagesCountChanged.clear()
         return
+
+    def __onNotificationRemoved(self, typeID, entityID, groupID, countOnce):
+        self.onNotificationRemoved(typeID, entityID, groupID, countOnce)

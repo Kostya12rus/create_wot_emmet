@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/minimap/plugins.py
 import logging, math
 from collections import defaultdict, namedtuple
@@ -8,6 +8,7 @@ from functools import partial
 from enum import Enum
 import BattleReplay, BigWorld, Keys, Math, aih_constants
 from AvatarInputHandler import AvatarInputHandler
+from Event import EventsSubscriber
 from PlayerEvents import g_playerEvents
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import MINIMAP_IBC_HINT_SECTION, HINTS_LEFT
@@ -44,7 +45,8 @@ _LOCATION_SUBTYPE_TO_FLASH_SYMBOL_NAME = {LocationMarkerSubType.SPG_AIM_AREA_SUB
    LocationMarkerSubType.PREBATTLE_WAYPOINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.LOCATION_MARKER, 
    LocationMarkerSubType.ATTENTION_TO_MARKER_SUBTYPE: settings.ENTRY_SYMBOL_NAME.ATTENTION_MARKER, 
    LocationMarkerSubType.SHOOTING_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.SHOOTING_POINT_MARKER, 
-   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.NAVIGATION_POINT_MARKER}
+   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.NAVIGATION_POINT_MARKER, 
+   LocationMarkerSubType.FLAG_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.FLAG_POINT_MARKER}
 _PING_FLASH_MINIMAP_SUBTYPES = {
  LocationMarkerSubType.GOING_TO_MARKER_SUBTYPE,
  LocationMarkerSubType.ATTENTION_TO_MARKER_SUBTYPE,
@@ -181,21 +183,20 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
             return
 
     def updateSettings(self, diff):
-        if not self.__isAlive:
-            return
-        if settings_constants.GAME.SHOW_VECTOR_ON_MAP in diff and GUI_SETTINGS.showDirectionLine:
-            value = diff[settings_constants.GAME.SHOW_VECTOR_ON_MAP]
-            if value:
-                self.__showDirectionLine()
-            else:
-                self.__hideDirectionLine()
-        if settings_constants.GAME.SHOW_SECTOR_ON_MAP in diff and GUI_SETTINGS.showSectorLines:
-            value = diff[settings_constants.GAME.SHOW_SECTOR_ON_MAP]
-            if value:
-                self.__setupYawLimit()
-            else:
-                self.__clearYawLimit()
-        if not self.__isObserver:
+        vInfo = self._arenaDP.getVehicleInfo(self._arenaDP.getAttachedVehicleID())
+        if self.__isAlive or self.__isObserver and vInfo and vInfo.isAlive():
+            if settings_constants.GAME.SHOW_VECTOR_ON_MAP in diff and GUI_SETTINGS.showDirectionLine:
+                value = diff[settings_constants.GAME.SHOW_VECTOR_ON_MAP]
+                if value:
+                    self.__showDirectionLine()
+                else:
+                    self.__hideDirectionLine()
+            if settings_constants.GAME.SHOW_SECTOR_ON_MAP in diff and GUI_SETTINGS.showSectorLines:
+                value = diff[settings_constants.GAME.SHOW_SECTOR_ON_MAP]
+                if value:
+                    self.__setupYawLimit()
+                else:
+                    self.__clearYawLimit()
             if settings_constants.GAME.MINIMAP_DRAW_RANGE in diff:
                 if self._canShowDrawRangeCircle():
                     self.__addDrawRangeCircle()
@@ -488,6 +489,7 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
 
     def __onRespawnBaseMoving(self):
         self.__isAlive = True
+        self.__isAlive = True
         self._invalidateMarkup(True)
 
     def __onMinimapFeedbackReceived(self, eventID, entityID, value):
@@ -584,8 +586,8 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
                  '__destroyDuration', '__isSPG', '__replayRegistrator', '__canShowVehicleHp',
                  '__tempHealthStorage', '__aoiEstimateRadius')
 
-    def __init__(self, parent):
-        super(ArenaVehiclesPlugin, self).__init__(parent, clazz=entries.VehicleEntry)
+    def __init__(self, parent, clazz=None):
+        super(ArenaVehiclesPlugin, self).__init__(parent, clazz=clazz or entries.VehicleEntry)
         self.__playerVehicleID = 0
         self.__isObserver = False
         self.__isSPG = False
@@ -799,10 +801,13 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
     def _getPlayerVehicleID(self):
         return self.__playerVehicleID
 
-    def _setVehicleInfo(self, vehicleID, entry, vInfo, guiProps, isSpotted=False):
+    def _getDisplayedName(self, vInfo):
         vehicleType = vInfo.vehicleType
-        classTag = vehicleType.classTag
-        name = vehicleType.shortNameWithPrefix
+        return vehicleType.shortNameWithPrefix
+
+    def _setVehicleInfo(self, vehicleID, entry, vInfo, guiProps, isSpotted=False):
+        classTag = vInfo.vehicleType.classTag
+        name = self._getDisplayedName(vInfo)
         if classTag is not None:
             entry.setVehicleInfo(not guiProps.isFriend, guiProps.name(), classTag, vInfo.isAlive())
             animation = self.__getSpottedAnimation(entry, isSpotted)
@@ -816,7 +821,7 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
             return
         if currH > maxH:
             self.__tempHealthStorage[vehicleID] = currH
-            _logger.warning('Max Vehicle Health is less then current. Health will be updated after max health update')
+            _logger.debug('Max Vehicle Health is less then current. Health will be updated after max health update')
             return
         self._invoke(self._entries[vehicleID].getID(), 'setVehicleHealth', normalizeHealthPercent(currH, maxH))
 
@@ -1462,16 +1467,18 @@ class RadarPlugin(common.SimplePlugin, IRadarListener):
         super(RadarPlugin, self).__init__(parent)
         self._vehicleEntries = {}
         self._lootEntries = []
+        self.__es = EventsSubscriber()
         self._params = RadarPluginParams(fadeIn=0.0, fadeOut=0.0, lifetime=0.0, vehicleEntryParams=RadarEntryParams(container='', symbol=''), lootEntryParams=RadarEntryParams(container='', symbol=''))
 
     def init(self, arenaVisitor, arenaDP):
         super(RadarPlugin, self).init(arenaVisitor, arenaDP)
-        if self.sessionProvider.dynamic.radar:
-            self.sessionProvider.dynamic.radar.addRuntimeView(self)
+        radarCtrl = self.sessionProvider.dynamic.radar
+        if radarCtrl:
+            radarCtrl.addRuntimeView(self)
+            self.__es.addCallbackOnUnsubscribe((lambda : radarCtrl.removeRuntimeView(self)))
 
     def fini(self):
-        if self.sessionProvider.dynamic.radar:
-            self.sessionProvider.dynamic.radar.removeRuntimeView(self)
+        self.__es.unsubscribeFromAllEvents()
         for lootData in self._lootEntries:
             lootData.destroy()
 

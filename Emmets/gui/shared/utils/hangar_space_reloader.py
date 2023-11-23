@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/hangar_space_reloader.py
 import logging
 from helpers import dependency
@@ -66,7 +66,7 @@ class HangarSpaceReloader(IHangarSpaceReloader):
                 _logger.error('Abnormal behaviour: hangarSpace.spacePath is not initialized')
                 reloadValid = False
                 errCode |= ErrorFlags.SPACE_PATH_NOT_INITED
-            spacePath = spaceName if spaceName.startswith('space') else ('spaces/{}').format(spaceName)
+            spacePath = self.buildHangarSpacePath(spaceName)
             if spacePath == hangarSpacePath:
                 _logger.warning('No need to load space "%s", because it is already loaded', spaceName)
                 reloadValid = False
@@ -80,6 +80,12 @@ class HangarSpaceReloader(IHangarSpaceReloader):
             from gui.ClientHangarSpace import g_clientHangarSpaceOverride
             g_clientHangarSpaceOverride.setPath(spacePath, visibilityMask=visibilityMask, isReload=True, event=self.hangarSpace.onSpaceChangedByAction if actionChange else None)
             return (reloadValid, errCode)
+
+    @staticmethod
+    def buildHangarSpacePath(spaceId):
+        if spaceId.startswith('space'):
+            return spaceId
+        return ('spaces/{}').format(spaceId)
 
     @property
     def hangarSpacePath(self):

@@ -1,9 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/page.py
 import logging, typing, BattleReplay, aih_constants
 from AvatarInputHandler import aih_global_binding
+from Event import EventsSubscriber
 from account_helpers.settings_core.settings_constants import SPGAim
 from frameworks.wulf import WindowLayer
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -113,9 +114,9 @@ class SharedPage(BattlePageMeta):
             components = _SHARED_COMPONENTS_CONFIG
         else:
             components += _SHARED_COMPONENTS_CONFIG
-        if BATTLE_CTRL_ID.HIT_DIRECTION not in dict(components.getConfig()):
-            components += _HIT_DIRECTION_COMPONENTS_CONFIG
+        components = self._addDefaultHitDirectionController(components)
         self.__componentsConfig = components
+        self._battleSessionES = EventsSubscriber()
         return
 
     def __del__(self):
@@ -185,6 +186,11 @@ class SharedPage(BattlePageMeta):
         self._stopBattleSession()
         super(SharedPage, self)._dispose()
 
+    def _addDefaultHitDirectionController(self, components):
+        if BATTLE_CTRL_ID.HIT_DIRECTION not in dict(components.getConfig()):
+            components += _HIT_DIRECTION_COMPONENTS_CONFIG
+        return components
+
     def _toggleGuiVisible(self):
         self._isVisible = not self._isVisible
         if self._isVisible:
@@ -222,36 +228,26 @@ class SharedPage(BattlePageMeta):
             if ctrl.isInPostmortem:
                 self._onPostMortemSwitched(noRespawnPossible=False, respawnAvailable=False)
             self._isInPostmortem = ctrl.isInPostmortem
-            ctrl.onPostMortemSwitched += self._onPostMortemSwitched
-            ctrl.onRespawnBaseMoving += self._onRespawnBaseMoving
+            self._battleSessionES.subscribeToEvent(ctrl.onPostMortemSwitched, self._onPostMortemSwitched)
+            self._battleSessionES.subscribeToEvent(ctrl.onRespawnBaseMoving, self._onRespawnBaseMoving)
         crosshairCtrl = self.sessionProvider.shared.crosshair
         if crosshairCtrl is not None:
-            crosshairCtrl.onCrosshairViewChanged += self.__onCrosshairViewChanged
+            self._battleSessionES.subscribeToEvent(crosshairCtrl.onCrosshairViewChanged, self.__onCrosshairViewChanged)
             self.__onCrosshairViewChanged(crosshairCtrl.getViewID())
-        self.__settingsCore.onSettingsChanged += self.__onSettingsChanged
+        self._battleSessionES.subscribeToEvent(self.__settingsCore.onSettingsChanged, self.__onSettingsChanged)
         if not self.__settingsCore.isReady:
-            self.__settingsCore.onSettingsReady += self.__onSettingsReady
+            self._battleSessionES.subscribeToEvent(self.__settingsCore.onSettingsReady, self.__onSettingsReady)
         aih_global_binding.subscribe(aih_global_binding.BINDING_ID.CTRL_MODE_NAME, self._onAvatarCtrlModeChanged)
         return
 
     def _stopBattleSession(self):
-        self.__settingsCore.onSettingsReady -= self.__onSettingsReady
-        self.__settingsCore.onSettingsChanged -= self.__onSettingsChanged
-        crosshairCtrl = self.sessionProvider.shared.crosshair
-        if crosshairCtrl is not None:
-            crosshairCtrl.onCrosshairViewChanged -= self.__onCrosshairViewChanged
-        ctrl = self.sessionProvider.shared.vehicleState
-        if ctrl is not None:
-            ctrl.onPostMortemSwitched -= self._onPostMortemSwitched
-            ctrl.onRespawnBaseMoving -= self._onRespawnBaseMoving
+        self._battleSessionES.unsubscribeFromAllEvents()
         aih_global_binding.unsubscribe(aih_global_binding.BINDING_ID.CTRL_MODE_NAME, self._onAvatarCtrlModeChanged)
         for alias, _ in self.__componentsConfig.getViewsConfig():
             self.sessionProvider.removeViewComponent(alias)
 
         for component in self._external:
             component.stopPlugins()
-
-        return
 
     def _handleRadialMenuCmd(self, event):
         raise NotImplementedError
@@ -271,12 +267,15 @@ class SharedPage(BattlePageMeta):
     def _handleHelpEvent(self, event):
         raise NotImplementedError
 
+    def _hasBattleMessenger(self):
+        return True
+
     def _onBattleLoadingStart(self):
         self._isBattleLoading = True
         if not self._blToggling:
             self._blToggling = set(self.as_getComponentsVisibilityS())
         self._blToggling.difference_update([_ALIASES.BATTLE_LOADING])
-        if not avatar_getter.isObserverSeesAll():
+        if self._hasBattleMessenger() and not avatar_getter.isObserverSeesAll():
             self._blToggling.add(_ALIASES.BATTLE_MESSENGER)
         hintPanel = self.getComponent(_ALIASES.HINT_PANEL)
         if hintPanel and hintPanel.getActiveHint():
@@ -298,7 +297,9 @@ class SharedPage(BattlePageMeta):
         for component in self._external:
             component.active(True)
 
-        self.sessionProvider.shared.hitDirection.setVisible(True)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(True)
+        return
 
     def _onDestroyTimerStart(self):
         hintPanel = self.getComponent(_ALIASES.HINT_PANEL)
@@ -413,13 +414,17 @@ class SharedPage(BattlePageMeta):
         for component in self._external:
             component.active(True)
 
-        self.sessionProvider.shared.hitDirection.setVisible(True)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(True)
+        return
 
     def __handleHideExternals(self, _):
         for component in self._external:
             component.active(False)
 
-        self.sessionProvider.shared.hitDirection.setVisible(False)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(False)
+        return
 
     def __handleShowBtnHint(self, _):
         self._processHint(True)

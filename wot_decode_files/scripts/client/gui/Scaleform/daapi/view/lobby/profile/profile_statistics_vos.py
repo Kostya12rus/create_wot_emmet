@@ -1,7 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/profile_statistics_vos.py
+from collections import namedtuple
 import nations
 from dossiers2.ui import layouts
 from gui import GUI_NATIONS, getNationIndex
@@ -494,8 +495,12 @@ class ProfileStatisticsBattleRoyaleVO(BaseDictStatisticsVO):
 
 class ProfileComp7StatisticsVO(ProfileDictStatisticsVO):
 
+    def __init__(self, targetData, accountDossier, isCurrentUser, headerKey):
+        self.__headerKey = headerKey
+        super(ProfileComp7StatisticsVO, self).__init__(targetData, accountDossier, isCurrentUser)
+
     def _getHeaderText(self, data):
-        return backport.text(R.strings.profile.section.statistics.headerText.comp7())
+        return backport.text(R.strings.profile.section.statistics.headerText.dyn(self.__headerKey)())
 
     def _getHeaderData(self, data):
         targetData, _ = data
@@ -519,27 +524,26 @@ class ProfileComp7StatisticsVO(ProfileDictStatisticsVO):
           tuple())))
 
 
-class ProfileComp7S2StatisticsVO(ProfileComp7StatisticsVO):
+_VOData = namedtuple('_VOData', ('clazz', 'params'))
 
-    def _getHeaderText(self, data):
-        return backport.text(R.strings.profile.section.statistics.headerText.comp7_s2())
+def getVOMapping():
+    mapping = {PROFILE_DROPDOWN_KEYS.ALL: _VOData(ProfileAllStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.FALLOUT: _VOData(ProfileFalloutStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.HISTORICAL: _VOData(ProfileHistoricalStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.TEAM: _VOData(Profile7x7StatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.STATICTEAM: _VOData(StaticProfile7x7StatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.STATICTEAM_SEASON: _VOData(StaticProfile7x7StatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.CLAN: _VOData(ProfileGlobalMapStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.FORTIFICATIONS: _VOData(ProfileFortStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.RANKED: _VOData(ProfileRankedStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.RANKED_10X10: _VOData(ProfileRanked10x10StatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.EPIC_RANDOM: _VOData(ProfileEpicRandomStatisticsVO, {}), 
+       PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SOLO: _VOData(ProfileStatisticsBattleRoyaleVO, {}), 
+       PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SQUAD: _VOData(ProfileStatisticsBattleRoyaleVO, {}), 
+       PROFILE_DROPDOWN_KEYS.COMP7: _VOData(ProfileComp7StatisticsVO, {'headerKey': PROFILE_DROPDOWN_KEYS.COMP7})}
+    return mapping
 
-
-_VO_MAPPING = {PROFILE_DROPDOWN_KEYS.ALL: ProfileAllStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.FALLOUT: ProfileFalloutStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.HISTORICAL: ProfileHistoricalStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.TEAM: Profile7x7StatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.STATICTEAM: StaticProfile7x7StatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.STATICTEAM_SEASON: StaticProfile7x7StatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.CLAN: ProfileGlobalMapStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.FORTIFICATIONS: ProfileFortStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.RANKED: ProfileRankedStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.RANKED_10X10: ProfileRanked10x10StatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.EPIC_RANDOM: ProfileEpicRandomStatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SOLO: ProfileStatisticsBattleRoyaleVO, 
-   PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SQUAD: ProfileStatisticsBattleRoyaleVO, 
-   PROFILE_DROPDOWN_KEYS.COMP7: ProfileComp7StatisticsVO, 
-   PROFILE_DROPDOWN_KEYS.COMP7_SEASON2: ProfileComp7S2StatisticsVO}
 
 def getStatisticsVO(battlesType, targetData, accountDossier, isCurrentUser):
-    return _VO_MAPPING[battlesType](targetData=targetData, accountDossier=accountDossier, isCurrentUser=isCurrentUser)
+    voData = getVOMapping()[battlesType]
+    return voData.clazz(targetData=targetData, accountDossier=accountDossier, isCurrentUser=isCurrentUser, **voData.params)

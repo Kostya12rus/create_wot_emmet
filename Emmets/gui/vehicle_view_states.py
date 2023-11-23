@@ -1,10 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/vehicle_view_states.py
+from helpers import dependency
 from gui.prb_control import prbDispatcherProperty
 from gui.shared.system_factory import registerVehicleViewState, collectVehicleViewStates
 from shared_utils import findFirst
+from skeletons.gui.lobby_context import ILobbyContext
+from skeletons.gui.game_control import IWotPlusController
 
 class IVehicleViewState(object):
     __slots__ = ()
@@ -102,11 +105,12 @@ class NoPresentViewState(IVehicleViewState):
 class SelectedViewState(IVehicleViewState):
     __slots__ = ('_locked', '_isInHangar', '_isBroken', '_isDisabledInRent', '_isOnlyForEventBattles',
                  '_isOutfitLocked', '_isCustomizationEnabled', '_isEliteShown', '_isLevelShown',
-                 '_isRoleShown', '_isMaintenanceVisible')
+                 '_isRoleShown', '_isMaintenanceVisible', '_isCustomizationVisible')
 
     def __init__(self, vehicle):
         super(SelectedViewState, self).__init__()
         self._isEliteShown = self._isLevelShown = self._isRoleShown = True
+        self._isMaintenanceVisible = self._isCustomizationVisible = True
         self._resolveVehicleState(vehicle)
         self._resolvePrbState()
 
@@ -149,13 +153,16 @@ class SelectedViewState(IVehicleViewState):
         return self._isCustomizationEnabled
 
     def isCustomizationVisible(self):
-        return True
+        return self._isCustomizationVisible
 
     def isOnlyForEventBattles(self):
         return self._isOnlyForEventBattles
 
     def isOptionalDevicesOpsEnabled(self):
         return self.isMaintenanceEnabled() and not self._isBroken
+
+    def isOutfitLocked(self):
+        return self._isOutfitLocked
 
     def _resolveVehicleState(self, vehicle):
         self._isInHangar = vehicle.isInHangar() and not vehicle.isDisabled()
@@ -164,7 +171,6 @@ class SelectedViewState(IVehicleViewState):
         self._isOnlyForEventBattles = vehicle.isOnlyForEventBattles()
         self._isOutfitLocked = vehicle.isOutfitLocked()
         self._isCustomizationEnabled = vehicle.isCustomizationEnabled()
-        self._isMaintenanceVisible = True
 
     def _resolvePrbState(self):
         self._locked = False
@@ -198,6 +204,21 @@ class PremiumIGRViewState(SelectedViewState):
 
 
 registerVehicleViewState(PremiumIGRViewState)
+
+class WoTPlusVehicleViewState(SelectedViewState):
+    _wotPlusCtrl = dependency.descriptor(IWotPlusController)
+    lobbyContext = dependency.descriptor(ILobbyContext)
+
+    @classmethod
+    def isSuitableVehicle(cls, vehicle):
+        return vehicle.isWotPlus()
+
+    def isMaintenanceEnabled(self):
+        isWotPlusMaintenanceEnabled = self._wotPlusCtrl.isEnabled() and self.lobbyContext.getServerSettings().isWoTPlusExclusiveVehicleEnabled()
+        return super(WoTPlusVehicleViewState, self).isMaintenanceEnabled() and isWotPlusMaintenanceEnabled
+
+
+registerVehicleViewState(WoTPlusVehicleViewState)
 
 def createState4CurrentVehicle(vehicle):
     if vehicle.isPresent():

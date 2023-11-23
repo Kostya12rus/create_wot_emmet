@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/currency_reserves/reserves_award_view.py
 from constants import PREMIUM_TYPE
 from frameworks.wulf import ViewSettings
@@ -46,7 +46,6 @@ class ReservesAwardView(ViewImpl):
         self.viewModel.onClose -= self._onClose
         self.viewModel.onPremiumAccountExtend -= self._onPremiumAccountExtend
         self.viewModel.onSubscriptionExtend -= self._onSubscriptionExtend
-        self._wotPlusUILogger.logCloseEvent()
 
     def _onLoading(self, creditsEarned, goldEarned):
         showCreditWarning = self._isPiggyBankEnabled() and not self._isPremiumPlusActive() and creditsEarned
@@ -66,16 +65,17 @@ class ReservesAwardView(ViewImpl):
         return self._lobbyContext.getServerSettings().isRenewableSubGoldReserveEnabled()
 
     def _onPremiumAccountExtend(self):
-        self._wotPlusUILogger.logClickEvent(ReservesKeys.PA_INFO)
+        self._wotPlusUILogger.logClickEvent(ReservesKeys.CREDITS_INFO)
         showShop(getBuyPremiumUrl())
         self.destroyWindow()
 
     def _onSubscriptionExtend(self):
-        self._wotPlusUILogger.logClickEvent(ReservesKeys.WP_INFO)
+        self._wotPlusUILogger.logClickEvent(ReservesKeys.GOLD_INFO)
         showShop(getWotPlusShopUrl())
         self.destroyWindow()
 
     def _onClose(self):
+        self._wotPlusUILogger.logCloseEvent()
         self.destroyWindow()
 
 

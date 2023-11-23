@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/pub/context_menu_window.py
 import logging, typing
 from frameworks.wulf import View, ViewFlags, WindowFlags, ViewSettings
@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 class ContextMenuContent(View):
 
     def __init__(self, layoutID=R.views.common.context_menu_window.context_menu_content.ContextMenuContent(), *args, **kwargs):
-        settings = ViewSettings(layoutID, ViewFlags.COMPONENT, ContextMenuContentModel())
+        settings = ViewSettings(layoutID, ViewFlags.VIEW, ContextMenuContentModel())
         settings.args = args
         settings.kwargs = kwargs
         super(ContextMenuContent, self).__init__(settings)

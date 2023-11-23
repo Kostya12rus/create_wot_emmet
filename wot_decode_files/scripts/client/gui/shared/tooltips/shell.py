@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/shell.py
 from debug_utils import LOG_ERROR
 from gui.Scaleform.genConsts.BLOCKS_TOOLTIP_TYPES import BLOCKS_TOOLTIP_TYPES
@@ -249,8 +249,6 @@ class CommonStatsBlockConstructor(_BaseCommonStatsBlockConstructor):
 
             formattedParameters = params_formatters.getFormattedParamsList(shell.descriptor, self._params)
             block.append(formatters.packTitleDescBlock(title=text_styles.middleTitle(_ms(TOOLTIPS.TANKCARUSEL_MAINPROPERTY)), padding=bottomPadding))
-            asteriskCount = 0
-            footNotes = []
             for paramName, paramValue in formattedParameters:
                 if paramName == ModuleTooltipBlockConstructor.CALIBER:
                     continue
@@ -261,26 +259,16 @@ class CommonStatsBlockConstructor(_BaseCommonStatsBlockConstructor):
                     isPiercingPower = paramName == 'avgPiercingPower'
                     if isPiercingPower:
                         if piercingPowerTable != NO_DATA:
-                            asteriskCount += 1
-                            asterisks = _ASTERISK * asteriskCount
-                            paramUnits += asterisks
-                            title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
-                            if tableData and isDistanceDependent:
-                                paramValue = '%s-%s' % (tableData[0][0], tableData[-1][0])
-                                title = _ms(MENU.MODULEINFO_PARAMS_PIERCINGDISTANCE_FOOTNOTE, minDist=tableData[0][1], maxDist=tableData[-1][1])
-                            footNotes.append(asterisks + title)
-                    isDamage = paramName == 'damage'
-                    isDamagePerSecond = paramName == 'damagePerSecond'
-                    if (isDamage or isDamagePerSecond) and shell.isGuaranteedDamage:
-                        asteriskCount += 1
-                        asterisks = _ASTERISK * asteriskCount
-                        paramUnits += asterisks
-                        footNotes.append(asterisks + _ms(MENU.MODULEINFO_PARAMS_GUARANTEEDDAMAGE_FOOTNOTE))
+                            paramUnits += _ASTERISK
+                        if tableData and isDistanceDependent:
+                            paramValue = '%s-%s' % (tableData[0][0], tableData[-1][0])
                     block.append(self._packParameterBlock(backport.text(R.strings.menu.moduleInfo.params.dyn(paramName)()), paramValue, paramUnits))
 
-            for footNote in footNotes:
-                block.append(formatters.packTitleDescBlock(title=text_styles.standard(footNote), padding=topPadding))
-
+            if piercingPowerTable != NO_DATA:
+                title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
+                if isDistanceDependent and tableData:
+                    title = _ms(MENU.MODULEINFO_PARAMS_PIERCINGDISTANCE_FOOTNOTE, minDist=tableData[0][1], maxDist=tableData[-1][1])
+                block.append(formatters.packTitleDescBlock(title=text_styles.standard(title), padding=topPadding))
         return block
 
     @staticmethod

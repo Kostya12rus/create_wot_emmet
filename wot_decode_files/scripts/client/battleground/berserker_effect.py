@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/battleground/berserker_effect.py
 import logging, BigWorld, AnimationSequence, Math, math_utils, ResMgr
 from battle_royale.gui.constants import BattleRoyaleEquipments
@@ -38,6 +38,9 @@ class BerserkerEffectComponent(AvatarRelatedComponent):
         if progressionCtrl is not None:
             progressionCtrl.onVehicleUpgradeStarted -= self.__onVehicleUpgradeStarted
             progressionCtrl.onVehicleUpgradeFinished -= self.__onVehicleUpgradeFinished
+        arena = BigWorld.player().arena
+        if arena is not None:
+            arena.onVehicleKilled -= self.__onVehicleKilled
         return
 
     def _initialize(self):
@@ -49,6 +52,7 @@ class BerserkerEffectComponent(AvatarRelatedComponent):
         if progressionCtrl is not None:
             progressionCtrl.onVehicleUpgradeStarted += self.__onVehicleUpgradeStarted
             progressionCtrl.onVehicleUpgradeFinished += self.__onVehicleUpgradeFinished
+        BigWorld.player().arena.onVehicleKilled += self.__onVehicleKilled
         _TransformationParser().parse()
         return
 
@@ -57,23 +61,38 @@ class BerserkerEffectComponent(AvatarRelatedComponent):
             self.__addEffect(vehicleID, data['duration'] + BigWorld.serverTime())
 
     def __addEffect(self, vehicleId, endTime):
-        self.__loadingEffects[vehicleId] = _BerserkerEffectObject(vehicleId, endTime, self.__destroyEffect)
+        self.__loadingEffects[vehicleId] = _BerserkerEffectObject(vehicleId, endTime, self.__destroyActiveEffect)
         loadComponentSystem(self.__loadingEffects[vehicleId], self.__onEffectLoaded, self.__getLoaders())
 
     def __onEffectLoaded(self, effObject):
-        vehicle = BigWorld.entities.get(effObject.vehicleId)
+        if effObject.vehicleId not in self.__loadingEffects:
+            effObject.destroy()
+            return
+        else:
+            vehicle = BigWorld.entities.get(effObject.vehicleId)
+            if vehicle is not None and vehicle.appearance is not None:
+                self.__activeEffectsTime[effObject.vehicleId] = effObject.endTime
+                vehicle.appearance.addTempGameObject(effObject, self.__APPEARANCE_COMPONENT_NAME)
+            self.__loadingEffects.pop(effObject.vehicleId)
+            return
+
+    def __destroyActiveEffect(self, vehicleId):
+        vehicle = BigWorld.entities.get(vehicleId)
         if vehicle is not None and vehicle.appearance is not None:
-            self.__activeEffectsTime[effObject.vehicleId] = effObject.endTime
-            vehicle.appearance.addTempGameObject(effObject, self.__APPEARANCE_COMPONENT_NAME)
-        self.__loadingEffects.pop(effObject.vehicleId)
+            vehicle.appearance.removeTempGameObjectIfExists(self.__APPEARANCE_COMPONENT_NAME)
+        self.__activeEffectsTime.pop(vehicleId, None)
         return
 
     def __destroyEffect(self, vehicleId):
-        vehicle = BigWorld.entities.get(vehicleId)
-        if vehicle is not None and vehicle.appearance is not None:
-            vehicle.appearance.removeTempGameObject(self.__APPEARANCE_COMPONENT_NAME)
-        self.__activeEffectsTime.pop(vehicleId, None)
-        return
+        if not vehicleId:
+            return
+        else:
+            loadingEffObject = self.__loadingEffects.pop(vehicleId, None)
+            if loadingEffObject:
+                loadingEffObject.stopLoading = True
+                loadingEffObject.destroy()
+            self.__destroyActiveEffect(vehicleId)
+            return
 
     def __getLoaders(self):
         loaders = {}
@@ -88,7 +107,7 @@ class BerserkerEffectComponent(AvatarRelatedComponent):
         if vehicleId in self.__activeEffectsTime:
             endTime = self.__activeEffectsTime[vehicleId]
             if endTime > BigWorld.serverTime():
-                self.__destroyEffect(vehicleId)
+                self.__destroyActiveEffect(vehicleId)
                 self.__activeEffectsTime[vehicleId] = endTime
 
     def __onVehicleUpgradeFinished(self, vehicleId):
@@ -99,6 +118,9 @@ class BerserkerEffectComponent(AvatarRelatedComponent):
             else:
                 self.__activeEffectsTime.pop(vehicleId, None)
         return
+
+    def __onVehicleKilled(self, vehicleId, *_, **__):
+        self.__destroyEffect(vehicleId)
 
 
 class _VehicleNodeEffect(SequenceComponent):

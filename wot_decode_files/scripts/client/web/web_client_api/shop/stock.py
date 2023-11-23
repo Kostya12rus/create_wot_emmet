@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/shop/stock.py
 import itertools, typing
 from collections import namedtuple
@@ -74,7 +74,7 @@ _GUI_ITEMS_TYPE_MAP = {ShopItemType.VEHICLE: GUI_ITEM_TYPE.VEHICLE,
    ShopItemType.EMBLEM: GUI_ITEM_TYPE.EMBLEM, 
    ShopItemType.INSCRIPTION: GUI_ITEM_TYPE.INSCRIPTION, 
    ShopItemType.PROJECTION_DECAL: GUI_ITEM_TYPE.PROJECTION_DECAL}
-_ITEMS_CRITERIA_MAP = {ShopItemType.VEHICLE: {'inventory': REQ_CRITERIA.INVENTORY, 
+_ITEMS_CRITERIA_MAP = {ShopItemType.VEHICLE: {'inventory': REQ_CRITERIA.INVENTORY | ~REQ_CRITERIA.VEHICLE.EVENT, 
                           'premium': REQ_CRITERIA.VEHICLE.PREMIUM, 
                           'ready': REQ_CRITERIA.VEHICLE.READY, 
                           'sellable': REQ_CRITERIA.VEHICLE.CAN_SELL, 

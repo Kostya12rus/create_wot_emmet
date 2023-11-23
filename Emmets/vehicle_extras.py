@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_extras.py
 from functools import partial
 from vehicle_systems.stricted_loading import makeCallbackWeak
@@ -131,41 +131,28 @@ class ShowShooting(EntityExtra):
 
 
 class ShowShootingMultiGun(ShowShooting):
-    _SHOT_ALL_GUNS = -1
+    _SHOT_SINGLE = 1
 
     def _start(self, data, args):
-        burstCount, currentGuns = args
+        burstCount, gunIndex = args
+        if burstCount != self._SHOT_SINGLE:
+            data['_gunIndex'] = range(0, burstCount)
+        else:
+            data['_gunIndex'] = [
+             gunIndex]
         vehicle = data['entity']
         gunDescr = vehicle.typeDescriptor.gun
-        turretDescr = vehicle.typeDescriptor.turret
-        if currentGuns == self._SHOT_ALL_GUNS:
-            data['_gunIndex'] = range(0, len(gunDescr.effects))
-            data['_gunSequence'] = [data['_gunIndex']] * burstCount
-        else:
-            if currentGuns < 0:
-                data['_gunIndex'] = turretDescr.multiGunState.patterns[currentGuns].gunIndexes
-                data['_gunSequence'] = turretDescr.multiGunState.patterns[currentGuns].sequence
-            else:
-                data['_gunIndex'] = [
-                 currentGuns]
-                data['_gunSequence'] = [data['_gunIndex']] * burstCount
-            if vehicle.typeDescriptor.isDualgunVehicle:
-                positions = [
-                 None] * len(turretDescr.multiGun)
-            else:
-                positions = [ (multiGunInstance.gunFire,) for multiGunInstance in turretDescr.multiGun ]
-            data['entity_id'] = vehicle.id
-            effectPlayers = {}
-            for gunIndex in data['_gunIndex']:
-                stages, effects, _ = gunDescr.effects[gunIndex]
-                effectPlayers[gunIndex] = EffectsListPlayer(effects, stages, position=positions[gunIndex], **data)
+        data['entity_id'] = vehicle.id
+        effectPlayers = {}
+        for gunIndex in data['_gunIndex']:
+            stages, effects, _ = gunDescr.effects[gunIndex]
+            effectPlayers[gunIndex] = EffectsListPlayer(effects, stages, **data)
 
         data['_effectsListPlayers'] = effectPlayers
         data['_burst'] = (
-         burstCount, burstCount, gunDescr.burst[1])
+         burstCount, gunDescr.burst[1])
         data['_gunModel'] = vehicle.appearance.compoundModel
         self.__doShot(data)
-        return
 
     def _cleanup(self, data):
         effPlayers = data.get('_effectsListPlayers')
@@ -176,14 +163,9 @@ class ShowShootingMultiGun(ShowShooting):
                 if effPlayer is not None:
                     effPlayer.stop()
 
-            timerID = data.get('_timerID')
-            if timerID is not None:
-                BigWorld.cancelCallback(timerID)
-                data['_timerID'] = None
             return
 
     def __doShot(self, data):
-        data['_timerID'] = None
         try:
             vehicle = data['entity']
             if not vehicle.isAlive():
@@ -194,41 +176,25 @@ class ShowShootingMultiGun(ShowShooting):
                 shotsDone.addShot()
             else:
                 vehicle.appearance.createComponent(Projectiles.ShotsDoneComponent)
-            burstSize, burstCount, burstInterval = data['_burst']
-            burstNumber = burstSize - burstCount
-            if burstCount == 1:
-                self.__doGunEffect(data, burstNumber, True)
-                withShot = 1
-            else:
-                data['_burst'] = (
-                 burstSize, burstCount - 1, burstInterval)
-                data['_timerID'] = BigWorld.callback(burstInterval, partial(self.__doShot, data))
-                self.__doGunEffect(data, burstNumber, False)
-                withShot = 2
+            self.__doGunEffect(data)
             self.__doRecoil(data)
             if not IS_EDITOR:
                 avatar = BigWorld.player()
                 if data['entity'].isPlayerVehicle or vehicle is avatar.getVehicleAttached():
-                    avatar.getOwnVehicleShotDispersionAngle(avatar.gunRotator.turretRotationSpeed, withShot=withShot)
+                    avatar.getOwnVehicleShotDispersionAngle(avatar.gunRotator.turretRotationSpeed, withShot=1)
         except Exception:
             LOG_CURRENT_EXCEPTION()
             self.stop(data)
 
         return
 
-    def __doGunEffect(self, data, burstNumber, isLastEffect):
+    def __doGunEffect(self, data):
         gunModel = data['_gunModel']
         vehicle = data['entity']
         multiGun = vehicle.typeDescriptor.turret.multiGun
         for gunIndex, effPlayer in data['_effectsListPlayers'].items():
             effPlayer.stop()
-
-        for gunIndex in data['_gunSequence'][burstNumber]:
-            effPlayer = data['_effectsListPlayers'][gunIndex]
-            if isLastEffect:
-                effPlayer.play(gunModel, None, partial(self.stop, data))
-            else:
-                effPlayer.play(gunModel)
+            effPlayer.play(gunModel, None, partial(self.stop, data))
             if not IS_EDITOR:
                 groundWaveEff = effPlayer.effectsList.relatedEffects.get('groundWave')
                 if groundWaveEff is not None:

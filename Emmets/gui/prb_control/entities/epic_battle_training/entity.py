@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/epic_battle_training/entity.py
 from functools import partial
 import BigWorld, account_helpers
@@ -25,7 +25,7 @@ from gui.prb_control.settings import PREBATTLE_ROSTER, REQUEST_TYPE
 from gui.prb_control.settings import PREBATTLE_SETTING_NAME
 from gui.prb_control.storages import legacy_storage_getter
 from gui.shared import g_eventBus, EVENT_BUS_SCOPE
-from gui.shared.events import ViewEventType
+from gui.shared.events import ViewEventType, LoadGuiImplViewEvent
 from prebattle_shared import decodeRoster
 
 class EpicBattleTrainingEntryPoint(LegacyEntryPoint):
@@ -111,7 +111,6 @@ class EpicBattleTrainingEntity(LegacyEntity):
      VIEW_ALIAS.LOBBY_STORE,
      VIEW_ALIAS.LOBBY_STORAGE,
      VIEW_ALIAS.LOBBY_TECHTREE,
-     VIEW_ALIAS.LOBBY_BARRACKS,
      VIEW_ALIAS.LOBBY_PROFILE,
      VIEW_ALIAS.VEHICLE_COMPARE)
 
@@ -133,6 +132,7 @@ class EpicBattleTrainingEntity(LegacyEntity):
     def init(self, clientPrb=None, ctx=None):
         result = super(EpicBattleTrainingEntity, self).init(clientPrb=clientPrb)
         g_eventBus.addListener(ViewEventType.LOAD_VIEW, self.__handleViewLoad, scope=EVENT_BUS_SCOPE.LOBBY)
+        g_eventBus.addListener(ViewEventType.LOAD_GUI_IMPL_VIEW, self.__handleViewLoad, scope=EVENT_BUS_SCOPE.LOBBY)
         if clientPrb is None:
             clientPrb = prb_getters.getClientPrebattle()
         if clientPrb is not None:
@@ -149,6 +149,7 @@ class EpicBattleTrainingEntity(LegacyEntity):
         if clientPrb is not None:
             clientPrb.onPlayerGroupChanged -= self.__prb_onPlayerGroupChanged
         g_eventBus.removeListener(ViewEventType.LOAD_VIEW, self.__handleViewLoad, scope=EVENT_BUS_SCOPE.LOBBY)
+        g_eventBus.removeListener(ViewEventType.LOAD_GUI_IMPL_VIEW, self.__handleViewLoad, scope=EVENT_BUS_SCOPE.LOBBY)
         if not woEvents:
             aliasToLoad = [
              PREBATTLE_ALIASES.EPICBATTLE_LIST_VIEW_PY, PREBATTLE_ALIASES.EPIC_TRAINING_ROOM_VIEW_PY]
@@ -412,7 +413,7 @@ class EpicBattleTrainingEntity(LegacyEntity):
         return
 
     def __handleViewLoad(self, event):
-        if event.alias in self.__loadEvents:
+        if isinstance(event, LoadGuiImplViewEvent) or event.alias in self.__loadEvents:
             self.setPlayerState(SetPlayerStateCtx(False, waitingID='prebattle/player_not_ready'))
 
     def __prb_onPlayerGroupChanged(self, pID, prevRoster, roster, group, actorID):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/BattleReplay.py
 import base64, os, datetime, json, copy, cPickle as pickle, logging, zlib
 from collections import defaultdict
@@ -31,6 +31,7 @@ REPLAY_TIME_MARK_CLIENT_READY = 2147483648
 REPLAY_TIME_MARK_REPLAY_FINISHED = 2147483649
 REPLAY_TIME_MARK_CURRENT_TIME = 2147483650
 FAST_FORWARD_STEP = 20.0
+MIN_REPLAY_TIME = 1
 _POSTMORTEM_CTRL_MODES = (
  CTRL_MODE_NAME.POSTMORTEM, CTRL_MODE_NAME.DEATH_FREE_CAM, CTRL_MODE_NAME.RESPAWN_DEATH)
 _FORWARD_INPUT_CTRL_MODES = (
@@ -55,11 +56,11 @@ class CallbackDataNames(object):
     BC_MARKERS_ONTRIGGERDEACTIVATED = 'bootcampMarkers_onTriggerDeactivated'
     BC_MARKERS_SHOWMARKER = 'bootcampMarkers_showMarker'
     BC_MARKERS_HIDEMARKER = 'bootcampMarkers_hideMarker'
-    BC_HINT_SHOW = 'bootcampHint_show'
-    BC_HINT_HIDE = 'bootcampHint_hide'
-    BC_HINT_COMPLETE = 'bootcampHint_complete'
-    BC_HINT_CLOSE = 'bootcampHint_close'
-    BC_HINT_ONHIDED = 'bootcampHint_onHided'
+    HINT_SHOW = 'hint_show'
+    HINT_HIDE = 'hint_hide'
+    HINT_COMPLETE = 'hint_complete'
+    HINT_CLOSE = 'hint_close'
+    HINT_ONHIDED = 'hint_onHided'
     BW_CHAT2_REPLAY_ACTION_RECEIVED_CALLBACK = 'bw_chat2.onActionReceived'
     CLIENT_VEHICLE_STATE_GROUP = 'client_vehicle_state_{}'
     DYN_SQUAD_SEND_ACTION_NAME = 'DynSquad.SendInvitationToSquad'
@@ -210,6 +211,7 @@ class BattleReplay(object):
         self.__replayCtrl.sniperModeCallback = self.onSniperModeChanged
         self.__replayCtrl.entityAoIChangedCallback = self.onEntityAoIChangedCallback
         self.__replayCtrl.postTickCallback = self.onPostTickCallback
+        self.__replayCtrl.serverAimCallback = self.setUseServerAim
         self.__isAutoRecordingEnabled = False
         self.__quitAfterStop = False
         self.__isPlayingPlayList = False
@@ -246,6 +248,7 @@ class BattleReplay(object):
         self.enableAutoRecordingBattles(True)
         self.onCommandReceived = Event.Event()
         self.onAmmoSettingChanged = Event.Event()
+        self.onServerAimChanged = Event.Event()
         self.onStopped = Event.Event()
         if hasattr(self.__replayCtrl, 'setupStreamExcludeFilter'):
             import streamIDs
@@ -283,6 +286,8 @@ class BattleReplay(object):
         self.onCommandReceived = None
         self.onAmmoSettingChanged.clear()
         self.onAmmoSettingChanged = None
+        self.onServerAimChanged.clear()
+        self.onServerAimChanged = None
         self.enableAutoRecordingBattles(False)
         self.__replayCtrl.replayTerminatedCallback = None
         self.__replayCtrl.replayFinishedCallback = None
@@ -295,6 +300,7 @@ class BattleReplay(object):
         self.__replayCtrl.lockTargetCallback = None
         self.__replayCtrl.equipmentIdCallback = None
         self.__replayCtrl.warpFinishedCallback = None
+        self.__replayCtrl.serverAimCallback = None
         self.__replayCtrl = None
         self.__settings = None
         self.__videoCameraMatrix = None
@@ -375,6 +381,13 @@ class BattleReplay(object):
         if self.__replayCtrl.startPlayback(fileName):
             self.__playbackSpeedIdx = self.__playbackSpeedModifiers.index(1.0)
             self.__savedPlaybackSpeedIdx = self.__playbackSpeedIdx
+            replayEndTime = self.__replayCtrl.getReplayEndTime()
+            totalReplayTime = self.__replayCtrl.getTimeMark(REPLAY_TIME_MARK_REPLAY_FINISHED)
+            replayStartTime = self.__replayCtrl.getReplayStartTime()
+            replayStartTime = min(replayStartTime, replayEndTime - MIN_REPLAY_TIME, totalReplayTime - MIN_REPLAY_TIME)
+            replayStartTime = max(replayStartTime, 0)
+            self.__replayStartTime = replayStartTime
+            self.__replayEndTime = replayEndTime
             g_replayEvents.onPlaying()
             return True
         else:
@@ -490,10 +503,11 @@ class BattleReplay(object):
                 if self.isControllingCamera:
                     self.appLoader.detachCursor(settings.APP_NAME_SPACE.SF_BATTLE)
                     controlMode = self.getControlMode()
-                    if controlMode not in _POSTMORTEM_CTRL_MODES:
+                    if controlMode in _POSTMORTEM_CTRL_MODES:
+                        self.onControlModeChanged(controlMode)
+                    else:
                         self.onControlModeChanged('arcade')
                     self.__replayCtrl.isControllingCamera = False
-                    self.onControlModeChanged(controlMode)
                     self.__showInfoMessage('replayFreeCameraActivated')
                 else:
                     if not self.__isAllowedSavedCamera():
@@ -586,22 +600,24 @@ class BattleReplay(object):
         self.__replayCtrl.gunMarkerPosition = pos
         self.__replayCtrl.gunMarkerDirection = direction
 
-    def setGunMarkerParams(self, diameter, pos, direction):
+    def setGunMarkerParams(self, diameter, dualAccDiameter, pos, direction):
         controlMode = self.getControlMode()
         if controlMode != 'mapcase':
             self.__replayCtrl.gunMarkerDiameter = diameter
-            self.__replayCtrl.gunMarkerPosition = pos
+            self.__replayCtrl.dualAccDiameter = dualAccDiameter
             self.__replayCtrl.gunMarkerDirection = direction
+            self.__replayCtrl.gunMarkerPosition = pos
 
     def getGunMarkerParams(self, defaultPos, defaultDir):
         diameter = self.__replayCtrl.gunMarkerDiameter
+        dualAccDiameter = self.__replayCtrl.dualAccDiameter
         direction = self.__replayCtrl.gunMarkerDirection
         pos = self.__replayCtrl.gunMarkerPosition
         if direction == Math.Vector3(0, 0, 0):
             pos = defaultPos
             direction = defaultDir
         return (
-         diameter, pos, direction)
+         diameter, dualAccDiameter, pos, direction)
 
     def getGunMarkerPos(self):
         return self.__replayCtrl.gunMarkerPosition
@@ -609,14 +625,20 @@ class BattleReplay(object):
     def getEquipmentId(self):
         return self.__equipmentId
 
-    def setArcadeGunMarkerSize(self, size):
-        self.__replayCtrl.setArcadeGunMarkerSize(size)
-
     def useSyncroniusResourceLoading(self, use):
         self.__replayCtrl.useSyncroniusResourceLoading = use
 
+    def setArcadeGunMarkerSize(self, size):
+        self.__replayCtrl.setArcadeGunMarkerSize(size)
+
     def getArcadeGunMarkerSize(self):
         return self.__replayCtrl.getArcadeGunMarkerSize()
+
+    def setDualAccMarkerSize(self, size):
+        self.__replayCtrl.setDualAccMarkerSize(size)
+
+    def getDualAccMarkerSize(self):
+        return self.__replayCtrl.getDualAccMarkerSize()
 
     def setSPGGunMarkerParams(self, dispersionAngle, size):
         self.__replayCtrl.setSPGGunMarkerParams((dispersionAngle, size))
@@ -873,6 +895,12 @@ class BattleReplay(object):
             self.__replayCtrl.onBattleLoadingFinished()
 
     def onReplayFinished(self):
+        replayTimes = self.__replayCtrl.getReplayTimes() - 1
+        if replayTimes > 0:
+            self.__replayCtrl.setReplayTimes(replayTimes)
+            self.timeWarp(self.__replayStartTime - self.currentTime)
+            return
+        self.__replayCtrl.processFinish()
         if not self.scriptModalWindowsEnabled:
             self.stop()
             return
@@ -904,7 +932,7 @@ class BattleReplay(object):
                 return
             preferredPos = self.getGunRotatorTargetPoint()
             if controlMode == CTRL_MODE_NAME.MAP_CASE:
-                _, preferredPos, _ = self.getGunMarkerParams(preferredPos, Math.Vector3(0.0, 0.0, 1.0))
+                _, _, preferredPos, _ = self.getGunMarkerParams(preferredPos, Math.Vector3(0.0, 0.0, 1.0))
             player.inputHandler.onControlModeChanged(controlMode, camMatrix=BigWorld.camera().matrix, preferredPos=preferredPos, saveZoom=False, saveDist=False, equipmentID=self.__equipmentId, curVehicleID=self.__replayCtrl.playerVehicleID)
             return
 
@@ -933,8 +961,13 @@ class BattleReplay(object):
         vehTeam = arenaVehicles[vehID]['team']
         return currTeam == vehTeam
 
-    def onPostTickCallback(self, currentTick, totalTicks):
+    def onPostTickCallback(self):
         self.__aoi.flush(self.getControlMode())
+        currentTime = self.currentTime
+        if currentTime < self.__replayStartTime:
+            self.timeWarp(self.__replayStartTime - currentTime)
+        elif currentTime > self.__replayEndTime:
+            self.onReplayFinished()
 
     def setAmmoSetting(self, idx):
         if not isPlayerAvatar():
@@ -1143,7 +1176,10 @@ class BattleReplay(object):
         return self.__replayCtrl.isEffectNeedToPlay(entity_id)
 
     def setUseServerAim(self, server_aim):
-        return self.__replayCtrl.onServerAim(server_aim)
+        if self.isPlaying:
+            self.onServerAimChanged(server_aim)
+        elif self.isRecording:
+            self.__replayCtrl.onServerAim(server_aim)
 
     def printAIMType(self):
         if self.isServerAim:
@@ -1158,11 +1194,11 @@ class BattleReplay(object):
         inputHandler = BigWorld.player().inputHandler
         if equipmentId != -1:
             self.__equipmentId = equipmentId
-            inputHandler.showGunMarker(False)
+            inputHandler.showClientGunMarkers(False)
             if self.getControlMode() == CTRL_MODE_NAME.MAP_CASE and inputHandler.ctrl.equipmentID != equipmentId:
                 inputHandler.ctrl.activateEquipment(equipmentId)
         else:
-            inputHandler.showGunMarker(True)
+            inputHandler.showClientGunMarkers(True)
             self.__equipmentId = None
         return
 

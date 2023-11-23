@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/dialogs/gf_builders.py
 import typing
 from frameworks.wulf import WindowLayer
@@ -187,6 +187,22 @@ class ConfirmCancelWarningDialogBuilder(ConfirmCancelDialogBuilder):
         super(ConfirmCancelWarningDialogBuilder, self)._extendTemplate(template)
         if self.__descriptionMsg and self.__warningMsg:
             template.setSubView(DefaultDialogPlaceHolders.CONTENT, TextWithWarning(self.__descriptionMsg, self.__warningMsg))
+
+
+class ConfirmCancelDescriptionDialogBuilder(ConfirmCancelDialogBuilder):
+    __slots__ = ('__descriptionMsg', )
+
+    def __init__(self, uniqueID=None):
+        super(ConfirmCancelDescriptionDialogBuilder, self).__init__(uniqueID)
+        self.__descriptionMsg = None
+        return
+
+    def setDescriptionMsg(self, text):
+        self.__descriptionMsg = toString(text)
+
+    def _extendTemplate(self, template):
+        if self.__descriptionMsg:
+            template.setSubView(DefaultDialogPlaceHolders.CONTENT, TextWithWarning(self.__descriptionMsg, ''))
 
 
 class AlertBuilder(BaseDialogBuilder):

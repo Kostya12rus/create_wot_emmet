@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/crew/crew_header_tooltip_view.py
 import typing
 from frameworks.wulf import ViewSettings
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.crew.crew_header_tooltip_view_model import CrewHeaderTooltipViewModel
 from gui.impl.gen.view_models.views.lobby.crew.idle_crew_bonus import IdleCrewBonusEnum
-from gui.impl.pub import ViewImpl
+from gui.impl.lobby.crew.base_crew_view import BaseCrewSoundView
 from helpers import dependency
 from skeletons.gui.game_control import IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
     from gui.shared.gui_items import Vehicle
 _MINUTES_MULTIPLICATOR = 5
 
-class CrewHeaderTooltipView(ViewImpl):
+class CrewHeaderTooltipView(BaseCrewSoundView):
     __slots__ = ('_serverSettings', )
     _lobbyContext = dependency.descriptor(ILobbyContext)
     _wotPlusCtrl = dependency.descriptor(IWotPlusController)

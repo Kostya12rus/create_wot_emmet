@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/hint_panel/component.py
 from functools import partial
 import BigWorld, CommandMapping, SoundGroups
@@ -112,7 +112,7 @@ class BattleHintPanel(BattleHintPanelMeta, IAbstractPeriodView):
             hintCanBeDisplayed = isHintActive and self.__isBattleLoaded
             if hintCanBeDisplayed:
                 btnID, hint = hintData
-                self.as_setDataS(hint.vKey, hint.key, hint.messageLeft, hint.messageRight, hint.offsetX, hint.offsetY, hint.reducedPanning)
+                self.as_setDataS(hint.vKey, hint.key, hint.messageLeft, hint.messageRight, hint.offsetX, hint.offsetY, hint.reducedPanning, hint.centeredMessage)
                 self.fireEvent(GameEvent(GameEvent.SHOW_BTN_HINT, ctx={'btnID': btnID, 'hintCtx': hint.hintCtx}), scope=EVENT_BUS_SCOPE.GLOBAL)
             self.as_toggleS(hintCanBeDisplayed)
             return

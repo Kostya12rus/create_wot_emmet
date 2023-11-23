@@ -1,10 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/comp7_prebattle_setup_ctrl.py
 import logging, BigWorld, CGF, GenericComponents, Math, constants
 from Event import Event, EventManager
-from constants import ARENA_PERIOD, ARENA_GUI_TYPE
+from constants import ARENA_PERIOD
 from gui.battle_control import avatar_getter
 from gui.battle_control.arena_info.interfaces import IComp7PrebattleSetupController
 from gui.battle_control.battle_constants import BATTLE_CTRL_ID
@@ -18,9 +18,9 @@ _logger = logging.getLogger(__name__)
 class _SceneController(object):
     __dynObjectsCache = dependency.descriptor(IBattleDynamicObjectsCache)
 
-    def __init__(self):
+    def __init__(self, setup):
         self.__spawnPoints = {}
-        self.__config = self.__dynObjectsCache.getConfig(ARENA_GUI_TYPE.COMP7).getSpawnPointsConfig()
+        self.__config = self.__dynObjectsCache.getConfig(setup.arenaEntity.guiType).getSpawnPointsConfig()
         self.__pendingSpawnPoints = {}
 
     def createSpawnPoint(self, vehicleID, positionNumber, status):
@@ -72,7 +72,7 @@ class _SceneController(object):
 class Comp7PrebattleSetupController(IComp7PrebattleSetupController):
     __sessionProvider = dependency.descriptor(IBattleSessionProvider)
 
-    def __init__(self):
+    def __init__(self, setup):
         super(Comp7PrebattleSetupController, self).__init__()
         self.__em = EventManager()
         self.__currentArenaPeriod = ARENA_PERIOD.IDLE
@@ -83,7 +83,7 @@ class Comp7PrebattleSetupController(IComp7PrebattleSetupController):
         self.onSelectionConfirmed = Event(self.__em)
         self.onTeammateSelectionStatuses = Event(self.__em)
         self.onBattleStarted = Event(self.__em)
-        self.__sceneCtrl = _SceneController()
+        self.__sceneCtrl = _SceneController(setup)
         return
 
     def startControl(self, battleCtx, arenaVisitor):

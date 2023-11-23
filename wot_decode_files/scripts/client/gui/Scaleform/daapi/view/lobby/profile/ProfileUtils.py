@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/ProfileUtils.py
 from debug_utils import LOG_ERROR
 from gui.Scaleform.locale.PROFILE import PROFILE
@@ -191,7 +191,8 @@ class _AvgPrestigePointsField(_AbstractField):
 class _AvgHealthRepairField(_AbstractField):
 
     def _buildData(self, targetData, isCurrentUser):
-        return backport.getIntegralFormat(ProfileUtils.getValueOrUnavailable(targetData.getAvgHealthRepair()))
+        avgValue = targetData.getAvgHealthRepair() or ProfileUtils.UNAVAILABLE_VALUE
+        return backport.getIntegralFormat(avgValue)
 
 
 class _AvgEnemiesSpottedField(_AbstractField):
@@ -446,7 +447,8 @@ class _MaxHealthRepairField(_AbstractField):
         return DetailedStatisticsUtils.getDetailedDataObject(self._label, self._buildData(targetData, isCurrentUser), tooltip, tooltipData)
 
     def _buildData(self, targetData, isCurrentUser):
-        return backport.getIntegralFormat(targetData.getMaxHealthRepair())
+        maxValue = targetData.getMaxHealthRepair() or ProfileUtils.UNAVAILABLE_VALUE
+        return backport.getIntegralFormat(maxValue)
 
     def _buildTooltipData(self, targetData, isCurrentUser):
         vehicle = self.__getVehicle(targetData)

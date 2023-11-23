@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/veh_comparison_basket.py
 from collections import namedtuple
 from itertools import imap
@@ -24,14 +24,31 @@ from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
 from soft_exception import SoftException
 PARAMS_AFFECTED_TANKMEN_SKILLS = (
- 'camouflage',
  'brotherhood',
  'repair',
+ 'camouflage',
  'commander_eagleEye',
+ 'commander_universalist',
+ 'commander_tutor',
+ 'commander_expert',
+ 'commander_enemyShotPredictor',
+ 'gunner_smoothTurret',
+ 'gunner_sniper',
+ 'gunner_rancorous',
+ 'gunner_gunsmith',
  'driver_virtuoso',
+ 'driver_smoothDriving',
  'driver_badRoadsKing',
+ 'driver_tidyPerson',
+ 'driver_rammingMaster',
+ 'loader_desperado',
+ 'loader_pedant',
+ 'loader_intuition',
+ 'radioman_finder',
+ 'radioman_retransmitter',
+ 'radioman_lastEffort',
  'radioman_inventor',
- 'radioman_finder')
+ 'fireFighting')
 MAX_VEHICLES_TO_COMPARE_COUNT = 20
 _NO_CREW_SKILLS = set()
 _DEF_SHELL_INDEX = 0
@@ -193,6 +210,7 @@ class _VehCompareData(object):
         self.__equipment = self.getNoEquipmentLayout()
         self.__battleBooster = None
         self.__invEquipment = self.getNoEquipmentLayout()
+        self.__invBattleBoost = None
         self.__selectedShellIndex = _DEF_SHELL_INDEX
         self.__invHasCamouflage = False
         self.__hasCamouflage = False
@@ -239,6 +257,9 @@ class _VehCompareData(object):
     def setInvEquipment(self, equipment):
         self.__invEquipment = equipment
 
+    def setInvBattleBoost(self, battleBoost):
+        self.__invBattleBoost = battleBoost
+
     def setHasCamouflage(self, value):
         self.__hasCamouflage = value
 
@@ -276,6 +297,9 @@ class _VehCompareData(object):
     def getInvEquipment(self):
         return self.__invEquipment
 
+    def getInvBattleBoost(self):
+        return self.__invBattleBoost
+
     def getBattleBooster(self):
         return self.__battleBooster
 
@@ -297,19 +321,20 @@ class _VehCompareData(object):
         cType = CONFIGURATION_TYPES.CUSTOM
         if self.__selectedShellIndex != self.getInventoryShellIndex():
             return cType
-        if self.__hasCamouflage != self.__invHasCamouflage:
+        else:
+            if self.__hasCamouflage != self.__invHasCamouflage:
+                return cType
+            if self.__dynSlotType != self.__invDynSlotType:
+                return cType
+            if self.__postProgressionState != self.__invPostProgressionState:
+                return cType
+            if self.__strCD == self.__stockVehStrCD and self.getEquipment() == self.getStockEquipment() and self.__crewLvl == self.getStockCrewLvl() and self.__crewSkills == self.getStockCrewSkills():
+                if self.__battleBooster is None:
+                    cType = CONFIGURATION_TYPES.BASIC
+            if self.__strCD == self.__invVehStrCD and self.__equipment == self.__invEquipment and self.__crewLvl == self.__inventoryCrewLvl and self.__crewSkills == self.__inventoryCrewSkills:
+                if self.__battleBooster == self.__invBattleBoost:
+                    cType = CONFIGURATION_TYPES.CURRENT
             return cType
-        if self.__dynSlotType != self.__invDynSlotType:
-            return cType
-        if self.__postProgressionState != self.__invPostProgressionState:
-            return cType
-        if self.__strCD == self.__stockVehStrCD and self.getEquipment() == self.getStockEquipment() and self.__crewLvl == self.getStockCrewLvl():
-            if self.__crewSkills == self.getStockCrewSkills():
-                cType = CONFIGURATION_TYPES.BASIC
-        if self.__strCD == self.__invVehStrCD and self.__equipment == self.__invEquipment and self.__crewLvl == self.__inventoryCrewLvl:
-            if self.__crewSkills == self.__inventoryCrewSkills:
-                cType = CONFIGURATION_TYPES.CURRENT
-        return cType
 
     def getVehicleStrCD(self):
         return self.__strCD
@@ -367,6 +392,7 @@ class _VehCompareData(object):
         dataClone.setInventoryCrewData(self.__inventoryCrewLvl, self.__inventoryCrewSkills)
         dataClone.setEquipment(self.getEquipment())
         dataClone.setInvEquipment(self.__invEquipment)
+        dataClone.setInvBattleBoost(self.getInvBattleBoost())
         dataClone.setHasCamouflage(self.__hasCamouflage)
         dataClone.setHasBattleBooster(self.__hasBattleBooster)
         dataClone.setBattleBooster(self.getBattleBooster())
@@ -530,6 +556,7 @@ class VehComparisonBasket(IVehicleComparisonBasket):
         vehicle.setSelectedShellIndex(_DEF_SHELL_INDEX)
         vehicle.setDynSlotType(vehicle.getInvDynSlotType())
         vehicle.setPostProgressionState(vehicle.getInvPostProgressionState())
+        vehicle.setBattleBooster(vehicle.getInvBattleBoost())
         self.onParametersChange((index,))
 
     @_operationLocked
@@ -769,6 +796,8 @@ class VehComparisonBasket(IVehicleComparisonBasket):
     def __updateInventoryEquipment(cls, vehCompareData, vehicle):
         if vehicle.isInInventory:
             vehCompareData.setInvEquipment(_getVehicleEquipment(vehicle))
+            if vehicle.battleBoosters.installed.getCapacity() > 0:
+                vehCompareData.setInvBattleBoost(vehicle.battleBoosters.installed[0])
         else:
             vehCompareData.setInvEquipment(vehCompareData.getNoEquipmentLayout())
 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/subscription/subscription_award_view.py
 from helpers.time_utils import makeLocalServerTime
 from typing import TYPE_CHECKING
@@ -13,12 +13,11 @@ from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.subscription.subscription_award_view_model import SubscriptionAwardViewModel
 from gui.impl.pub import ViewImpl
 from gui.impl.pub.lobby_window import LobbyNotificationWindow
-from gui.server_events.bonuses import GoldBank, IdleCrewXP, ExcludedMap, FreeEquipmentDemounting, WoTPlusExclusiveVehicle, WoTPlusBonus
+from gui.server_events.bonuses import WoTPlusBonus
 from gui.shared.event_dispatcher import showWotPlusInfoPage
 from gui.shared.missions.packers.bonus import getDefaultBonusPackersMap
 from helpers import dependency
 from skeletons.gui.game_control import IWotPlusController
-from skeletons.gui.lobby_context import ILobbyContext
 from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource, WotPlusKeys
 from uilogging.wot_plus.loggers import WotPlusRewardTooltipLogger, WotPlusRewardScreenLogger
 if TYPE_CHECKING:
@@ -44,7 +43,6 @@ class LoggedBackportTooltipWindow(BackportTooltipWindow):
 
 
 class SubscriptionAwardView(ViewImpl):
-    _lobbyContext = dependency.descriptor(ILobbyContext)
     _wotPlusCtrl = dependency.descriptor(IWotPlusController)
     __slots__ = ('__tooltips', '__bonuses', '_wotPlusUILogger')
 
@@ -75,19 +73,7 @@ class SubscriptionAwardView(ViewImpl):
         self._soundsOnClose()
 
     def _getBonuses(self):
-        serverSettings = self._lobbyContext.getServerSettings()
-        bonuses = []
-        if serverSettings.isWoTPlusExclusiveVehicleEnabled():
-            bonuses.append(WoTPlusExclusiveVehicle())
-        if serverSettings.isRenewableSubGoldReserveEnabled():
-            bonuses.append(GoldBank())
-        if serverSettings.isRenewableSubPassiveCrewXPEnabled():
-            bonuses.append(IdleCrewXP())
-        if serverSettings.isWotPlusExcludedMapEnabled():
-            bonuses.append(ExcludedMap())
-        if serverSettings.isFreeEquipmentDemountingEnabled():
-            bonuses.append(FreeEquipmentDemounting())
-        return bonuses
+        return self._wotPlusCtrl.getEnabledBonuses()
 
     def _fillViewModel(self):
         with self.getViewModel().transaction() as (model):
@@ -116,7 +102,7 @@ class SubscriptionAwardView(ViewImpl):
         self.destroyWindow()
 
     def _onInfo(self):
-        showWotPlusInfoPage(WotPlusInfoPageSource.REWARD_SCREEN)
+        showWotPlusInfoPage(WotPlusInfoPageSource.REWARD_SCREEN, useCustomSoundSpace=True)
 
     def _soundsOnOpen(self):
         WWISE.WW_eventGlobal(backport.sound(R.sounds.gui_reward_screen_general()))

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/__init__.py
 from frameworks.wulf import WindowLayer
 from gui.app_loader import settings as app_settings
@@ -19,6 +19,7 @@ def getContextMenuHandlers():
 
 def getViewSettings():
     from gui.Scaleform.daapi.view.lobby.profile.ProfileAwards import ProfileAwards
+    from gui.Scaleform.daapi.view.lobby.profile.profile_collections_page import ProfileCollectionsPage
     from gui.Scaleform.daapi.view.lobby.profile.ProfilePage import ProfilePage
     from gui.Scaleform.daapi.view.lobby.profile.ProfileTotalPage import ProfileTotalPage
     from gui.Scaleform.daapi.view.lobby.profile.ProfileStatistics import ProfileStatistics
@@ -29,6 +30,7 @@ def getViewSettings():
     from gui.Scaleform.daapi.view.lobby.profile.ProfileTechniqueWindow import ProfileTechniqueWindow
     from gui.Scaleform.daapi.view.lobby.profile.ProfileWindow import ProfileWindow
     from gui.Scaleform.daapi.view.lobby.profile.ProfileHof import ProfileHof
+    from gui.Scaleform.daapi.view.lobby.profile.profile_technique_prestige_injects import ProfileTechniquePrestigeInject, ProfileTechniquePrestigeEmblemInject
     return (
      ViewSettings(VIEW_ALIAS.LOBBY_PROFILE, ProfilePage, 'profile.swf', WindowLayer.SUB_VIEW, VIEW_ALIAS.LOBBY_PROFILE, ScopeTemplates.LOBBY_SUB_SCOPE),
      GroupedViewSettings(VIEW_ALIAS.PROFILE_WINDOW, ProfileWindow, 'profileWindow.swf', WindowLayer.WINDOW, 'profileWindow', None, ScopeTemplates.DEFAULT_SCOPE),
@@ -40,7 +42,10 @@ def getViewSettings():
      ComponentSettings(VIEW_ALIAS.PROFILE_TAB_NAVIGATOR, ProfileTabNavigator, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(VIEW_ALIAS.PROFILE_TECHNIQUE_PAGE, ProfileTechniquePage, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(VIEW_ALIAS.PROFILE_TECHNIQUE_WINDOW, ProfileTechniqueWindow, ScopeTemplates.DEFAULT_SCOPE),
-     ComponentSettings(VIEW_ALIAS.PROFILE_HOF, ProfileHof, ScopeTemplates.DEFAULT_SCOPE))
+     ComponentSettings(VIEW_ALIAS.PROFILE_HOF, ProfileHof, ScopeTemplates.DEFAULT_SCOPE),
+     ComponentSettings(VIEW_ALIAS.PROFILE_COLLECTIONS_PAGE, ProfileCollectionsPage, ScopeTemplates.DEFAULT_SCOPE),
+     ComponentSettings(VIEW_ALIAS.PROFILE_PRESTIGE_WIDGET, ProfileTechniquePrestigeInject, ScopeTemplates.DEFAULT_SCOPE),
+     ComponentSettings(VIEW_ALIAS.PROFILE_PRESTIGE_EMBLEM_WIDGET, ProfileTechniquePrestigeEmblemInject, ScopeTemplates.DEFAULT_SCOPE))
 
 
 def getBusinessHandlers():
@@ -53,7 +58,14 @@ class ProfilePackageBusinessHandler(PackageBusinessHandler):
     def __init__(self):
         listeners = (
          (
-          VIEW_ALIAS.LOBBY_PROFILE, self.loadViewByCtxEvent),
+          VIEW_ALIAS.LOBBY_PROFILE, self.__loadOrUpdateView),
          (
           VIEW_ALIAS.PROFILE_WINDOW, self.loadViewByCtxEvent))
         super(ProfilePackageBusinessHandler, self).__init__(listeners, app_settings.APP_NAME_SPACE.SF_LOBBY, EVENT_BUS_SCOPE.LOBBY)
+
+    def __loadOrUpdateView(self, event):
+        view = self.findViewByAlias(WindowLayer.SUB_VIEW, VIEW_ALIAS.LOBBY_PROFILE)
+        if view and event.ctx.get('selectedAlias'):
+            view.updateSubView(event.ctx)
+            return
+        self.loadViewByCtxEvent(event)

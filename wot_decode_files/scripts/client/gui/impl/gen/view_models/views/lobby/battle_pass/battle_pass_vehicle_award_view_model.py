@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/battle_pass/battle_pass_vehicle_award_view_model.py
 from frameworks.wulf import ViewModel
 
 class BattlePassVehicleAwardViewModel(ViewModel):
     __slots__ = ()
 
-    def __init__(self, properties=11, commands=0):
+    def __init__(self, properties=12, commands=0):
         super(BattlePassVehicleAwardViewModel, self).__init__(properties=properties, commands=commands)
 
     def getVehicleLevelPoints(self):
@@ -76,6 +76,12 @@ class BattlePassVehicleAwardViewModel(ViewModel):
     def setChapterID(self, value):
         self._setNumber(10, value)
 
+    def getIsBattlePassPurchased(self):
+        return self._getBool(11)
+
+    def setIsBattlePassPurchased(self, value):
+        self._setBool(11, value)
+
     def _initialize(self):
         super(BattlePassVehicleAwardViewModel, self)._initialize()
         self._addNumberProperty('vehicleLevelPoints', 0)
@@ -89,3 +95,4 @@ class BattlePassVehicleAwardViewModel(ViewModel):
         self._addBoolProperty('isEliteVehicle', False)
         self._addBoolProperty('isPostProgression', False)
         self._addNumberProperty('chapterID', 0)
+        self._addBoolProperty('isBattlePassPurchased', False)

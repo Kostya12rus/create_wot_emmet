@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/BADGE.py
 from debug_utils import LOG_WARNING
 
@@ -313,6 +313,17 @@ class BADGE(object):
     BADGE_134_DESCR = '#badge:badge_134_descr'
     BADGE_135 = '#badge:badge_135'
     BADGE_135_DESCR = '#badge:badge_135_descr'
+    BADGE_136 = '#badge:badge_136'
+    BADGE_136_DESCR = '#badge:badge_136_descr'
+    BADGE_137 = '#badge:badge_137'
+    BADGE_137_DESCR = '#badge:badge_137_descr'
+    BADGE_138 = '#badge:badge_138'
+    BADGE_138_DESCR = '#badge:badge_138_descr'
+    SUFFIX_BADGE_138 = '#badge:suffix/badge_138'
+    BADGE_139 = '#badge:badge_139'
+    BADGE_139_DESCR = '#badge:badge_139_descr'
+    BADGE_140 = '#badge:badge_140'
+    BADGE_140_DESCR = '#badge:badge_140_descr'
     BADGE_ENUM = (
      BADGE_0,
      BADGE_0_DESCR,
@@ -600,7 +611,17 @@ class BADGE(object):
      BADGE_134,
      BADGE_134_DESCR,
      BADGE_135,
-     BADGE_135_DESCR)
+     BADGE_135_DESCR,
+     BADGE_136,
+     BADGE_136_DESCR,
+     BADGE_137,
+     BADGE_137_DESCR,
+     BADGE_138,
+     BADGE_138_DESCR,
+     BADGE_139,
+     BADGE_139_DESCR,
+     BADGE_140,
+     BADGE_140_DESCR)
     BADGE_ALL_SHORT_ENUM = (
      BADGE_10_SHORT,
      BADGE_11_SHORT,
@@ -754,7 +775,12 @@ class BADGE(object):
      BADGE_132_DESCR,
      BADGE_133_DESCR,
      BADGE_134_DESCR,
-     BADGE_135_DESCR)
+     BADGE_135_DESCR,
+     BADGE_136_DESCR,
+     BADGE_137_DESCR,
+     BADGE_138_DESCR,
+     BADGE_139_DESCR,
+     BADGE_140_DESCR)
     BADGE_ALL_DESCR_LONG_ENUM = (
      BADGE_102_DESCR_LONG,)
 

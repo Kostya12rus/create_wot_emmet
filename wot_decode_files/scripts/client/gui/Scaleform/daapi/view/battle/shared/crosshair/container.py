@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/crosshair/container.py
 import logging, BattleReplay, GUI, WWISE
 from debug_utils import LOG_WARNING, LOG_DEBUG, LOG_ERROR
@@ -46,7 +46,7 @@ class CrosshairPanelContainer(ExternalFlashComponent, CrosshairPanelContainerMet
     def __init__(self):
         super(CrosshairPanelContainer, self).__init__(ExternalFlashSettings(BATTLE_VIEW_ALIASES.CROSSHAIR_PANEL, settings.CROSSHAIR_CONTAINER_SWF, settings.CROSSHAIR_ROOT_PATH, settings.CROSSHAIR_INIT_CALLBACK))
         self.__plugins = PluginsCollection(self)
-        self.__plugins.addPlugins(plugins.createPlugins())
+        self.__plugins.addPlugins(self._getPlugins())
         self.__gunMarkers = None
         self.__viewID = CROSSHAIR_VIEW_ID.UNDEFINED
         self.__zoomFactor = 0.0
@@ -182,6 +182,9 @@ class CrosshairPanelContainer(ExternalFlashComponent, CrosshairPanelContainerMet
             self.__callbackDelayer.destroy()
         g_eventBus.removeListener(GameEvent.ROLE_HINT_TOGGLE, self.__handleRoleHintToggled, scope=EVENT_BUS_SCOPE.BATTLE)
         super(CrosshairPanelContainer, self)._dispose()
+
+    def _getPlugins(self):
+        return plugins.createPlugins()
 
     def __handleRoleHintToggled(self, event):
         self.__toggleFade(event.ctx.get('isShown', False))

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/inventory/inventory_view.py
 import copy
 from gui import GUI_NATIONS_ORDER_INDICES
@@ -17,7 +17,7 @@ from helpers import dependency
 from skeletons.gui.storage_novelty import IStorageNovelty
 from skeletons.gui.lobby_context import ILobbyContext
 from constants import SwitchState
-from gui.shared.event_dispatcher import showConfirmInStorageDialog
+from gui.shared.event_dispatcher import showSellDialog
 VERSION = 1
 _TABS_DATA = (
  {'id': STORAGE_CONSTANTS.INVENTORY_TAB_ALL, 
@@ -76,10 +76,10 @@ def _defaultInGroupComparator(a, b):
 
 
 _OPT_DEVICE_TYPE_ORDER = (
- REQ_CRITERIA.OPTIONAL_DEVICE.MODERNIZED,
+ REQ_CRITERIA.OPTIONAL_DEVICE.SIMPLE,
  REQ_CRITERIA.OPTIONAL_DEVICE.TROPHY,
  REQ_CRITERIA.OPTIONAL_DEVICE.DELUXE,
- REQ_CRITERIA.OPTIONAL_DEVICE.SIMPLE)
+ REQ_CRITERIA.OPTIONAL_DEVICE.MODERNIZED)
 
 def _getDeviceCategoriesOrder(optDevice):
     categories = optDevice.descriptor.categories
@@ -176,18 +176,11 @@ class InventoryCategoryStorageView(StorageCategoryStorageViewMeta):
         self.__storageNovelty.onUpdated -= self._updateTabCounters
 
     def _getTabsData(self):
-        lobbyContext = dependency.instance(ILobbyContext)
-
-        def validateTab(tab):
-            if tab['id'] == STORAGE_CONSTANTS.INVENTORY_TAB_CREW_BOOKS:
-                return lobbyContext.getServerSettings().isCrewBooksEnabled()
-            return True
-
         tabsData = copy.deepcopy(_TABS_DATA)
         for item in tabsData:
             item['label'] = backport.text(item['label']())
 
-        return tuple(filter(validateTab, tabsData))
+        return tuple(tabsData)
 
     def _onRegisterFlashComponent(self, viewPy, alias):
         super(InventoryCategoryStorageView, self)._onRegisterFlashComponent(viewPy, alias)
@@ -220,7 +213,7 @@ class RegularInventoryCategoryTabView(InventoryCategoryView):
         self._itemsCache.onSyncCompleted -= self.__onCacheResync
 
     def _sellItems(self, itemId):
-        showConfirmInStorageDialog(int(itemId))
+        showSellDialog(int(itemId))
 
     def setTabId(self, tabId):
         self._currentTabId = tabId
@@ -241,10 +234,6 @@ class RegularInventoryCategoryTabView(InventoryCategoryView):
         return items
 
     def _getItemTypeID(self):
-        if self._currentTabId == STORAGE_CONSTANTS.INVENTORY_TAB_ALL:
-            if not self.__lobbyContext.getServerSettings().isCrewBooksEnabled():
-                allItemTypes = set(_TABS_ITEM_TYPES[self._currentTabId]).difference({GUI_ITEM_TYPE.CREW_BOOKS})
-                return tuple(allItemTypes)
         return _TABS_ITEM_TYPES[self._currentTabId]
 
     def _getRequestCriteria(self, invVehicles):

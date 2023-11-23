@@ -1,13 +1,14 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/battle_pass_helpers.py
 import logging
 from collections import namedtuple
 import typing
-from shared_utils import first
-from account_helpers.AccountSettings import AccountSettings, IS_BATTLE_PASS_EXTRA_STARTED, LAST_BATTLE_PASS_POINTS_SEEN, IS_BATTLE_PASS_COLLECTION_SEEN
+from enum import Enum
+from account_helpers.AccountSettings import AccountSettings, IS_BATTLE_PASS_COLLECTION_SEEN, IS_BATTLE_PASS_EXTRA_STARTED, LAST_BATTLE_PASS_POINTS_SEEN
 from account_helpers.settings_core.settings_constants import BattlePassStorageKeys
+from battle_pass_common import BattlePassConsts, FinalReward
 from constants import ARENA_BONUS_TYPE, QUEUE_TYPE
 from gui import GUI_SETTINGS
 from gui.Scaleform.genConsts.SKILLS_CONSTANTS import SKILLS_CONSTANTS as SKILLS
@@ -16,6 +17,7 @@ from gui.impl.gen import R
 from gui.impl.gen.view_models.common.price_model import PriceModel
 from gui.impl.wrappers.user_compound_price_model import PriceModelBuilder
 from gui.prb_control.dispatcher import g_prbLoader
+from gui.server_events.bonuses import VehiclesBonus
 from gui.server_events.recruit_helper import getRecruitInfo
 from gui.shared.event_dispatcher import showBattlePassDailyQuestsIntroWindow
 from gui.shared.formatters import time_formatters
@@ -23,6 +25,7 @@ from gui.shared.gui_items import GUI_ITEM_TYPE
 from helpers import dependency, time_utils
 from helpers.dependency import replace_none_kwargs
 from nations import INDICES
+from shared_utils import first
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.customization import ICustomizationService
 from skeletons.gui.game_control import IBattlePassController
@@ -35,6 +38,14 @@ _logger = logging.getLogger(__name__)
 _CUSTOMIZATION_BONUS_NAME = 'customizations'
 TANKMAN_BONUS_NAME = 'tmanToken'
 TokenPositions = namedtuple('TokenPositions', ['free', 'paid'])
+
+class BattlePassMediaPatterns(str, Enum):
+    STYLE = 'style'
+    MEDIA = 'media'
+    CHAPTER = 'ch'
+    LEVEL = 'lvl'
+    PART = 'pt'
+
 
 def chaptersIDsComparator(firstID, secondID):
     order = getChaptersOrder()
@@ -65,7 +76,7 @@ def getFormattedTimeLeft(seconds):
 def getBattlePassUrl(urlPathName):
     return ('').join((
      GUI_SETTINGS.baseUrls['webBridgeRootURL'],
-     GUI_SETTINGS.battlePass.get(urlPathName)))
+     GUI_SETTINGS.battlePassUrls.get(urlPathName)))
 
 
 def getInfoPageURL():
@@ -85,7 +96,7 @@ def getExtraIntroVideoURL():
 
 
 def getIntroSlidesNames():
-    return GUI_SETTINGS.battlePass.get('introSlides')
+    return GUI_SETTINGS.battlePassIntroSlides
 
 
 @dependency.replace_none_kwargs(battlePass=IBattlePassController)
@@ -95,7 +106,7 @@ def getChaptersOrder(battlePass=None):
     extraChapterID = battlePass.getExtraChapterID()
     if extraChapterID:
         chapterIDs.append(extraChapterID)
-    return dict(zip(chapterIDs, GUI_SETTINGS.battlePass.get('chaptersOrder')))
+    return dict(zip(chapterIDs, GUI_SETTINGS.battlePassChaptersOrder))
 
 
 def getSupportedArenaBonusTypeFor(queueType, isInUnit):
@@ -139,6 +150,50 @@ def showVideo(videoSource, onVideoClosed=None, isAutoClose=False):
     window.load()
 
 
+def makeProgressionStyleMediaName(chapterID, styleLevel):
+    return ('{}_{}{}_{}{}').format(BattlePassMediaPatterns.STYLE, BattlePassMediaPatterns.CHAPTER, getChaptersOrder()[chapterID], BattlePassMediaPatterns.LEVEL, styleLevel)
+
+
+def makeChapterMediaName(chapterID, part=''):
+    mediaName = ('{}_{}{}').format(BattlePassMediaPatterns.MEDIA, BattlePassMediaPatterns.CHAPTER, getChaptersOrder()[chapterID])
+    if part:
+        return ('{}_{}{}').format(mediaName, BattlePassMediaPatterns.PART, part)
+    return mediaName
+
+
+def asBPVideoName(filename):
+    return ('.').join(('battle_pass', filename))
+
+
+def showBPFullscreenVideo(videoName, audioName, onVideoClosed=None):
+    from gui.impl.lobby.battle_pass.fullscreen_video_view import FullscreenVideoWindow
+    window = FullscreenVideoWindow(videoName, audioName, onVideoClosed=onVideoClosed)
+    window.load()
+
+
+@replace_none_kwargs(battlePass=IBattlePassController)
+def isCommonBattlePassChapter(chapterID, battlePass=None):
+    isProgressiveStyle = FinalReward.PROGRESSIVE_STYLE in battlePass.getFreeFinalRewardTypes(chapterID)
+    return isProgressiveStyle and not battlePass.getPaidFinalRewardTypes(chapterID)
+
+
+@replace_none_kwargs(battlePass=IBattlePassController)
+def getAllFinalRewards(chapterID, battlePass=None):
+    return battlePass.getFreeFinalRewardTypes(chapterID).union(battlePass.getPaidFinalRewardTypes(chapterID))
+
+
+@replace_none_kwargs(battlePass=IBattlePassController)
+def getRewardTypeBySource(reward, chapter, battlePass=None):
+    freeRewards = battlePass.getRewardTypes(chapter).get(BattlePassConsts.REWARD_FREE)
+    paidRewards = battlePass.getRewardTypes(chapter).get(BattlePassConsts.REWARD_PAID)
+    if reward in freeRewards:
+        return BattlePassConsts.REWARD_FREE
+    else:
+        if reward in paidRewards:
+            return BattlePassConsts.REWARD_PAID
+        return
+
+
 @replace_none_kwargs(battlePass=IBattlePassController, c11nService=ICustomizationService)
 def getStyleForChapter(chapter, battlePass=None, c11nService=None):
     stylesConfig = battlePass.getStylesConfig()
@@ -156,6 +211,21 @@ def getStyleInfoForChapter(chapter, battlePass=None):
         return (style.intCD, style.getProgressionLevel())
     else:
         return (None, None)
+
+
+@replace_none_kwargs(battlePass=IBattlePassController, c11nService=ICustomizationService)
+def getVehicleInfoForChapter(chapter, battlePass=None, c11nService=None, awardSource=BattlePassConsts.REWARD_PAID):
+    rewards = battlePass.getSingleAward(chapter, battlePass.getMaxLevelInChapter(chapter), awardType=awardSource)
+    for bonus in rewards:
+        if bonus.getName() == VehiclesBonus.VEHICLES_BONUS:
+            vehicle, vehInfo = bonus.getVehicles()[0]
+            styleId = vehInfo.get('customization', {}).get('styleId')
+            style = c11nService.getItemByID(GUI_ITEM_TYPE.STYLE, styleId) if styleId is not None else None
+            return (
+             vehicle, style)
+
+    _logger.error("In chapterID: %s in final level doesn't have vehicle", chapter)
+    return (None, None)
 
 
 def getSingleVehicleForCustomization(customization):

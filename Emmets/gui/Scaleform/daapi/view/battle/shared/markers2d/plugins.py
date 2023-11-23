@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/markers2d/plugins.py
 import logging
 from collections import defaultdict
@@ -40,7 +40,8 @@ _LOCATION_SUBTYPE_TO_FLASH_SYMBOL_NAME = {LocationMarkerSubType.SPG_AIM_AREA_SUB
    LocationMarkerSubType.PREBATTLE_WAYPOINT_SUBTYPE: settings.MARKER_SYMBOL_NAME.LOCATION_MARKER, 
    LocationMarkerSubType.ATTENTION_TO_MARKER_SUBTYPE: settings.MARKER_SYMBOL_NAME.ATTENTION_MARKER, 
    LocationMarkerSubType.SHOOTING_POINT_SUBTYPE: settings.MARKER_SYMBOL_NAME.SHOOTING_MARKER, 
-   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.MARKER_SYMBOL_NAME.NAVIGATION_MARKER}
+   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.MARKER_SYMBOL_NAME.NAVIGATION_MARKER, 
+   LocationMarkerSubType.FLAG_POINT_SUBTYPE: settings.MARKER_SYMBOL_NAME.FLAG_MARKER}
 _STATIC_MARKER_CULL_DISTANCE = 1800
 _STATIC_MARKER_MIN_SCALE = 60.0
 _BASE_MARKER_MIN_SCALE = 100.0

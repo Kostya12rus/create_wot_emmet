@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/VehicleParameters.py
 from CurrentVehicle import g_currentVehicle, g_currentPreviewVehicle
 from account_helpers.AccountSettings import AccountSettings
@@ -13,7 +13,7 @@ from gui.shared.formatters import text_styles
 from gui.shared.items_parameters import params_helper, formatters
 from gui.shared.items_parameters.comparator import PARAM_STATE
 from gui.shared.items_parameters.param_name_helper import getVehicleParameterText
-from gui.shared.items_parameters.params_helper import VehParamsBaseGenerator, getParameters, getCommonParam, SimplifiedBarVO
+from gui.shared.items_parameters.params_helper import VehParamsBaseGenerator, getParameters, getCommonParam, isValidEmptyValue, SimplifiedBarVO
 from helpers import dependency
 from skeletons.gui.shared import IItemsCache
 
@@ -134,7 +134,7 @@ class _VehParamsGenerator(VehParamsBaseGenerator):
         return self._tooltipType
 
     def _makeAdvancedParamVO(self, param, parentID, highlight):
-        if param.value:
+        if param.value or isValidEmptyValue(param.name, param.value):
             data = super(_VehParamsGenerator, self)._makeAdvancedParamVO(param, parentID, highlight)
             data.update({'titleText': formatters.formatVehicleParamName(param.name, False), 
                'valueText': formatters.colorizedFullFormatParameter(param, self._getAdvancedFormatters()), 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/team_bases_ctrl.py
 from collections import defaultdict
 import BattleReplay, BigWorld, SoundGroups
@@ -153,8 +153,13 @@ class BattleTeamsBasesController(ITeamsBasesController, ViewComponentsController
         arenaDP = self.__battleCtx.getArenaDP()
         playerTeam = arenaDP.getNumberOfTeam()
         isEnemyBase = arenaDP.isEnemyTeam(baseTeam)
-        self.__points[clientID] = (
-         points, timeLeft, invadersCnt, capturingStopped)
+        prevPointsState = self.__points.get(clientID)
+        if prevPointsState:
+            prevPoints, _, prevInvCount, __ = prevPointsState
+            prevTeamBaseLeft = self._teamBaseLeft(prevPoints, prevInvCount)
+        else:
+            prevTeamBaseLeft = True
+        self.__points[clientID] = (points, timeLeft, invadersCnt, capturingStopped)
         if self._teamBaseLeft(points, invadersCnt):
             if clientID in self.__clientIDs:
                 if not invadersCnt:
@@ -165,7 +170,7 @@ class BattleTeamsBasesController(ITeamsBasesController, ViewComponentsController
                     if not invadersCnt:
                         viewCmp.removeTeamBase(clientID)
 
-                if not self.__hasBaseID(baseTeam) or isEnemyBase:
+                if not self.__hasBaseID(baseTeam) or isEnemyBase or not prevTeamBaseLeft:
                     self.__stopCaptureSound(baseTeam)
         else:
             if clientID in self.__clientIDs:

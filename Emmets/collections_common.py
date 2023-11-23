@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/collections_common.py
 from collections import namedtuple
 from copy import deepcopy
 import typing
 if typing.TYPE_CHECKING:
-    from typing import List, Optional, Tuple
+    from typing import Optional
 USABLE_COLLECTION_ENTITIES = {
  'customizationItem', 'dossier', 'tankman'}
 UNUSABLE_COLLECTION_ENTITIES = {
@@ -26,10 +26,11 @@ class CollectionItem(namedtuple('CollectionItem', ('itemId', 'type', 'isSpecial'
         return cls()
 
 
-class Collection(namedtuple('Collection', ('collectionId', 'name', 'items', 'tags', 'rewards', 'isRelatedEventActive'))):
+class Collection(namedtuple('Collection', ('collectionId', 'name', 'items', 'tags', 'rewards', 'isRelatedEventActive',
+                          'isActive', 'year'))):
 
     def __new__(cls, **kwargs):
-        defaults = dict(collectionId=0, items={}, tags=set(), rewards={}, name='', isRelatedEventActive=False)
+        defaults = dict(collectionId=0, items={}, tags=set(), rewards={}, name='', isRelatedEventActive=False, isActive=False, year=0)
         defaults.update(kwargs)
         cls.__packItemConfigs(defaults)
         return super(Collection, cls).__new__(cls, **defaults)
@@ -53,11 +54,12 @@ class Collection(namedtuple('Collection', ('collectionId', 'name', 'items', 'tag
         dataToUpdate['items'] = items
 
 
-class CollectionsConfig(namedtuple('CollectionsConfig', ('isEnabled', 'collections', 'linkedCollections'))):
+class CollectionsConfig(namedtuple('CollectionsConfig', ('isEnabled', 'useCdnResourceCache', 'collections',
+                                 'linkedCollections'))):
 
     def __new__(cls, **kwargs):
         cls.__rawData = kwargs
-        defaults = dict(isEnabled=False, collections={}, linkedCollections=[])
+        defaults = dict(isEnabled=False, useCdnResourceCache=True, collections={}, linkedCollections=[])
         defaults.update(kwargs)
         cls.__packCollectionConfigs(defaults)
         return super(CollectionsConfig, cls).__new__(cls, **defaults)
@@ -76,11 +78,7 @@ class CollectionsConfig(namedtuple('CollectionsConfig', ('isEnabled', 'collectio
 
     @classmethod
     def __packCollectionConfigs(cls, dataToUpdate):
-        collections = {}
-        for collectionId, collection in dataToUpdate['collections'].iteritems():
-            collections[collectionId] = Collection(collectionId=collectionId, **collection)
-
-        dataToUpdate['collections'] = collections
+        dataToUpdate['collections'] = {collectionID: Collection(collectionId=collectionID, **collection) for collectionID, collection in dataToUpdate['collections'].iteritems()}
 
 
 def isCollectionsPrefix(itemName):

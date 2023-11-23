@@ -1,12 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/client_request_lib/data_sources/gateway.py
 import zlib, json, urllib
 from base64 import b64encode
 from datetime import datetime, timedelta, time as dt_time
 from client_request_lib import exceptions
 from client_request_lib.data_sources import base
+from debug_utils import LOG_ERROR
 EXAMPLES = {}
 DEFAULT_SINCE_DELAY = timedelta(days=1)
 SUCCESS_STATUSES = [
@@ -72,7 +73,8 @@ class GatewayDataAccessor(base.BaseDataAccessor):
                         pass
 
                     data = json.loads(data)
-                except:
+                except Exception as error:
+                    LOG_ERROR('Can not process request response. Exception occured: %s' % type(error).__name__, str(error))
                     data = None
                     headers = None
 
@@ -180,8 +182,8 @@ class GatewayDataAccessor(base.BaseDataAccessor):
         url = '/agate/api/v4/commerce/fetchProductListState/'
         return self._request_data(callback, url, method='POST', post_data=request_data)
 
-    def agate_v5_get_user_subscriptions(self, callback, request_data, fields=None):
-        url = '/agate/api/v5/commerce/getUserSubscriptions/'
+    def agate_v6_get_user_subscriptions2(self, callback, request_data, fields=None):
+        url = '/agate/api/v6/commerce/getUserSubscriptions2/'
         return self._request_data(callback, url, method='POST', post_data=request_data)
 
     def get_clan_members(self, callback, clan_id, fields=None):

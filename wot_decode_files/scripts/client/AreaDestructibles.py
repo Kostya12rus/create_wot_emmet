@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AreaDestructibles.py
 import math, random
 from functools import partial
@@ -98,7 +98,7 @@ class AreaDestructibles(BigWorld.Entity):
         g_destructiblesManager._addController(chunkID, self)
         self.__prevFallenColumns = frozenset(self.fallenColumns)
         for fallData in self.fallenColumns:
-            g_destructiblesManager.orderDestructibleDestroy(chunkID, DestructiblesCache.DESTR_TYPE_FALLING_ATOM, fallData, False)
+            g_destructiblesManager.orderDestructibleDestroy(chunkID, DestructiblesCache.DESTR_TYPE_FALLING_ATOM, fallData, False, False, True)
 
         self.__prevFallenTrees = frozenset(self.fallenTrees)
         for fallData in self.fallenTrees:
@@ -251,7 +251,11 @@ class DestructiblesManager(object):
             chunkEntries = self.__destructiblesWaitDestroy.get(chunkID)
             if chunkEntries is not None:
                 for dmgType, destrData, isNeedAnimation in chunkEntries:
-                    self.__destroyDestructible(chunkID, dmgType, destrData, isNeedAnimation)
+                    if dmgType == DestructiblesCache.DESTR_TYPE_FALLING_ATOM:
+                        destrIndex, _, _ = DestructiblesCache.decodeFallenColumn(destrData)
+                        self.__setFragileDestroyed(self.__spaceID, chunkID, destrIndex, False, False)
+                    else:
+                        self.__destroyDestructible(chunkID, dmgType, destrData, isNeedAnimation)
 
                 del self.__destructiblesWaitDestroy[chunkID]
             for destrIndex in xrange(numDestructibles):
@@ -297,10 +301,14 @@ class DestructiblesManager(object):
         if not gotDestrs:
             BigWorld.callback(_SHOT_EXPLOSION_SYNC_TIMEOUT, partial(self.__delayedHavokExplosion, self.__spaceID, explosionInfo))
 
-    def orderDestructibleDestroy(self, chunkID, dmgType, destrData, isNeedAnimation, syncWithProjectile=False):
+    def orderDestructibleDestroy(self, chunkID, dmgType, destrData, isNeedAnimation, syncWithProjectile=False, forceRemove=False):
         if self.forceNoAnimation:
             isNeedAnimation = False
         if self.__loadedChunkIDs.has_key(chunkID):
+            if forceRemove and dmgType == DestructiblesCache.DESTR_TYPE_FALLING_ATOM:
+                destrIndex, _, _ = DestructiblesCache.decodeFallenColumn(destrData)
+                self.__setFragileDestroyed(self.__spaceID, chunkID, destrIndex, False, False)
+                return
             if isNeedAnimation and syncWithProjectile:
                 if dmgType == DestructiblesCache.DESTR_TYPE_FRAGILE:
                     itemIndex, _ = DestructiblesCache.decodeFragile(destrData)

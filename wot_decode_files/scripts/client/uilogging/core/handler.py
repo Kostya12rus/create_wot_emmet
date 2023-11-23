@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/uilogging/core/handler.py
 import typing, json, zlib, base64, binascii
 from functools import wraps, partial
@@ -8,8 +8,6 @@ import BigWorld
 from Event import SafeEvent
 from helpers import isPlayerAccount
 from helpers.log.adapters import getWithContext
-from PlayerEvents import g_playerEvents as playerEvents
-from bootcamp.BootCampEvents import g_bootcampEvents as bootcampPlayerEvents
 from shared_utils import safeCancelCallback
 from uilogging.constants import DEFAULT_LOGGER_NAME, LogLevels
 from uilogging.core.core_constants import LOGS_SEND_PERIOD, LOGS_FORCE_SEND_PERIOD, LOGS_MAX_QUEUE_SIZE, HTTP_DEFAULT_TIMEOUT, HTTP_OK_STATUS, HTTP_SESSION_EXPIRED, DEFAULT_COMPRESSION_LEVEL, FINAL_FLUSH_TIMEOUT, HttpHeaders
@@ -141,8 +139,6 @@ class LogHandler(object):
         self._logs = []
         self._sender = None
         self._logsBatchWaitingTime = 0
-        playerEvents.onAccountShowGUI += self._startSender
-        bootcampPlayerEvents.onAccountShowGUI += self._startSender
         self.onDestroy = SafeEvent()
         self._logger = getWithContext(DEFAULT_LOGGER_NAME, self)
         return
@@ -182,6 +178,7 @@ class LogHandler(object):
     @_ifDestroyed(None)
     def getSessionLifetime(self):
         if not self._isPlayer:
+            self._logger.debug('Getting session lifetime stopped. Player not account any more.')
             return None
         else:
             session = self._getSession()
@@ -191,9 +188,11 @@ class LogHandler(object):
                 return None
             return 0
 
+    @_ifDestroyed(None)
+    def startSender(self):
+        self._startSender()
+
     def destroy(self, flush=False):
-        playerEvents.onAccountShowGUI -= self._startSender
-        bootcampPlayerEvents.onAccountShowGUI -= self._startSender
         self._stopSender()
         self._logsBatchWaitingTime = 0
         session = self._session.get()

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/GameSessionController.py
 import sys, time, typing, BigWorld, Event, account_shared, constants
 from constants import SECONDS_IN_DAY
@@ -103,10 +103,6 @@ class GameSessionController(IGameSessionController, IGlobalListener, Notifiable)
         LOG_DEBUG('GameSessionController::start', self.__sessionStartedAt)
         BigWorld.lobbyStarted(self.__sessionStartedAt)
 
-    @property
-    def sessionStartedAt(self):
-        return self.__sessionStartedAt
-
     def onLobbyInited(self, event):
         if self.__lastNotifyTime is None:
             self.__lastNotifyTime = time_utils.getCurrentTimestamp()
@@ -165,6 +161,10 @@ class GameSessionController(IGameSessionController, IGlobalListener, Notifiable)
     @prbEntityProperty
     def prbEntity(self):
         pass
+
+    @property
+    def sessionStartedAt(self):
+        return self.__sessionStartedAt
 
     @property
     def sessionDuration(self):

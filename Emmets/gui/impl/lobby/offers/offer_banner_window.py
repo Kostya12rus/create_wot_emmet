@@ -1,10 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/offers/offer_banner_window.py
 import BigWorld
 from PlayerEvents import g_playerEvents
-from frameworks.wulf import ViewSettings, ViewFlags, WindowFlags
+from frameworks.wulf import ViewSettings, WindowFlags
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.offers.offer_banner_model import OfferBannerModel
 from gui.impl.lobby.offers import getGfImagePath
@@ -21,7 +21,7 @@ class OfferBannerWindowView(ViewImpl):
     _offersProvider = dependency.descriptor(IOffersDataProvider)
 
     def __init__(self, offerID):
-        settings = ViewSettings(layoutID=R.views.lobby.offers.OfferBannerWindow(), flags=ViewFlags.WINDOW_DECORATOR, model=OfferBannerModel())
+        settings = ViewSettings(layoutID=R.views.lobby.offers.OfferBannerWindow(), model=OfferBannerModel())
         super(OfferBannerWindowView, self).__init__(settings)
         self._offerID = offerID
         self._langCode = getClientLanguage()

@@ -1,18 +1,26 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/premature_leave.py
+import BigWorld
 from BWUtil import AsyncReturn
-from wg_async import wg_await, wg_async
+from constants import ARENA_GUI_TYPE
+from gui.impl.dialogs.dialog_template_utils import closeDialogTemplate
 from gui.impl.gen import R
 from gui.impl.pub.dialog_window import DialogButtons
+from wg_async import wg_await, wg_async
 _DIMMER_ALPHA = 0.7
+_PREMATURE_LEAVE_DIALOG_ID = 'PREMATURE_LEAVE_DIALOG'
+
+def closeDialogWindow():
+    closeDialogTemplate(_PREMATURE_LEAVE_DIALOG_ID)
+
 
 @wg_async
-def showResDialogWindow(title, confirm=None, cancel=None, description=None, icon=None):
+def showDialogWindow(title, confirm=None, cancel=None, description=None, icon=None):
     from gui.impl.dialogs import dialogs
     from gui.impl.dialogs.gf_builders import ConfirmCancelDialogBuilder
-    builder = ConfirmCancelDialogBuilder()
+    builder = ConfirmCancelDialogBuilder(uniqueID=_PREMATURE_LEAVE_DIALOG_ID)
     builder.setBlur(False)
     builder.setDimmerAlpha(_DIMMER_ALPHA)
     builder.setTitle(title)
@@ -24,7 +32,19 @@ def showResDialogWindow(title, confirm=None, cancel=None, description=None, icon
     if icon:
         builder.setIcon(icon)
     result = yield wg_await(dialogs.show(builder.build()))
-    raise AsyncReturn(result.result == DialogButtons.SUBMIT)
+    raise AsyncReturn(result.result)
+
+
+@wg_async
+def showResDialogWindow(title, confirm=None, cancel=None, description=None, icon=None):
+    result = yield wg_await(showDialogWindow(title, confirm=confirm, cancel=cancel, description=description, icon=icon))
+    raise AsyncReturn(result == DialogButtons.SUBMIT)
+
+
+@wg_async
+def showCancellationDialogWindow(title, confirm=None, cancel=None, description=None, icon=None):
+    result = yield wg_await(showDialogWindow(title, confirm=confirm, cancel=cancel, description=description, icon=icon))
+    raise AsyncReturn(result == DialogButtons.CANCEL)
 
 
 @wg_async
@@ -42,8 +62,13 @@ def showLeaverAliveWindow(IGR=False):
 @wg_async
 def showComp7LeaverAliveWindow():
     from gui.impl.dialogs import dialogs
-    from gui.impl.dialogs.gf_builders import ConfirmCancelWarningDialogBuilder
-    builder = ConfirmCancelWarningDialogBuilder()
+    from gui.impl.dialogs.gf_builders import ConfirmCancelWarningDialogBuilder, ConfirmCancelDescriptionDialogBuilder
+    arenaGuiType = BigWorld.player().arenaGuiType
+    if arenaGuiType == ARENA_GUI_TYPE.COMP7:
+        builder = ConfirmCancelWarningDialogBuilder()
+        builder.setWarningMsg(R.strings.dialogs.comp7.deserter.msgTitle())
+    else:
+        builder = ConfirmCancelDescriptionDialogBuilder()
     builder.setBlur(False)
     builder.setDimmerAlpha(_DIMMER_ALPHA)
     builder.setTitle(R.strings.dialogs.comp7.deserter.title())
@@ -51,7 +76,6 @@ def showComp7LeaverAliveWindow():
     builder.setConfirmButtonLabel(R.strings.dialogs.comp7.deserter.submit())
     builder.setFocusedButtonID(DialogButtons.CANCEL)
     builder.setDescriptionMsg(R.strings.dialogs.comp7.deserter.message())
-    builder.setWarningMsg(R.strings.dialogs.comp7.deserter.msgTitle())
     builder.setIcon(R.images.gui.maps.icons.comp7.battle.comp7DeserterLeaveBattle())
     result = yield wg_await(dialogs.show(builder.build()))
     raise AsyncReturn(result.result == DialogButtons.SUBMIT)

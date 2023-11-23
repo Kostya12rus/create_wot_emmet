@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/steam_add_email_overlay_view.py
 import typing
 from gui.impl.backport import text as loc
@@ -13,6 +13,7 @@ from gui.impl.pub.tooltip_window import SimpleTooltipContent
 from gui.shared.event_dispatcher import showSteamConfirmEmailOverlay
 from helpers import dependency
 from helpers.time_utils import getTimeDeltaFromNow
+from skeletons.gui.game_control import ISteamCompletionController
 from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
 if typing.TYPE_CHECKING:
     from wg_async import _Future
@@ -25,7 +26,8 @@ class SteamAddEmailOverlayView(BaseCredentialsOverlayView):
     _TITLE = rAccCompletion.email.title()
     _SUBTITLE = rAccCompletion.email.subTitle()
     _REWARDS_TITLE = rAccCompletion.rewardsTitle()
-    _wgnpSteamAccCtrl = dependency.descriptor(IWGNPSteamAccRequestController)
+    __wgnpSteamAccCtrl = dependency.descriptor(IWGNPSteamAccRequestController)
+    __accountCompletionCtrl = dependency.descriptor(ISteamCompletionController)
 
     def createToolTipContent(self, event, contentID):
         if contentID == R.views.common.tooltip_window.backport_tooltip_content.BackportTooltipContent():
@@ -37,14 +39,16 @@ class SteamAddEmailOverlayView(BaseCredentialsOverlayView):
     def _onLoading(self, *args, **kwargs):
         super(SteamAddEmailOverlayView, self)._onLoading(*args, **kwargs)
         self.viewModel.setIsPasswordInputVisible(False)
+        self.__accountCompletionCtrl.setAddEmailOverlayShown()
 
     def _validateInput(self):
         return self._email.validate()
 
     def _doRequest(self):
-        return self._wgnpSteamAccCtrl.addEmail(self._email.value)
+        return self.__wgnpSteamAccCtrl.addEmail(self._email.value)
 
     def _handleSuccess(self, *_):
+        self.__accountCompletionCtrl.setConfirmEmailOverlayAllowed(isAllowed=True)
         showSteamConfirmEmailOverlay(email=self._email.value)
 
     def _handleError(self, response):

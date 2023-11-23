@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/epic_meta_game_ctrl.py
 from bisect import insort_right
 from operator import itemgetter
@@ -36,10 +36,12 @@ from gui import DialogsInterface
 from adisp import adisp_async, adisp_process
 from account_helpers.settings_core.settings_constants import GRAPHICS
 from player_ranks import getSettings as getRankSettings
+from frontline_account_settings import isWelcomeScreenViewed, setWelcomeScreenViewed
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.battle_results import IBattleResultsService
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.offers import IOffersDataProvider
+from gui.shared.event_dispatcher import showFrontlineWelcomeWindow
 from epic_constants import EPIC_SELECT_BONUS_NAME, EPIC_CHOICE_REWARD_OFFER_GIFT_TOKENS, LEVELUP_TOKEN_TEMPLATE, CATEGORIES_ORDER
 if typing.TYPE_CHECKING:
     from helpers.server_settings import EpicGameConfig
@@ -215,6 +217,10 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
     def isEnabled(self):
         return self.getModeSettings().isEnabled
 
+    @property
+    def enableWelcomeScreen(self):
+        return self.getModeSettings().enableWelcomeScreen
+
     def isEpicPrbActive(self):
         if self.prbEntity is None:
             return False
@@ -327,8 +333,7 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
         return bool(self.__metaSettings.randomReservesMode)
 
     def getRandomReservesBonusProbability(self):
-        bonusProbability = 0 if not self.__metaSettings.randomReservesMode else self.__metaSettings.randomReservesOpt['boardingVehAmmo']['extraWeight']
-        return bonusProbability
+        return self.__metaSettings.randomReservesOpt['boardingVehAmmo']['extraWeight']
 
     def getSeasonData(self):
         return self.__itemsCache.items.epicMetaGame.seasonData
@@ -427,11 +432,9 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
 
     def showWelcomeScreenIfNeed(self):
         currentSeason = self.getActiveSeason()
-        if currentSeason is not None:
+        if self.enableWelcomeScreen and currentSeason is not None:
             seasonId = currentSeason.getSeasonID()
-            from frontline_account_settings import isWelcomeScreenViewed, setWelcomeScreenViewed
             if not isWelcomeScreenViewed(seasonId):
-                from gui.shared.event_dispatcher import showFrontlineWelcomeWindow
                 showFrontlineWelcomeWindow()
                 setWelcomeScreenViewed(seasonId)
                 return True
@@ -471,7 +474,10 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
         self.__addSkillPointsBonus(startBonuses, startLvl)
         bonusesByLvl = {startLvl: startBonuses}
         currentLevel, _ = self.getPlayerLevelInfo()
-        result = [[startLvl, startLvl, startBonuses]]
+        mergeSelectable(currentLevel, startLvl, startLvl, startBonuses, bonusesByLvl)
+        result = [
+         [
+          startLvl, startLvl, startBonuses]]
         for level in levels:
             endBonus = rewardsData[level].getBonuses()
             self.__addSkillPointsBonus(endBonus, level)
@@ -480,7 +486,7 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
             if isBonusesEqual(prevBonus, endBonus):
                 result[-1][1] = level
             else:
-                mergeSelectable(currentLevel, prevStartLvl, prevEndLvl, prevBonus, bonusesByLvl)
+                mergeSelectable(currentLevel, prevStartLvl, prevEndLvl, endBonus, bonusesByLvl)
                 result.append([level, level, endBonus])
 
         return result
@@ -710,9 +716,13 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
                 event_dispatcher.showEpicBattlesAfterBattleWindow(levelUpInfo, resultsWindow)
 
     def __isInValidPrebattle(self):
-        if g_prbLoader and g_prbLoader.getDispatcher() and g_prbLoader.getDispatcher().getEntity():
-            currentPrbEntity = g_prbLoader.getDispatcher().getEntity().getEntityType()
-            return currentPrbEntity in (QUEUE_TYPE.EPIC, PREBATTLE_TYPE.EPIC, PREBATTLE_TYPE.EPIC_TRAINING)
+        if g_prbLoader and g_prbLoader.getDispatcher() is not None:
+            entity = g_prbLoader.getDispatcher().getEntity()
+            if entity is None:
+                return
+            currentPrbEntity = entity.getEntityType()
+            return currentPrbEntity in (
+             PREBATTLE_TYPE.EPIC, PREBATTLE_TYPE.EPIC_TRAINING) or entity.getQueueType() == QUEUE_TYPE.EPIC
         else:
             return
 

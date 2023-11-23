@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/advanced.py
 from constants import SHELL_TYPES
 from gui.Scaleform.genConsts.BLOCKS_TOOLTIP_TYPES import BLOCKS_TOOLTIP_TYPES
@@ -176,13 +176,7 @@ class HangarModuleAdvanced(BaseAdvancedTooltip):
 class TankmanPreviewTooltipAdvanced(BaseAdvancedTooltip):
 
     def _packBlocks(self, role, *args, **kwargs):
-        return self._packAdvancedBlocks(_TANKMAN_MOVIES[role], ITEM_TYPES.tankman_roles(role), role)
-
-
-class TankmanTooltipAdvanced(BaseAdvancedTooltip):
-
-    def _getBlocksList(self, *args, **kwargs):
-        return self._packAdvancedBlocks(_TANKMAN_MOVIES[self._item.role], self._item.roleUserName, self._item.role)
+        return self._packAdvancedBlocks(TANKMAN_MOVIES[role], ITEM_TYPES.tankman_roles(role), role)
 
 
 class VehicleParametersAdvanced(ToolTipBaseData):
@@ -323,7 +317,7 @@ MODULE_MOVIES = {'largeRepairkit': 'consumablesRepairKitBig',
    'additionalInvisibilityDevice': 'equipmentLowNoiseExhaustSystem', 
    'improvedConfiguration': 'equipmentModifiedConfiguration', 
    'turbocharger': 'equipmentTurbocharger'}
-_TANKMAN_MOVIES = {'commander': 'crewCommander', 
+TANKMAN_MOVIES = {'commander': 'crewCommander', 
    'driver': 'crewDriver', 
    'gunner': 'crewGunner', 
    'loader': 'crewLoader', 

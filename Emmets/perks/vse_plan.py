@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/perks/vse_plan.py
 import BigWorld, VSE
 from constants import IS_CELLAPP
 from items import perks
 from visual_script.misc import ASPECT
 from functools import wraps
-from debug_utils import LOG_ERROR, LOG_DEBUG_DEV, LOG_WARNING
+from debug_utils import LOG_ERROR, LOG_DEBUG_DEV, LOG_WARNING, LOG_DEBUG
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from visual_script.contexts.perks_context import PerkContext
@@ -37,6 +37,7 @@ class VsePlan(object):
 
     def __init__(self, owner, scopeId, level, perkId, onReadyCallback, contextArgs):
         self._owner = owner
+        self._ownerId = self._owner.id
         self.scopeId = scopeId
         self.perkId = perkId
         self._level = level
@@ -51,6 +52,7 @@ class VsePlan(object):
         self._contextArgs = contextArgs
         self._isPlanStarted = False
         self._status = PlanStatus.DEFAULT
+        LOG_DEBUG('init plan', self._ownerId, self._planId)
         return
 
     @property
@@ -129,6 +131,7 @@ class VsePlan(object):
         else:
             ownerId = self._owner.id if self._owner else -1
             LOG_WARNING(('[PerksController] No plan for perkID:{0} vehicleID:{1} after destroy in applySelectedSetup ').format(self.perkId, ownerId))
+        LOG_DEBUG('destroy plan', self._ownerId, self._planId)
         self._plan = None
         self._isPlanLoaded = False
         self._isPlanStarted = False
@@ -146,6 +149,9 @@ class VsePlan(object):
 
     def _onPlanPreLoaded(self, future=None):
         try:
+            LOG_DEBUG('_onPlanPreLoaded plan', self._ownerId, self._planId, self._plan)
+            if self._owner is None or self._owner.isDestroyed:
+                return
             if IS_CELLAPP:
                 future.get()
             self._usedEvents = []
@@ -158,6 +164,8 @@ class VsePlan(object):
                 self.start()
         except BigWorld.FutureNotReady:
             LOG_ERROR("VsePlan: Plan xml '%s' not pre-loaded." % self._planId)
+
+        return
 
     def _clearCallBack(self):
         self.__callback = None

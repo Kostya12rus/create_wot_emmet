@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/main_view.py
 import logging, typing
 from collections import namedtuple
@@ -40,6 +40,7 @@ from gui.impl.dialogs.builders import ResPureDialogBuilder, ResSimpleDialogBuild
 from gui.impl.gen import R
 from gui.impl.gen.view_models.constants.dialog_presets import DialogPresets
 from gui.impl.lobby.customization.customization_cart.customization_cart_view import CustomizationCartView
+from gui.impl.lobby.common.view_mixins import LobbyHeaderVisibility
 from gui.impl.pub.dialog_window import DialogButtons
 from gui.shared import events
 from gui.shared.close_confiramtor_helper import CloseConfirmatorsHelper
@@ -182,6 +183,13 @@ class _CustomizationCloseConfirmatorsHelper(CloseConfirmatorsHelper):
         result.append(VIEW_ALIAS.LOBBY_HANGAR)
         return result
 
+    def getRestrictedGuiImplViews(self):
+        return super(_CustomizationCloseConfirmatorsHelper, self).getRestrictedGuiImplViews() + [
+         R.views.lobby.common.BrowserView(),
+         R.views.lobby.personal_reserves.ReservesActivationView(),
+         R.views.lobby.personal_reserves.ReservesConversionView(),
+         R.views.lobby.personal_reserves.ReservesIntroView()]
+
     def start(self, closeConfirmator):
         super(_CustomizationCloseConfirmatorsHelper, self).start(closeConfirmator)
         self._addPlatoonCreationConfirmator()
@@ -191,7 +199,7 @@ class _CustomizationCloseConfirmatorsHelper(CloseConfirmatorsHelper):
         super(_CustomizationCloseConfirmatorsHelper, self).stop()
 
 
-class MainView(LobbySubView, CustomizationMainViewMeta):
+class MainView(LobbySubView, CustomizationMainViewMeta, LobbyHeaderVisibility):
     __background_alpha__ = 0.0
     _COMMON_SOUND_SPACE = C11N_SOUND_SPACE
     _ZOOM_ON_EMBLEM = 0.1
@@ -274,6 +282,12 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
     def onShopEntryPointClick(self):
         self.__exitingToShop = True
         showShop(getShowcaseUrl())
+
+    @adisp.adisp_async
+    @wg_async
+    def showCloseConfirmator(self, callback):
+        result = yield wg_await(self.__closeConfirmator())
+        callback(result)
 
     def __onVehicleChangeStarted(self):
         entity = self.hangarSpace.getVehicleEntity()
@@ -472,7 +486,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         return
 
     def __onCustomizationClearLocked(self):
-        if self.__ctx.modeId != CustomizationModes.EDITABLE_STYLE:
+        if self.__ctx.modeId not in (CustomizationModes.STYLED, CustomizationModes.EDITABLE_STYLE):
             return
         filterMethod = REQ_CRITERIA.CUSTOM((lambda item: not item.isUnlockedByToken()))
         modifiedOutfits = self.__ctx.mode.getModifiedOutfits()
@@ -776,7 +790,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         self.__onVehicleLoadFinishedEvent = Event()
         self.as_selectSeasonS(SEASON_TYPE_TO_IDX[self.__ctx.season])
         self.fireEvent(CameraRelatedEvents(CameraRelatedEvents.FORCE_DISABLE_IDLE_PARALAX_MOVEMENT, ctx={'isDisable': True, 'setIdle': True, 'setParallax': True}), scope=EVENT_BUS_SCOPE.LOBBY)
-        self.fireEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.ONLINE_COUNTER}), EVENT_BUS_SCOPE.LOBBY)
+        self.suspendLobbyHeader(self.key, HeaderMenuVisibilityState.ONLINE_COUNTER)
         self.__renderEnv = BigWorld.CustomizationEnvironment()
         self.__renderEnv.enable(True)
         if self.__ctx.vehicleAnchorsUpdater is not None:
@@ -813,7 +827,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
             entity.appearance.loadState.unsubscribe(self.__onVehicleLoadFinished, self.__onVehicleLoadStarted)
             entity.appearance.turretRotator.onTurretRotated -= self.__onTurretAndGunRotated
         self.fireEvent(events.HangarCustomizationEvent(events.HangarCustomizationEvent.RESET_VEHICLE_MODEL_TRANSFORM), scope=EVENT_BUS_SCOPE.LOBBY)
-        self.fireEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.ALL}), EVENT_BUS_SCOPE.LOBBY)
+        self.resumeLobbyHeader(self.key)
         self.fireEvent(CameraRelatedEvents(CameraRelatedEvents.FORCE_DISABLE_IDLE_PARALAX_MOVEMENT, ctx={'isDisable': False, 'setIdle': True, 'setParallax': True}), scope=EVENT_BUS_SCOPE.LOBBY)
         if self.__styleInfo is not None:
             self.__styleInfo.disableBlur()

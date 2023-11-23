@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/state_machine/delegator.py
 import typing
 from battle_pass_common import BattlePassRewardReason as BPReason
@@ -38,9 +38,8 @@ class BattlePassRewardLogic(object):
         self.__startAfterTurningOnMachine = False
 
     def startRewardFlow(self, rewards, data, packageRewards):
-        rewardsToChoose, defaultRewards, chapterStyle = separateRewards(rewards, battlePass=self.__battlePassController)
-        rewardsToChoose = self.__getValidRewardsToChoose(rewardsToChoose)
-        self.__machine.saveRewards(rewardsToChoose, defaultRewards, chapterStyle, data, packageRewards)
+        defaultRewards, chapterStyle = separateRewards(rewards)
+        self.__machine.saveRewards(data, defaultRewards, chapterStyle, packageRewards)
         if not self.__machine.isRunning():
             self.__startAfterTurningOnMachine = True
         else:
@@ -50,7 +49,7 @@ class BattlePassRewardLogic(object):
         data = {'chapter': self.__getChapterFromRewardsToChoose(rewardsToChoose) if chapterID is None else chapterID, 
            'level': level, 
            'reason': BPReason.SELECT_REWARD}
-        self.__machine.saveRewards(rewardsToChoose, None, None, data, None)
+        self.__machine.saveRewards(data, rewardsToChoose=rewardsToChoose)
         self.__machine.setManualFlow()
         if not self.__machine.isRunning():
             self.__startAfterTurningOnMachine = True

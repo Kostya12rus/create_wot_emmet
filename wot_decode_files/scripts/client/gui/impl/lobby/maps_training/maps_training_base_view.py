@@ -1,17 +1,16 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/maps_training/maps_training_base_view.py
-from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
-from gui.Scaleform.framework.entities.View import ViewKey
 from gui.impl.pub import ViewImpl
+from gui.impl.lobby.common.view_mixins import LobbyHeaderVisibility
 from gui.hangar_cameras.hangar_camera_common import CameraRelatedEvents
 from gui.shared import g_eventBus, EVENT_BUS_SCOPE, events
 from frameworks.wulf import ViewSettings, ViewFlags
 from helpers import dependency
 from skeletons.gui.app_loader import IAppLoader
 
-class MapsTrainingBaseView(ViewImpl):
+class MapsTrainingBaseView(ViewImpl, LobbyHeaderVisibility):
     appLoader = dependency.descriptor(IAppLoader)
     _BACKGROUND_ALPHA = 0
 
@@ -29,7 +28,7 @@ class MapsTrainingBaseView(ViewImpl):
 
     def _initialize(self, *args, **kwargs):
         super(MapsTrainingBaseView, self)._initialize(*args, **kwargs)
-        self._hideMenu()
+        self.suspendLobbyHeader(self.uniqueID)
         app = self.appLoader.getApp()
         app.setBackgroundAlpha(self._BACKGROUND_ALPHA)
 
@@ -39,8 +38,7 @@ class MapsTrainingBaseView(ViewImpl):
 
     def _finalize(self):
         self._removeListeners()
-        if not self._isInCustomization():
-            self._showMenu()
+        self.resumeLobbyHeader(self.uniqueID)
         super(MapsTrainingBaseView, self)._finalize()
 
     def _addListeners(self):
@@ -48,14 +46,6 @@ class MapsTrainingBaseView(ViewImpl):
 
     def _removeListeners(self):
         self.viewModel.onMoveSpace -= self._onMoveSpace
-
-    def _hideMenu(self):
-        from gui.Scaleform.daapi.view.lobby.header.LobbyHeader import HeaderMenuVisibilityState
-        g_eventBus.handleEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.NOTHING}), scope=EVENT_BUS_SCOPE.LOBBY)
-
-    def _showMenu(self):
-        from gui.Scaleform.daapi.view.lobby.header.LobbyHeader import HeaderMenuVisibilityState
-        g_eventBus.handleEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.ALL}), scope=EVENT_BUS_SCOPE.LOBBY)
 
     def _onMoveSpace(self, args=None):
         if args is None:
@@ -65,7 +55,3 @@ class MapsTrainingBaseView(ViewImpl):
             g_eventBus.handleEvent(CameraRelatedEvents(CameraRelatedEvents.LOBBY_VIEW_MOUSE_MOVE, ctx=ctx), EVENT_BUS_SCOPE.GLOBAL)
             g_eventBus.handleEvent(events.LobbySimpleEvent(events.LobbySimpleEvent.NOTIFY_SPACE_MOVED, ctx=ctx), EVENT_BUS_SCOPE.GLOBAL)
             return
-
-    def _isInCustomization(self):
-        app = self.appLoader.getApp()
-        return app.containerManager.getViewByKey(ViewKey(VIEW_ALIAS.LOBBY_CUSTOMIZATION)) is not None

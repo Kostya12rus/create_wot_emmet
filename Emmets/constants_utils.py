@@ -1,11 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/constants_utils.py
 import types
-from UnitBase import CMD_NAMES, ROSTER_TYPE, PREBATTLE_TYPE_BY_UNIT_MGR_ROSTER, PREBATTLE_TYPE_BY_UNIT_MGR_ROSTER_EXT, ROSTER_TYPE_TO_CLASS, UNIT_MGR_FLAGS_TO_PREBATTLE_TYPE, UNIT_MGR_FLAGS_TO_UNIT_MGR_ENTITY_NAME, UNIT_MGR_FLAGS_TO_INVITATION_TYPE, UNIT_MGR_FLAGS_TO_QUEUE_TYPE, QUEUE_TYPE_BY_UNIT_MGR_ROSTER, UNIT_ERROR, VEHICLE_TAGS_GROUP_BY_UNIT_MGR_FLAGS
-from chat_shared import SYS_MESSAGE_TYPE
-from constants import ARENA_GUI_TYPE, ARENA_GUI_TYPE_LABEL, ARENA_BONUS_TYPE, ARENA_BONUS_TYPE_NAMES, ARENA_BONUS_TYPE_IDS, ARENA_BONUS_MASK, QUEUE_TYPE, QUEUE_TYPE_NAMES, PREBATTLE_TYPE, PREBATTLE_TYPE_NAMES, INVITATION_TYPE, BATTLE_MODE_VEHICLE_TAGS, SEASON_TYPE_BY_NAME, SEASON_NAME_BY_TYPE, QUEUE_TYPE_IDS
+from UnitBase import CMD_NAMES, ROSTER_TYPE, PREBATTLE_TYPE_BY_UNIT_MGR_ROSTER, PREBATTLE_TYPE_BY_UNIT_MGR_ROSTER_EXT, ROSTER_TYPE_TO_CLASS, UNIT_MGR_FLAGS_TO_PREBATTLE_TYPE, UNIT_MGR_FLAGS_TO_UNIT_MGR_ENTITY_NAME, UNIT_MGR_FLAGS_TO_INVITATION_TYPE, QUEUE_TYPE_BY_UNIT_MGR_ROSTER, UNIT_ERROR, VEHICLE_TAGS_GROUP_BY_UNIT_MGR_FLAGS
+from constants import ARENA_GUI_TYPE, ARENA_GUI_TYPE_LABEL, ARENA_BONUS_TYPE, ARENA_BONUS_TYPE_NAMES, ARENA_BONUS_TYPE_IDS, ARENA_BONUS_MASK, QUEUE_TYPE, QUEUE_TYPE_NAMES, PREBATTLE_TYPE, PREBATTLE_TYPE_NAMES, INVITATION_TYPE, BATTLE_MODE_VEHICLE_TAGS, SEASON_TYPE_BY_NAME, SEASON_NAME_BY_TYPE, QUEUE_TYPE_IDS, ARENA_BONUS_TYPE_TO_QUEUE_TYPE
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE
 from debug_utils import LOG_DEBUG
 from soft_exception import SoftException
@@ -170,11 +169,11 @@ def addUnitMgrFlagToInvitationType(unitMgrFlag, invType, personality):
     LOG_DEBUG(msg)
 
 
-def addUnitMgrFlagToQueueType(unitMgrFlag, queueType, personality):
-    if unitMgrFlag in UNIT_MGR_FLAGS_TO_QUEUE_TYPE:
-        raise SoftException(('UNIT_MGR_FLAGS_TO_QUEUE_TYPE already has unitMgrFlag:{unitMgrFlag}. Personality: {p}').format(unitMgrFlag=unitMgrFlag, p=personality))
-    UNIT_MGR_FLAGS_TO_QUEUE_TYPE.update({unitMgrFlag: queueType})
-    msg = ('unitMgrFlag:{flag}->{queueType} was added to UNIT_MGR_FLAGS_TO_QUEUE_TYPE. Personality: {p}').format(flag=unitMgrFlag, queueType=queueType, p=personality)
+def addArenaBonusTypeToQueueType(bonusType, queueType, personality):
+    if bonusType in ARENA_BONUS_TYPE_TO_QUEUE_TYPE:
+        raise SoftException(('ARENA_BONUS_TYPE_TO_QUEUE_TYPE already has bonusType:{bonusType}. Personality: {p}').format(bonusType=bonusType, p=personality))
+    ARENA_BONUS_TYPE_TO_QUEUE_TYPE.update({bonusType: queueType})
+    msg = ('bonusType:{bonusType}->{queueType} was added to ARENA_BONUS_TYPE_TO_QUEUE_TYPE. Personality: {p}').format(bonusType=bonusType, queueType=queueType, p=personality)
     LOG_DEBUG(msg)
 
 
@@ -225,6 +224,7 @@ class AbstractBattleMode(object):
     _NEW_VEHICLES_TAGS = set()
     _BASE_CHAT_LOG_FLAGS = None
     _BASE_QUEUE_CONTROLLER_CLASS = None
+    _BASE_WINNER_PROCESSOR_CLASS = None
     _INVITATION_TYPE = None
     _CLIENT_BATTLE_PAGE = None
     _CLIENT_PRB_ACTION_NAME = None
@@ -308,6 +308,10 @@ class AbstractBattleMode(object):
 
     @property
     def _client_battleControllersRepository(self):
+        return
+
+    @property
+    def _client_sharedControllersRepository(self):
         return
 
     @property
@@ -397,7 +401,6 @@ class AbstractBattleMode(object):
 
     def registerSquadTypes(self):
         addQueueTypeByUnitMgrRoster(self._QUEUE_TYPE, self._ROSTER_TYPE, self._personality)
-        addUnitMgrFlagToQueueType(self._UNIT_MGR_FLAGS, self._QUEUE_TYPE, self._personality)
         addPrbTypeByUnitMgrRoster(self._PREBATTLE_TYPE, self._ROSTER_TYPE, self._personality)
         addPrbTypeByUnitMgrRosterExt(self._PREBATTLE_TYPE, self._ROSTER_TYPE, self._personality)
         addRosterTypeToClass(self._ROSTER_TYPE, self._ROSTER_CLASS, self._personality)
@@ -413,6 +416,11 @@ class AbstractBattleMode(object):
         scu.addSingletonsToStart(self._BATTLE_MGR_NAME, self._battleMgrConfig, self._personality)
         scu.addBattlesConfigToList(self._GAME_PARAMS_KEY, self._personality)
         scu.addPreBattleTypeToChatLogFlags(self._PREBATTLE_TYPE, self._BASE_CHAT_LOG_FLAGS, self._personality)
+        if self._BASE_WINNER_PROCESSOR_CLASS:
+            scu.addWinnerProcessor(self._ARENA_BONUS_TYPE, self._BASE_WINNER_PROCESSOR_CLASS, self._personality)
+
+    def registerCommon(self):
+        addArenaBonusTypeToQueueType(self._ARENA_BONUS_TYPE, self._QUEUE_TYPE, self._personality)
 
     def registerBaseUnit(self):
         import server_constants_utils as scu
@@ -478,6 +486,10 @@ class AbstractBattleMode(object):
         from gui.shared.system_factory import registerBattleControllerRepo
         registerBattleControllerRepo(self._ARENA_GUI_TYPE, self._client_battleControllersRepository)
 
+    def registerSharedControllersRepository(self):
+        from gui.shared.system_factory import registerSharedControllerRepo
+        registerSharedControllerRepo(self._ARENA_GUI_TYPE, self._client_sharedControllersRepository)
+
     def registerBattleResultsConfig(self):
         config = self._BATTLE_RESULTS_CONFIG
         if config is None:
@@ -529,10 +541,12 @@ class AbstractBattleMode(object):
             addBattleRequiredLibraries(self._client_battleRequiredLibraries, self._ARENA_GUI_TYPE, self._personality)
 
     def registerSystemMessagesTypes(self):
+        from chat_shared import SYS_MESSAGE_TYPE
         SYS_MESSAGE_TYPE.inject(self._SM_TYPES)
 
     def registerBattleResultSysMsgType(self):
         from battle_results import ARENA_BONUS_TYPE_TO_SYS_MESSAGE_TYPE
+        from chat_shared import SYS_MESSAGE_TYPE
         if self._ARENA_BONUS_TYPE in ARENA_BONUS_TYPE_TO_SYS_MESSAGE_TYPE:
             raise SoftException(('ARENA_BONUS_TYPE_TO_SYS_MESSAGE_TYPE already has ARENA_BONUS_TYPE:{t}. Personality: {p}').format(t=self._ARENA_BONUS_TYPE, p=self._personality))
         try:
@@ -541,7 +555,7 @@ class AbstractBattleMode(object):
             raise SoftException('No index for {attr} found. Use registerSystemMessagesTypes before')
 
         ARENA_BONUS_TYPE_TO_SYS_MESSAGE_TYPE.update({self._ARENA_BONUS_TYPE: msgTypeIndex})
-        msg = ('ARENA_BONUS_TYPE:{type}->{sysMsg} was added to UNIT_MGR_FLAGS_TO_QUEUE_TYPE. Personality: {p}').format(type=self._ARENA_BONUS_TYPE, sysMsg=self._SM_TYPE_BATTLE_RESULT, p=self._personality)
+        msg = ('ARENA_BONUS_TYPE:{type}->{sysMsg} was added to ARENA_BONUS_TYPE_TO_SYS_MESSAGE_TYPE. ' + 'Personality: {p}').format(type=self._ARENA_BONUS_TYPE, sysMsg=self._SM_TYPE_BATTLE_RESULT, p=self._personality)
         LOG_DEBUG(msg)
 
     def registerClientNotificationHandlers(self):

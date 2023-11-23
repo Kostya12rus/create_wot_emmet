@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/settings.py
 from UnitBase import UNIT_ERROR, UNIT_BROWSER_ERROR, LEADER_SLOT
 from constants import PREBATTLE_TYPE, PREBATTLE_INVITE_STATE, QUEUE_TYPE
@@ -58,7 +58,7 @@ class FUNCTIONAL_FLAG(BitmaskHelper):
     MAPBOX = 67108864
     MAPS_TRAINING = 134217728
     COMP7 = 536870912
-    DEFAULT = 2147483648
+    DEFAULT = 4294967296
     LEGACY_BITMASK = LEGACY_INTRO | LEGACY
     UNIT_BITMASK = UNIT_INTRO | UNIT_BROWSER | UNIT
     PRE_QUEUE_BITMASK = PRE_QUEUE_INTRO | PRE_QUEUE
@@ -121,6 +121,10 @@ UNIT_ERRORS_TRANSLATE_AS_WARNINGS = (
  UNIT_ERROR.NO_CLAN_MEMBERS)
 UNIT_NOTIFICATION_TO_DISPLAY = (
  UNIT_ERROR.KICKED_PLAYER,)
+UNIT_COMP7_ERRORS = (
+ UNIT_ERROR.ACCOUNT_BANNED,
+ UNIT_ERROR.NO_ARENA_VEHICLES,
+ UNIT_ERROR.COMP7_QUALIFICATION)
 UNIT_ERROR_NAMES = dict([ (v, k) for k, v in UNIT_ERROR.__dict__.iteritems() ])
 UNIT_BROWSER_ERROR_NAMES = dict([ (v, k) for k, v in UNIT_BROWSER_ERROR.__dict__.iteritems() ])
 
@@ -321,6 +325,7 @@ class PREBATTLE_RESTRICTION(object):
     UNSUITABLE_VEHICLE_FOR_BATTLE_ROYALE = 'vehicle/notForBattleRoyaleMode'
     VEHICLE_TOO_HEAVY = 'vehicle/tooHeavy'
     VEHICLE_WILL_BE_UNLOCKED = 'vehicle/willBeUnlocked'
+    VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE = 'vehicle/wotPlusExclusiveUnavailable'
     CREW_NOT_FULL = 'crew/notFull'
     UNIT_NOT_FULL = 'squad/notFull'
     TUTORIAL_NOT_FINISHED = 'tutorial/notFinished'
@@ -351,7 +356,8 @@ class PREBATTLE_RESTRICTION(object):
      VEHICLE_IN_PREMIUM_IGR_ONLY,
      VEHICLE_NOT_SUPPORTED,
      CREW_NOT_FULL,
-     VEHICLE_TOO_HEAVY)
+     VEHICLE_TOO_HEAVY,
+     VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE)
 
     @classmethod
     def getVehClassRestrictions(cls):
@@ -442,6 +448,8 @@ class PRE_QUEUE_RESTRICTION(object):
     MODE_OFFLINE = 'mode/offline'
     VEHICLE_WILL_BE_UNLOCKED = 'vehicle/willBeUnlocked'
     BAN_IS_SET = 'ban/isSet'
+    QUALIFICATION_RESULTS_PROCESSING = 'qualification/resultsProcessing'
+    QUALIFICATION_CALCULATION_RATING = 'qualification/calculatingRating'
     VEHICLE_LIMITS = (
      LIMIT_LEVEL, LIMIT_VEHICLE_TYPE, LIMIT_VEHICLE_CLASS)
 

@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/trophy_device_confirm_view.py
 import logging
+from frameworks.wulf import ViewSettings
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.battle_pass.trophy_device_confirm_bonus_model import TrophyDeviceConfirmBonusModel
@@ -94,7 +95,7 @@ class TrophyDeviceUpgradeConfirmDialogContent(DialogContent):
     __itemsCache = dependency.descriptor(IItemsCache)
 
     def __init__(self, trophyBasicModule):
-        super(TrophyDeviceUpgradeConfirmDialogContent, self).__init__(R.views.lobby.battle_pass.trophy_device_confirm_dialog.TrophyDeviceConfirmDialogContent(), viewModelClazz=TrophyDeviceConfirmDialogModel)
+        super(TrophyDeviceUpgradeConfirmDialogContent, self).__init__(ViewSettings(R.views.lobby.battle_pass.trophy_device_confirm_dialog.TrophyDeviceConfirmDialogContent(), model=TrophyDeviceConfirmDialogModel()))
         self.__trophyBasicModule = trophyBasicModule
         self.__trophyUpgadedModule = self.__itemsCache.items.getItemByCD(trophyBasicModule.descriptor.upgradeInfo.upgradedCompDescr)
 

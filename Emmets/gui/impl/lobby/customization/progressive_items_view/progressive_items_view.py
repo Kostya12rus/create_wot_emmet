@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/customization/progressive_items_view/progressive_items_view.py
 import logging, BigWorld
 from adisp import adisp_process
@@ -78,6 +78,20 @@ class ProgressiveItemsView(ViewImpl):
             return window
         return super(ProgressiveItemsView, self).createToolTip(event)
 
+    def update(self, *args, **kwargs):
+        itemIntCD = kwargs.get('itemIntCD')
+        self._vehicle = g_currentVehicle.item
+        self._possibleItems = self._getPossibleItemsForVehicle()
+        self._itemsProgressData = self.__itemsCache.items.inventory.getC11nProgressionDataForVehicle(self._vehicle.intCD)
+        with self.getViewModel().transaction() as (model):
+            model.setTankName(self._vehicle.userName)
+            model.setTankLevel(int2roman(self._vehicle.level))
+            model.setTankType(self._vehicle.typeBigIconResource())
+            self.__setItems(model)
+            model.setIsRendererPipelineDeferred(isRendererPipelineDeferred())
+            model.setItemToScroll(0 if itemIntCD is None else itemIntCD)
+        return
+
     @property
     def viewModel(self):
         return super(ProgressiveItemsView, self).getViewModel()
@@ -105,18 +119,7 @@ class ProgressiveItemsView(ViewImpl):
         return
 
     def _onLoading(self, *args, **kwargs):
-        self._vehicle = g_currentVehicle.item
-        self._possibleItems = self._getPossibleItemsForVehicle()
-        self._itemsProgressData = self.__itemsCache.items.inventory.getC11nProgressionDataForVehicle(self._vehicle.intCD)
-        itemIntCD = kwargs.get('itemIntCD')
-        with self.getViewModel().transaction() as (model):
-            model.setTankName(self._vehicle.userName)
-            model.setTankLevel(int2roman(self._vehicle.level))
-            model.setTankType(self._vehicle.typeBigIconResource())
-            self.__setItems(model)
-            model.setIsRendererPipelineDeferred(isRendererPipelineDeferred())
-            model.setItemToScroll(0 if itemIntCD is None else itemIntCD)
-        return
+        self.update(*args, **kwargs)
 
     def _onLoaded(self, *args, **kwargs):
         self.__blur.enable()
@@ -160,6 +163,7 @@ class ProgressiveItemsView(ViewImpl):
                ]
 
     def __setItems(self, model):
+        model.progressiveItems.clearItems()
         for intCD in self._possibleItems:
             itemModel = ItemModel()
             item = self.__customizationService.getItemByCD(intCD)

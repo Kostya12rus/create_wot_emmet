@@ -1,12 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/customization/service.py
 import math, logging
 from itertools import chain
 import typing, BigWorld, CGF, Windowing, Event, adisp
 from CurrentVehicle import g_currentVehicle, g_currentPreviewVehicle
 from ClientSelectableCameraObject import ClientSelectableCameraObject
+from gui.Scaleform.framework.entities.View import ViewKey
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.server_events.events_helpers import getC11nQuestsConfig, isC11nQuest
 from gui.shared.event_dispatcher import hideVehiclePreview
@@ -21,6 +22,7 @@ from gui.shared.gui_items.customization.c11n_items import Customization
 from items import vehicles
 from items.customizations import createNationalEmblemComponents
 from serializable_types.customizations import CustomizationOutfit
+from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from vehicle_outfit.outfit import Outfit, Area
@@ -234,6 +236,10 @@ class CustomizationService(_ServiceItemShopMixin, _ServiceHelpersMixin, ICustomi
             lobbyHeaderNavigationPossible = yield self.__lobbyContext.isHeaderNavigationPossible()
             if not lobbyHeaderNavigationPossible:
                 return
+        elif self.__customizationCtx.isOutfitsModified() and g_currentVehicle.invID != vehInvID:
+            result = yield self.__confirmClose()
+            if not result:
+                return
         self.__showCustomizationKwargs = {'vehInvID': vehInvID, 'callback': callback, 'season': season, 'modeId': modeId, 'tabId': tabId}
         shouldSelectVehicle = False
         if self.hangarSpace.space is not None:
@@ -264,6 +270,18 @@ class CustomizationService(_ServiceItemShopMixin, _ServiceHelpersMixin, ICustomi
                     vEntity.appearance.rotateGunToDefault()
             self.__delayedShowCustomization()
             return
+
+    @adisp.adisp_async
+    @adisp.adisp_process
+    @dependency.replace_none_kwargs(appLoader=IAppLoader)
+    def __confirmClose(self, appLoader=None, callback=None):
+        result = True
+        app = appLoader.getApp()
+        customizationView = app.containerManager.getViewByKey(ViewKey(VIEW_ALIAS.LOBBY_CUSTOMIZATION))
+        if customizationView is not None:
+            result = yield customizationView.showCloseConfirmator()
+        callback(result)
+        return
 
     def __delayedShowCustomization(self):
         self.hangarSpace.onVehicleChanged -= self.__delayedShowCustomization

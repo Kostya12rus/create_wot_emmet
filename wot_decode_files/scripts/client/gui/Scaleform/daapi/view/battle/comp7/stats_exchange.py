@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/comp7/stats_exchange.py
 import typing, VOIP
 from constants import ROLE_TYPE_TO_LABEL
@@ -12,6 +12,7 @@ from gui.battle_control.arena_info import vos_collections
 from gui.battle_control.arena_info.arena_vos import Comp7Keys
 from gui.impl import backport
 from gui.impl.gen import R
+from gui.impl.lobby.comp7.comp7_i18n_helpers import RANK_MAP, DIVISION_MAP
 from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider
 if typing.TYPE_CHECKING:
@@ -25,10 +26,13 @@ class Comp7VehicleInfoComponent(vehicle.VehicleInfoComponent):
         super(Comp7VehicleInfoComponent, self).addVehicleInfo(vInfoVO, overrides)
         rank, division = vInfoVO.gameModeSpecific.getValue(Comp7Keys.RANK, default=(0,
                                                                                     0))
+        rankName = RANK_MAP[rank] if rank > 0 else ''
+        divisionName = DIVISION_MAP[division] if division > 0 else ''
         return self._data.update({'role': ROLE_TYPE_TO_LABEL.get(vInfoVO.vehicleType.role, ''), 
            'skillLevel': vInfoVO.gameModeSpecific.getValue(Comp7Keys.ROLE_SKILL_LEVEL, default=0), 
-           'rank': rank, 
-           'rankDivision': division, 
+           'rank': rankName, 
+           'rankDivision': divisionName, 
+           'isQualification': vInfoVO.gameModeSpecific.getValue(Comp7Keys.IS_QUAL_ACTIVE, default=False), 
            'voiceChatConnected': self.__getVoiceChatConnected(vInfoVO)})
 
     @classmethod

@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/buy_vehicle_view.py
 import logging
+from typing import TYPE_CHECKING
 from collections import namedtuple
 from functools import partial
 import BigWorld, adisp, nations, constants
@@ -58,6 +59,8 @@ from skeletons.gui.shared import IItemsCache
 from frameworks.wulf import WindowFlags, ViewStatus, ViewSettings
 from uilogging.shop.loggers import ShopBuyVehicleMetricsLogger
 from uilogging.shop.logging_constants import ShopLogItemStates
+if TYPE_CHECKING:
+    from typing import Optional
 _logger = logging.getLogger(__name__)
 
 class VehicleBuyActionTypes(CONST_CONTAINER):
@@ -635,8 +638,9 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
 
     def __updateAmmoPrice(self):
         ammoItemPrice = self.__getAmmoItemPrice()
+        vehiclePrice, _ = self.__getVehiclePrice()
         with self.viewModel.equipmentBlock.ammo.transaction() as (ammoVm):
-            isAvailable = self.__getAmmoIsAvailable(ammoItemPrice.price)
+            isAvailable = self.__getAmmoIsAvailable(ammoItemPrice.price, vehiclePrice)
             ammoVm.setIsDisabledTooltip(self.__vehicle.isAmmoFull)
             ammoVm.setIsEnabled(isAvailable)
             if not isAvailable:
@@ -644,7 +648,7 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
             listArray = ammoVm.actionPrices.getItems()
             isInit = len(listArray) == 0
             if isInit:
-                self.__addVMsInActionPriceList(listArray, ammoItemPrice)
+                self.__addVMsInActionPriceList(listArray, ammoItemPrice, reservedMoney=vehiclePrice)
             else:
                 self.__updateActionPriceArray(listArray, ammoItemPrice)
 
@@ -764,7 +768,8 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
                 slotItemPrice = self.__shop.getVehicleSlotsItemPrice(self.__stats.vehicleSlots)
                 self.__updateActionPriceArray(slotPriceModel, slotItemPrice)
                 equipmentBlock = vm.equipmentBlock
-                equipmentBlock.ammo.setIsEnabled(self.__getAmmoIsAvailable(ammoPrice.price))
+                vehiclePrice, _ = self.__getVehiclePrice()
+                equipmentBlock.ammo.setIsEnabled(self.__getAmmoIsAvailable(ammoPrice.price, vehiclePrice))
                 equipmentBlock.slot.setIsEnabled(self.__getSlotIsAvailable(slotItemPrice.price))
                 idx = 0
                 commanderCards = vm.commanderLvlCards.getItems()
@@ -841,8 +846,8 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
 
         return ammoPrice
 
-    def __getAmmoIsAvailable(self, ammoPrice):
-        return not self.__vehicle.isAmmoFull and self.__isAvailablePrice(ammoPrice)
+    def __getAmmoIsAvailable(self, ammoPrice, vehiclePrice=ZERO_MONEY):
+        return not self.__vehicle.isAmmoFull and self.__isAvailablePrice(ammoPrice, vehiclePrice)
 
     def __getSlotIsAvailable(self, slotPrice):
         isSlotForRent = self.__selectedRentIdx >= 0 and self.__isRentVisible
@@ -850,18 +855,7 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
         return not isSlotForRent and not isSlotForTradeIn and self.__isAvailablePrice(slotPrice)
 
     def __getTotalItemPrice(self):
-        price = defPrice = ZERO_MONEY
-        if self.__isTradeIn() and self.__tradeInVehicleToSell is not None and not self.__isRentVisible:
-            tradeInPrice = self.__tradeIn.getTradeInPrice(self.__vehicle)
-            price = tradeInPrice.price
-            defPrice = tradeInPrice.defPrice
-        elif self.__selectedRentIdx >= 0 and self.__isRentVisible:
-            price += self.__vehicle.rentPackages[self.__selectedRentIdx]['rentPrice']
-        elif self.viewModel.getIsRestore():
-            price += self.__vehicle.restorePrice
-        else:
-            price += self.__vehicle.buyPrices.itemPrice.price
-            defPrice += self.__vehicle.buyPrices.itemPrice.defPrice
+        price, defPrice = self.__getVehiclePrice()
         if not self.__isWithoutCommander:
             commanderItemPrice = self.__getCommanderPrice(self.__selectedCardIdx)
             price += commanderItemPrice.price
@@ -877,6 +871,22 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
         if defPrice is ZERO_MONEY:
             defPrice = price
         return ItemPrice(price=price, defPrice=defPrice)
+
+    def __getVehiclePrice(self):
+        price = defPrice = ZERO_MONEY
+        if self.__isTradeIn() and self.__tradeInVehicleToSell is not None and not self.__isRentVisible:
+            tradeInPrice = self.__tradeIn.getTradeInPrice(self.__vehicle)
+            price = tradeInPrice.price
+            defPrice = tradeInPrice.defPrice
+        elif self.__selectedRentIdx >= 0 and self.__isRentVisible:
+            price += self.__vehicle.rentPackages[self.__selectedRentIdx]['rentPrice']
+        elif self.viewModel.getIsRestore():
+            price += self.__vehicle.restorePrice
+        else:
+            price += self.__vehicle.buyPrices.itemPrice.price
+            defPrice += self.__vehicle.buyPrices.itemPrice.defPrice
+        return (
+         price, defPrice)
 
     def __getCommanderPrice(self, idx, commanderCardsPrices=None):
         if not commanderCardsPrices:
@@ -921,8 +931,10 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
                 args = None
             return createTooltipData(tooltip=tooltipId, isSpecial=True, specialAlias=tooltipId, specialArgs=args)
 
-    def __addVMsInActionPriceList(self, listArray, itemPrice, fontNotEnoughIsEnabled=True, tooltipData=None):
-        actionPriceModels = getItemPricesViewModel(self.__stats.money, itemPrice, isBootcamp=self.__bootcamp.isInBootcamp())[0]
+    def __addVMsInActionPriceList(self, listArray, itemPrice, fontNotEnoughIsEnabled=True, tooltipData=None, reservedMoney=ZERO_MONEY):
+        statsMoney = self.__stats.money
+        money = statsMoney if reservedMoney == ZERO_MONEY else statsMoney - reservedMoney
+        actionPriceModels = getItemPricesViewModel(money, itemPrice, isBootcamp=self.__bootcamp.isInBootcamp())[0]
         for model in actionPriceModels:
             if tooltipData is not None:
                 model.setKey(tooltipData.key)
@@ -933,15 +945,15 @@ class BuyVehicleView(ViewImpl, EventSystemEntity, IPrbListener):
 
         return
 
-    def __isAvailablePrice(self, money):
+    def __isAvailablePrice(self, money, reservedMoney=ZERO_MONEY):
         isPurchaseCurrencyAvailable = money.isDefined()
         statsMoney = self.__stats.money
         for currency in Currency.ALL:
             currencyValue = money.get(currency)
-            if currencyValue and currencyValue > statsMoney.get(currency):
+            if currencyValue and currencyValue > statsMoney.get(currency, 0) - reservedMoney.get(currency, 0):
                 isPurchaseCurrencyAvailable &= self.__isPurchaseCurrencyAvailable(currency)
 
-        return self.__stats.money >= money or isPurchaseCurrencyAvailable
+        return statsMoney - reservedMoney >= money or isPurchaseCurrencyAvailable
 
     def __isPurchaseCurrencyAvailable(self, currencyType):
         return currencyType == Currency.GOLD and self.__isGoldAutoPurchaseEnabled

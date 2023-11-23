@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/managers/battle_input.py
 import Keys
 from AvatarInputHandler import aih_global_binding
 from aih_constants import CTRL_MODE_NAME
 from gui.battle_control import avatar_getter
 from gui.battle_control import event_dispatcher
-from helpers import dependency
+from helpers import dependency, isPlayerAvatar
 from skeletons.gui.battle_session import IBattleSessionProvider
 from soft_exception import SoftException
 import CommandMapping
@@ -35,16 +35,16 @@ class BattleGameInputMgr(object):
         del self.__consumers[:]
         del self.__keyHandlers[:]
 
-    def enterGuiControlMode(self, consumerID, cursorVisible=True, enableAiming=True):
+    def enterGuiControlMode(self, consumerID, cursorVisible=True, enableAiming=True, stopVehicle=False):
         if consumerID not in self.__consumers:
             if not self.__consumers:
-                avatar_getter.setForcedGuiControlMode(True, cursorVisible=cursorVisible, enableAiming=enableAiming)
+                avatar_getter.setForcedGuiControlMode(True, stopVehicle=stopVehicle, cursorVisible=cursorVisible, enableAiming=enableAiming)
             self.__consumers.append(consumerID)
 
     def leaveGuiControlMode(self, consumerID):
         if consumerID in self.__consumers:
             self.__consumers.remove(consumerID)
-            if not self.__consumers:
+            if not self.__consumers and isPlayerAvatar():
                 avatar_getter.setForcedGuiControlMode(False)
 
     def hasGuiControlModeConsumers(self, *consumersIDs):

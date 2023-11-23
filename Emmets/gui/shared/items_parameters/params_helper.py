@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/items_parameters/params_helper.py
 import copy, typing
+from itertools import chain
 from debug_utils import LOG_CURRENT_EXCEPTION, LOG_ERROR, LOG_WARNING
 from gui import GUI_SETTINGS
 from gui.Scaleform.genConsts.HANGAR_ALIASES import HANGAR_ALIASES
@@ -10,17 +11,18 @@ from gui.shared.gui_items import GUI_ITEM_TYPE, KPI
 from gui.shared.items_parameters import params, RELATIVE_PARAMS, MAX_RELATIVE_VALUE
 from gui.shared.items_parameters.comparator import VehiclesComparator, ItemsComparator, PARAM_STATE
 from gui.shared.items_parameters.functions import getBasicShell
+from gui.shared.items_parameters.params import HIDDEN_PARAM_DEFAULTS
 from gui.shared.items_parameters.params_cache import g_paramsCache
-from gui.shared.utils import AUTO_RELOAD_PROP_NAME, MAX_STEERING_LOCK_ANGLE, TURBOSHAFT_SPEED_MODE_SPEED, WHEELED_SPEED_MODE_SPEED, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_ENGINE_POWER, TURBOSHAFT_INVISIBILITY_STILL_FACTOR, TURBOSHAFT_INVISIBILITY_MOVING_FACTOR, TURBOSHAFT_SWITCH_TIME, CHASSIS_REPAIR_TIME, ROCKET_ACCELERATION_ENGINE_POWER, ROCKET_ACCELERATION_SPEED_LIMITS, ROCKET_ACCELERATION_REUSE_AND_DURATION
+from gui.shared.utils import AUTO_RELOAD_PROP_NAME, MAX_STEERING_LOCK_ANGLE, TURBOSHAFT_SPEED_MODE_SPEED, WHEELED_SPEED_MODE_SPEED, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_ENGINE_POWER, TURBOSHAFT_INVISIBILITY_STILL_FACTOR, SHOT_DISPERSION_ANGLE, TURBOSHAFT_INVISIBILITY_MOVING_FACTOR, TURBOSHAFT_SWITCH_TIME, CHASSIS_REPAIR_TIME, ROCKET_ACCELERATION_ENGINE_POWER, ROCKET_ACCELERATION_SPEED_LIMITS, ROCKET_ACCELERATION_REUSE_AND_DURATION, DUAL_ACCURACY_COOLING_DELAY, BURST_FIRE_RATE
 from helpers import dependency
 from items import vehicles, ITEM_TYPES
 from shared_utils import findFirst, first
 from skeletons.gui.shared.gui_items import IGuiItemsFactory
 RELATIVE_POWER_PARAMS = (
  'avgDamage', 'avgPiercingPower', 'stunMinDuration', 'stunMaxDuration', 'reloadTime', AUTO_RELOAD_PROP_NAME,
- 'reloadTimeSecs', 'clipFireRate', 'burstFireRate', 'turboshaftBurstFireRate', DUAL_GUN_CHARGE_TIME,
- 'turretRotationSpeed', 'turretYawLimits', 'pitchLimits', 'gunYawLimits', 'aimingTime', 'shotDispersionAngle',
- 'avgDamagePerMinute')
+ 'reloadTimeSecs', 'clipFireRate', BURST_FIRE_RATE, 'turboshaftBurstFireRate', DUAL_GUN_CHARGE_TIME,
+ 'turretRotationSpeed', 'turretYawLimits', 'pitchLimits', 'gunYawLimits', 'aimingTime', SHOT_DISPERSION_ANGLE,
+ DUAL_ACCURACY_COOLING_DELAY, 'avgDamagePerMinute')
 RELATIVE_ARMOR_PARAMS = (
  'maxHealth', 'hullArmor', 'turretArmor', CHASSIS_REPAIR_TIME)
 RELATIVE_MOBILITY_PARAMS = (
@@ -105,6 +107,15 @@ _STATE_TO_HIGHLIGHT = {PARAM_STATE.WORSE: HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGH
    PARAM_STATE.BETTER: HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_POSITIVE, 
    PARAM_STATE.NOT_APPLICABLE: HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_NONE, 
    PARAM_STATE.NORMAL: HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_NONE}
+_PARAMS_WITH_AVAILABLE_ZERO_VALUES = {DUAL_ACCURACY_COOLING_DELAY: lambda v: v is not None}
+
+def isValidEmptyValue(paramName, paramValue):
+    func = _PARAMS_WITH_AVAILABLE_ZERO_VALUES.get(paramName)
+    if func is not None:
+        return func(paramValue)
+    else:
+        return False
+
 
 def _getParamsProvider(item, vehicleDescr=None):
     if vehicles.isVehicleDescr(item.descriptor):
@@ -198,6 +209,20 @@ def itemOnVehicleComparator(vehicle, item):
         withItemParams = params.VehicleParams(vehicle).getParamsDict()
         vehicle.descriptor.installComponent(removedModule[0])
     return VehiclesComparator(withItemParams, vehicleParams)
+
+
+def skillOnIdealCrewComparator(vehicle, skillName=None):
+    vehicleWithIdealCrew = copy.copy(vehicle)
+    vehicleWithIdealCrew.crew = vehicle.makeCrewMaxRolesLevel()
+    vehicleParamsObject = params.VehicleParams(vehicleWithIdealCrew)
+    vehicleParams = vehicleParamsObject.getParamsDict()
+    bonuses = vehicleParamsObject.getBonuses(vehicleWithIdealCrew)
+    penalties = vehicleParamsObject.getPenalties(vehicleWithIdealCrew)
+    compatibleArtefacts = g_paramsCache.getCompatibleArtefacts(vehicleWithIdealCrew)
+    newVehicle = copy.copy(vehicle)
+    newVehicle.crew = newVehicle.getCrewWithSkill(skillName)
+    newVehicleParams = params.VehicleParams(newVehicle).getParamsDict()
+    return VehiclesComparator(newVehicleParams, vehicleParams, suitableArtefacts=compatibleArtefacts, bonuses=bonuses, penalties=penalties)
 
 
 def artifactComparator(vehicle, item, slotIdx, compareWithEmptySlot=False):
@@ -312,6 +337,26 @@ def hasGroupPenalties(groupName, comparator):
     return False
 
 
+def __hasEffect(groupName, comparator, targetState):
+    for paramName in chain(PARAMS_GROUPS[groupName], EXTRA_PARAMS_GROUP[groupName]):
+        state = comparator.getExtendedData(paramName).state
+        if type(state[0]) is not tuple:
+            state = (
+             state,)
+        if any([ status == targetState for status, _ in state ]):
+            return True
+
+    return False
+
+
+def hasNegativeEffect(groupName, comparator):
+    return __hasEffect(groupName, comparator, PARAM_STATE.WORSE)
+
+
+def hasPositiveEffect(groupName, comparator):
+    return __hasEffect(groupName, comparator, PARAM_STATE.BETTER)
+
+
 def getCommonParam(state, name, parentID='', highlight=HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_NONE):
     return {'state': state, 
        'paramID': name, 
@@ -334,7 +379,7 @@ class SimplifiedBarVO(dict):
 
 class VehParamsBaseGenerator(object):
 
-    def getFormattedParams(self, comparator, expandedGroups=None, vehIntCD=None, diffParams=None):
+    def getFormattedParams(self, comparator, expandedGroups=None, vehIntCD=None, diffParams=None, hasNormalization=False):
         result = []
         if not GUI_SETTINGS.technicalInfo:
             return result
@@ -350,7 +395,7 @@ class VehParamsBaseGenerator(object):
                     result.append(bottomVo)
                 if isOpened:
                     for paramName in PARAMS_GROUPS[groupName]:
-                        param = comparator.getExtendedData(paramName)
+                        param = comparator.getExtendedData(paramName, hasNormalization)
                         highlight = diffParams.get(paramName, HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_NONE)
                         formattedParam = self._makeAdvancedParamVO(param, groupName, highlight)
                         if formattedParam:
@@ -391,6 +436,8 @@ class VehParamsBaseGenerator(object):
             hasExtraParams = False
             for extraParamName in EXTRA_PARAMS_GROUP[groupName]:
                 param = comparator.getExtendedData(extraParamName)
+                if extraParamName in HIDDEN_PARAM_DEFAULTS and param.value == HIDDEN_PARAM_DEFAULTS[extraParamName]:
+                    continue
                 highlight = diffParams.get(extraParamName, HANGAR_ALIASES.VEH_PARAM_RENDERER_HIGHLIGHT_NONE)
                 formattedParam, nSlashCount = self._makeExtraParamVO(param, groupName, highlight)
                 if formattedParam:

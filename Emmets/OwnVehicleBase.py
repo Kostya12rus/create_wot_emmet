@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/OwnVehicleBase.py
 from collections import namedtuple
 from functools import partial
@@ -216,7 +216,7 @@ class OwnVehicleBase(BigWorld.DynamicScriptComponent):
         avatar = self._avatar()
         if not avatar:
             return
-        avatar.updateTargetingInfo(self.entity.id, data.turretYaw, data.gunPitch, data.maxTurretRotationSpeed, data.maxGunRotationSpeed, data.shotDispMultiplierFactor, data.gunShotDispersionFactorsTurretRotation, data.chassisShotDispersionFactorsMovement, data.chassisShotDispersionFactorsRotation, data.gunShotDispersionFactorsAfterShot, data.aimingTime)
+        avatar.updateTargetingInfo(self.entity.id, data.turretYaw, data.gunPitch, data.maxTurretRotationSpeed, data.maxGunRotationSpeed, data.shotDispMultiplierFactor, data.gunShotDispersionFactorsTurretRotation, data.chassisShotDispersionFactorsMovement, data.chassisShotDispersionFactorsRotation, data.aimingTime)
 
     @noexcept
     def update_vehicleHealthInfo(self, data):
@@ -268,6 +268,12 @@ class OwnVehicleBase(BigWorld.DynamicScriptComponent):
         if _DO_LOG:
             self._doLog(('onSectorShooting {}').format(sectorID))
         avatar.onSectorShooting(sectorID)
+
+    def stopSetupSelection(self):
+        avatar = self._avatar()
+        if not avatar:
+            return
+        avatar.stopSetupSelection()
 
     def beforeSetupUpdate(self):
         avatar = self._avatar()
@@ -449,3 +455,6 @@ class OwnVehicleBase(BigWorld.DynamicScriptComponent):
 
     def _avatar(self):
         raise NotImplementedError('_avatar must be overrided in ownVehicle')
+
+    def _entities(self):
+        raise NotImplementedError('_entities must be overrided in ownVehicle')

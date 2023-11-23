@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/counter_settings.py
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import NEW_SETTINGS_COUNTER
@@ -11,6 +11,7 @@ from skeletons.gui.lobby_context import ILobbyContext
 _NEW_SETTING_COUNTER_VISIBILITY_VALIDATORS = {settings_constants.GAME.ANONYMIZER: lambda : dependency.instance(IAnonymizerController).isEnabled, 
    'showQuestProgress': lambda : dependency.instance(ILobbyContext).getServerSettings().isPersonalMissionsEnabled(), 
    settings_constants.GAME.GAMEPLAY_ONLY_10_MODE: lambda : dependency.instance(ILobbyContext).getServerSettings().isOnly10ModeEnabled(), 
+   settings_constants.GAME.GAMEPLAY_DEV_MAPS: lambda : dependency.instance(ILobbyContext).getServerSettings().isMapsInDevelopmentEnabled(), 
    settings_constants.GAME.SWITCH_SETUPS_IN_LOADING: lambda : dependency.instance(IVehiclePostProgressionController).isSwitchSetupFeatureEnabled(), 
    settings_constants.GAME.LIMITED_UI_ACTIVE: lambda : dependency.instance(ILimitedUIController).isUserSettingsMayShow}
 

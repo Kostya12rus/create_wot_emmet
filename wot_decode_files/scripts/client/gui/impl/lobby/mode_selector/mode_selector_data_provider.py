@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/mode_selector/mode_selector_data_provider.py
 import logging
 from collections import defaultdict, OrderedDict
@@ -9,9 +9,7 @@ from Event import SafeEvent
 from gui.Scaleform.daapi.view.lobby.header import battle_selector_items
 from gui.impl.gen.view_models.views.lobby.mode_selector.mode_selector_columns import ModeSelectorColumns
 from gui.impl.lobby.mode_selector.items.base_item import ModeSelectorLegacyItem
-from gui.impl.lobby.mode_selector.items.bootcamp_mode_selector_item import BootcampModeSelectorItem
 from gui.impl.lobby.mode_selector.items.epic_mode_selector_item import EpicModeSelectorItem
-from gui.impl.lobby.mode_selector.items.items_constants import CustomModeName
 from gui.impl.lobby.mode_selector.items.mapbox_mode_selector_item import MapboxModeSelectorItem
 from gui.impl.lobby.mode_selector.items.random_mode_selector_item import RandomModeSelectorItem
 from gui.impl.lobby.mode_selector.items.ranked_mode_selector_item import RankedModeSelectorItem
@@ -29,7 +27,6 @@ if typing.TYPE_CHECKING:
     from gui.Scaleform.daapi.view.lobby.header.battle_selector_item import SelectorItem
     from gui.impl.lobby.mode_selector.items.base_item import ModeSelectorItem
 _logger = logging.getLogger(__name__)
-_ADDITIONAL_ITEMS = {CustomModeName.BOOTCAMP: None}
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.RANDOM, RandomModeSelectorItem)
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.RANKED, RankedModeSelectorItem)
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.STRONGHOLDS_BATTLES_LIST, StrongholdsModeSelectorItem)
@@ -40,7 +37,6 @@ registerModeSelectorItem(PREBATTLE_ACTION_NAME.EPIC, EpicModeSelectorItem)
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.BATTLE_ROYALE, BattleRoyaleModeSelectorItem)
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.COMP7, Comp7ModeSelectorItem)
 registerModeSelectorItem(PREBATTLE_ACTION_NAME.WINBACK, WinbackModeSelectorItem)
-registerModeSelectorItem(CustomModeName.BOOTCAMP, BootcampModeSelectorItem)
 
 class ModeSelectorDataProvider(IGlobalListener):
     __slots__ = ('onListChanged', '_items')
@@ -86,22 +82,22 @@ class ModeSelectorDataProvider(IGlobalListener):
         else:
             return
 
+    def forceRefresh(self):
+        self._clearItems()
+        self.__createItems(self.__getItems())
+        self._updateItems()
+
     def onPrbEntitySwitched(self):
         items = self.__getItems()
         self.__createItems(items)
         for nameItem in self._items:
-            if nameItem not in _ADDITIONAL_ITEMS and (not items.get(nameItem) or not items[nameItem].isVisible()):
+            if not items.get(nameItem) or not items[nameItem].isVisible():
                 self._clearItem(self._items.pop(nameItem))
 
         self._updateItems()
 
     def _onCardChangeHandler(self, *args, **kwargs):
-        self._updateItemsForce()
-
-    def _updateItemsForce(self):
-        self._clearItems()
-        self.__createItems(self.__getItems())
-        self._updateItems()
+        self.forceRefresh()
 
     def _clearItems(self):
         for key in self._items:
@@ -179,6 +175,4 @@ class ModeSelectorDataProvider(IGlobalListener):
     @staticmethod
     def __getItems():
         allItems = battle_selector_items.getItems().allItems
-        items = {nameItem.getData(): nameItem for nameItem in allItems}
-        items.update(_ADDITIONAL_ITEMS)
-        return items
+        return {nameItem.getData(): nameItem for nameItem in allItems}

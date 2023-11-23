@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/battle_pass/__init__.py
 import logging
-from gui.battle_pass.battle_pass_constants import ChapterState
-from gui.battle_pass.battle_pass_helpers import isSeasonEndingSoon
+from itertools import chain
 from gui.impl.gen import R
 from gui.server_events.events_dispatcher import showMissionsBattlePass
+from gui.shared.event_dispatcher import showBattlePassTankmenVoiceover
 from helpers import dependency
 from skeletons.gui.game_control import IBattlePassController
 from web.common import formatBattlePassInfo
@@ -16,10 +16,11 @@ _R_VIEWS = R.views.lobby.battle_pass
 _VIEWS_IDS = {'intro': _R_VIEWS.BattlePassIntroView(), 
    'chapter_choice': _R_VIEWS.ChapterChoiceView(), 
    'progression': _R_VIEWS.BattlePassProgressionsView()}
+_VIEWS_COMMANDS = {'voiceover': showBattlePassTankmenVoiceover}
 
 def _isValidViewID(_, data):
     viewID = data.get('id')
-    if viewID in _VIEWS_IDS:
+    if viewID in chain(_VIEWS_IDS, _VIEWS_COMMANDS):
         return True
     raise WebCommandException(('id: "{}" is not supported').format(viewID))
 
@@ -43,7 +44,11 @@ class BattlePassWebApi(W2CSchema):
 
     @w2c(_ShowViewSchema, name='show_view')
     def handleShowView(self, cmd):
-        showMissionsBattlePass(_VIEWS_IDS.get(cmd.id), cmd.chapter_id)
+        if cmd.id in _VIEWS_COMMANDS:
+            showView = _VIEWS_COMMANDS[cmd.id]
+            showView()
+        else:
+            showMissionsBattlePass(_VIEWS_IDS.get(cmd.id), cmd.chapter_id)
 
     @w2c(W2CSchema, name='get_info')
     def handleGetInfo(self, _):

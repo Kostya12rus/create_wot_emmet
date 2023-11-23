@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/doc_loaders/html_templates.py
 import types
 from debug_utils import LOG_WARNING
@@ -14,6 +14,10 @@ class _MessageTemplate(templates.Template):
         self.data = data
         self.priority = priority
         self.groupID = groupID
+
+    @property
+    def lifeTime(self):
+        return self.data.get('lifeTime', 0)
 
     def format(self, ctx=None, data=None):
         vo = self.data.copy()
@@ -55,6 +59,9 @@ class MessageTemplates(templates.XMLCollection):
     def groupID(self, key):
         return self[key].groupID
 
+    def lifeTime(self, key):
+        return self[key].lifeTime
+
     def __missing__(self, key):
         self[key] = value = _MessageTemplate(key, {}, NotificationPriorityLevel.MEDIUM, NotificationGroup.INFO)
         return value
@@ -69,7 +76,8 @@ class MessageTemplates(templates.XMLCollection):
            'bgIconSizeAuto': source.readBool('bgIconSizeAuto'), 
            'icon': source.readString('icon'), 
            'defaultIcon': source.readString('defaultIcon'), 
-           'filters': [], 'buttonsLayout': []}
+           'filters': [], 'buttonsLayout': [], 'buttonsAlign': source.readString('buttonsAlign', 'left'), 
+           'lifeTime': source.readInt('lifeTime')}
         priority = source.readString('priority', NotificationPriorityLevel.MEDIUM)
         if priority not in NotificationPriorityLevel.RANGE:
             LOG_WARNING('Priority is invalid', sourceID, priority)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/settings/config.py
 from constants import HAS_DEV_RESOURCES, ARENA_GUI_TYPE, IS_DEVELOPMENT_BUILD
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS as _TOOLTIPS
@@ -14,19 +14,19 @@ _LOBBY_RELEASE_PACKAGES = ('gui.Scaleform.daapi.view.lobby', 'gui.Scaleform.daap
                            'gui.Scaleform.daapi.view.lobby.crewOperations', 'gui.Scaleform.daapi.view.lobby.customization',
                            'gui.Scaleform.daapi.view.lobby.cyberSport', 'gui.Scaleform.daapi.view.lobby.exchange',
                            'gui.Scaleform.daapi.view.lobby.fortifications', 'gui.Scaleform.daapi.view.lobby.hangar',
-                           'gui.Scaleform.daapi.view.lobby.header', 'gui.Scaleform.daapi.view.lobby.inputChecker',
-                           'gui.Scaleform.daapi.view.lobby.messengerBar', 'gui.Scaleform.daapi.view.lobby.prb_windows',
-                           'gui.Scaleform.daapi.view.lobby.profile', 'gui.Scaleform.daapi.view.lobby.rankedBattles',
-                           'gui.Scaleform.daapi.view.lobby.epicBattle', 'gui.Scaleform.daapi.view.lobby.store',
-                           'gui.Scaleform.daapi.view.lobby.storage', 'gui.Scaleform.daapi.view.lobby.techtree',
-                           'gui.Scaleform.daapi.view.lobby.trainings', 'gui.Scaleform.daapi.view.lobby.vehicle_preview',
-                           'gui.Scaleform.daapi.view.lobby.vehicle_compare', 'gui.Scaleform.daapi.view.lobby.wgnc',
-                           'gui.Scaleform.daapi.view.login', 'messenger.gui.Scaleform.view.lobby',
-                           'gui.Scaleform.daapi.view.lobby.missions.regular', 'gui.Scaleform.daapi.view.lobby.missions.personal',
-                           'gui.Scaleform.daapi.view.bootcamp.lobby', 'gui.Scaleform.daapi.view.lobby.event_boards',
-                           'gui.Scaleform.daapi.view.lobby.shop', 'gui.Scaleform.daapi.view.lobby.session_stats',
-                           'gui.Scaleform.daapi.view.lobby.epicBattleTraining', 'gui.Scaleform.daapi.view.lobby.tank_setup',
-                           'gui.Scaleform.daapi.view.lobby.mapbox', 'gui.Scaleform.daapi.view.lobby.veh_post_progression',
+                           'gui.Scaleform.daapi.view.lobby.header', 'gui.Scaleform.daapi.view.lobby.messengerBar',
+                           'gui.Scaleform.daapi.view.lobby.prb_windows', 'gui.Scaleform.daapi.view.lobby.profile',
+                           'gui.Scaleform.daapi.view.lobby.rankedBattles', 'gui.Scaleform.daapi.view.lobby.epicBattle',
+                           'gui.Scaleform.daapi.view.lobby.store', 'gui.Scaleform.daapi.view.lobby.storage',
+                           'gui.Scaleform.daapi.view.lobby.techtree', 'gui.Scaleform.daapi.view.lobby.trainings',
+                           'gui.Scaleform.daapi.view.lobby.vehicle_preview', 'gui.Scaleform.daapi.view.lobby.vehicle_compare',
+                           'gui.Scaleform.daapi.view.lobby.wgnc', 'gui.Scaleform.daapi.view.login',
+                           'messenger.gui.Scaleform.view.lobby', 'gui.Scaleform.daapi.view.lobby.missions.regular',
+                           'gui.Scaleform.daapi.view.lobby.missions.personal', 'gui.Scaleform.daapi.view.bootcamp.lobby',
+                           'gui.Scaleform.daapi.view.lobby.event_boards', 'gui.Scaleform.daapi.view.lobby.shop',
+                           'gui.Scaleform.daapi.view.lobby.session_stats', 'gui.Scaleform.daapi.view.lobby.epicBattleTraining',
+                           'gui.Scaleform.daapi.view.lobby.tank_setup', 'gui.Scaleform.daapi.view.lobby.mapbox',
+                           'gui.Scaleform.daapi.view.lobby.veh_post_progression',
                            'gui.Scaleform.daapi.view.lobby.comp7')
 _LOBBY_DEBUG_PACKAGES = ('gui.development.ui.messenger.view.lobby', 'gui.development.ui.demo',
                          'gui.Scaleform.daapi.view.lobby.epicBattleTraining', 'gui.development.ui.gf_viewer')
@@ -106,7 +106,9 @@ _LOBBY_TOOLTIPS_BUILDERS_PATHS = [
  (
   'gui.Scaleform.daapi.view.tooltips.resource_well_builders', _TOOLTIPS.RESOURCE_WELL_SET),
  (
-  'gui.Scaleform.daapi.view.tooltips.comp7_lobby_builders', _TOOLTIPS.COMP7_LOBBY_SET)]
+  'gui.Scaleform.daapi.view.tooltips.comp7_lobby_builders', _TOOLTIPS.COMP7_LOBBY_SET),
+ (
+  'gui.Scaleform.daapi.view.tooltips.wot_plus_builders', _TOOLTIPS.WOT_PLUS_SET)]
 _LOBBY_DEBUG_TOOLTIPS_BUILDERS_PATHS = (
  (
   'gui.development.ui.tooltips.development_builders', _TOOLTIPS.DEVELOPMENT_SET),)
@@ -115,8 +117,6 @@ _BATTLE_TOOLTIPS_BUILDERS_PATHS = (
   'gui.Scaleform.daapi.view.tooltips.settings_builders', _TOOLTIPS.SETTINGS_SET),
  (
   'gui.Scaleform.daapi.view.tooltips.battle_opt_devices_builder', _TOOLTIPS.BATTLE_BLOCK_TOOLTIPS),
- (
-  'gui.Scaleform.daapi.view.tooltips.bootcamp_builders', _TOOLTIPS.BOOTCAMP_SET),
  (
   'gui.Scaleform.daapi.view.tooltips.epic_in_battle_builders', _TOOLTIPS.EPIC_IN_BATTE_SET),
  (
@@ -159,6 +159,7 @@ registerScaleformBattlePackages(ARENA_GUI_TYPE.BOOTCAMP, BATTLE_PACKAGES + ('gui
 registerScaleformBattlePackages(ARENA_GUI_TYPE.MAPS_TRAINING, ('messenger.gui.Scaleform.view.battle',
                                                                'gui.Scaleform.daapi.view.battle.maps_training') + (_BATTLE_DEBUG_PACKAGES if HAS_DEV_RESOURCES else ()))
 registerScaleformBattlePackages(ARENA_GUI_TYPE.COMP7, BATTLE_PACKAGES + ('gui.Scaleform.daapi.view.battle.comp7', ))
+registerScaleformBattlePackages(ARENA_GUI_TYPE.TOURNAMENT_COMP7, BATTLE_PACKAGES + ('gui.Scaleform.daapi.view.battle.comp7', ))
 registerScaleformBattlePackages(ARENA_GUI_TYPE.WINBACK, BATTLE_PACKAGES + ('gui.Scaleform.daapi.view.battle.winback', ))
 registerBattleTooltipsBuilders(_BATTLE_TOOLTIPS_BUILDERS_PATHS)
 registerLobbyTooltipsBuilders(_LOBBY_TOOLTIPS_BUILDERS_PATHS)

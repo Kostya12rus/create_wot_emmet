@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/missions/packers/events.py
 import logging, typing, constants
 from gui.Scaleform.daapi.view.lobby.missions.awards_formatters import CurtailingAwardsComposer
@@ -11,10 +11,12 @@ from gui.impl.gen.view_models.common.missions.daily_quest_model import DailyQues
 from gui.impl.gen.view_models.common.missions.event_model import EventStatus
 from gui.impl.gen.view_models.common.missions.quest_model import QuestModel
 from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.quest_card_model import QuestCardModel, CardState
+from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.weekly_quests_model import SeasonState
+from gui.impl.lobby.comp7.comp7_quest_helpers import parseComp7WeeklyQuestID
 from gui.server_events.awards_formatters import AWARDS_SIZES
 from gui.server_events.events_helpers import isPremium, isDailyQuest
 from gui.server_events.formatters import DECORATION_SIZES
-from gui.shared.missions.packers.bonus import getDefaultBonusPacker, packBonusModelAndTooltipData
+from gui.shared.missions.packers.bonus import getDefaultBonusPacker, packMissionsBonusModelAndTooltipData
 from gui.shared.missions.packers.conditions import PostBattleConditionPacker
 from gui.shared.missions.packers.conditions import BonusConditionPacker
 from helpers import dependency
@@ -24,6 +26,7 @@ from soft_exception import SoftException
 if typing.TYPE_CHECKING:
     from gui.server_events.event_items import ServerEventAbstract
     from gui.server_events.bonuses import SimpleBonus
+    from gui.shared.missions.packers.bonus import BonusUIPacker
 _logger = logging.getLogger(__name__)
 DEFAULT_AWARDS_COUNT = 10
 DAILY_QUEST_AWARDS_COUNT = 1000
@@ -62,7 +65,7 @@ class BattleQuestUIDataPacker(_EventUIDataPacker):
 
     def __init__(self, event):
         super(BattleQuestUIDataPacker, self).__init__(event)
-        self.__tooltipData = {}
+        self._tooltipData = {}
 
     def pack(self, model=None):
         if model is not None and not isinstance(model, QuestModel):
@@ -74,7 +77,7 @@ class BattleQuestUIDataPacker(_EventUIDataPacker):
             return model
 
     def getTooltipData(self):
-        return self.__tooltipData
+        return self._tooltipData
 
     def _packModel(self, model):
         super(BattleQuestUIDataPacker, self)._packModel(model)
@@ -84,9 +87,13 @@ class BattleQuestUIDataPacker(_EventUIDataPacker):
         self._packDefaultConds(model)
 
     def _packBonuses(self, model):
+        packer = self._getBonusPacker()
+        self._tooltipData = {}
+        packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, tooltipData=self._tooltipData)
+
+    def _getBonusPacker(self):
         packer = getDefaultBonusPacker()
-        self.__tooltipData = {}
-        packQuestBonusModelAndTooltipData(packer, model.getBonuses(), self._event, tooltipData=self.__tooltipData)
+        return packer
 
     def _packPostBattleConds(self, model):
         postBattleContitionPacker = PostBattleConditionPacker()
@@ -122,6 +129,12 @@ class PrivateMissionUIDataPacker(_EventUIDataPacker):
 class Comp7WeeklyQuestPacker(_EventUIDataPacker):
     __comp7Controller = dependency.descriptor(IComp7Controller)
 
+    def __init__(self, quest, seasonState):
+        super(Comp7WeeklyQuestPacker, self).__init__(quest)
+        self.__seasonState = seasonState
+        self.__unavailableSeasonStates = (
+         SeasonState.NOTSTARTED, SeasonState.FINISHED)
+
     def pack(self, model=None):
         if model is None:
             model = QuestCardModel()
@@ -134,7 +147,15 @@ class Comp7WeeklyQuestPacker(_EventUIDataPacker):
             return CardState.COMPLETED
         if self._event.isAvailable()[0] and self.__comp7Controller.isAvailable():
             return CardState.ACTIVE
-        return CardState.LOCKED
+        return self.__getLockedState()
+
+    def __getLockedState(self):
+        isFirstQuest = parseComp7WeeklyQuestID(self._event.getID()) == '1_1'
+        if isFirstQuest and not self.__comp7Controller.hasSuitableVehicles():
+            return CardState.LOCKEDBYNOXVEHICLES
+        if self.__seasonState in self.__unavailableSeasonStates:
+            return CardState.LOCKEDBYINACTIVESEASON
+        return CardState.LOCKEDBYPREVIOUSQUEST
 
     def __updateQuestAttributes(self, cardModel):
         description = self._event.getDescription()
@@ -211,7 +232,7 @@ def packQuestBonusModel(quest, packer, array):
 
 def packQuestBonusModelAndTooltipData(packer, array, quest, tooltipData=None, questBonuses=None):
     bonuses = quest.getBonuses() if questBonuses is None else questBonuses
-    packBonusModelAndTooltipData(bonuses, packer, array, tooltipData)
+    packMissionsBonusModelAndTooltipData(bonuses, packer, array, tooltipData)
     return
 
 

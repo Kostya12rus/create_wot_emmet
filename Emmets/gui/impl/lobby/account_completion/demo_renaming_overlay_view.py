@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/demo_renaming_overlay_view.py
 import typing, BigWorld
 from wg_async import wg_await, wg_async, AsyncReturn
@@ -78,9 +78,9 @@ class DemoRenamingOverlayView(BaseWGNPOverlayView):
         haveTimedWarning = self.viewModel.getWarningCountdown() and self.viewModel.getWarningText()
         self.viewModel.setIsConfirmEnabled(self._name.isValid and bool(self._name.value) and not haveTimedWarning)
 
-    def _finalize(self):
+    def _doFinalize(self):
         self._name.dispose()
-        super(DemoRenamingOverlayView, self)._finalize()
+        super(DemoRenamingOverlayView, self)._doFinalize()
 
     def _validateInput(self):
         self._name.validate()

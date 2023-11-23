@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/components/vehicle_shadow_manager.py
 import BigWorld
 from aih_constants import CTRL_MODE_NAME
@@ -20,7 +20,7 @@ class VehicleShadowManager(Component):
 
     def changePlayerTarget(self, isStatic):
         vehicle = BigWorld.player().getVehicleAttached()
-        if vehicle is not None:
+        if vehicle is not None and vehicle.appearance is not None:
             self.updatePlayerTarget(vehicle.appearance.compoundModel)
         else:
             self.updatePlayerTarget(None)
@@ -32,7 +32,7 @@ class VehicleShadowManager(Component):
         isValidMode = cameraMode == CTRL_MODE_NAME.VIDEO or cameraMode == CTRL_MODE_NAME.CAT
         if isValidMode:
             self.updatePlayerTarget(None)
-        elif not isValidMode and vehicle is not None:
+        elif not isValidMode and vehicle is not None and vehicle.appearance is not None:
             self.updatePlayerTarget(vehicle.appearance.compoundModel)
         return
 

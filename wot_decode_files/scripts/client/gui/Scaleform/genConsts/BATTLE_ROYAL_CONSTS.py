@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/BATTLE_ROYAL_CONSTS.py
 
 
@@ -11,3 +11,8 @@ class BATTLE_ROYAL_CONSTS(object):
     COUNTER_STATE_INITIAL = 0
     COUNTER_STATE_EXTRA = 1
     COUNTER_STATE_MAX = 2
+    MESSAGE_TIMER_LINKAGE = 'RespawnMessageTimerUI'
+    MESSAGE_RESPAWN_AVAILABLE_LINKAGE = 'RespawnMessageAvailableUI'
+    MESSAGE_RESPAWN_NOT_AVAILABLE_LINKAGE = 'RespawnMessageNotAvailableUI'
+    MESSAGE_RESPAWN_NO_ICON_LINKAGE = 'RespawnMessageNoIconUI'
+    RESPAWN_MESSAGE_LINKAGES = [MESSAGE_TIMER_LINKAGE, MESSAGE_RESPAWN_AVAILABLE_LINKAGE, MESSAGE_RESPAWN_NOT_AVAILABLE_LINKAGE, MESSAGE_RESPAWN_NO_ICON_LINKAGE]

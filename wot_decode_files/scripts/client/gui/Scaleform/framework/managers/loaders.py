@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/managers/loaders.py
 import logging, typing, Event, constants, BigWorld
 from gui.Scaleform.framework import g_entitiesFactories, ViewSettings, ScopeTemplates
@@ -9,6 +9,7 @@ from gui.Scaleform.framework.entities.abstract.LoaderManagerMeta import LoaderMa
 from gui.Scaleform.framework.entities.sf_window import SFWindow
 from gui.Scaleform.framework.entities.view_impl_adaptor import ViewImplAdaptor
 from gui.Scaleform.framework.settings import UIFrameworkImpl
+from gui.Scaleform.framework.view_overrider import ViewOverrider
 from helpers import dependency, uniprof
 from shared_utils import CONST_CONTAINER
 from skeletons.gui.impl import IGuiLoader
@@ -143,6 +144,10 @@ class LoaderManager(LoaderManagerMeta):
         return ('{}[{}]=[loadingItems=[{}]]').format(self.__class__.__name__, hex(id(self)), self.__loadingItems)
 
     def loadView(self, loadParams, *args, **kwargs):
+        override = g_viewOverrider.getOverrideData(loadParams, *args, **kwargs)
+        if override:
+            self.cancelLoading(loadParams.viewKey)
+            return self.__doLoadGuiImplView(override.loadParams, *override.args, **override.kwargs)
         if loadParams.uiImpl == UIFrameworkImpl.GUI_IMPL:
             return self.__doLoadGuiImplView(loadParams, *args, **kwargs)
         if loadParams.uiImpl == UIFrameworkImpl.SCALEFORM:
@@ -339,3 +344,6 @@ class LoaderManager(LoaderManagerMeta):
         self.onViewLoadInit(adaptor)
         adaptor.loadView()
         return adaptor
+
+
+g_viewOverrider = ViewOverrider()

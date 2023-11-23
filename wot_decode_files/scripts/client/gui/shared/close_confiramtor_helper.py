@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/close_confiramtor_helper.py
 import adisp
 from wg_async import wg_async, wg_await
@@ -37,7 +37,6 @@ class CloseConfirmatorsHelper(object):
          VIEW_ALIAS.VEHICLE_COMPARE,
          VIEW_ALIAS.LOBBY_STORE,
          VIEW_ALIAS.LOBBY_PROFILE,
-         VIEW_ALIAS.LOBBY_BARRACKS,
          VIEW_ALIAS.LOBBY_MISSIONS,
          VIEW_ALIAS.LOBBY_RESEARCH,
          VIEW_ALIAS.WIKI_VIEW,
@@ -46,7 +45,8 @@ class CloseConfirmatorsHelper(object):
 
     def getRestrictedGuiImplViews(self):
         return [
-         R.views.lobby.dog_tags.DogTagsView()]
+         R.views.lobby.dog_tags.DogTagsView(),
+         R.views.lobby.crew.BarracksView()]
 
     def start(self, closeConfirmator):
         self.__closeConfirmator = closeConfirmator

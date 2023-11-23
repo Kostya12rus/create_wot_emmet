@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/state_machine/machine.py
 import logging, typing
 from frameworks.state_machine import ConditionTransition, StateMachine
@@ -59,12 +59,12 @@ class BattlePassStateMachine(StateMachine):
         choiceState.configure()
         rewardState.configure()
         lobbyState.lobbyWait.addTransition(ConditionTransition(self.__hasChoiceOption, priority=2), target=choiceState.choiceItem)
-        lobbyState.lobbyWait.addTransition(ConditionTransition(self.__hasStyleReward, priority=1), target=videoState)
+        lobbyState.lobbyWait.addTransition(ConditionTransition(self.__hasVideo, priority=1), target=videoState)
         lobbyState.lobbyWait.addTransition(ConditionTransition(self.__hasAnyReward, priority=0), target=rewardState.rewardAny)
-        choiceState.choiceItem.addTransition(ConditionTransition(self.__hasStyleReward, priority=2), target=videoState)
         choiceState.choiceItem.addTransition(ConditionTransition(self.__hasAnyReward, priority=1), target=rewardState.rewardAny)
         choiceState.choiceItem.addTransition(ConditionTransition((lambda _: True), priority=0), target=lobbyState.lobbyWait)
-        videoState.addTransition(ConditionTransition((lambda _: True), priority=0), target=rewardState.rewardStyle)
+        videoState.addTransition(ConditionTransition(self.__hasStyleReward, priority=1), target=rewardState.rewardStyle)
+        videoState.addTransition(ConditionTransition((lambda _: True), priority=0), target=rewardState.rewardAny)
         rewardState.rewardAny.addTransition(ConditionTransition(isProgressionComplete, priority=1), target=lobbyState.lobbyFinal)
         rewardState.rewardAny.addTransition(ConditionTransition((lambda _: True), priority=0), target=lobbyState.lobbyWait)
         self.addState(lobbyState)
@@ -75,12 +75,12 @@ class BattlePassStateMachine(StateMachine):
     def hasActiveFlow(self):
         return not self.isStateEntered(states.BattlePassRewardStateID.LOBBY)
 
-    def saveRewards(self, rewardsToChoose, defaultRewards, chapterStyle, data, packageRewards):
-        self.__rewardsToChoose = rewardsToChoose
+    def saveRewards(self, data, defaultRewards=None, chapterStyle=None, packageRewards=None, rewardsToChoose=None):
+        self.__data = data
         self.__rewards = defaultRewards
         self.__packageRewards = packageRewards
         self.__chapterStyle = chapterStyle
-        self.__data = data
+        self.__rewardsToChoose = rewardsToChoose or []
 
     def setManualFlow(self):
         self.__manualFlow = True
@@ -145,3 +145,6 @@ class BattlePassStateMachine(StateMachine):
 
     def __hasAnyReward(self, *_):
         return bool(self.__rewards) or bool(self.__packageRewards)
+
+    def __hasVideo(self, *_):
+        return self.__hasStyleReward() or self.__data is not None and self.__data.get('needVideo', False)

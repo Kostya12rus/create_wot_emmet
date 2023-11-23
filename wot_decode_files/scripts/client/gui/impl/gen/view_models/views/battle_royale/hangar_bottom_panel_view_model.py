@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/battle_royale/hangar_bottom_panel_view_model.py
 from frameworks.wulf import ViewModel
 from gui.impl.gen.view_models.ui_kit.list_model import ListModel
@@ -8,7 +8,7 @@ from gui.impl.gen.view_models.ui_kit.list_model import ListModel
 class HangarBottomPanelViewModel(ViewModel):
     __slots__ = ('onRentBtnClicked', 'onRepairBtnClicked')
 
-    def __init__(self, properties=11, commands=2):
+    def __init__(self, properties=12, commands=2):
         super(HangarBottomPanelViewModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -28,65 +28,74 @@ class HangarBottomPanelViewModel(ViewModel):
         return ListModel
 
     @property
-    def rentPrice(self):
+    def specialAbilities(self):
         return self._getViewModel(2)
+
+    @staticmethod
+    def getSpecialAbilitiesType():
+        return ListModel
+
+    @property
+    def rentPrice(self):
+        return self._getViewModel(3)
 
     @staticmethod
     def getRentPriceType():
         return ListModel
 
     def getVehName(self):
-        return self._getString(3)
-
-    def setVehName(self, value):
-        self._setString(3, value)
-
-    def getVehType(self):
         return self._getString(4)
 
-    def setVehType(self, value):
+    def setVehName(self, value):
         self._setString(4, value)
 
-    def getRentState(self):
+    def getVehType(self):
         return self._getString(5)
 
-    def setRentState(self, value):
+    def setVehType(self, value):
         self._setString(5, value)
 
+    def getRentState(self):
+        return self._getString(6)
+
+    def setRentState(self, value):
+        self._setString(6, value)
+
     def getRentDays(self):
-        return self._getNumber(6)
+        return self._getNumber(7)
 
     def setRentDays(self, value):
-        self._setNumber(6, value)
+        self._setNumber(7, value)
 
     def getRentTime(self):
-        return self._getString(7)
+        return self._getString(8)
 
     def setRentTime(self, value):
-        self._setString(7, value)
+        self._setString(8, value)
 
     def getIsRepairBtnVisible(self):
-        return self._getBool(8)
-
-    def setIsRepairBtnVisible(self, value):
-        self._setBool(8, value)
-
-    def getIsVehicleInBattle(self):
         return self._getBool(9)
 
-    def setIsVehicleInBattle(self, value):
+    def setIsRepairBtnVisible(self, value):
         self._setBool(9, value)
 
-    def getIsEnoughMoney(self):
+    def getIsVehicleInBattle(self):
         return self._getBool(10)
 
-    def setIsEnoughMoney(self, value):
+    def setIsVehicleInBattle(self, value):
         self._setBool(10, value)
+
+    def getIsEnoughMoney(self):
+        return self._getBool(11)
+
+    def setIsEnoughMoney(self, value):
+        self._setBool(11, value)
 
     def _initialize(self):
         super(HangarBottomPanelViewModel, self)._initialize()
         self._addViewModelProperty('ammunition', ListModel())
         self._addViewModelProperty('abilities', ListModel())
+        self._addViewModelProperty('specialAbilities', ListModel())
         self._addViewModelProperty('rentPrice', ListModel())
         self._addStringProperty('vehName', '')
         self._addStringProperty('vehType', '')

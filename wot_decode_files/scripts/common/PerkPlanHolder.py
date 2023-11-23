@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/PerkPlanHolder.py
 from collections import defaultdict
 from constants import IS_CELLAPP, IS_BASEAPP
@@ -50,7 +50,7 @@ class PCPlanHolder(object):
 
     def loadPlan(self, owner, loadScopeID, loadPerkID, isAutostart=False):
         scope, creator = self._scopedPerks[loadScopeID]
-        callback = self._loader._onStatusChanged() if self._loader else self._onPlanReady()
+        callback = self._loader._onStatusChanged if self._loader else self._onPlanReady
         for perkID, (level, args) in scope:
             if perkID != loadPerkID:
                 continue

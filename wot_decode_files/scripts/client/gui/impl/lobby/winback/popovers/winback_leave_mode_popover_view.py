@@ -1,9 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/winback/popovers/winback_leave_mode_popover_view.py
 from account_helpers.AccountSettings import Winback
-from constants import WINBACK_CALL_BATTLE_TOKEN_DRAW_REASON
+from constants import WINBACK_BATTLE_TOKEN_DRAW_REASON
 from frameworks.wulf import ViewFlags, ViewSettings
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.winback.popovers.winback_leave_mode_popover_view_model import WinbackLeaveModePopoverViewModel
@@ -53,7 +53,7 @@ class WinbackLeaveModePopoverView(PopOverViewImpl):
           self.viewModel.onClick, self.__onClick),)
 
     def __onClick(self):
-        leaveWinbackMode(WINBACK_CALL_BATTLE_TOKEN_DRAW_REASON.MANUAL, showConfirmDialog=True, callback=selectRandom)
+        leaveWinbackMode(WINBACK_BATTLE_TOKEN_DRAW_REASON.MANUAL, showConfirmDialog=True, callback=selectRandom)
 
     def __updateBulletSetting(self):
         setWinbackSetting(Winback.BATTLE_SELECTOR_SETTINGS_BULLET_SHOWN, True)

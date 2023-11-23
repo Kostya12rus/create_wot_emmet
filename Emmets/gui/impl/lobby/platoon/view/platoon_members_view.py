@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/platoon/view/platoon_members_view.py
 import logging, typing
 from enum import Enum
@@ -28,6 +28,7 @@ from gui.impl.gen.view_models.views.lobby.platoon.slot_model import SlotModel, E
 from gui.impl.gen.view_models.views.lobby.platoon.comp7_member_count_dropdown import Comp7DropdownItem
 from gui.impl.gui_decorators import args2params
 from gui.impl.lobby.comp7 import comp7_shared
+from gui.impl.lobby.comp7.comp7_model_helpers import getSeasonNameEnum
 from gui.impl.lobby.platoon.platoon_helpers import formatSearchEstimatedTime
 from gui.impl.lobby.platoon.tooltip.platoon_alert_tooltip import AlertTooltip
 from gui.impl.lobby.platoon.tooltip.platoon_wtr_tooltip import WTRTooltip
@@ -37,6 +38,7 @@ from gui.impl.lobby.platoon.view.subview.platoon_tiers_filter_subview import Set
 from gui.impl.lobby.platoon.view.subview.platoon_tiers_limit_subview import TiersLimitSubview
 from gui.impl.lobby.common.vehicle_model_helpers import fillVehicleModel
 from gui.impl.lobby.premacc.squad_bonus_tooltip_content import SquadBonusTooltipContent, Comp7SquadBonusTooltipContent
+from gui.prestige.prestige_helpers import hasVehiclePrestige, fillPrestigeEmblemModel
 from gui.impl.pub import ViewImpl
 from gui.prb_control import prb_getters, prbEntityProperty
 from gui.prb_control.settings import CTRL_ENTITY_TYPE, REQUEST_TYPE, SELECTOR_BATTLE_TYPES
@@ -59,7 +61,7 @@ from gui.impl.pub.tooltip_window import SimpleTooltipContent
 from messenger.ext import channel_num_gen
 from adisp import adisp_process
 if typing.TYPE_CHECKING:
-    from helpers.server_settings import Comp7PrestigeRanksConfig
+    from helpers.server_settings import Comp7RanksConfig
     from comp7_ranks_common import Comp7Division
 _logger = logging.getLogger(__name__)
 _strButtons = R.strings.platoon.buttons
@@ -350,6 +352,13 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
         tags = playerData.get('tags', [])
         slotModel.player.voice.setIsMutedByUser(USER_TAG.MUTED in tags)
         slotModel.player.setIsIgnored(USER_TAG.IGNORED in tags)
+        prestigeLevel = slotData.get('prestigeLevel', 0)
+        vehicleData = slotData.get('selectedVehicle')
+        vehicleCD = vehicleData.get('intCD', 0) if vehicleData else 0
+        isPrestigeAvailable = hasVehiclePrestige(vehicleCD) and prestigeLevel != 0
+        slotModel.player.setIsPrestigeAvailable(isPrestigeAvailable)
+        if isPrestigeAvailable:
+            fillPrestigeEmblemModel(slotModel.player.prestigeEmblem, prestigeLevel, vehicleCD)
         return
 
     def _setVehicleData(self, slotData, slotModel):
@@ -571,7 +580,7 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
         self.__updateVoiceChatToggleState()
 
     def _onLeavePlatoon(self):
-        self._platoonCtrl.leavePlatoon()
+        self._platoonCtrl.leavePlatoon(parent=self)
 
     def __onServerSettingsChange(self, diff):
         if 'unit_assembler_config' in diff:
@@ -820,6 +829,7 @@ class Comp7MembersView(SquadMembersView):
 
     def _initWindowModeSpecificData(self, model):
         options = self._comp7Controller.getModeSettings().squadSizes
+        model.setSeasonName(getSeasonNameEnum())
         model.header.memberCountDropdown.setMultiple(False)
         items = model.header.memberCountDropdown.getItems()
         for option in options:
@@ -894,7 +904,7 @@ class Comp7MembersView(SquadMembersView):
 
     @classmethod
     def __getDivision(cls, rank, rating):
-        ranksConfig = cls._lobbyContext.getServerSettings().comp7PrestigeRanksConfig
+        ranksConfig = cls._lobbyContext.getServerSettings().comp7RanksConfig
         division = findFirst((lambda d: rating in d.range), ranksConfig.divisionsByRank.get(rank, ()))
         return division
 

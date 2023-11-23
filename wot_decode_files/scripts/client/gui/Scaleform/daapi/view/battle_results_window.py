@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle_results_window.py
 import logging
 from functools import partial
@@ -16,10 +16,10 @@ from gui.Scaleform.daapi.view.lobby.customization.sound_constants import SOUNDS
 from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getBuyPremiumUrl
 from gui.Scaleform.daapi.view.meta.BattleResultsMeta import BattleResultsMeta
 from gui.Scaleform.framework.entities.View import ViewKey
-from gui.Scaleform.genConsts.PERSONALCASECONST import PERSONALCASECONST
 from gui.battle_results import RequestEmblemContext, EMBLEM_TYPE
 from gui.battle_results.settings import PROGRESS_ACTION
 from gui.prb_control.dispatcher import g_prbLoader
+from gui.prestige.prestige_helpers import showPrestigeVehicleStats
 from gui.server_events import events_dispatcher as quests_events
 from gui.server_events.events_helpers import isC11nQuest
 from gui.shared import event_bus_handlers, events, EVENT_BUS_SCOPE, g_eventBus
@@ -107,14 +107,17 @@ class BattleResultsWindow(BattleResultsMeta):
         if unlockType in (PROGRESS_ACTION.RESEARCH_UNLOCK_TYPE, PROGRESS_ACTION.PURCHASE_UNLOCK_TYPE):
             event_dispatcher.showResearchView(itemID)
             self.onWindowClose()
-        elif unlockType == PROGRESS_ACTION.NEW_SKILL_UNLOCK_TYPE:
-            event_dispatcher.showPersonalCase(itemID, PERSONALCASECONST.SKILLS_TAB_ID, EVENT_BUS_SCOPE.LOBBY)
-        elif unlockType == PROGRESS_ACTION.NEW_FREE_SKILL_UNLOCK_TYPE:
-            event_dispatcher.showPersonalCase(itemID, PERSONALCASECONST.FREE_SKILLS_TAB_ID, EVENT_BUS_SCOPE.LOBBY)
+        elif unlockType in (PROGRESS_ACTION.NEW_SKILL_UNLOCK_TYPE, PROGRESS_ACTION.NEW_FREE_SKILL_UNLOCK_TYPE):
+            event_dispatcher.showPersonalCase(itemID)
 
     def showDogTagWindow(self, itemID):
         if self.__canNavigate():
             event_dispatcher.showDogTags(itemID, False)
+            self.destroy()
+
+    def showVehicleStats(self, vehCD):
+        if self.__canNavigate():
+            showPrestigeVehicleStats(vehCD)
             self.destroy()
 
     def showProgressiveRewardView(self):

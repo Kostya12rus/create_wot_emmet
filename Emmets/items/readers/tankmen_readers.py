@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/readers/tankmen_readers.py
 import ResMgr
 from constants import IS_CLIENT, IS_WEB, IS_BOT
@@ -162,4 +162,20 @@ def readNationConfig(xmlPath):
         _xml.raiseWrongXml(None, xmlPath, 'can not open or read')
     config = _readNationConfigSection((None, xmlPath), section)
     ResMgr.purge(xmlPath, True)
+    return config
+
+
+def readLoreConfig(xmlPath):
+    xmlCtx = (
+     None, xmlPath)
+    section = ResMgr.openSection(xmlPath)
+    if section is None:
+        _xml.raiseWrongXml(None, xmlPath, 'can not open or read')
+    config = tankmen_components.LoreComponent()
+    for partName, part in _xml.getChildren(xmlCtx, section, tankmen_components.LoreComponent.SECTION):
+        config.addDescrForGroup(partName, part.asString)
+        if part.has_key(tankmen_components.LoreComponent.NATION_SECTION):
+            for itemName, item in _xml.getChildren(xmlCtx, part, tankmen_components.LoreComponent.NATION_SECTION):
+                config.addNationDescrForGroup(partName, itemName, item.asString)
+
     return config

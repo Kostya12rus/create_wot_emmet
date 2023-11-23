@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/components/common.py
 from constants import ARENA_GUI_TYPE, FINISH_REASON
 from gui.impl import backport
@@ -24,9 +24,13 @@ def makeArenaFullName(arenaTypeName, i18nKey):
 
 
 def makeRegularFinishResultLabel(finishReason, teamResult):
-    if finishReason == FINISH_REASON.EXTERMINATION:
-        return backport.text(R.strings.battle_results.finish.reason.dyn(('c_{}{}').format(finishReason, teamResult))())
-    return backport.text(R.strings.battle_results.finish.reason.dyn(('c_{}').format(finishReason))())
+    return backport.text(getRegularFinishResultResource(finishReason, teamResult))
+
+
+def getRegularFinishResultResource(finishReason, teamResult):
+    isExtermination = finishReason == FINISH_REASON.EXTERMINATION
+    reasonKey = ('c_{}{}').format(finishReason, teamResult) if isExtermination else ('c_{}').format(finishReason)
+    return R.strings.battle_results.finish.reason.dyn(reasonKey)()
 
 
 def makeEpicBattleFinishResultLabel(finishReason, teamResult):
@@ -63,11 +67,18 @@ class RegularArenaFullNameItem(base.StatsItem):
     def _convert(self, record, reusable):
         arenaGuiType = reusable.common.arenaGuiType
         arenaType = reusable.common.arenaType
-        if arenaGuiType in (ARENA_GUI_TYPE.RANDOM, ARENA_GUI_TYPE.EPIC_RANDOM):
+        if arenaGuiType in ARENA_GUI_TYPE.RANDOM_RANGE:
             i18nKey = _ARENA_TYPE_FORMAT.format(arenaType.getGamePlayName())
         else:
             i18nKey = _ARENA_TYPE_EXT_FORMAT.format(arenaGuiType)
         return makeArenaFullName(arenaType.getName(), i18nKey)
+
+
+class ArenaNameItem(base.StatsItem):
+    __slots__ = ()
+
+    def _convert(self, record, reusable):
+        return backport.text(R.strings.arenas.dyn(('c_{}').format(reusable.common.arenaType.getGeometryName())).name())
 
 
 class ArenaIconItem(base.StatsItem):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/ProfileTechniquePage.py
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import PROFILE_TECHNIQUE
@@ -70,6 +70,15 @@ class ProfileTechniquePage(ProfileTechniquePageMeta):
     def requestData(self, vehicleId):
         self._receiveVehicleDossier(int(vehicleId), None)
         return
+
+    def updateView(self, ctx):
+        isPrestigeSorting = ctx.get('initVehicleSorting', {}).get('selectedColumnStr') == 'prestigeLevel'
+        if isPrestigeSorting:
+            self._selectedData = ctx
+            self._selectedVehicleIntCD = self._selectedData.get('itemCD', -1)
+            self.as_setSelectedVehicleIntCDS(self._selectedVehicleIntCD)
+            self.as_setInitDataS(self._getInitData())
+            self.invokeUpdate()
 
     def invokeUpdate(self):
         super(ProfileTechniquePage, self).invokeUpdate()

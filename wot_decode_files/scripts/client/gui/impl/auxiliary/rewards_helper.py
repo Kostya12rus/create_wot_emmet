@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/auxiliary/rewards_helper.py
 import logging, types, typing, itertools
 from collections import namedtuple
@@ -47,6 +47,7 @@ from gui.shared.utils.requesters import REQ_CRITERIA
 from gui.shared.utils.requesters.blueprints_requester import getUniqueBlueprints
 from helpers import dependency, int2roman
 from shared_utils import first
+from skeletons.gui.game_control import IBattlePassController
 from skeletons.gui.shared import IItemsCache
 STYLES_TAGS = []
 VIDEO_TAGS = []
@@ -58,8 +59,9 @@ TMAN_TOKENS = 'tmanToken'
 class BlueprintBonusTypes(object):
     BLUEPRINTS = 'blueprints'
     FINAL_BLUEPRINTS = 'finalBlueprints'
+    BLUEPRINTS_ANY = 'blueprintsAny'
     ALL = (
-     BLUEPRINTS, FINAL_BLUEPRINTS)
+     BLUEPRINTS, FINAL_BLUEPRINTS, BLUEPRINTS_ANY)
 
 
 class CrewBonusTypes(object):
@@ -528,6 +530,22 @@ DEF_MODEL_PRESENTERS = {CrewBonusTypes.CREW_BOOK_BONUSES: CrewBookModelPresenter
    BlueprintsBonusSubtypes.NATION_FRAGMENT: LootRewardConversionModelPresenter(R.images.gui.maps.icons.blueprints.fragment.big.vehicle(), R.sounds.gui_blueprint_fragment_convert()), 
    BlueprintsBonusSubtypes.VEHICLE_FRAGMENT: BlueprintFragmentRewardPresenter()}
 RANKED_MODEL_PRESENTERS = {'vehicles': LootVehicleRewardPresenter()}
+
+@dependency.replace_none_kwargs(battlePass=IBattlePassController)
+def setRewards(model, chapterID, battlePass=None):
+    freeArray = model.getFreeFinalRewards()
+    freeArray.clear()
+    for freeReward in battlePass.getFreeFinalRewardTypes(chapterID):
+        freeArray.addString(freeReward)
+
+    freeArray.invalidate()
+    paidArray = model.getPaidFinalRewards()
+    paidArray.clear()
+    for paidReward in battlePass.getPaidFinalRewardTypes(chapterID):
+        paidArray.addString(paidReward)
+
+    paidArray.invalidate()
+
 
 def getRewardsBonuses(rewards, size='big', awardsCount=_DEFAULT_DISPLAYED_AWARDS_COUNT):
     formatter = BonusNameQuestsBonusComposer(awardsCount, getPackRentVehiclesAwardPacker())

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/battle_pass_buy_view.py
 import logging, SoundGroups
 from PlayerEvents import g_playerEvents
@@ -149,6 +149,7 @@ class BattlePassBuyView(ViewImpl):
         with self.viewModel.transaction() as (tx):
             tx.setIsWalletAvailable(self.__wallet.isAvailable)
             tx.setIsShopOfferAvailable(self.__isShopOfferAvailable())
+            tx.setIsCustomSeason(self.__battlePass.isCustomSeason())
 
     def __clearTooltips(self):
         self.__tooltipItems.clear()
@@ -162,6 +163,7 @@ class BattlePassBuyView(ViewImpl):
             self.__showBuy()
         elif self.__backCallback is not None:
             self.__backCallback()
+            self.destroyWindow()
         else:
             self.destroyWindow()
         return
@@ -272,6 +274,7 @@ class BattlePassBuyView(ViewImpl):
             item.setIsLocked(package.isLocked())
             item.setChapterID(package.getChapterID())
             item.setIsExtra(package.isExtra())
+            item.setIsCustom(package.isCustom())
             item.setChapterState(_CHAPTER_STATES.get(package.getChapterState()))
             item.setCurrentLevel(package.getCurrentLevel() + 1)
             item.setExpireTime(self.__battlePass.getChapterRemainingTime(package.getChapterID()))

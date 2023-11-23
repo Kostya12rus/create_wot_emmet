@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/cond_formatters/tooltips.py
 from battle_pass_common import BATTLE_PASS_RANDOM_QUEST_TOKEN_PREFIX
 from constants import EVENT_TYPE
@@ -23,8 +23,7 @@ def reqStyle(_):
 def getSeparatorBlock(groupType=GROUP_TYPE.AND):
     label = getSeparator(groupType)
     if label:
-        item = packText(text_styles.standard(label))
-        return item
+        return packText(text=label, styler=text_styles.standard)
     else:
         return
 
@@ -35,6 +34,7 @@ class MissionsAccountRequirementsFormatter(ConditionsFormatter):
         super(MissionsAccountRequirementsFormatter, self).__init__({'token': _TokenRequirementFormatter(), 
            'premiumAccount': requirements.PremiumAccountFormatter(), 
            'premiumPlusAccount': requirements.PremiumPlusAccountFormatter(), 
+           'wotPlus': requirements.WotPlusFormatter(), 
            'inClan': requirements.InClanRequirementFormatter(), 
            'igrType': requirements.IgrTypeRequirementFormatter(), 
            'GR': requirements.GlobalRatingRequirementFormatter(), 
@@ -45,9 +45,19 @@ class MissionsAccountRequirementsFormatter(ConditionsFormatter):
 
     def format(self, conditions, event):
         if event.isGuiDisabled():
-            return {}
+            return []
         group = prepareAccountConditionsGroup(conditions, event)
         rqs = self._format(group, event)
+        return self._processRequirements(rqs)
+
+    @staticmethod
+    def _processRequirements(rqs):
+        for item in rqs:
+            styler = item.get('styler')
+            if styler:
+                item['text'] = styler(item['text'])
+                del item['styler']
+
         return rqs
 
     def _format(self, group, event, isNested=False, topHasOrGroup=False):
@@ -73,12 +83,12 @@ class MissionsAccountRequirementsFormatter(ConditionsFormatter):
                     if fmt:
                         branch = fmt.format(condition, event, reqStyle)
                     if branch:
-                        result.extend(self._processNonGroupConidtions(branch, isNested, separator, topHasOrGroup, isNotLast))
+                        result.extend(self._processNonGroupConditions(branch, isNested, separator, topHasOrGroup, isNotLast))
 
         return result
 
     @classmethod
-    def _processNonGroupConidtions(cls, branch, isNested, separator, isInOrGroup, isNotLast):
+    def _processNonGroupConditions(cls, branch, isNested, separator, isInOrGroup, isNotLast):
         formattedBranch = []
         for item in branch:
             if not isNested or not isInOrGroup:
@@ -120,4 +130,4 @@ class _TokenRequirementFormatter(ConditionFormatter):
             if msg is None:
                 msg = backport.text(R.strings.tooltips.quests.unavailable.token(), tokenName=text_styles.neutral(condition.getUserName()), count=condition.getNeededCount())
             return [
-             packText(style(msg))]
+             packText(text=msg, styler=style)]

@@ -1,19 +1,23 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/battle_pass_bonuses_helper.py
 import logging, typing
+from battle_pass_common import BATTLE_PASS_TOKEN_BLUEPRINT_GIFT_OFFER
+from gui.battle_pass.battle_pass_constants import BonusesLayoutConsts
+from gui.battle_pass.battle_pass_helpers import getOfferTokenByGift
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.server_events.recruit_helper import getRecruitInfo
 from gui import makeHtmlString
 from gui.server_events.bonuses import IntelligenceBlueprintBonus, NationalBlueprintBonus, DossierBonus
+from gui.shared.formatters import text_styles
 from gui.shared.gui_items import GUI_ITEM_TYPE
 from gui.shared.utils.requesters.blueprints_requester import getVehicleCDForIntelligence, getVehicleCDForNational
-from gui.battle_pass.battle_pass_constants import BonusesLayoutConsts
-from helpers import i18n, int2roman
+from helpers import i18n, int2roman, dependency
 from items.tankmen import RECRUIT_TMAN_TOKEN_PREFIX
 from shared_utils import first
+from skeletons.gui.offers import IOffersDataProvider
 if typing.TYPE_CHECKING:
     from gui.server_events.bonuses import SimpleBonus, VehicleBlueprintBonus, ItemsBonus, CustomizationsBonus, BattlePassSelectTokensBonus, BattlePassStyleProgressTokenBonus
 _logger = logging.getLogger(__name__)
@@ -308,13 +312,31 @@ class _DossierTextGetter(_HtmlTextGetter):
 
 
 class _SelectTokenTextGetter(_BaseTextGetter):
+    __offersProvider = dependency.descriptor(IOffersDataProvider)
 
     @classmethod
     def getText(cls, item):
         nameRes = R.strings.battle_pass.chosenBonuses.bonus.dyn(item.getType())
+        if nameRes.exists() and first(item.getTokens().keys()).startswith(BATTLE_PASS_TOKEN_BLUEPRINT_GIFT_OFFER):
+            count = text_styles.credits(cls.__getRealValue(item))
+            colon = backport.text(R.strings.common.common.colon())
+            if count > 1:
+                return ('{}{} {}').format(backport.text(nameRes()), colon, count)
         if nameRes.exists():
             return backport.text(nameRes())
         return ''
+
+    @classmethod
+    def __getRealValue(cls, item):
+        giftTokenName = first(item.getTokens().keys())
+        offer = cls.__offersProvider.getOfferByToken(getOfferTokenByGift(giftTokenName))
+        if offer is None:
+            return item.getCount()
+        else:
+            gift = first(offer.getAllGifts())
+            if gift is None:
+                return item.getCount()
+            return str(gift.giftCount * item.getCount())
 
 
 class _StyleProgressTokenTextGetter(_BaseTextGetter):

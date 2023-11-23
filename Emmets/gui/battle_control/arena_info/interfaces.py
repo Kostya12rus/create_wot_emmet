@@ -1,13 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/arena_info/interfaces.py
 import typing
 from gui.battle_control.arena_info.settings import ARENA_LISTENER_SCOPE as _SCOPE
 from gui.battle_control.controllers.interfaces import IBattleController
 from gui.battle_control.view_components import ViewComponentsController
 if typing.TYPE_CHECKING:
-    from auto_shoot_guns.auto_shoot_guns_common import AutoShootGunState
     from Math import Matrix
     from EmptyEntity import EmptyEntity
     from items.vehicles import VehicleDescr
@@ -15,7 +14,8 @@ if typing.TYPE_CHECKING:
     from vehicle_systems.appearance_cache import VehicleAppearanceCacheInfo
     from vehicle_systems.CompoundAppearance import CompoundAppearance
     from points_of_interest.components import PoiStateComponent
-    from cgf_components.zone_components import ZoneMarker, MinimapChanger, ZoneUINotification
+    from cgf_components.zone_components import ZoneMarker, ZoneUINotification
+    from UIComponents import MinimapChangerComponent
 
 class IArenaController(IBattleController):
     __slots__ = ('__weakref__', )
@@ -324,6 +324,9 @@ class IVehicleCountController(IArenaVehiclesController, ViewComponentsController
     def updateAttachedVehicle(self, vehicleID):
         raise NotImplementedError
 
+    def updateLives(self, lives):
+        raise NotImplementedError
+
 
 class IPrebattleSetupsController(IArenaPeriodController, IArenaLoadController, ViewComponentsController):
 
@@ -519,60 +522,28 @@ class IMapZonesController(IBattleController):
         raise NotImplementedError
 
 
-class IAutoShootGunController(IBattleController):
-
-    class IBurstController(object):
-
-        def isBurstActive(self):
-            raise NotImplementedError
-
-        def processShootCmd(self):
-            raise NotImplementedError
-
-    class IBurstPredictor(object):
-        onStateChanged = None
-        onStateUpdated = None
-
-        def isShootingPossible(self):
-            raise NotImplementedError
-
-        def isShootingProcess(self):
-            raise NotImplementedError
-
-        def canConfirmShooting(self):
-            raise NotImplementedError
-
-        def getPredictionState(self):
-            raise NotImplementedError
-
-        def activateCooldown(self):
-            raise NotImplementedError
-
-        def setShootingPossible(self, isShootingPossible):
-            raise NotImplementedError
-
-        def activateShooting(self):
-            raise NotImplementedError
-
-        def deactivateShooting(self):
-            raise NotImplementedError
-
-        def killShooting(self):
-            raise NotImplementedError
-
-        def synchronizeShooting(self, state):
-            raise NotImplementedError
+class IOverrideSettingsController(IArenaController):
+    __slots__ = ()
 
     @property
-    def burstController(self):
+    def defaultTab(self):
         raise NotImplementedError
 
     @property
-    def burstPredictor(self):
+    def disabledTabs(self):
         raise NotImplementedError
 
-    def startControl(self, *args):
+    def getCtrlScope(self):
+        return _SCOPE.OVERRIDE_SETTINGS
+
+
+class IAimingSoundsCtrl(IBattleController):
+
+    def startControl(self, *_):
         pass
 
-    def getControllerID(self):
+    def stopControl(self):
+        pass
+
+    def updateDispersion(self, multFactor, aimingFactor, idealFactor, dualAccMultFactor, dualAccFactor, idealDualAccFactor, hasDualAcc):
         raise NotImplementedError

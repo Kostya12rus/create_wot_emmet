@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/techtree/data.py
 import logging
 from itertools import chain
@@ -856,7 +856,8 @@ class NationTreeData(_ItemsData):
         if filtered:
             unlocked = [ (item, self._change2UnlockedByCD(item)) for item in filtered ]
             parents = map(g_techTreeDP.getTopLevel, filtered)
-            prevUnlocked = [ (item, self._changePreviouslyUnlockedByCD(item)) for item in chain(*parents) ]
+            prevUnlocked = [ (item, self._changePreviouslyUnlockedByCD(item)) for item in chain(*parents) if not self.__isInInventory(item)
+                           ]
         return (
          next2Unlock, unlocked, prevUnlocked)
 
@@ -1022,3 +1023,12 @@ class NationTreeData(_ItemsData):
             self._nodes[self._scrollIndex].addStateFlag(NODE_STATE_FLAGS.SELECTED)
         elif self._scrollIndex < 0:
             self._scrollIndex = 0
+
+    def __isInInventory(self, nodeCD):
+        try:
+            node = self._nodes[self._nodesIdx[nodeCD]]
+        except KeyError as e:
+            _logger.exception(e)
+            return False
+
+        return NODE_STATE.inInventory(node.getState())

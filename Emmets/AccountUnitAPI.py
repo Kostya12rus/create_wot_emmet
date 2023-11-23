@@ -1,14 +1,14 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/AccountUnitAPI.py
 import cPickle
 from typing import Optional as TOptional
 import constants
-from constants import PREBATTLE_TYPE
 from UnitBase import UNIT_SLOT, CLIENT_UNIT_CMD, INV_ID_CLEAR_VEHICLE
-from unit_roster_config import UnitRosterSlot
+from constants import PREBATTLE_TYPE
 from debug_utils import *
+from unit_roster_config import UnitRosterSlot
 
 class UNIT_API:
     NONE = 0
@@ -167,13 +167,13 @@ class UnitClientAPI(object):
         if constants.IS_DEVELOPMENT:
             return self._doUnitCmd(CLIENT_UNIT_CMD.SET_UNIT_DEV_MODE, int(isDevMode))
 
-    def startBattle(self, vehInvID=0, gameplaysMask=None, arenaTypeID=0, isOnly10ModeEnabled=None, stopAutoSearch=False, startBattleUnitCmd=CLIENT_UNIT_CMD.START_UNIT_BATTLE, extraModeData=''):
+    def startBattle(self, vehInvID=0, gameplaysMask=None, arenaTypeID=0, randomFlags=None, stopAutoSearch=False, startBattleUnitCmd=CLIENT_UNIT_CMD.START_UNIT_BATTLE, extraModeData=''):
         if gameplaysMask is not None:
             self.setGameplaysMask(gameplaysMask)
         if arenaTypeID != 0:
             self.setArenaType(arenaTypeID)
-        if isOnly10ModeEnabled is not None:
-            self.setOnly10Mode(isOnly10ModeEnabled)
+        if randomFlags is not None:
+            self.setRandomFlags(randomFlags)
         return self._doUnitCmd(startBattleUnitCmd, vehInvID, int(stopAutoSearch), extraModeData)
 
     def stopBattle(self, stopBattleUnitCmd=CLIENT_UNIT_CMD.STOP_UNIT_BATTLE):
@@ -194,8 +194,8 @@ class UnitClientAPI(object):
     def setGameplaysMask(self, gameplaysMask):
         return self._doUnitCmd(CLIENT_UNIT_CMD.SET_GAMEPLAYS_MASK, gameplaysMask)
 
-    def setOnly10Mode(self, isOnly10ModeEnabled):
-        return self._doUnitCmd(CLIENT_UNIT_CMD.SET_ONLY_10_MODE, isOnly10ModeEnabled)
+    def setRandomFlags(self, randomFlags):
+        return self._doUnitCmd(CLIENT_UNIT_CMD.SET_RANDOM_FLAGS, randomFlags)
 
     def setSquadSize(self, squadSize):
         return self._doUnitCmd(CLIENT_UNIT_CMD.SET_SQUAD_SIZE, squadSize)

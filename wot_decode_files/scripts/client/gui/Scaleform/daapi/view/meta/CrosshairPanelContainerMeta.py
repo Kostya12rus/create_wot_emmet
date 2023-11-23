@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/meta/CrosshairPanelContainerMeta.py
 from gui.Scaleform.daapi.view.meta.DAAPISimpleContainerMeta import DAAPISimpleContainerMeta
 
@@ -201,14 +201,6 @@ class CrosshairPanelContainerMeta(DAAPISimpleContainerMeta):
         if self._isDAAPIInited():
             return self.flashObject.as_blinkReloadTime(blinkType)
 
-    def as_setOverheatProgressS(self, value, isOverheated):
+    def as_setDualAccActiveS(self, value):
         if self._isDAAPIInited():
-            return self.flashObject.as_setOverheatProgress(value, isOverheated)
-
-    def as_addOverheatS(self, overheatMark):
-        if self._isDAAPIInited():
-            return self.flashObject.as_addOverheat(overheatMark)
-
-    def as_removeOverheatS(self):
-        if self._isDAAPIInited():
-            return self.flashObject.as_removeOverheat()
+            return self.flashObject.as_setDualAccActive(value)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/GUN_MARKER_VIEW_CONSTANTS.py
 
 
@@ -16,9 +16,11 @@ class GUN_MARKER_VIEW_CONSTANTS(object):
     ARTY_HIT_MARKER_LINKAGE = 'ArtyHitMarkerUI'
     ARCADE_GUN_MARKER_NAME = 'arcadeGunMarker'
     SNIPER_GUN_MARKER_NAME = 'sniperGunMarker'
+    SPG_GUN_MARKER_NAME = 'spgGunMarker'
     DUAL_GUN_ARCADE_MARKER_NAME = 'arcadeDualGunMarker'
     DUAL_GUN_SNIPER_MARKER_NAME = 'sniperDualGunMarker'
-    SPG_GUN_MARKER_NAME = 'spgGunMarker'
+    ARCADE_DUAL_ACC_GUN_MARKER_NAME = 'arcadeDualAccGunMarker'
+    SNIPER_DUAL_ACC_GUN_MARKER_NAME = 'sniperDualAccGunMarker'
     VIDEO_GUN_MARKER_NAME = 'videoGunMarker'
     ARTY_HIT_MARKER_NAME = 'artyHitGunMarker'
     DEBUG_ARCADE_GUN_MARKER_NAME = 'arcadeDebugGunMarker'

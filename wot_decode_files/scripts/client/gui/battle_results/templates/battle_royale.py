@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/templates/battle_royale.py
 from gui.battle_results.components import base, battle_royale
 from gui.battle_results.settings import BATTLE_RESULTS_RECORD as _RECORD
@@ -90,7 +90,9 @@ _REWARDS_VO_META = base.PropertyMeta((
   'bonuses', [], 'bonuses'),
  ('completedQuestsCount', 0, 'completedQuestsCount'),
  (
-  'completedQuests', {}, 'completedQuests')))
+  'completedQuests', {}, 'completedQuests'),
+ (
+  'brAwardTokens', {}, 'brAwardTokens')))
 _REWARDS_VO_META.bind(battle_royale.BattleRoyaleRewardsBlock)
 BR_PERSONAL_STATS_BLOCK = base.StatsBlock(_PERSONAL_VO_META, 'personal')
 BR_PERSONAL_STATS_BLOCK.addNextComponent(battle_royale.BattleRoyaleFinancialBlock(_FINANCIAL_BLOCK_VO_META, 'financialBalance'))

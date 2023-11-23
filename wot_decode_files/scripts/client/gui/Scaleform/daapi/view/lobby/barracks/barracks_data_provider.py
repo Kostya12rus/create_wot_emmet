@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/barracks/barracks_data_provider.py
 from typing import Dict
 from CurrentVehicle import g_currentVehicle
@@ -69,7 +69,7 @@ def _packTankmanData(tankman, itemsCache=None, lobbyContext=None):
         isInSelfVehicle = True
         isInSelfVehicleType = True
     data = {'fullName': tankman.fullUserName, 'rank': tankman.rankUserName, 
-       'specializationLevel': tankman.realRoleLevel[0], 
+       'specializationLevel': tankman.realRoleLevel.lvl, 
        'role': tankman.roleUserName, 
        'vehicleType': tankmanVehicle.shortUserName, 
        'iconFile': tankman.smallIconPath, 
@@ -94,7 +94,7 @@ def _packTankmanData(tankman, itemsCache=None, lobbyContext=None):
        'notRecruited': False, 
        'hasCommanderFeature': tankman.role == Tankman.ROLES.COMMANDER, 
        'roles': tankman.roles()}
-    if tankman.skinID != NO_CREW_SKIN_ID and lobbyContext.getServerSettings().isCrewSkinsEnabled():
+    if tankman.skinID != NO_CREW_SKIN_ID:
         skinItem = itemsCache.items.getCrewSkin(tankman.skinID)
         iconFile = getCrewSkinIconSmall(skinItem.getIconID())
         data['iconFile'] = iconFile

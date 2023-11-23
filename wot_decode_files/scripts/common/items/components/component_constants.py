@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/component_constants.py
 import collections
 from soft_exception import SoftException
@@ -8,14 +8,12 @@ from wrapped_reflection_framework import reflectedNamedTuple
 from Math import Vector3
 Autoreload = collections.namedtuple('Autoreload', [
  'reloadTime', 'boostStartTime', 'boostResidueTime', 'boostFraction'])
-AutoShoot = collections.namedtuple('AutoShoot', [
- 'shotDispersionPerSec', 'maxShotDispersion'])
-SpinGun = collections.namedtuple('SpinGun', [
- 'spinUpTimeout', 'spinDownTimeout', 'isSpinUpShootingEnable', 'startFactor'])
 DualGun = reflectedNamedTuple('DualGun', [
  'chargeTime', 'shootImpulse', 'reloadLockTime', 'reloadTimes', 'rateTime', 
  'chargeThreshold', 
  'afterShotDelay', 'preChargeIndication', 'chargeCancelTime'])
+DualAccuracy = collections.namedtuple('DualAccuracy', [
+ 'afterShotDispersionAngle', 'coolingDelay'])
 UNDEFINED_ITEM_TYPE_ID = 0
 ZERO_FLOAT = 0.0
 ZERO_INT = 0
@@ -44,8 +42,7 @@ DEFAULT_GUN_BURST = (1, 0.0)
 DEFAULT_GUN_CLIP = (1, 0.0)
 DEFAULT_GUN_DUALGUN = DualGun(chargeTime=4.0, shootImpulse=100.0, reloadLockTime=10.0, reloadTimes=(10,
                                                                                                     8), rateTime=5, chargeThreshold=0.5, afterShotDelay=0.5, preChargeIndication=0.25, chargeCancelTime=0.18)
-DEFAULT_GUN_AUTOSHOOT = AutoShoot(shotDispersionPerSec=0.0, maxShotDispersion=0.0)
-DEFAULT_SPIN_GUN = SpinGun(startFactor=0.0, spinUpTimeout=0.0, spinDownTimeout=0.0, isSpinUpShootingEnable=True)
+DEFAULT_GUN_DUAL_ACCURACY = DualAccuracy(afterShotDispersionAngle=1.0, coolingDelay=5.0)
 DEFAULT_FAKE_TURRETS = {'lobby': (), 'battle': ()}
 DEFAULT_HULL_VARIANT_MATCH = (None, None)
 DEFAULT_PREMIUM_VEHICLE_XP_FACTOR = 0.0
@@ -70,7 +67,5 @@ ALLOWED_MISC_SLOTS = ('sequence', 'attachment')
 ALLOWED_SLOTS_ANCHORS = ('paint', 'camouflage', 'effect', 'style')
 TANKMEN_GROUPS = ('normalGroups', 'premiumGroups')
 MAIN_TRACK_PAIR_IDX = 0
-DynamicShotEffect = collections.namedtuple('DynamicShotEffect', ['effectsIndex', 'minShotsCount', 'maxShotsCount'])
-DYNAMIC_SHOT_MAX_COUNT = 10000
 ShootImpulse = collections.namedtuple('ShootImpulse', [
  'magnitude', 'applicationPoint', 'isStillSafe'])

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/base/__init__.py
 from adisp import adisp_process
 from gui.shared.utils import functions
@@ -38,7 +38,6 @@ def lobbyHeaderNavigationPossibleCheck(func):
 
 
 @adisp_process
-def checkVehicleAmmoFull(vehicle, callback):
-    res = yield functions.checkAmmoLevel((vehicle,))
-    if res:
-        callback()
+def checkVehicleAmmoFull(vehicle, callback=None):
+    result = yield functions.checkAmmoLevel((vehicle,))
+    callback(result)

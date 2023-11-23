@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/settings/views.py
 import logging
 from constants import ARENA_GUI_TYPE
@@ -13,7 +13,6 @@ _logger.addHandler(logging.NullHandler())
 
 class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     GOLD_FISH_WINDOW = 'goldFishWindow'
-    PERSONAL_CASE = 'personalCase'
     EULA = 'EULA'
     EULA_FULL = 'EULAFull'
     LOGIN_QUEUE = 'loginQueue'
@@ -56,12 +55,14 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     PROFILE_TECHNIQUE_WINDOW = 'profileTechniqueWindow'
     PROFILE_FORMATIONS_PAGE = 'profileFormationsPage'
     PROFILE_HOF = 'profileHof'
+    PROFILE_COLLECTIONS_PAGE = 'profileCollectionsPage'
+    PROFILE_PRESTIGE_WIDGET = 'profilePrestigeWidget'
+    PROFILE_PRESTIGE_EMBLEM_WIDGET = 'profilePrestigeEmblemWidget'
     GAMMA_WIZARD = 'gammaWizard'
     COLOR_SETTING = 'colorSettings'
     WIKI_VIEW = 'wikiView'
     MANUAL_CHAPTER_VIEW = 'manualChapterView'
     WOT_PLUS_INFO_VIEW = 'wotPlusInfoView'
-    VEHICLE_RENTAL_VIEW = 'vehicleRentalView'
     TELECOM_RENTAL_VIEW = 'telecomRentalView'
     AMMUNITION_SETUP_VIEW = 'ammunitionSetupView'
     LOBBY_TECHTREE = 'techtree'
@@ -79,13 +80,11 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     CONTACTS_LIST_BUTTON = 'contactsListButton'
     VEHICLE_COMPARE_CART_BUTTON = 'vehicleCompareCartButton'
     TEST_WINDOW = 'testWindow'
-    RECRUIT_WINDOW = 'recruitWindow'
-    CREW_ABOUT_DOG_WINDOW = 'aboutDogWindow'
     EXCHANGE_WINDOW = 'exchangeWindow'
+    EXCHANGE_WINDOW_MODAL = 'exchangeWindowModal'
     PROFILE_WINDOW = 'profileWindow'
     EXCHANGE_XP_WINDOW = 'exchangeXPWindow'
     EXCHANGE_XP_WINDOW_DIALOG_MODAL = 'exchangeXPWindowDialog'
-    EXCHANGE_FREE_TO_TANKMAN_XP_WINDOW = 'exchangeFreeToTankmanXpWindow'
     VEHICLE_BUY_WINDOW = 'vehicleBuyWindow'
     VEHICLE_RESTORE_WINDOW = 'vehicleRestoreWindow'
     BATTLE_QUEUE = 'battleQueue'
@@ -99,7 +98,6 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     VEHICLE_SELL_DIALOG = 'vehicleSellDialog'
     SETTINGS_WINDOW = 'settingsWindow'
     BATTLE_RESULTS = 'battleResults'
-    TANKMAN_SKILLS_DROP_WINDOW = 'tankmanSkillsDropWindow'
     TANKMAN_SKILLS_DROP_FOR_FREE_WINDOW = 'tankmanSkillsDropForFreeWindow'
     BROWSER_WINDOW = 'browserWindow'
     BROWSER_WINDOW_MODAL = 'browserWindowModal'
@@ -112,7 +110,7 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     IMAGE_VIEW = 'imageView'
     HERO_VEHICLE_PREVIEW = 'heroVehiclePreviewPage'
     TRADE_IN_VEHICLE_PREVIEW = 'tradeInVehiclePreview'
-    WOT_PLUS_VEHICLE_PREVIEW = 'wotPlusVehiclePreview'
+    RENTAL_VEHICLE_PREVIEW = 'rentalVehiclePreview'
     BATTLE_PASS_VEHICLE_PREVIEW = 'battlePassVehiclePreview'
     MARATHON_VEHICLE_PREVIEW = 'marathonVehiclePreview'
     CONFIGURABLE_VEHICLE_PREVIEW = 'configurableVehiclePreview'
@@ -131,19 +129,15 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     USE_FREEW_AWARD_SHEET_DIALOG = 'useFreeAwardSheetDialog'
     ICON_DIALOG = 'iconDialog'
     ICON_PRICE_DIALOG = 'iconPriceDialog'
-    CREW_SKINS_COMPENSATION_DIALOG = 'crewSkinsCompensationDialog'
     PM_CONFIRMATION_DIALOG = 'pmConfirmationDialog'
     PUNISHMENT_DIALOG = 'punishmentDialog'
     SYSTEM_MESSAGE_DIALOG = 'systemMessageDialog'
     NOTIFICATIONS_LIST = 'notificationsList'
-    RETRAIN_CREW = 'retrainCrewWindow'
     CREW_OPERATIONS_POPOVER = 'crewOperationsPopOver'
     BATTLE_TYPE_SELECT_POPOVER = 'battleTypeSelectPopover'
     SQUAD_TYPE_SELECT_POPOVER = 'squadTypeSelectPopover'
     TRADEIN_POPOVER = 'TradeInPopover'
     ACOUSTIC_POPOVER = 'acousticPopover'
-    DISMISS_TANKMAN_DIALOG = 'dismissTankmanDialog'
-    RESTORE_TANKMAN_DIALOG = 'restoreTankmanDialog'
     ADVENT_CALENDAR = 'adventCalendar'
     AWARD_WINDOW = 'awardWindow'
     AWARD_WINDOW_MODAL = 'awardWindowModal'
@@ -172,7 +166,6 @@ class VIEW_ALIAS(COMMON_VIEW_ALIAS):
     CONFIRM_EXCHANGE_DIALOG_MODAL = 'ConfirmExchangeDialogModal'
     QUESTS_SEASON_AWARDS_WINDOW = 'QuestsSeasonAwardsWindow'
     CHECK_BOX_DIALOG = 'CheckBoxDialog'
-    ROLE_CHANGE = 'roleChange'
     REPORT_BUG = 'reportBug'
     SQUAD_PROMO_WINDOW = 'squadPromoWindow'
     BOOSTERS_PANEL = 'boostersPanel'
@@ -265,6 +258,7 @@ VIEW_BATTLE_PAGE_ALIAS_BY_ARENA_GUI_TYPE = {ARENA_GUI_TYPE.EPIC_RANDOM: VIEW_ALI
    ARENA_GUI_TYPE.SORTIE_2: VIEW_ALIAS.STRONGHOLD_BATTLE_PAGE, 
    ARENA_GUI_TYPE.FORT_BATTLE_2: VIEW_ALIAS.STRONGHOLD_BATTLE_PAGE, 
    ARENA_GUI_TYPE.COMP7: VIEW_ALIAS.COMP7_BATTLE_PAGE, 
+   ARENA_GUI_TYPE.TOURNAMENT_COMP7: VIEW_ALIAS.COMP7_BATTLE_PAGE, 
    ARENA_GUI_TYPE.WINBACK: VIEW_ALIAS.WINBACK_BATTLE_PAGE}
 
 def addViewBattlePageAliasByArenaGUIType(arenaGuiType, viewAlias, personality):

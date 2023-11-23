@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/limited_ui/lui_rules_storage.py
 from collections import namedtuple
 import enum, typing
@@ -41,12 +41,14 @@ class LuiRules(enum.Enum):
     BM_FLAG = 'BattleMattersFlag'
     PERSONAL_MISSIONS = 'PersonalMissions'
     SYS_MSG_COLLECTION_START_BP = 'sysMsgCollectionStartBattlePass'
+    SYS_MSG_COLLECTIONS_UPDATED_ENTRY = 'sysMsgCollectionsUpdatedEntry'
     LOBBY_HEADER_COUNTERS_STORAGE = 'storage'
     PR_HANGAR_BUTTON = 'PersonalReservesHangarButton'
     STRONGHOLD_ENTRY_POINT = 'StrongholdEntryPoint'
     BR_ENTRY_POINT = 'BREntryPoint'
     FUN_RANDOM_ENTRY_POINT = 'FunRandomEntryPoint'
     FUN_RANDOM_NOTIFICATIONS = 'FunRandomNotifications'
+    HALLOWEEN_ENTRY_POINT = 'HalloweenEntryPoint'
 
 
 class _LimitedUIRule(namedtuple('_LimitedUIRule', ('idx', 'expression', 'tokens', 'message'))):

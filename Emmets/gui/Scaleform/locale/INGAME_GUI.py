@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/INGAME_GUI.py
 from debug_utils import LOG_WARNING
 
@@ -34,7 +34,6 @@ class INGAME_GUI(object):
     PLAYER_ERRORS_CANT_SHOOT_CREW_INACTIVE = '#ingame_gui:player_errors/cant_shoot/crew_inactive'
     PLAYER_ERRORS_CANT_SHOOT_NO_AMMO = '#ingame_gui:player_errors/cant_shoot/no_ammo'
     PLAYER_ERRORS_CANT_SHOOT_GUN_DAMAGED = '#ingame_gui:player_errors/cant_shoot/gun_damaged'
-    PLAYER_ERRORS_CANT_SHOOT_GUN_OVERHEATED = '#ingame_gui:player_errors/cant_shoot/gun_overheated'
     PLAYER_ERRORS_CANT_SHOOT_GUN_RELOAD = '#ingame_gui:player_errors/cant_shoot/gun_reload'
     PLAYER_ERRORS_CANT_SHOOT_GUN_LOCKED = '#ingame_gui:player_errors/cant_shoot/gun_locked'
     PLAYER_ERRORS_CANT_SWITCH_ENGINE_DESTROYED = '#ingame_gui:player_errors/cant_switch/engine_destroyed'
@@ -64,7 +63,6 @@ class INGAME_GUI(object):
     PLAYER_MESSAGES_TANKMAN_RESTORED = '#ingame_gui:player_messages/TANKMAN_RESTORED'
     PLAYER_MESSAGES_DEVICE_REPAIRED = '#ingame_gui:player_messages/DEVICE_REPAIRED'
     PLAYER_MESSAGES_ALLY_HIT = '#ingame_gui:player_messages/ALLY_HIT'
-    PLAYER_MESSAGES_ALLY_MULTI_HIT = '#ingame_gui:player_messages/ALLY_MULTI_HIT'
     PLAYER_MESSAGES_ALLY_BASE_CAPTURED_NOTIFICATION = '#ingame_gui:player_messages/ally_base_captured_notification'
     PLAYER_MESSAGES_ENEMY_BASE_CAPTURED_NOTIFICATION = '#ingame_gui:player_messages/enemy_base_captured_notification'
     PLAYER_MESSAGES_BASE_CAPTURED_NOTIFICATION = '#ingame_gui:player_messages/base_captured_notification'
@@ -234,7 +232,6 @@ class INGAME_GUI(object):
     SHELLS_KINDS_ARMOR_PIERCING_HE = '#ingame_gui:shells_kinds/ARMOR_PIERCING_HE'
     SHELLS_KINDS_ARMOR_PIERCING_CR = '#ingame_gui:shells_kinds/ARMOR_PIERCING_CR'
     SHELLS_KINDS_PARAMS_DAMAGE = '#ingame_gui:shells_kinds/params/damage'
-    SHELLS_KINDS_PARAMS_DAMAGEPERSECOND = '#ingame_gui:shells_kinds/params/damagePerSecond'
     SHELLS_KINDS_PARAMS_PIERCINGPOWER = '#ingame_gui:shells_kinds/params/piercingPower'
     SHELLS_KINDS_PARAMS_SHOTSPEED = '#ingame_gui:shells_kinds/params/shotSpeed'
     SHELLS_KINDS_PARAMS_EXPLOSIONRADIUS = '#ingame_gui:shells_kinds/params/explosionRadius'
@@ -562,6 +559,7 @@ class INGAME_GUI(object):
     POSTMORTEM_MESSAGES_DEATH_FROM_THUNDER_STRIKE = '#ingame_gui:postmortem_messages/DEATH_FROM_THUNDER_STRIKE'
     POSTMORTEM_MESSAGES_DEATH_FROM_CORRODING_SHOT = '#ingame_gui:postmortem_messages/DEATH_FROM_CORRODING_SHOT'
     POSTMORTEM_MESSAGES_DEATH_FROM_CLING_BRANDER = '#ingame_gui:postmortem_messages/DEATH_FROM_CLING_BRANDER'
+    POSTMORTEM_MESSAGES_DEATH_FROM_BR_BOT = '#ingame_gui:postmortem_messages/DEATH_FROM_BR_BOT'
     POSTMORTEM_MESSAGES_DEATH_FROM_SHOT_ARCADE_BOMBER_BATTLE_ROYALE = '#ingame_gui:postmortem_messages/DEATH_FROM_SHOT_ARCADE_BOMBER_BATTLE_ROYALE'
     PLAYER_MESSAGES_DEATH_FROM_OVERTURN_SELF_SUICIDE = '#ingame_gui:player_messages/DEATH_FROM_OVERTURN_SELF_SUICIDE'
     PLAYER_MESSAGES_DEATH_FROM_OVERTURN_SELF_ALLY = '#ingame_gui:player_messages/DEATH_FROM_OVERTURN_SELF_ALLY'
@@ -999,8 +997,14 @@ class INGAME_GUI(object):
     PERSONAL_RESERVES_HINT_PRESS = '#ingame_gui:personal_reserves/hint/press'
     PERSONAL_RESERVES_HINT_DESCRIPTION = '#ingame_gui:personal_reserves/hint/description'
     HINT_NOBINDINGKEY = '#ingame_gui:hint/noBindingKey'
+    DESTROYTIMER_LIFTOVER = '#ingame_gui:destroyTimer/liftOver'
     DANGER_ZONE_INDICATOR = '#ingame_gui:danger_zone/indicator'
+    WARNING_ZONE_INDICATOR = '#ingame_gui:warning_zone/indicator'
     STATUSNOTIFICATIONTIMERS_STATICDEATHZONE = '#ingame_gui:statusNotificationTimers/staticDeathZone'
+    DEVMAPS_HINT_PRESS = '#ingame_gui:devMaps/hint/press'
+    DEVMAPS_HINT_DESCRIPTION = '#ingame_gui:devMaps/hint/description'
+    DEVMAPS_MAPINFO_TEXT = '#ingame_gui:devMaps/mapInfo/text'
+    DEVMAPS_MAPINFO_INFO = '#ingame_gui:devMaps/mapInfo/info'
     CHAT_SHORTCUTS_ENUM = (
      CHAT_SHORTCUTS_ATTENTION_TO_POSITION_GRIDINFO,
      CHAT_SHORTCUTS_ATTENTION_TO_POSITION,

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/reusable/personal.py
 import itertools
 from collections import namedtuple
@@ -434,7 +434,8 @@ class PersonalInfo(shared.UnpackedInfo):
     __slots__ = ('__avatar', '__vehicles', '__lifeTimeInfo', '__isObserver', '_economicsRecords',
                  '__questsProgress', '__PM2Progress', '__rankInfo', '__isTeamKiller',
                  '__progressiveReward', '__premiumMask', '__isAddXPBonusApplied',
-                 '__c11nProgress', '__dogTags', '__goldBankGain', '__xpProgress')
+                 '__c11nProgress', '__dogTags', '__goldBankGain', '__xpProgress',
+                 '__prestigeResults')
     itemsCache = dependency.descriptor(IItemsCache)
 
     def __init__(self, bonusType, personal):
@@ -457,6 +458,7 @@ class PersonalInfo(shared.UnpackedInfo):
         self.__xpProgress = {}
         self.__rankInfo = PostBattleRankInfo(0, 0, 0, 0, 0, 0, 0, 0, {}, {}, False, 0, 0)
         self.__dogTags = {}
+        self.__prestigeResults = {}
         self.__goldBankGain = 0
         if not self.hasUnpackedItems():
             self.__collectRequiredData(personal)
@@ -559,6 +561,9 @@ class PersonalInfo(shared.UnpackedInfo):
     def getProgressiveReward(self):
         return self.__progressiveReward
 
+    def getPrestigeResults(self):
+        return self.__prestigeResults
+
     def getBaseCreditsRecords(self):
         return self._economicsRecords.getBaseCreditsRecords()
 
@@ -635,6 +640,7 @@ class PersonalInfo(shared.UnpackedInfo):
             self.__c11nProgress[intCD] = data.get('c11nProgress', {})
             self.__xpProgress[intCD] = {'xp': data.get('xp', 0), 
                'xpByTmen': data.get('xpByTmen', [])}
+            self.__prestigeResults[intCD] = data.get('prestigeResults', {})
 
         if lifeTimes:
             self.__lifeTimeInfo = _LifeTimeInfo(True, min(lifeTimes))

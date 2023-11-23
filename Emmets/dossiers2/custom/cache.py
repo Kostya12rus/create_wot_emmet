@@ -1,10 +1,24 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/dossiers2/custom/cache.py
 import nations
 from items import vehicles
 from collector_vehicle import CollectorVehicleConsts
+PRESTIGE_ALLOWED_TAGS = {
+ 'role_ATSPG_sniper', 'role_ATSPG_universal', 'role_ATSPG_support', 'role_LT_universal', 
+ 'role_LT_wheeled', 
+ 'role_SPG', 'role_HT_break', 'role_HT_universal', 'role_HT_support', 
+ 'role_MT_assault', 
+ 'role_MT_universal', 'role_MT_sniper', 'role_MT_support', 
+ 'role_ATSPG_assault', 
+ 'role_HT_assault', 'special', 'collectorVehicle', 'secret', 'testTank', 
+ 'private', 
+ 'event_battles', 'fallout', 'epic_battles', 'mapbox', 'fun_random', 
+ 'rent_promotion', 
+ 'premiumIGR', 'pillbox', 'fr_hidden', 'mode_hidden', 'disableIBA', 'comp7', 
+ 'bot_hunter', 
+ 'clanWarsBattles'}
 
 def getCache():
     global _g_cache
@@ -13,12 +27,16 @@ def getCache():
 
 def buildCache():
     vehiclesByLevel = {}
-    vehiclesByTag = {'beast': set(), 'sinai': set(), 'patton': set()}
+    TAGS_TO_COLLECT = {
+     'beast', 'sinai', 'patton'}.union(PRESTIGE_ALLOWED_TAGS)
+    vehiclesByTag = {tag: set() for tag in TAGS_TO_COLLECT}
     vehiclesInTreeByNation = {}
     vehiclesInTree = set()
     nationsWithVehiclesInTree = []
     collectorVehiclesByNations = {}
     collectorVehiclesLevelsByNations = {}
+    vehiclesNameToDescr = {}
+    vehicleEliteStatusXp = {}
     unlocksSources = vehicles.getUnlocksSources()
     for nationIdx in xrange(len(nations.NAMES)):
         nationList = vehicles.g_list.getList(nationIdx)
@@ -31,8 +49,10 @@ def buildCache():
                     continue
                 elif 'maps_training' in vehDescr.tags:
                     continue
+                vehiclesNameToDescr[vehDescr.name] = vehDescr.compactDescr
+                vehicleEliteStatusXp[vehDescr.compactDescr] = __getVehicleEliteStatusXp(vehDescr.compactDescr)
                 vehiclesByLevel.setdefault(vehDescr.level, set()).add(vehDescr.compactDescr)
-                for tag in ('beast', 'sinai', 'patton'):
+                for tag in TAGS_TO_COLLECT:
                     if tag in vehDescr.tags:
                         vehiclesByTag[tag].add(vehDescr.compactDescr)
 
@@ -58,7 +78,17 @@ def buildCache():
        'vehiclesInTrees': vehiclesInTree, 
        'nationsWithVehiclesInTree': nationsWithVehiclesInTree, 
        'collectorVehiclesByNations': collectorVehiclesByNations, 
-       'collectorVehiclesLevelsByNations': collectorVehiclesLevelsByNations})
+       'collectorVehiclesLevelsByNations': collectorVehiclesLevelsByNations, 
+       'vehiclesNameToDescr': vehiclesNameToDescr, 
+       'vehicleEliteStatusXp': vehicleEliteStatusXp})
 
 
 _g_cache = {}
+
+def __getVehicleEliteStatusXp(vehicleCompDescr):
+    eliteXpCost = 0
+    vehType = vehicles.getVehicleType(vehicleCompDescr)
+    for unlockDescr in vehType.unlocksDescrs:
+        eliteXpCost += unlockDescr[0]
+
+    return eliteXpCost

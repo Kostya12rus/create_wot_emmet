@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/epic_battle/epic_skills.py
 from CurrentVehicle import g_currentVehicle
 from debug_utils import LOG_ERROR
@@ -41,9 +41,9 @@ class EpicSkillBaseTooltipData(BlocksTooltipData):
                 items.append(formatters.packBuildUpBlockData(statBlocks[i], linkage=BLOCKS_TOOLTIP_TYPES.TOOLTIP_BUILDUP_BLOCK_WHITE_BG_LINKAGE))
 
             realLevel = self._epicMetaGameCtrl.getSkillLevels().get(skillID)
-            items.append(self.__constructModesInfoBlock(realLevel))
             if not realLevel:
                 items.append(formatters.packBuildUpBlockData(self.__constructInactiveStateBlock(skillInfo), padding=formatters.packPadding(top=-6, bottom=-21)))
+            items.append(self.__constructModesInfoBlock(realLevel))
             return items
 
     @staticmethod

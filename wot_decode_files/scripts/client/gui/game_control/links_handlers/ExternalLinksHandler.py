@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/links_handlers/ExternalLinksHandler.py
 import typing, logging
 from adisp import adisp_async, adisp_process
@@ -36,7 +36,8 @@ _LISTENERS = {OpenLinkEvent.SPECIFIED: '_handleSpecifiedURL',
    OpenLinkEvent.FRONTLINE_CHANGES: '_handleFrontlineChangesURL', 
    OpenLinkEvent.TOKEN_SHOP: '_handleTokenShopURL', 
    OpenLinkEvent.WOT_PLUS_STEAM_SHOP: '_handleWotPlusSteamShopURL', 
-   OpenLinkEvent.WOT_PLUS_SHOP: '_handleWotPlusShopURL'}
+   OpenLinkEvent.WOT_PLUS_SHOP: '_handleWotPlusShopURL', 
+   OpenLinkEvent.STEAM_SUBSCRIPTION_MANAGEMENT: '_handleSteamSubscriptionManagementURL'}
 
 class ExternalLinksHandler(IExternalLinksController):
     __loginManager = dependency.descriptor(ILoginManager)
@@ -176,6 +177,9 @@ class ExternalLinksHandler(IExternalLinksController):
 
     def _handleWotPlusShopURL(self, _):
         self.__openParsedUrl('wotPlusShopURL')
+
+    def _handleSteamSubscriptionManagementURL(self, _):
+        self.__openParsedUrl('steamSubscriptionManagementURL')
 
     def _getHandlers(self):
         if not self.__linksHandlers:

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/statistics.py
 import BigWorld, ResMgr, Settings
 from constants import ARENA_PERIOD, INVALID_CLIENT_STATS
@@ -118,6 +118,7 @@ class StatisticsCollector(IStatisticsCollector):
         self.__lastArenaUniqueID = 0
         self.__lastArenaTypeID = 0
         self.__lastArenaTeam = 0
+        self.__randomEvents = []
 
     def init(self):
         self.connectionMgr.onDisconnected += self.__onClientDisconnected
@@ -185,10 +186,11 @@ class StatisticsCollector(IStatisticsCollector):
                 self.stop()
             return result
 
-    def noteLastArenaData(self, arenaTypeID, arenaUniqueID, arenaTeam):
+    def noteLastArenaData(self, arenaTypeID, arenaUniqueID, arenaTeam, randomEvents):
         self.__lastArenaTypeID = arenaTypeID
         self.__lastArenaUniqueID = arenaUniqueID
         self.__lastArenaTeam = arenaTeam
+        self.__randomEvents = randomEvents
         if not self.__hangarWasLoadedOnce and not self.bootcampController.isInBootcamp():
             self.__invalidStats |= INVALID_CLIENT_STATS.CLIENT_STRAIGHT_INTO_BATTLE
             self.__sendFullStat = True
@@ -228,8 +230,7 @@ class StatisticsCollector(IStatisticsCollector):
             resolutionContainer = monitorSettings.currentVideoMode
         elif windowMode == BigWorld.WindowModeBorderless:
             resolutionContainer = monitorSettings.currentBorderlessSize
-        return {'started_at': int(self.gameSession.sessionStartedAt), 
-           'map': lastArenaTypeID & 65535, 
+        data = {'started_at': int(self.gameSession.sessionStartedAt), 'map': lastArenaTypeID & 65535, 
            'mode': lastArenaTypeID >> 16, 
            'spawn': self.__lastArenaTeam, 
            'fps_min': statisticsDict['fpsMin'], 
@@ -292,10 +293,13 @@ class StatisticsCollector(IStatisticsCollector):
            'gpu_utilization_low_fps': statisticsDict['gpu_utilization_low_fps'], 
            'cpu_utilization_low_fps': statisticsDict['cpu_utilization_low_fps'], 
            'gpu_utilization': statisticsDict['gpu_utilization'], 
-           'cpu_utilization': statisticsDict['cpu_utilization']}
+           'cpu_utilization': statisticsDict['cpu_utilization'], 
+           'random_events': len(self.__randomEvents)}
+        BigWorld.wg_reportSessionData(data)
+        return data
 
     def __getSystemData(self, statisticsDict):
-        return {'started_at': int(self.gameSession.sessionStartedAt), 
+        data = {'started_at': int(self.gameSession.sessionStartedAt), 
            'server_name': self.connectionMgr.serverUserName, 
            'is_laptop': statisticsDict['isLaptop'], 
            'cpu_vendor': statisticsDict['cpuVendor'], 
@@ -325,6 +329,8 @@ class StatisticsCollector(IStatisticsCollector):
            'page_file_total': statisticsDict['pageFileTotal'], 
            'system_hdd_name': statisticsDict['systemHddName'], 
            'game_hdd_name': statisticsDict['gameHddName']}
+        BigWorld.wg_reportSystemData(data)
+        return data
 
     def __onSettingsChanged(self, diff):
         keys = set(diff.keys())

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/fixed_dict.py
 from collections import namedtuple
 import typing
@@ -14,6 +14,7 @@ VisualScriptEquipmentState = namedtuple('VisualScriptEquipmentState', ('quantity
                                                                        'totalTime',
                                                                        'prevStage',
                                                                        'stage'))
+VisualScriptEquipmentPublicState = namedtuple('VisualScriptEquipmentPublicState', ('stage', ))
 if typing.TYPE_CHECKING:
     from enum import Enum
 
@@ -39,4 +40,9 @@ def getStateWithTimeInterval(fixedDict):
 
 def getVisualScriptEquipmentState(fixedDict):
     state = VisualScriptEquipmentState(quantity=fixedDict['quantity'], endTime=fixedDict['endTime'], totalTime=fixedDict['totalTime'], prevStage=fixedDict['prevStage'], stage=fixedDict['stage'])
+    return state
+
+
+def getVisualScriptEquipmentPublicState(fixedDict):
+    state = VisualScriptEquipmentPublicState(stage=fixedDict['stage'])
     return state

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/dog_tags/ranked_efficiency_tooltip.py
 import typing, BigWorld
 from frameworks.wulf import ViewSettings
@@ -42,7 +42,7 @@ class RankedEfficiencyTooltip(ViewImpl):
                 items.invalidate()
 
     def __addPassedSeasons(self, itemsArr):
-        seasons = sorted([ seasonData[0] for seasonData in self.__rankedController.getSeasonPassed() ])
+        seasons = sorted([ seasonData[0] for seasonData in self.__rankedController.getSeasonsPassed() ])
         previousSeason = self.__rankedController.getPreviousSeason()
         previousSeasonId = previousSeason.getSeasonID() if previousSeason else None
         playerDogTag = BigWorld.player().dogTags.getDisplayableDT()

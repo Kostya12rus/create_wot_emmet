@@ -1,16 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/shop/renewable_subscription.py
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 from constants import WoTPlusBonusType
-from gui import SystemMessages
-from gui.impl import backport
-from gui.impl.gen import R
-from gui.shared.gui_items.Vehicle import getUserName
 from helpers import dependency
-from items.vehicles import getVehicleType
 from skeletons.gui.game_control import IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
 from uilogging.wot_plus.loggers import WotPlusInfoPageLogger
@@ -49,16 +44,10 @@ class RenewableSubWebApiMixin(object):
             enabledBonuses.append(WoTPlusBonusType.FREE_EQUIPMENT_DEMOUNTING)
         if serverSettings.isWoTPlusExclusiveVehicleEnabled():
             enabledBonuses.append(WoTPlusBonusType.EXCLUSIVE_VEHICLE)
+        if serverSettings.isDailyAttendancesEnabled():
+            enabledBonuses.append(WoTPlusBonusType.ATTENDANCE_REWARD)
         return enabledBonuses
 
     @w2c(W2CSchema, 'subscription_info_window')
     def handleSubscriptionInfoWindow(self, cmd):
         WotPlusInfoPageLogger().logInfoPage(WotPlusInfoPageSource.SHOP)
-
-    @w2c(_RenewableSubRentVehicleInfoSchema, 'subscription_rent_delayed')
-    def subscriptionRentDelayed(self, cmd):
-        if cmd.vehCD:
-            self._wotPlusCtrl.setRentPending(cmd.vehCD)
-            vehName = getUserName(getVehicleType(cmd.vehCD))
-            SystemMessages.pushMessage('', messageData={'header': backport.text(R.strings.messenger.serviceChannelMessages.wotPlus.tankRental.isPending.title()), 
-               'text': backport.text(R.strings.messenger.serviceChannelMessages.wotPlus.tankRental.isPending.text(), vehicle=vehName)}, type=SystemMessages.SM_TYPE.MessageHeader)

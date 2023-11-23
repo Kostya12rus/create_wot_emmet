@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/common_tank_appearance.py
 import math, random, logging, BigWorld, CGF, GenericComponents, Triggers, Math, DataLinks, Vehicular, NetworkFilters, material_kinds
 from constants import IS_EDITOR, VEHICLE_SIEGE_STATE
@@ -202,28 +202,25 @@ class CommonTankAppearance(ScriptGameObject):
         prereqs.extend(camouflages.getCamoPrereqs(self.outfit, self.typeDescriptor))
         prereqs.extend(camouflages.getModelAnimatorsPrereqs(self.outfit, self.spaceID))
         prereqs.extend(camouflages.getAttachmentsAnimatorsPrereqs(self.__attachments, self.spaceID))
+        modelsSetParams = self.modelsSetParams
+        if IS_EDITOR and not modelsSetParams.skin:
+            modelsSetParams = ModelsSetParams(self.currentModelsSet, modelsSetParams.state, modelsSetParams.attachments)
         splineDesc = self.typeDescriptor.chassis.splineDesc
-        modelsSet = self.outfit.modelsSet
-        if IS_EDITOR:
-            modelsSet = self.currentModelsSet
+        modelsSet = (IS_EDITOR or self.outfit).modelsSet if 1 else modelsSetParams.skin
         if splineDesc is not None:
             for _, trackDesc in splineDesc.trackPairs.iteritems():
                 prereqs += trackDesc.prerequisites(modelsSet)
 
-        modelsSetParams = self.modelsSetParams
         compoundAssembler = model_assembler.prepareCompoundAssembler(self.typeDescriptor, modelsSetParams, self.spaceID, self.isTurretDetached, renderMode=self.renderMode)
         prereqs.append(compoundAssembler)
         if renderMode == TankRenderMode.OVERLAY_COLLISION:
             self.damageState.update(0, isCrewActive, False)
         collisionAssembler = model_assembler.prepareCollisionAssembler(self.typeDescriptor, self.isTurretDetached, self.spaceID)
         prereqs.append(collisionAssembler)
-        skin = modelsSetParams.skin
-        if IS_EDITOR:
-            skin = self.currentModelsSet
         physicalTracksBuilders = self.typeDescriptor.chassis.physicalTracks
         for name, builders in physicalTracksBuilders.iteritems():
             for index, builder in enumerate(builders):
-                prereqs.append(builder.createLoader(self.spaceID, ('{0}{1}PhysicalTrack').format(name, index), skin))
+                prereqs.append(builder.createLoader(self.spaceID, ('{0}{1}PhysicalTrack').format(name, index), modelsSetParams.skin))
 
         return prereqs
 
@@ -249,7 +246,7 @@ class CommonTankAppearance(ScriptGameObject):
         if not isCurrentModelDamaged:
             modelsSet = self.outfit.modelsSet
             if IS_EDITOR:
-                modelsSet = self.currentModelsSet
+                modelsSet = self.modelsSetParams.skin if self.modelsSetParams.skin else self.currentModelsSet
             self._splineTracks = model_assembler.setupSplineTracks(self.fashion, self.typeDescriptor, self.compoundModel, resourceRefs, modelsSet)
             self.crashedTracksController = CrashedTrackController(self.typeDescriptor, self.fashion, modelsSet)
         else:
@@ -413,14 +410,17 @@ class CommonTankAppearance(ScriptGameObject):
         self._initiateRecoil(TankNodeNames.GUN_INCLINATION, 'HP_gunFire', self.gunRecoil)
 
     def multiGunRecoil(self, indexes):
-        gunAnimators = self.gunAnimators
-        for index in indexes:
-            typeDescr = self.typeDescriptor
-            gunNodeName = typeDescr.turret.multiGun[index].node
-            gunFireNodeName = typeDescr.turret.multiGun[index].gunFire
-            self._initiateRecoil(gunNodeName, gunFireNodeName, gunAnimators[index].findComponentByType(Vehicular.RecoilAnimator) if gunAnimators else None)
+        if self.gunAnimators is None:
+            return
+        else:
+            for index in indexes:
+                typeDescr = self.typeDescriptor
+                gunNodeName = typeDescr.turret.multiGun[index].node
+                gunFireNodeName = typeDescr.turret.multiGun[index].gunFire
+                gunAnimator = self.gunAnimators[index].findComponentByType(Vehicular.RecoilAnimator)
+                self._initiateRecoil(gunNodeName, gunFireNodeName, gunAnimator)
 
-        return
+            return
 
     def computeFullVehicleLength(self):
         vehicleLength = 0.0
@@ -434,8 +434,7 @@ class CommonTankAppearance(ScriptGameObject):
         impulseDir = Math.Matrix(gunNode).applyVector(Math.Vector3(0, 0, -1))
         impulseValue = self.typeDescriptor.gun.impulse
         self.receiveShotImpulse(impulseDir, impulseValue)
-        if gunAnimator is not None:
-            gunAnimator.recoil()
+        gunAnimator.recoil()
         return impulseDir
 
     def _connectCollider(self):
@@ -539,14 +538,14 @@ class CommonTankAppearance(ScriptGameObject):
 
     def _attachStickers(self):
         _logger.debug('Attaching VehicleStickers for vehicle: %s', self._vehicle)
+        isCurrentModelDamaged = self.damageState.isCurrentModelDamaged
         if self.vehicleStickers is None:
-            _logger.error('Failed to attach VehicleStickers. Missing VehicleStickers. Vehicle: %s', self._vehicle)
+            if not isCurrentModelDamaged:
+                _logger.error('Failed to attach VehicleStickers. Missing VehicleStickers. Vehicle: %s', self._vehicle)
             return
-        else:
-            isCurrentModelDamaged = self.damageState.isCurrentModelDamaged
-            self.vehicleStickers.alpha = DEFAULT_STICKERS_ALPHA
-            self.vehicleStickers.attach(compoundModel=self.compoundModel, isDamaged=isCurrentModelDamaged, showDamageStickers=not isCurrentModelDamaged)
-            return
+        self.vehicleStickers.alpha = DEFAULT_STICKERS_ALPHA
+        self.vehicleStickers.attach(compoundModel=self.compoundModel, isDamaged=isCurrentModelDamaged, showDamageStickers=not isCurrentModelDamaged)
+        return
 
     def _detachStickers(self):
         _logger.debug('Detaching VehicleStickers for vehicle: %s', self._vehicle)

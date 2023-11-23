@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/model_assembler.py
 import math
 from collections import namedtuple
@@ -385,19 +385,12 @@ def assembleVehicleTraces(appearance, f, lodStateLink=None):
     return
 
 
-def createGunRecoil(appearance, lodLink):
+def assembleRecoil(appearance, lodLink):
     gunAnimatorNode = appearance.compoundModel.node(TankNodeNames.GUN_RECOIL)
     localGunMatrix = gunAnimatorNode.localMatrix
-    gunRecoil = createGunAnimator(appearance, appearance.typeDescriptor, localGunMatrix, lodLink)
+    appearance.gunRecoil = gunRecoil = createGunAnimator(appearance, appearance.typeDescriptor, localGunMatrix, lodLink)
     gunRecoilMProv = gunRecoil.animatedMProv
     appearance.compoundModel.node(TankNodeNames.GUN_RECOIL, gunRecoilMProv)
-    return gunRecoil
-
-
-def assembleRecoil(appearance, lodLink):
-    recoil = appearance.typeDescriptor.gun.recoil
-    appearance.gunRecoil = createGunRecoil(appearance, lodLink) if recoil is not None else None
-    return
 
 
 def createMultiGunRecoils(appearance, lodLink, gunNodes):
@@ -421,12 +414,9 @@ def createMultiGunRecoils(appearance, lodLink, gunNodes):
 
 
 def assembleMultiGunRecoil(appearance, lodLink):
-    recoil = appearance.typeDescriptor.gun.recoil
     multiGun = appearance.typeDescriptor.turret.multiGun
-    if multiGun is not None and recoil is not None:
+    if multiGun is not None:
         appearance.gunAnimators = createMultiGunRecoils(appearance, lodLink, multiGun)
-    else:
-        appearance.gunAnimators = None
     return
 
 
@@ -921,6 +911,8 @@ def loadAppearancePrefab(prefab, appearance, posloadCallback=None):
 
     def _onLoaded(gameObject):
         appearance.undamagedStateChildren.append(gameObject)
+        if IS_UE_EDITOR:
+            gameObject.removeComponentByType(GenericComponents.DynamicModelComponent)
         gameObject.createComponent(GenericComponents.RedirectorComponent, appearance.gameObject)
         gameObject.createComponent(GenericComponents.DynamicModelComponent, appearance.compoundModel)
         if posloadCallback:

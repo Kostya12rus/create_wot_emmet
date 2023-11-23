@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/visual_script/multi_plan_provider.py
 import VSE
 from context import VScriptContext
@@ -11,6 +11,7 @@ from soft_exception import SoftException
 from plan_holder import PlanHolder
 
 class MultiPlanProvider(object):
+    PLAN_KEY_SEPARATOR = '#'
 
     def __init__(self, aspect, arenaBonusType=0):
         self._plans = {}
@@ -22,6 +23,10 @@ class MultiPlanProvider(object):
     def destroy(self):
         pass
 
+    def getPlanNameWithKey(self, planName, key=''):
+        nameWithKey = planName if key == '' else planName + self.PLAN_KEY_SEPARATOR + key
+        return nameWithKey
+
     def reset(self):
         self.stop()
         for holder in self._plans.itervalues():
@@ -31,8 +36,9 @@ class MultiPlanProvider(object):
         self._context = None
         return
 
-    def get(self, planName):
-        return self._plans.get(planName, PlanHolder(None, PlanHolder.INACTIVE)).plan
+    def get(self, planName, key=''):
+        nameWithKey = self.getPlanNameWithKey(planName, key)
+        return self._plans.get(nameWithKey, PlanHolder(None, PlanHolder.INACTIVE)).plan
 
     def start(self):
         for holder in self._plans.itervalues():
@@ -67,12 +73,20 @@ class MultiPlanProvider(object):
         self.reset()
         for entry in planNames:
             if isinstance(entry, dict):
-                self._loadPlan(entry['name'], dict(entry['params']))
+                self._loadPlan(entry['name'], dict(entry['params']), False, entry.get('plan_id', ''))
             else:
                 self._loadPlan(entry)
 
-    def startPlan(self, planName, params={}):
-        self._loadPlan(planName, params, True)
+    def startPlan(self, planName, params={}, key='', contextInstance=None):
+        self._loadPlan(planName, params, True, key, contextInstance)
+
+    def stopPlan(self, planName, key=''):
+        nameWithKey = self.getPlanNameWithKey(planName, key)
+        if nameWithKey in self._plans.keys():
+            holder = self._plans[nameWithKey]
+            if holder.isLoaded:
+                holder.plan.stop()
+            holder.autoStart = False
 
     def setOptionalInputParam(self, name, value):
         for holder in self._plans.itervalues():
@@ -88,13 +102,24 @@ class MultiPlanProvider(object):
 
         self._context = context
 
-    def _loadPlan(self, planName, params={}, autoStart=False):
-        holder = PlanHolder(VSE.Plan(), PlanHolder.LOADING, autoStart)
-        holder.params = params
-        if self._context is not None:
-            holder.plan.setContext(self._context)
-        holder.load(planName, self._aspect, self._planTags.tags)
-        self._plans[planName] = holder
+    def _loadPlan(self, planName, params={}, autoStart=False, key='', contextInstance=None):
+        nameWithKey = self.getPlanNameWithKey(planName, key)
+        holder = None
+        if nameWithKey in self._plans.keys():
+            holder = self._plans[nameWithKey]
+            holder.params = params
+            holder.autoStart = autoStart
+            if holder.isLoaded and autoStart:
+                holder.start()
+        else:
+            holder = PlanHolder(VSE.Plan(), PlanHolder.LOADING, autoStart)
+            holder.params = params
+            if contextInstance:
+                holder.plan.setContext(contextInstance)
+            elif self._context is not None:
+                holder.plan.setContext(self._context)
+            holder.load(planName, self._aspect, self._planTags.tags)
+            self._plans[nameWithKey] = holder
         return holder
 
 
@@ -103,6 +128,7 @@ class CallableProviderType:
     HANGAR = 'HANGAR'
     DEATH_ZONES = 'DEATH_ZONES'
     LOOT = 'LOOT'
+    ENTITY = 'ENTITY'
 
 
 if IS_DEVELOPMENT:
@@ -111,7 +137,8 @@ if IS_DEVELOPMENT:
         providers = {CallableProviderType.ARENA: set(), 
            CallableProviderType.HANGAR: set(), 
            CallableProviderType.DEATH_ZONES: set(), 
-           CallableProviderType.LOOT: set()}
+           CallableProviderType.LOOT: set(), 
+           CallableProviderType.ENTITY: set()}
         plansOnLoad = dict()
 
         def __init__(self, aspect, name, arenaBonusType=0):

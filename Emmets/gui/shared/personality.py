@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/personality.py
 import logging, time, typing, weakref, BigWorld, SoundGroups
 from CurrentVehicle import g_currentVehicle, g_currentPreviewVehicle
@@ -47,6 +47,7 @@ from skeletons.gui.shared import IItemsCache
 from skeletons.gui.shared.utils import IHangarSpace, IRaresCache
 from skeletons.gui.sounds import ISoundsController
 from skeletons.gui.web import IWebController
+from skeletons.ui_logging import IUILoggingCore
 from skeletons.helpers.statistics import IStatisticsCollector
 if typing.TYPE_CHECKING:
     from gui.goodies.booster_state_provider import BoosterStateProvider
@@ -82,6 +83,7 @@ class ServicesLocator(object):
     appLoader = dependency.descriptor(IAppLoader)
     offersProvider = dependency.descriptor(IOffersDataProvider)
     bootcamp = dependency.descriptor(IBootcampController)
+    uiLoggingCore = dependency.descriptor(IUILoggingCore)
 
     @classmethod
     def clear(cls):
@@ -105,12 +107,13 @@ def onAccountShowGUI(ctx):
     ServicesLocator.statsCollector.noteHangarLoadingState(HANGAR_LOADING_STATE.SHOW_GUI)
     ServicesLocator.lobbyContext.onAccountShowGUI(ctx)
     for func in [
-     __runItemsCacheSync, __validateInventoryVehicles, __validateInventoryOutfit, 
-     __validateInventoryTankmen, 
-     __cacheVehicles, __runQuestSync, 
-     __runSettingsSync, __processEULA, __notifyOnSyncComplete, 
-     __requestDossier, 
-     __initializeHangarSpace, __initializeHangar, __processWebCtrl, __processElen]:
+     __runUiLogging, __runItemsCacheSync, __validateInventoryVehicles, 
+     __validateInventoryOutfit, 
+     __validateInventoryTankmen, __cacheVehicles, 
+     __runQuestSync, __runSettingsSync, __processEULA, 
+     __notifyOnSyncComplete, 
+     __requestDossier, __initializeHangarSpace, __initializeHangar, __processWebCtrl, 
+     __processElen]:
         try:
             if BigWorld.player():
                 ts = time.time()
@@ -471,6 +474,12 @@ def __processWebCtrl(_, callback=None):
     ServicesLocator.webCtrl.start()
     if serverSettings.wgcg.getLoginOnStart() and not ServicesLocator.bootcamp.isInBootcamp():
         yield ServicesLocator.webCtrl.login()
+    callback(True)
+
+
+def __runUiLogging(_, callback=None):
+    ServicesLocator.uiLoggingCore.start()
+    ServicesLocator.uiLoggingCore.send()
     callback(True)
 
 

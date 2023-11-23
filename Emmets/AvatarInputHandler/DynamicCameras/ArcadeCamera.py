@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarInputHandler/DynamicCameras/ArcadeCamera.py
 from collections import namedtuple
 import logging, math, GUI, Keys, Math, BattleReplay, Settings, constants, math_utils, BigWorld
@@ -290,9 +290,9 @@ class ArcadeCamera(CameraWithSettings, CallbackDelayer, TimeDeltaMeter):
                 self.delayCallback(0.0, self.enable, preferredPos, closesDist, postmortemParams, turretYaw, gunPitch, camTransitionParams, initialVehicleMatrix)
                 return
         if initialVehicleMatrix is None:
-            initialVehicleMatrix = player.getOwnVehicleMatrix(self.vehicleMProv) if vehicle is None else vehicle.matrix
+            initialVehicleMatrix = player.getOwnVehicleMatrix(Math.Matrix(self.vehicleMProv)) if vehicle is None else vehicle.matrix
         vehicleMProv = initialVehicleMatrix
-        if self.__compareCurrStateSettingsKey(GAME.COMMANDER_CAM) or arcadeState is not None:
+        if not self.__isSettingsEnabled(GAME.COMMANDER_CAM) and self.__compareCurrStateSettingsKey(GAME.COMMANDER_CAM) or arcadeState is not None:
             state = None
             newCameraDistance = self.__distRange.max
             if arcadeState is not None:

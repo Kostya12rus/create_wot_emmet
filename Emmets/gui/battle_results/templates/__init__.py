@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/templates/__init__.py
 from gui.battle_results.components import base
 from gui.battle_results.templates.cybersport import CYBER_SPORT_BLOCK
@@ -9,6 +9,7 @@ from gui.battle_results.templates.fortification import STRONGHOLD_PERSONAL_STATS
 from gui.battle_results.templates.fortification import STRONGHOLD_TEAMS_STATS_BLOCK
 from gui.battle_results.templates.regular import MULTI_TEAM_TABS_BLOCK
 from gui.battle_results.templates.regular import PROGRESSIVE_REWARD_VO
+from gui.battle_results.templates.regular import PRESTIGE_PROGRESS_VO
 from gui.battle_results.templates.regular import REGULAR_TABS_BLOCK
 from gui.battle_results.templates.regular import VEHICLE_PROGRESS_STATS_BLOCK
 from gui.battle_results.templates.regular import BATTLE_PASS_PROGRESS_STATS_BLOCK
@@ -40,7 +41,9 @@ from gui.battle_results.templates.battle_royale import BR_PERSONAL_STATS_BLOCK
 from gui.battle_results.templates.battle_royale import BR_COMMON_STATS_BLOCK
 from gui.battle_results.templates.maps_training import MAPS_TRAINING_RESULTS_BLOCK
 from gui.battle_results.templates.comp7 import COMP7_PERSONAL_STATS_BLOCK
+from gui.battle_results.templates.comp7 import TOURNAMENT_COMP7_PERSONAL_STATS_BLOCK
 from gui.battle_results.templates.comp7 import COMP7_COMMON_STATS_BLOCK
+from gui.battle_results.templates.comp7 import TOURNAMENT_COMP7_COMMON_STATS_BLOCK
 from gui.battle_results.templates.comp7 import COMP7_TEAMS_STATS_BLOCK
 from gui.battle_results.templates.comp7 import COMP7_BATTLE_PASS_PROGRESS_STATS_BLOCK
 from gui.battle_results.templates.comp7 import EFFICIENCY_TITLE_WITH_SKILLS_VO
@@ -57,8 +60,10 @@ __all__ = ('TOTAL_VO_META', 'MULTI_TEAM_TABS_BLOCK', 'REGULAR_TABS_BLOCK', 'VEHI
            'EPIC_PERSONAL_STATS_BLOCK', 'EPIC_TEAMS_STATS_BLOCK', 'RANKED_SHOW_WIDGET_BLOCK',
            'PROGRESSIVE_REWARD_VO', 'RANKED_RESULTS_STATE_BLOCK', 'BR_TOTAL_VO_META',
            'BR_TABS_BLOCK', 'BR_TEAM_STATS_BLOCK', 'BR_PERSONAL_STATS_BLOCK', 'BR_COMMON_STATS_BLOCK',
-           'MAPS_TRAINING_RESULTS_BLOCK', 'COMP7_PERSONAL_STATS_BLOCK', 'COMP7_COMMON_STATS_BLOCK',
-           'COMP7_TEAMS_STATS_BLOCK', 'COMP7_BATTLE_PASS_PROGRESS_STATS_BLOCK', 'EFFICIENCY_TITLE_WITH_SKILLS_VO')
+           'MAPS_TRAINING_RESULTS_BLOCK', 'COMP7_PERSONAL_STATS_BLOCK', 'TOURNAMENT_COMP7_PERSONAL_STATS_BLOCK',
+           'COMP7_COMMON_STATS_BLOCK', 'TOURNAMENT_COMP7_COMMON_STATS_BLOCK', 'COMP7_TEAMS_STATS_BLOCK',
+           'COMP7_BATTLE_PASS_PROGRESS_STATS_BLOCK', 'EFFICIENCY_TITLE_WITH_SKILLS_VO',
+           'PRESTIGE_PROGRESS_VO')
 TOTAL_VO_META = base.DictMeta({'personal': {}, 'common': {}, 'team1': [], 'team2': [], 'textData': {}, 'battlePass': None, 
    'quests': None, 
    'unlocks': [], 'tabInfo': [], 'cyberSport': None, 
@@ -66,4 +71,5 @@ TOTAL_VO_META = base.DictMeta({'personal': {}, 'common': {}, 'team1': [], 'team2
    'closingTeamMemberStatsEnabled': True, 
    'selectedTeamMemberId': -1, 
    'progressiveReward': None, 
-   'dog_tags': {}, 'efficiencyTitle': backport.text(R.strings.battle_results.common.battleEfficiencyWithoutOreders.title())})
+   'dog_tags': {}, 'prestige': None, 
+   'efficiencyTitle': backport.text(R.strings.battle_results.common.battleEfficiencyWithoutOreders.title())})

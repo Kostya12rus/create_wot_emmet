@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/HANGAR_ALIASES.py
 
 
@@ -13,12 +13,9 @@ class HANGAR_ALIASES(object):
     ROYALE_TANK_CAROUSEL = 'royaleTankCarousel'
     MAPBOX_TANK_CAROUSEL = 'mapboxTankCarousel'
     FUN_RANDOM_TANK_CAROUSEL = 'funRandomTankCarousel'
-    FUN_RANDOM_QFG_TANK_CAROUSEL = 'funRandomQFGTankCarousel'
     COMP7_TANK_CAROUSEL = 'comp7TankCarousel'
-    CREW = 'crew'
     AMMUNITION_PANEL = 'ammunitionPanel'
     RESEARCH_PANEL = 'researchPanel'
-    TMEN_XP_PANEL = 'tmenXpPanel'
     VEHICLE_PARAMETERS = 'params'
     HEADER = 'header'
     RANKED_WIDGET = 'rankedWdgt'
@@ -43,6 +40,7 @@ class HANGAR_ALIASES(object):
     VEH_PARAM_RENDERER_HIGHLIGHT_NEGATIVE = 'negative'
     VEH_PARAM_RENDERER_HIGHLIGHT_MIXED = 'mixed'
     PROGRESSIVE_REWARD_WIDGET = 'progressiveRewardWdgt'
+    PRESTIGE_PROGRESS_WIDGET = 'prestigeProgressWidget'
     DAILY_QUEST_WIDGET = 'dqWidget'
     BATTLE_PASSS_ENTRY_POINT = 'battlePassEntryPoint'
     BATTLE_ROYALE_ENTRY_POINT = 'battleRoyaleEntryPoint'
@@ -56,7 +54,7 @@ class HANGAR_ALIASES(object):
     AMMUNITION_SETUP_VIEW_VEHICLE_PARAMS = 'ammunitionSetupViewVehicleParams'
     AMMUNITION_PANEL_INJECT = 'ammunitionPanelInject'
     AMMUNITION_SETUP_VIEW_INJECT = 'ammunitionSetupViewInject'
-    CREW_XP_PANEL_INJECT = 'crewXPPanelInject'
+    CREW_PANEL_INJECT = 'crewPanelInject'
     CRAFT_MACHINE_ENTRY_POINT = 'CraftMachineEntryPoint'
     STRONGHOLD_ENTRY_POINT = 'StrongholdEntryPoint'
     MAPBOX_ENTRY_POINT = 'MapBoxEntryPoint'
@@ -69,7 +67,6 @@ class HANGAR_ALIASES(object):
     PERSONAL_RESERVES_WIDGET_INJECT = 'PersonalReservesWidgetInject'
     FUN_RANDOM_ENTRY_POINT = 'FunRandomEntryPoint'
     FUN_RANDOM_HANGAR_WIDGET = 'FunRandomHangarWidget'
-    STRENGTHS_WEAKNESSES_PANEL = 'StrengthsWeaknessesPanel'
     EVENT_CREW_HEALING_COMPONENT = 'eventCrewHealingComponent'
     EVENT_CREW_BOOSTER_COMPONENT = 'eventCrewBoosterComponent'
     EVENT_TANK_RENT_COMPONENT = 'eventTankRentComponent'

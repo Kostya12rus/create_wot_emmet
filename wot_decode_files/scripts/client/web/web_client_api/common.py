@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/common.py
 import itertools
 from collections import namedtuple
@@ -73,6 +73,7 @@ class ItemPackType(CONST_CONTAINER):
     ITEM_EQUIPMENT = 'item/equipment'
     ITEM_DEVICE = 'item/optionalDevice'
     ITEM_SHELL = 'item/shell'
+    ITEM_CREW_SKIN = 'item/crewSkin'
     GOODIE_GOLD = 'goodie/gold'
     GOODIE_CREDITS = 'goodie/credits'
     GOODIE_EXPERIENCE = 'goodie/experience'
@@ -95,12 +96,15 @@ class ItemPackType(CONST_CONTAINER):
     CUSTOM_EVENT_COIN = 'custom/eventCoin'
     CUSTOM_EVENT_COIN_EXTERNAL = 'custom/event_coin'
     CUSTOM_BPCOIN = 'custom/bpcoin'
+    CUSTOM_EQUIP_COIN = 'custom/equip_coin'
     CUSTOM_SLOT = 'custom/slot'
     CUSTOM_SEVERAL_SLOTS = 'custom/slots'
     CUSTOM_REFERRAL_CREW = 'custom/crew'
     CUSTOM_SUPPLY_POINT = 'custom/supply_point'
     CUSTOM_BATTLE_PASS_POINTS = 'custom/battlePassPoints'
     CUSTOM_X5_BATTLE_BONUS = 'custom/X5_battle'
+    CUSTOM_X3_CREW_BONUS = 'custom/X3_crew'
+    CUSTOM_FREE_XP = 'custom/freeXP'
     TOKEN = 'token'
     PAINT_ALL = 'paint/all'
     PAINT_SUMMER = 'paint/summer'

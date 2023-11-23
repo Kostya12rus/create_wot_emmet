@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/barracks/Barracks.py
 import logging
 from account_helpers.AccountSettings import AccountSettings, BARRACKS_FILTER, RECRUIT_NOTIFICATIONS
@@ -15,11 +15,13 @@ from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.Scaleform.genConsts.BARRACKS_CONSTANTS import BARRACKS_CONSTANTS
 from gui.Scaleform.locale.MENU import MENU
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
+from gui.impl.gen import R
 from gui.prb_control.entities.listener import IGlobalListener
 from gui.server_events import recruit_helper
 from gui.server_events.events_dispatcher import showRecruitWindow
-from gui.shared import event_dispatcher as shared_events, events
+from gui.shared import events
 from gui.shared.event_bus import EVENT_BUS_SCOPE
+from gui.shared.event_dispatcher import showPersonalCase
 from gui.shared.formatters import icons, moneyWithIcon, text_styles
 from gui.shared.gui_items import GUI_ITEM_TYPE
 from gui.shared.gui_items.Tankman import TankmenComparator
@@ -55,7 +57,8 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
     def __init__(self, ctx=None):
         super(Barracks, self).__init__()
         self.filter = dict(AccountSettings.getFilter(BARRACKS_FILTER))
-        self.__updateLocationFilter(ctx)
+        self.__ctx = ctx
+        self.__updateLocationFilter()
         self.__sortedCachedTankmen = None
         self.__notRecruitedTankmen = []
         self.__dataProvider = BarracksDataProvider()
@@ -71,7 +74,7 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
         tmanInvID = int(tankmanInvID)
         tankman = self.itemsCache.items.getTankman(tmanInvID)
         if tankman and not tankman.isDismissed:
-            shared_events.showPersonalCase(tmanInvID, tabID, EVENT_BUS_SCOPE.LOBBY)
+            showPersonalCase(tmanInvID, previousViewID=R.views.lobby.crew.BarracksView())
 
     def closeBarracks(self):
         self.fireEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_HANGAR)), scope=EVENT_BUS_SCOPE.LOBBY)
@@ -82,9 +85,6 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
     def onShowRecruitWindowClick(self, rendererData, menuEnabled):
         if rendererData is not None and rendererData.notRecruited:
             showRecruitWindow(rendererData.recruitID)
-        else:
-            self.fireEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.RECRUIT_WINDOW), ctx={'data': rendererData, 
-               'menuEnabled': menuEnabled}))
         return
 
     def buyBerths(self):
@@ -121,7 +121,7 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
                 if tmanVehile is None:
                     _logger.error("Target tankman's vehicle is not found in inventory %r %r", tankman, tankman.vehicleInvID)
                     return
-                result = yield TankmanUnload(tmanVehile, tankman.vehicleSlotIdx).request()
+                result = yield TankmanUnload(tmanVehile.invID, tankman.vehicleSlotIdx).request()
             else:
                 result = yield TankmanDismiss(tankman).request()
             SystemMessages.pushMessagesFromResult(result)
@@ -165,7 +165,8 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
 
     def _invalidate(self, ctx=None):
         super(Barracks, self)._invalidate(ctx)
-        self.__updateLocationFilter(ctx)
+        self.__ctx = ctx
+        self.__updateLocationFilter()
         self.setTankmenFilter()
 
     def _dispose(self):
@@ -182,8 +183,8 @@ class Barracks(BarracksMeta, LobbySubView, IGlobalListener):
         super(LobbySubView, self)._dispose()
         return
 
-    def __updateLocationFilter(self, ctx):
-        data = ctx or {}
+    def __updateLocationFilter(self):
+        data = self.__ctx or {}
         location = data.get('location')
         if location is not None:
             self.filter['location'] = location

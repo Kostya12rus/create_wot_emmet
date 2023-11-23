@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/missions/regular/missions_page.py
 import weakref
 from collections import namedtuple
@@ -45,7 +45,7 @@ from helpers import dependency
 from helpers.i18n import makeString as _ms
 from items import getTypeOfCompactDescr
 from skeletons.gui.event_boards_controllers import IEventBoardController
-from skeletons.gui.game_control import IBattlePassController, IHangarSpaceSwitchController, IGameSessionController, IMapboxController, IMarathonEventsController, IRankedBattlesController, IFunRandomController, ILimitedUIController
+from skeletons.gui.game_control import IBattlePassController, IHangarSpaceSwitchController, IGameSessionController, IMapboxController, IMarathonEventsController, IRankedBattlesController, IFunRandomController, ILimitedUIController, IWinbackController
 from skeletons.gui.app_loader import IAppLoader, GuiGlobalSpaceID
 from skeletons.gui.battle_matters import IBattleMattersController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -96,6 +96,7 @@ class MissionsPage(LobbySubView, MissionsPageMeta):
     __mapboxCtrl = dependency.descriptor(IMapboxController)
     __battleMattersController = dependency.descriptor(IBattleMattersController)
     __limitedUIController = dependency.descriptor(ILimitedUIController)
+    __winbackController = dependency.descriptor(IWinbackController)
 
     def __init__(self, ctx):
         super(MissionsPage, self).__init__(ctx)
@@ -427,6 +428,9 @@ class MissionsPage(LobbySubView, MissionsPageMeta):
             vehicle = g_currentVehicle.item
             vehName = vehicle.shortUserName if vehicle else ''
             tab['label'] = tabData.label % {'vehName': vehName}
+        if alias == QUESTS_ALIASES.MISSIONS_PREMIUM_VIEW_PY_ALIAS and self.__winbackController.isProgressionAvailable():
+            tab['label'] = backport.text(R.strings.winback.winbackTab())
+            headerTab['tooltip'] = QUESTS.MISSIONS_TAB_WINBACK
         if alias in (QUESTS_ALIASES.MISSIONS_MARATHON_VIEW_PY_ALIAS,
          QUESTS_ALIASES.MISSIONS_CATEGORIES_VIEW_PY_ALIAS,
          QUESTS_ALIASES.MISSIONS_PREMIUM_VIEW_PY_ALIAS,

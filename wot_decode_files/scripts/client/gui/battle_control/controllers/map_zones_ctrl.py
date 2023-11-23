@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/map_zones_ctrl.py
 import Event, SoundGroups
+from cgf_components.zone_components import ZoneUINotificationType
 from gui.battle_control.arena_info.interfaces import IMapZonesController
 from gui.battle_control.battle_constants import BATTLE_CTRL_ID, VEHICLE_VIEW_STATE, DestroyTimerViewState, TIMER_VIEW_STATE
 from helpers import dependency
@@ -15,6 +16,13 @@ class SoundNotifications(object):
     DANGER_ZONE_EXIT = 'dstrct_death_zone_exit'
 
 
+_notificationMapping = {ZoneUINotificationType.WARNING_ZONE: (
+                                       VEHICLE_VIEW_STATE.WARNING_ZONE, TIMER_VIEW_STATE.WARNING), 
+   ZoneUINotificationType.DANGER_ZONE: (
+                                      VEHICLE_VIEW_STATE.DANGER_ZONE, TIMER_VIEW_STATE.CRITICAL), 
+   ZoneUINotificationType.MAP_DEATH_ZONE: (
+                                         VEHICLE_VIEW_STATE.MAP_DEATH_ZONE, TIMER_VIEW_STATE.WARNING)}
+
 class MapZonesController(IMapZonesController):
     sessionProvider = dependency.descriptor(IBattleSessionProvider)
 
@@ -26,10 +34,9 @@ class MapZonesController(IMapZonesController):
         self.onMarkerProgressUpdated = Event.Event(self.__eManager)
         self.onZoneTransformed = Event.Event(self.__eManager)
         self.onTransformedZoneRemoved = Event.Event(self.__eManager)
-        self.__activeDangerZone = None
+        self.__activeDangerZones = set()
         self.__zoneMarkers = {}
         self.__transformedZones = {}
-        return
 
     def startControl(self, *args):
         pass
@@ -54,28 +61,31 @@ class MapZonesController(IMapZonesController):
         SoundGroups.g_instance.playSoundPos(SoundNotifications.DANGER_ZONE_MARKER_STOP, matrix.translation)
 
     def addTransformedZone(self, zone):
-        self.__transformedZones[zone.id] = zone
+        self.__transformedZones[zone.layerId] = zone
         self.onZoneTransformed(zone)
 
     def removeTransformedZone(self, zone):
-        self.__transformedZones.pop(zone.id)
+        self.__transformedZones.pop(zone.layerId)
         self.onTransformedZoneRemoved(zone)
 
     def enterDangerZone(self, zone):
-        self.__activeDangerZone = zone.id
-        state = DestroyTimerViewState(VEHICLE_VIEW_STATE.DANGER_ZONE, zone.finishTime - zone.startTime, TIMER_VIEW_STATE.CRITICAL, startTime=zone.startTime)
-        self.sessionProvider.invalidateVehicleState(VEHICLE_VIEW_STATE.DANGER_ZONE, state)
-        SoundGroups.g_instance.playSound2D(SoundNotifications.DANGER_ZONE_ENTER)
+        self.__activeDangerZones.add(zone.id)
+        vehicleState, timerState = _notificationMapping[zone.zoneType]
+        state = DestroyTimerViewState(vehicleState, zone.finishTime - zone.startTime, timerState, startTime=zone.startTime)
+        self.sessionProvider.invalidateVehicleState(vehicleState, state)
+        if vehicleState == VEHICLE_VIEW_STATE.DANGER_ZONE:
+            SoundGroups.g_instance.playSound2D(SoundNotifications.DANGER_ZONE_ENTER)
 
     def exitDangerZone(self, zone):
-        self.__activeDangerZone = None
-        state = DestroyTimerViewState.makeCloseTimerState(VEHICLE_VIEW_STATE.DANGER_ZONE)
-        self.sessionProvider.invalidateVehicleState(VEHICLE_VIEW_STATE.DANGER_ZONE, state)
-        SoundGroups.g_instance.playSound2D(SoundNotifications.DANGER_ZONE_EXIT)
-        return
+        self.__activeDangerZones.discard(zone.id)
+        vehicleState, _ = _notificationMapping[zone.zoneType]
+        state = DestroyTimerViewState.makeCloseTimerState(vehicleState)
+        self.sessionProvider.invalidateVehicleState(vehicleState, state)
+        if vehicleState == VEHICLE_VIEW_STATE.DANGER_ZONE:
+            SoundGroups.g_instance.playSound2D(SoundNotifications.DANGER_ZONE_EXIT)
 
     def removeDangerZone(self, zone):
-        if zone.id == self.__activeDangerZone:
+        if zone.id in self.__activeDangerZones:
             self.exitDangerZone(zone)
 
     def getZoneMarkers(self):

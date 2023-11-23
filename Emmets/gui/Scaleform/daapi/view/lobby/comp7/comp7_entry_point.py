@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/comp7/comp7_entry_point.py
 from frameworks.wulf import ViewFlags, ViewSettings
 from gui.Scaleform.daapi.view.meta.ResizableEntryPointMeta import ResizableEntryPointMeta
@@ -10,7 +10,7 @@ from gui.shared.utils import SelectorBattleTypesUtils as selectorUtils
 from gui.shared.utils.scheduled_notifications import Notifiable, PeriodicNotifier
 from gui.impl.pub import ViewImpl
 from gui.impl.gen import R
-from gui.impl.gen.view_models.views.lobby.comp7.views.banner_model import BannerModel, State
+from gui.impl.gen.view_models.views.lobby.comp7.banner_model import BannerModel, State
 from gui.periodic_battles.models import PeriodType
 from gui.prb_control.entities.comp7 import comp7_prb_helpers
 from helpers import dependency, time_utils
@@ -19,8 +19,7 @@ from skeletons.gui.game_control import IComp7Controller
 
 def isComp7EntryPointAvailable():
     comp7Ctrl = dependency.instance(IComp7Controller)
-    settings = comp7Ctrl.getModeSettings()
-    return comp7Ctrl.isEnabled() and settings is not None and settings.seasons
+    return comp7Ctrl.isEnabled() and not comp7Ctrl.isFrozen() and comp7Ctrl.hasAnySeason()
 
 
 class Comp7EntryPoint(ResizableEntryPointMeta):
@@ -30,7 +29,7 @@ class Comp7EntryPoint(ResizableEntryPointMeta):
             self.__view.setIsSingle(value)
 
     def _makeInjectView(self):
-        self.__view = Comp7EntryPointView(flags=ViewFlags.COMPONENT)
+        self.__view = Comp7EntryPointView(flags=ViewFlags.VIEW)
         return self.__view
 
 
@@ -40,7 +39,7 @@ class Comp7EntryPointView(ViewImpl, Notifiable):
     __comp7Controller = dependency.descriptor(IComp7Controller)
 
     def __init__(self, flags=ViewFlags.VIEW):
-        settings = ViewSettings(R.views.lobby.comp7.views.Banner())
+        settings = ViewSettings(R.views.lobby.comp7.Banner())
         settings.flags = flags
         settings.model = BannerModel()
         super(Comp7EntryPointView, self).__init__(settings)

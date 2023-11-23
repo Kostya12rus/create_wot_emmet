@@ -1,10 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/formatters/service_channel_helpers.py
 import typing, logging
 from collections import namedtuple
 from gui.collection.collections_constants import COLLECTION_ITEM_PREFIX_NAME
+from gui.server_events.bonuses import BattleTokensBonus
 from items import makeIntCompactDescrByID
 from optional_bonuses import BONUS_MERGERS
 from skeletons.gui.shared import IItemsCache
@@ -84,3 +85,9 @@ def popCollectionEntitlements(rewards):
         rewards['entitlements'].pop(eName)
 
     return entitlements
+
+
+def parseTokenBonusCount(bonus, tokenName):
+    if isinstance(bonus, BattleTokensBonus):
+        return bonus.getValue().get(tokenName, {}).get('count', 0)
+    return 0

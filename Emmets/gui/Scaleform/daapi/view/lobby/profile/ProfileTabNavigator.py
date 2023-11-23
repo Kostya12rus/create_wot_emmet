@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/ProfileTabNavigator.py
 from gui.Scaleform.daapi.view.lobby.profile.ProfileSection import ProfileSection
 from gui.Scaleform.daapi.view.meta.ProfileTabNavigatorMeta import ProfileTabNavigatorMeta
@@ -32,7 +32,10 @@ class ProfileTabNavigator(ProfileTabNavigatorMeta):
         super(ProfileTabNavigator, self).registerFlashComponent(component, alias, self.__userName, self.__userID, self.__databaseID, self.__selectedData)
 
     def onTabChange(self, tabId):
+        self.__safeCall(self.components.get(self.tabId), 'onSectionDeactivated')
         self.tabId = tabId
-        currentTab = self.components.get(tabId)
-        if currentTab:
-            currentTab.onSectionActivated()
+        self.__safeCall(self.components.get(self.tabId), 'onSectionActivated')
+
+    @staticmethod
+    def __safeCall(obj, attrName, *args, **kwargs):
+        return getattr(obj, attrName, (lambda *__, **_: None))(*args, **kwargs)

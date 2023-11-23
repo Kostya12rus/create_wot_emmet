@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/notification/NotificationPopUpViewer.py
 from gui.Scaleform.daapi.view.meta.NotificationPopUpViewerMeta import NotificationPopUpViewerMeta
+from gui.game_loading.resources.consts import Milestones
 from gui.shared.notifications import NotificationPriorityLevel, NotificationGroup
 from helpers import dependency
 from messenger import g_settings
@@ -11,10 +12,13 @@ from messenger.proto.events import g_messengerEvents
 from notification import NotificationMVC
 from notification.BaseNotificationView import BaseNotificationView
 from notification.settings import NOTIFICATION_STATE
+from PlayerEvents import g_playerEvents
 from skeletons.connection_mgr import IConnectionManager
+from skeletons.gui.shared.utils import IHangarSpace
 
 class NotificationPopUpViewer(NotificationPopUpViewerMeta, BaseNotificationView):
-    connectionMgr = dependency.descriptor(IConnectionManager)
+    __connectionMgr = dependency.descriptor(IConnectionManager)
+    __hangarSpace = dependency.descriptor(IHangarSpace)
 
     def __init__(self):
         mvc = NotificationMVC.g_instance
@@ -50,16 +54,8 @@ class NotificationPopUpViewer(NotificationPopUpViewerMeta, BaseNotificationView)
 
     def _populate(self):
         super(NotificationPopUpViewer, self)._populate()
-        self._model.onNotificationReceived += self.__onNotificationReceived
-        self._model.onNotificationUpdated += self.__onNotificationUpdated
-        self._model.onNotificationRemoved += self.__onNotificationRemoved
-        self._model.onDisplayStateChanged += self.__displayStateChangeHandler
-        mvcInstance = NotificationMVC.g_instance
-        mvcInstance.getAlertController().onAllAlertsClosed += self.__allAlertsMessageCloseHandler
-        g_messengerEvents.onLockPopUpMessages += self.__onLockPopUpMassages
-        g_messengerEvents.onUnlockPopUpMessages += self.__onUnlockPopUpMessages
         self.as_initInfoS(self.__maxAvailableItemsCount, self.__messagesPadding)
-        self._model.setup()
+        self.__startNotifications()
 
     def _dispose(self):
         self.__pendingMessagesQueue = []
@@ -71,8 +67,9 @@ class NotificationPopUpViewer(NotificationPopUpViewerMeta, BaseNotificationView)
         mvcInstance.getAlertController().onAllAlertsClosed -= self.__allAlertsMessageCloseHandler
         g_messengerEvents.onLockPopUpMessages -= self.__onLockPopUpMassages
         g_messengerEvents.onUnlockPopUpMessages -= self.__onUnlockPopUpMessages
+        g_playerEvents.onLoadingMilestoneReached -= self._onLoadingMilestoneReached
         self.cleanUp()
-        mvcInstance.cleanUp(resetCounter=self.connectionMgr.isDisconnected())
+        mvcInstance.cleanUp(resetCounter=self.__connectionMgr.isDisconnected())
         super(NotificationPopUpViewer, self)._dispose()
 
     def _getSettings(self):
@@ -155,3 +152,22 @@ class NotificationPopUpViewer(NotificationPopUpViewerMeta, BaseNotificationView)
     def __onUnlockPopUpMessages(self):
         self.__lockedNotificationPriority = []
         self.__showMessagesFromQueue()
+
+    def __startNotifications(self):
+        if self.__hangarSpace.spaceInited:
+            self._model.onNotificationReceived += self.__onNotificationReceived
+            self._model.onNotificationUpdated += self.__onNotificationUpdated
+            self._model.onNotificationRemoved += self.__onNotificationRemoved
+            self._model.onDisplayStateChanged += self.__displayStateChangeHandler
+            mvcInstance = NotificationMVC.g_instance
+            mvcInstance.getAlertController().onAllAlertsClosed += self.__allAlertsMessageCloseHandler
+            g_messengerEvents.onLockPopUpMessages += self.__onLockPopUpMassages
+            g_messengerEvents.onUnlockPopUpMessages += self.__onUnlockPopUpMessages
+            self._model.setup()
+        else:
+            g_playerEvents.onLoadingMilestoneReached += self._onLoadingMilestoneReached
+
+    def _onLoadingMilestoneReached(self, milestoneName):
+        if milestoneName == Milestones.HANGAR_READY:
+            g_playerEvents.onLoadingMilestoneReached -= self._onLoadingMilestoneReached
+            self.__startNotifications()

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/conditions.py
 import logging, operator, typing, weakref
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -17,7 +17,7 @@ from gui.shared.utils.requesters.ItemsRequester import RESEARCH_CRITERIA
 from helpers import i18n, dependency, getLocalizedData
 from items import vehicles
 from shared_utils import CONST_CONTAINER
-from skeletons.gui.game_control import IIGRController
+from skeletons.gui.game_control import IIGRController, IWotPlusController
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
 from soft_exception import SoftException
@@ -26,7 +26,8 @@ if typing.TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 _AVAILABLE_GUI_TYPES_LABELS = {constants.ARENA_BONUS_TYPE.REGULAR: constants.ARENA_GUI_TYPE.RANDOM, 
    constants.ARENA_BONUS_TYPE.TRAINING: constants.ARENA_GUI_TYPE.TRAINING, 
-   constants.ARENA_BONUS_TYPE.TOURNAMENT_REGULAR: constants.ARENA_GUI_TYPE.TRAINING}
+   constants.ARENA_BONUS_TYPE.TOURNAMENT_REGULAR: constants.ARENA_GUI_TYPE.TRAINING, 
+   constants.ARENA_BONUS_TYPE.TOURNAMENT_COMP7: constants.ARENA_GUI_TYPE.COMP7}
 _AVAILABLE_BONUS_TYPES_LABELS = {constants.ARENA_BONUS_TYPE.CYBERSPORT: 'team7x7'}
 _RELATIONS = formatters.RELATIONS
 _RELATIONS_SCHEME = formatters.RELATIONS_SCHEME
@@ -580,6 +581,23 @@ class PremiumPlusAccount(_Requirement):
             return True
 
 
+class WotPlus(_Requirement):
+    wotPlusController = dependency.descriptor(IWotPlusController)
+
+    def __init__(self, path, data):
+        super(WotPlus, self).__init__('wotPlus', dict(data), path)
+        self._needValue = self._data.get('value')
+
+    def isWotPlusNeeded(self):
+        return self._needValue
+
+    def negate(self):
+        self._needValue = not self._needValue
+
+    def _isAvailable(self):
+        return self.wotPlusController.isEnabled() == self._needValue
+
+
 class InClan(_Requirement):
 
     def __init__(self, path, data):
@@ -890,7 +908,7 @@ class BattleBonusType(_Condition, _Negatable):
         self._types = self._data.get('value')
 
     def __repr__(self):
-        return 'BonusType<types=%r>' % self._types
+        return 'BattleBonusType<types=%r>' % self._types
 
     def negate(self):
         newTypes = []

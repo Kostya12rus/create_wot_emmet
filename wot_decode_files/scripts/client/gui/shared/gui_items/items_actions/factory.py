@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/items_actions/factory.py
 import logging
 from adisp import adisp_process, adisp_async
@@ -24,6 +24,14 @@ BUY_BOOSTER = 'buyBooster'
 BUY_AND_ACTIVATE_BOOSTER = 'buyAndActivateBooster'
 CONVERT_BLUEPRINT_FRAGMENT = 'convertFragment'
 USE_CREW_BOOK = 'useCrewBook'
+USE_FREE_XP_TO_TANKMAN = 'useFreeXpToTankman'
+RETRAIN_TANKMAN = 'retrainTankman'
+CHANGE_ROLE_TANKMAN = 'changeRoleTankman'
+UNLOAD_TANKMAN = 'unloadTankman'
+EQUIP_TANKMAN = 'equipTankman'
+CHANGE_TANKMAN_PASSPORT = 'changeTankmanPassport'
+DISMISS_TANKMAN = 'dismissTankman'
+RESTORE_TANKMAN = 'restoreTankman'
 CHANGE_NATION = 'changeNation'
 INSTALL_BATTLE_ABILITIES = 'installBattleAbilities'
 FRONTLINE_INSTALL_RESERVES = 'frontlineInstallReserves'
@@ -59,6 +67,14 @@ _ACTION_MAP = {SELL_ITEM: actions.SellItemAction,
    BUY_AND_ACTIVATE_BOOSTER: actions.BuyAndActivateBooster, 
    CONVERT_BLUEPRINT_FRAGMENT: actions.ConvertBlueprintFragmentAction, 
    USE_CREW_BOOK: actions.UseCrewBookAction, 
+   USE_FREE_XP_TO_TANKMAN: actions.UseFreeXpToTankman, 
+   RETRAIN_TANKMAN: actions.TankmanRetrainingAction, 
+   CHANGE_ROLE_TANKMAN: actions.TankmanChangeRoleAction, 
+   UNLOAD_TANKMAN: actions.TankmanUnloadAction, 
+   EQUIP_TANKMAN: actions.TankmanEquipAction, 
+   CHANGE_TANKMAN_PASSPORT: actions.TankmanChangePassportAction, 
+   DISMISS_TANKMAN: actions.TankmanDismissAction, 
+   RESTORE_TANKMAN: actions.TankmanRestoreAction, 
    CHANGE_NATION: actions.ChangeVehicleNationAction, 
    INSTALL_BATTLE_ABILITIES: actions.InstallBattleAbilities, 
    FRONTLINE_INSTALL_RESERVES: actions.FrontlineInstallReserves, 

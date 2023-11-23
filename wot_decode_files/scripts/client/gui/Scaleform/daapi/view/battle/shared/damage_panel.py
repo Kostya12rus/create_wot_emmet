@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/damage_panel.py
 import logging, math, typing, weakref, BattleReplay, BigWorld, GUI, Math
 from account_helpers.settings_core import settings_constants
@@ -61,7 +61,7 @@ class _IStatusAnimPlayer(object):
         self._statusId = statusId
         self._hasStatus = False
 
-    def showStatus(self, time, animated):
+    def showStatus(self, time, animated, startTimer=True):
         self._hasStatus = True
 
     def hideStatus(self, animated):
@@ -77,7 +77,7 @@ class _ActionScriptTimer(_IStatusAnimPlayer):
         super(_ActionScriptTimer, self).__init__(statusId=statusId)
         self._view = view
 
-    def showStatus(self, time, animated):
+    def showStatus(self, time, animated, startTimer=True):
         super(_ActionScriptTimer, self).showStatus(time, animated)
         if not self._view.isDisposed():
             self._view.as_showStatusS(self._statusId, time, animated)
@@ -95,13 +95,16 @@ class _PythonTimer(PythonTimer, _IStatusAnimPlayer):
         self._animated = False
         self.__hideAnimated = False
 
-    def showStatus(self, totalTime, animated):
+    def showStatus(self, totalTime, animated, startTimer=True):
         super(_PythonTimer, self).showStatus(totalTime, animated)
         self._animated = animated
         self._totalTime = totalTime
         self._startTime = BigWorld.serverTime()
         self._finishTime = self._startTime + totalTime if totalTime else 0
-        self.show()
+        if startTimer:
+            self.show()
+        else:
+            self._showView(isBubble=True)
 
     def hideStatus(self, animated):
         self.__hideAnimated = animated
@@ -144,7 +147,10 @@ class _TankIndicatorCtrl(object):
             hullMat = BigWorld.player().getOwnVehicleMatrix()
         else:
             hullMat = vehicle.matrix
-        turretMat = vehicle.appearance.turretMatrix
+        if vehicle.isHidden:
+            turretMat = hullMat
+        else:
+            turretMat = vehicle.appearance.turretMatrix
         if yawLimits:
             self.__component.wg_turretYawConstraints = yawLimits
         else:
@@ -365,7 +371,7 @@ class DamagePanel(DamagePanelMeta, IPrebattleSetupsListener, IArenaVehiclesContr
         animated = debuffInfo.animated
         stunDuration = self.__getStunDuration()
         if self.__debuffDuration > 0 and stunDuration == 0:
-            self._statusAnimPlayers[STATUS_ID.STUN].showStatus(self.__debuffDuration, animated)
+            self._statusAnimPlayers[STATUS_ID.STUN].showStatus(self.__debuffDuration, animated, startTimer=False)
         elif stunDuration > 0:
             self._statusAnimPlayers[STATUS_ID.STUN].showStatus(stunDuration, False)
         else:

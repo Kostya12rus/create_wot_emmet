@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/arena_info/vos_collections.py
 from gui.shared.sort_key import SortKey
 from gui.battle_control.arena_info.arena_vos import EPIC_RANDOM_KEYS, EPIC_BATTLE_KEYS, Comp7Keys
@@ -170,9 +170,14 @@ class Comp7SortKey(VehicleInfoSortKey):
         result = cmp(yvInfoVO.isAlive(), xvInfoVO.isAlive())
         if result:
             return result
+        xvIsQual = xvInfoVO.gameModeSpecific.getValue(Comp7Keys.IS_QUAL_ACTIVE, default=False)
+        yvIsQual = yvInfoVO.gameModeSpecific.getValue(Comp7Keys.IS_QUAL_ACTIVE, default=False)
+        result = cmp(xvIsQual, yvIsQual)
+        if result:
+            return result
         xvRank = xvInfoVO.gameModeSpecific.getValue(Comp7Keys.RANK, default=(0, 0))
         yvRank = yvInfoVO.gameModeSpecific.getValue(Comp7Keys.RANK, default=(0, 0))
-        result = cmp(yvRank, xvRank)
+        result = cmp(xvRank, yvRank)
         if result:
             return result
         return cmp(xvInfoVO.player, yvInfoVO.player)

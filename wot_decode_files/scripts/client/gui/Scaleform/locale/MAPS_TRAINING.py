@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/MAPS_TRAINING.py
 
 
@@ -500,13 +500,13 @@ class MAPS_TRAINING(object):
     C_37_CAUCASUS_B_MT_BALCONYPHRASE = '#maps_training:37_caucasus/b_mt_balconyPhrase'
     C_37_CAUCASUS_B_MT_RAVINE = '#maps_training:37_caucasus/b_mt_ravine'
     C_37_CAUCASUS_B_MT_RAVINEPHRASE = '#maps_training:37_caucasus/b_mt_ravinePhrase'
-    C_37_CAUCASUS_B_MT_SMALLLEDGE = '#maps_training:37_caucasus/b_mt_smallLedge'
-    C_37_CAUCASUS_B_MT_SMALLLEDGEPHRASE = '#maps_training:37_caucasus/b_mt_smallLedgePhrase'
+    C_37_CAUCASUS_B_MT_BRIDGE = '#maps_training:37_caucasus/b_mt_bridge'
+    C_37_CAUCASUS_B_MT_BRIDGEPHRASE = '#maps_training:37_caucasus/b_mt_bridgePhrase'
     C_37_CAUCASUS_B_MT_GORGE = '#maps_training:37_caucasus/b_mt_gorge'
     C_37_CAUCASUS_B_MT_GORGEPHRASE1 = '#maps_training:37_caucasus/b_mt_gorgePhrase1'
     C_37_CAUCASUS_B_MT_GORGEPHRASE2 = '#maps_training:37_caucasus/b_mt_gorgePhrase2'
-    C_37_CAUCASUS_B_MT_GLACIER = '#maps_training:37_caucasus/b_mt_glacier'
-    C_37_CAUCASUS_B_MT_GLACIERPHRASE = '#maps_training:37_caucasus/b_mt_glacierPhrase'
+    C_37_CAUCASUS_B_MT_PLATEAUNORTH = '#maps_training:37_caucasus/b_mt_plateauNorth'
+    C_37_CAUCASUS_B_MT_PLATEAUNORTHPHRASE = '#maps_training:37_caucasus/b_mt_plateauNorthPhrase'
     C_37_CAUCASUS_UPPERNAME = '#maps_training:37_caucasus/upperName'
     C_38_MANNERHEIM_LINE_TEAM1_HEAVYTANK_TITLE = '#maps_training:38_mannerheim_line/team1/heavyTank/title'
     C_38_MANNERHEIM_LINE_TEAM1_HEAVYTANK_DESCR = '#maps_training:38_mannerheim_line/team1/heavyTank/descr'

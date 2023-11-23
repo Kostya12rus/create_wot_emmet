@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/mode_selector/items/base_item.py
 from abc import ABCMeta, abstractmethod
 import typing, Event
@@ -12,7 +12,7 @@ from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.mode_selector.mode_selector_card_types import ModeSelectorCardTypes
 from gui.impl.gen.view_models.views.lobby.mode_selector.mode_selector_normal_card_model import ModeSelectorNormalCardModel
 from gui.impl.gen.view_models.views.lobby.mode_selector.mode_selector_reward_model import ModeSelectorRewardModel
-from gui.impl.lobby.mode_selector.items.items_constants import CustomModeName, COLUMN_SETTINGS, DEFAULT_PRIORITY, DEFAULT_COLUMN, ModeSelectorRewardID
+from gui.impl.lobby.mode_selector.items.items_constants import COLUMN_SETTINGS, DEFAULT_PRIORITY, DEFAULT_COLUMN, ModeSelectorRewardID, DEFAULT_MODE_SETTING
 from gui.limited_ui.lui_rules_storage import LuiRules
 from gui.shared.event_dispatcher import showBrowserOverlayView
 from gui.shared.formatters import time_formatters
@@ -171,7 +171,7 @@ class ModeSelectorNormalCardItem(ModeSelectorItem):
 
     @property
     def modeName(self):
-        return CustomModeName.DEFAULT
+        return DEFAULT_MODE_SETTING
 
     @property
     def calendarTooltipText(self):

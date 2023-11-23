@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/comp7/meta_view/root_view_model.py
 from enum import IntEnum
 from frameworks.wulf import ViewModel
@@ -8,20 +8,24 @@ from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.leaderboard_mode
 from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.progression_model import ProgressionModel
 from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.rank_rewards_model import RankRewardsModel
 from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.weekly_quests_model import WeeklyQuestsModel
+from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.yearly_rewards_model import YearlyRewardsModel
+from gui.impl.gen.view_models.views.lobby.comp7.meta_view.pages.yearly_statistics_model import YearlyStatisticsModel
 from gui.impl.gen.view_models.views.lobby.comp7.meta_view.sidebar_model import SidebarModel
 from gui.impl.gen.view_models.views.lobby.comp7.schedule_info_model import ScheduleInfoModel
 
 class MetaRootViews(IntEnum):
     PROGRESSION = 0
     RANKREWARDS = 1
-    WEEKLYQUESTS = 2
-    LEADERBOARD = 3
+    YEARLYREWARDS = 2
+    WEEKLYQUESTS = 3
+    LEADERBOARD = 4
+    YEARLYSTATISTICS = 5
 
 
 class RootViewModel(ViewModel):
     __slots__ = ('onClose', 'onInfoPageOpen')
 
-    def __init__(self, properties=7, commands=2):
+    def __init__(self, properties=9, commands=2):
         super(RootViewModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -72,11 +76,27 @@ class RootViewModel(ViewModel):
     def getLeaderboardModelType():
         return LeaderboardModel
 
-    def getViewType(self):
-        return MetaRootViews(self._getNumber(6))
+    @property
+    def yearlyRewardsModel(self):
+        return self._getViewModel(6)
 
-    def setViewType(self, value):
-        self._setNumber(6, value.value)
+    @staticmethod
+    def getYearlyRewardsModelType():
+        return YearlyRewardsModel
+
+    @property
+    def yearlyStatisticsModel(self):
+        return self._getViewModel(7)
+
+    @staticmethod
+    def getYearlyStatisticsModelType():
+        return YearlyStatisticsModel
+
+    def getPageViewId(self):
+        return MetaRootViews(self._getNumber(8))
+
+    def setPageViewId(self, value):
+        self._setNumber(8, value.value)
 
     def _initialize(self):
         super(RootViewModel, self)._initialize()
@@ -86,6 +106,8 @@ class RootViewModel(ViewModel):
         self._addViewModelProperty('rankRewardsModel', RankRewardsModel())
         self._addViewModelProperty('weeklyQuestsModel', WeeklyQuestsModel())
         self._addViewModelProperty('leaderboardModel', LeaderboardModel())
-        self._addNumberProperty('viewType')
+        self._addViewModelProperty('yearlyRewardsModel', YearlyRewardsModel())
+        self._addViewModelProperty('yearlyStatisticsModel', YearlyStatisticsModel())
+        self._addNumberProperty('pageViewId')
         self.onClose = self._addCommand('onClose')
         self.onInfoPageOpen = self._addCommand('onInfoPageOpen')

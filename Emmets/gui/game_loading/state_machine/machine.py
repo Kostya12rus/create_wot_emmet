@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_loading/state_machine/machine.py
 from functools import wraps
 import typing
@@ -9,7 +9,7 @@ from gui.game_loading import loggers
 from gui.game_loading.resources.cdn.images import CdnImagesResources
 from gui.game_loading.resources.consts import LoadingTypes
 from gui.game_loading.resources.local.base import LocalResources
-from gui.game_loading.state_machine.const import GameLoadingStatesEvents
+from gui.game_loading.state_machine.const import GameLoadingStatesEvents, GameLoadingStates
 from gui.game_loading.state_machine.states.base import BaseTickingState, BaseGroupTickingStates
 from gui.game_loading.state_machine.states.client_loading import ClientLoadingState
 from gui.game_loading.state_machine.states.idl import IdlState
@@ -135,3 +135,7 @@ class GameLoadingStateMachine(StateMachine):
     @_ifNotRunning()
     def idl(self):
         self.post(StringEvent(GameLoadingStatesEvents.IDL.value))
+
+    @property
+    def isLoading(self):
+        return not self.isStateEntered(GameLoadingStates.IDL.value)

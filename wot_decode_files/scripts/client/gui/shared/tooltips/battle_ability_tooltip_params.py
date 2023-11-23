@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/battle_ability_tooltip_params.py
 import logging
 from functools import partial
@@ -149,14 +149,17 @@ class DisplayLabelMixin(object):
 
     @classmethod
     def _formatParamStringInternal(cls, values, unitLocalization=None, returnArray=False):
-        formatTemplate = '{}{}' if unitLocalization == COMMON.COMMON_PERCENT else '{} {}'
+        isPercentValue = unitLocalization == COMMON.COMMON_PERCENT
+        formatTemplate = i18n.makeString(COMMON.PERCENTVALUE) if isPercentValue else '{} {}'
         if not unitLocalization:
             unitLocalization = None if 1 else i18n.makeString(unitLocalization)
             formattedValues = []
             if values:
                 for idx, dv in enumerate(values):
                     dvStr = ('{}').format(abs(dv))
-                    if unitLocalization:
+                    if isPercentValue:
+                        dvStr = formatTemplate.format(value=dvStr)
+                    elif unitLocalization:
                         dvStr = formatTemplate.format(dvStr, unitLocalization)
                     dvStr = _getTextStyle(idx)(dvStr)
                     formattedValues.append(dvStr)

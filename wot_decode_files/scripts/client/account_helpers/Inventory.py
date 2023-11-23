@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/Inventory.py
 import collections, logging, typing
 from array import array
@@ -142,15 +142,16 @@ class Inventory(object):
         self.__account._doCmdInt3(AccountCommands.CMD_TMAN_UNEQUIP_CREW_SKIN, tmanInvID, 0, 0, proxy)
         return
 
-    def useCrewBook(self, crewBookCD, vehInvID, tmanInvID, callback):
+    def useCrewBook(self, crewBookCD, crewBookCount, vehInvID, tmanInvID, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER)
             return
         proxy = None
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
-        self.__account._doCmdInt3(AccountCommands.CMD_LEARN_CREW_BOOK, crewBookCD, vehInvID, tmanInvID, proxy)
+            proxy = lambda requestID, resultID, errorStr='', ext=None: callback(resultID, errorStr, ext)
+        arr = [crewBookCD, crewBookCount, vehInvID, tmanInvID, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_LEARN_CREW_BOOK, arr, proxy)
         return
 
     def equip(self, vehInvID, itemCompDescr, callback):
@@ -285,7 +286,7 @@ class Inventory(object):
         self.__account.shop.waitForSync(partial(self.__setEquipmentSlotTypeOnShopSynched, vehInvID, slotID, callback))
         return
 
-    def equipTankman(self, vehInvID, slot, tmanInvID, callback):
+    def equipTankman(self, vehInvID, slot, tmanInvID, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER, [])
@@ -293,10 +294,11 @@ class Inventory(object):
         if tmanInvID is None:
             tmanInvID = -1
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
+            proxy = lambda requestID, resultID, errorStr='', ext=None: callback(resultID, errorStr, ext)
         else:
             proxy = None
-        self.__account._doCmdInt3(AccountCommands.CMD_EQUIP_TMAN, vehInvID, slot, tmanInvID, proxy)
+        arr = [vehInvID, slot, tmanInvID, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_EQUIP_TMAN, arr, proxy)
         return
 
     def returnCrew(self, vehInvID, callback):
@@ -369,34 +371,22 @@ class Inventory(object):
         self.__account.shop.waitForSync(partial(self.__dropSkillsTmanOnShopSynced, tmanInvID, dropSkillsCostIdx, useRecertificationForm, callback))
         return
 
-    def respecTankman(self, tmanInvID, vehTypeCompDescr, tmanCostTypeIdx, callback):
+    def respecTankman(self, tmanInvID, vehicleIntCD, tmanCostTypeIdx, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER)
             return
-        if vehTypeCompDescr is None:
-            vehTypeCompDescr = 0
-        self.__account.shop.waitForSync(partial(self.__respecTmanOnShopSynced, tmanInvID, vehTypeCompDescr, tmanCostTypeIdx, callback))
+        self.__account.shop.waitForSync(partial(self.__respecTmanOnShopSynced, tmanInvID, vehicleIntCD, tmanCostTypeIdx, groupID, groupSize, callback))
         return
 
-    def multiRespecTankman(self, tmenInvIDsAndCostTypeIdx, vehTypeCompDescr, callback):
+    def changeTankmanRole(self, tmanInvID, roleIdx, vehTypeCompDescr, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER)
             return
         if vehTypeCompDescr is None:
             vehTypeCompDescr = 0
-        self.__account.shop.waitForSync(partial(self.__multiRespecTmanOnShopSynced, tmenInvIDsAndCostTypeIdx, vehTypeCompDescr, callback))
-        return
-
-    def changeTankmanRole(self, tmanInvID, roleIdx, vehTypeCompDescr, callback):
-        if self.__ignore:
-            if callback is not None:
-                callback(AccountCommands.RES_NON_PLAYER)
-            return
-        if vehTypeCompDescr is None:
-            vehTypeCompDescr = 0
-        self.__account.shop.waitForSync(partial(self.__changeTankmanRoleOnShopSynced, tmanInvID, roleIdx, vehTypeCompDescr, callback))
+        self.__account.shop.waitForSync(partial(self.__changeTankmanRoleOnShopSynced, tmanInvID, roleIdx, vehTypeCompDescr, groupID, groupSize, callback))
         return
 
     def replacePassport(self, tmanInvID, isPremium, isFemale, fnGroupID, firstNameID, lnGroupID, lastNameID, iGroupID, iconID, callback):
@@ -407,12 +397,12 @@ class Inventory(object):
         self.__account.shop.waitForSync(partial(self.__replacePassportOnShopSynced, tmanInvID, isPremium, isFemale, fnGroupID, firstNameID, lnGroupID, lastNameID, iGroupID, iconID, callback))
         return
 
-    def freeXPToTankman(self, tmanInvID, freeXP, callback):
+    def freeXPToTankman(self, tmanInvID, freeXP, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback('', AccountCommands.RES_NON_PLAYER)
             return
-        self.__account.shop.waitForSync(partial(self.__freeXPToTankmanOnShopSynced, tmanInvID, freeXP, callback))
+        self.__account.shop.waitForSync(partial(self.__freeXPToTankmanOnShopSynced, tmanInvID, freeXP, groupID, groupSize, callback))
         return
 
     def changeVehicleSetting(self, vehInvID, setting, isOn, source, callback):
@@ -497,6 +487,20 @@ class Inventory(object):
             proxy = None
         self.__account._doCmdInt2(AccountCommands.CMD_OBTAIN_ALL, 0, 0, proxy)
         return
+
+    def addAllUniqueTankmen(self):
+        if self.__ignore:
+            return
+        else:
+            self.__account._doCmdInt(AccountCommands.CMD_ADD_ALL_UNIQUE_TMEN, 0, None)
+            return
+
+    def emptyBarracks(self):
+        if self.__ignore:
+            return
+        else:
+            self.__account._doCmdInt(AccountCommands.CMD_EMPTY_BARRACKS, 0, None)
+            return
 
     def obtainVehicle(self, name, callback=None):
         if self.__ignore:
@@ -614,45 +618,30 @@ class Inventory(object):
         self.__account._doCmdInt4(AccountCommands.CMD_TMAN_DROP_SKILLS, shopRev, tmanInvID, dropSkillsCostIdx, useRecertificationForm, proxy)
         return
 
-    def __respecTmanOnShopSynced(self, tmanInvID, vehTypeCompDescr, tmanCostTypeIdx, callback, resultID, shopRev):
+    def __respecTmanOnShopSynced(self, tmanInvID, vehicleIntCD, tmanCostTypeIdx, groupID, groupSize, callback, resultID, shopRev):
         if resultID < 0:
             if callback is not None:
                 callback(resultID)
             return
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
+            proxy = lambda requestID, resultID, errorStr='', ext=None: callback(resultID, errorStr, ext)
         else:
             proxy = None
-        self.__account._doCmdInt4(AccountCommands.CMD_TMAN_RESPEC, shopRev, tmanInvID, tmanCostTypeIdx, vehTypeCompDescr, proxy)
+        arr = [shopRev, tmanInvID, tmanCostTypeIdx, vehicleIntCD, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_TMAN_RESPEC, arr, proxy)
         return
 
-    def __multiRespecTmanOnShopSynced(self, tmenInvIDsAndCostTypeIdx, vehTypeCompDescr, callback, resultID, shopRev):
-        if resultID < 0:
-            if callback is not None:
-                callback(resultID)
-            return
-        if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
-        else:
-            proxy = None
-        arr = [shopRev, vehTypeCompDescr]
-        for tmanInvID, tmanCostTypeIdx in tmenInvIDsAndCostTypeIdx:
-            arr.append(tmanInvID)
-            arr.append(tmanCostTypeIdx)
-
-        self.__account._doCmdIntArr(AccountCommands.CMD_TMAN_MULTI_RESPEC, arr, proxy)
-        return
-
-    def __changeTankmanRoleOnShopSynced(self, tmanInvID, roleIdx, vehTypeCompDescr, callback, resultID, shopRev):
+    def __changeTankmanRoleOnShopSynced(self, tmanInvID, roleIdx, vehTypeCompDescr, groupID, groupSize, callback, resultID, shopRev):
         if resultID < 0:
             if callback is not None:
                 callback(resultID, None)
             return
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID, ext)
+            proxy = lambda requestID, resultID, errorStr='', ext=None: callback(resultID, errorStr, ext)
         else:
             proxy = None
-        self.__account._doCmdInt4(AccountCommands.CMD_TMAN_CHANGE_ROLE, shopRev, tmanInvID, roleIdx, vehTypeCompDescr, proxy)
+        arr = [shopRev, tmanInvID, roleIdx, vehTypeCompDescr, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_TMAN_CHANGE_ROLE, arr, proxy)
         return
 
     def __replacePassportOnShopSynced(self, tmanInvID, isPremium, isFemale, fnGroupID, firstNameID, lnGroupID, lastNameID, iGroupID, iconID, callback, resultID, shopRev):
@@ -681,16 +670,17 @@ class Inventory(object):
         self.__account._doCmdIntArr(AccountCommands.CMD_TMAN_PASSPORT, arr, proxy)
         return
 
-    def __freeXPToTankmanOnShopSynced(self, tmanInvID, freeXP, callback, resultID, shopRev):
+    def __freeXPToTankmanOnShopSynced(self, tmanInvID, freeXP, groupID, groupSize, callback, resultID, shopRev):
         if resultID < 0:
             if callback is not None:
                 callback('', resultID)
             return
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(errorStr, resultID)
+            proxy = lambda requestID, resultID, errorStr='', ext=None: callback(resultID, errorStr, ext)
         else:
             proxy = None
-        self.__account._doCmdInt3(AccountCommands.CMD_TRAINING_TMAN, shopRev, tmanInvID, freeXP, proxy)
+        arr = [shopRev, tmanInvID, freeXP, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_TRAINING_TMAN, arr, proxy)
         return
 
     def __setAndFillLayoutsOnShopSynced(self, vehInvID, shellsLayout, equipmentType, eqsLayout, callback, resultID, shopRev):

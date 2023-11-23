@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/battleground/loot_object.py
 import logging, weakref
 from collections import defaultdict
@@ -64,9 +64,7 @@ def _loadLoot(typeID, radius, callback, desc):
     loot.prepareCompositeLoader(callback)
     spaceID = BigWorld.player().spaceID
     cachingManager = CGF.getManager(spaceID, SteelHunterDynamicObjectsCachingManager)
-    hasLoot = cachingManager.hasCachedLoot(typeID)
-    useForeground = cachingManager is not None and hasLoot
-    if useForeground:
+    if cachingManager is not None and cachingManager.hasCachedLoot(typeID):
         _loadLootForeground(loot, spaceID, desc)
     else:
         cachingManager.cacheForegroundLootLoading(loot)
@@ -98,6 +96,7 @@ class LootObject(TerrainAreaGameObject, ILootObject, CompositeLoaderMixin):
             child.activate()
 
         if not self.__collected:
+            self.model.activate()
             self.markingSmoke.bindAndStart(self.model.compoundModel)
         self.pickupEffect.enable(False)
 
@@ -107,6 +106,10 @@ class LootObject(TerrainAreaGameObject, ILootObject, CompositeLoaderMixin):
         self.markingSmoke.unbind()
         for child in self.__children:
             child.deactivate()
+
+        if self.model is not None:
+            self.model.deactivate()
+        return
 
     def processPickup(self, entityID):
         self.__collected = True
@@ -126,7 +129,7 @@ class LootObject(TerrainAreaGameObject, ILootObject, CompositeLoaderMixin):
         return len(self.__children) + 1
 
 
-@bonusCapsManager(ARENA_BONUS_TYPE_CAPS.BATTLEROYALE)
+@bonusCapsManager(ARENA_BONUS_TYPE_CAPS.BATTLEROYALE, CGF.DomainOption.DomainClient)
 class SteelHunterDynamicObjectsCachingManager(CGF.ComponentManager):
     __dynamicObjectsCache = dependency.descriptor(IBattleDynamicObjectsCache)
 
@@ -185,7 +188,9 @@ class SteelHunterDynamicObjectsCachingManager(CGF.ComponentManager):
 
         self.__lootCache[lootType] = cachedResources
         for effectPath in effectsPaths:
-            resourceList[effectPath].halt()
+            effect = resourceList[effectPath]
+            if effect:
+                effect.halt()
 
         _logger.info('[Loot] Loot %d resources has been cached', lootType)
         toForegroundLoad = self.__cachingQueue[lootType]

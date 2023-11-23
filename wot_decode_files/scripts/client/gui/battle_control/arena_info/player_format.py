@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/arena_info/player_format.py
 from collections import namedtuple
 from helpers import dependency
@@ -24,9 +24,9 @@ _PLAYER_FULL_NAME_FORMATS = {_FORMAT_MASK.VEHICLE: '{0:>s} ({2:>s})',
    _FORMAT_MASK.VEH_REGION: '{0:>s} {3:>s} ({2:>s})', 
    _FORMAT_MASK.REG_CLAN: '{0:>s}[{1:>s}] {3:>s}', 
    _FORMAT_MASK.ALL: '{0:>s}[{1:>s}] {3:>s} ({2:>s})'}
-_PlayerFormatResult = namedtuple('PlayerFormatResult', ('playerFullName', 'playerName',
-                                                        'playerFakeName', 'clanAbbrev',
-                                                        'regionCode', 'vehicleName'))
+PlayerFormatResult = namedtuple('PlayerFormatResult', ('playerFullName', 'playerName',
+                                                       'playerFakeName', 'clanAbbrev',
+                                                       'regionCode', 'vehicleName'))
 
 @dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
 def getRegionCode(accountDBID, lobbyContext=None):
@@ -93,7 +93,7 @@ class PlayerFullNameFormatter(object):
             fullName = playerName
         else:
             fullName = _PLAYER_FULL_NAME_FORMATS.get(key, '{0:>s}').format(playerName, clanAbbrev, vehShortName, regionCode)
-        return _PlayerFormatResult(fullName, playerName, fakePlayerName, clanAbbrev, regionCode, vehName)
+        return PlayerFormatResult(fullName, playerName, fakePlayerName, clanAbbrev, regionCode, vehName)
 
     @staticmethod
     def _normalizePlayerName(name):

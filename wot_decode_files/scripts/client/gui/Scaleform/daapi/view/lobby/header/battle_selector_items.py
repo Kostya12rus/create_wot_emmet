@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/header/battle_selector_items.py
 from __future__ import absolute_import
 from builtins import object
@@ -197,6 +197,15 @@ class _SelectorExtraItem(_SelectorItem):
 
 class _MapsTrainingItem(_SelectorItem):
     mapsTrainingController = dependency.descriptor(IMapsTrainingController)
+
+    def isRandomBattle(self):
+        return True
+
+    def setLocked(self, value):
+        self._isLocked = value
+        if self._isLocked:
+            self._isDisabled = True
+            self._isSelected = False
 
     def _update(self, state):
         self._isVisible = True
@@ -924,6 +933,9 @@ class EpicBattleItem(SelectorItem):
 class _Comp7Item(_SelectorItem):
     __comp7Controller = dependency.descriptor(IComp7Controller)
     __bootcampController = dependency.descriptor(IBootcampController)
+
+    def isInSquad(self, state):
+        return state.isInUnit(PREBATTLE_TYPE.COMP7)
 
     def isRandomBattle(self):
         return True

@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/Stats.py
-import cPickle
+import cPickle, logging
 from functools import partial, wraps
 import AccountCommands, constants, items
 from account_helpers.premium_info import PremiumInfo
@@ -12,6 +12,7 @@ from piggy_bank_common.settings_constants import PIGGY_BANK_PDATA_KEY
 from shared_utils.account_helpers.diff_utils import synchronizeDicts
 from items import vehicles
 from gui.shared.money import Currency
+_logger = logging.getLogger(__name__)
 _VEHICLE = items.ITEM_TYPE_INDICES['vehicle']
 _CHASSIS = items.ITEM_TYPE_INDICES['vehicleChassis']
 _TURRET = items.ITEM_TYPE_INDICES['vehicleTurret']
@@ -34,10 +35,12 @@ _DICT_STATS = ('vehTypeXP', 'vehTypeLocks', 'restrictions', 'globalVehicleLocks'
 _GROWING_SET_STATS = ('unlocks', 'eliteVehicles', 'multipliedXPVehs', 'multipliedRankedBattlesVehs')
 _ACCOUNT_STATS = ('clanDBID', 'attrs', 'premiumExpiryTime', 'autoBanTime', 'globalRating')
 _CACHE_STATS = ('isFinPswdVerified', 'mayConsumeWalletResources', 'oldVehInvIDs', 'isSsrPlayEnabled',
-                'comp7')
+                'isEmergencyModeEnabled')
+_CACHE_DICT_STATS = ('SPA', 'entitlements', 'dynamicCurrencies', 'comp7')
 _PREFERRED_MAPS_KEY = 'preferredMaps'
 _ADDITIONAL_XP_CACHE_KEY = '_additionalXPCache'
 _LIMITED_UI = 'limitedUi'
+_AB_FEATURE_TEST = 'abFeatureTest'
 
 def _checkIfNonPlayer(*args):
 
@@ -66,9 +69,10 @@ def _get_callback_proxy(callback=None):
 
 class Stats(object):
 
-    def __init__(self, syncData):
+    def __init__(self, syncData, commandsProxy):
         self.__account = None
         self.__syncData = syncData
+        self.__commandsProxy = commandsProxy
         self.__cache = {}
         self.__ignore = True
         return
@@ -139,15 +143,11 @@ class Stats(object):
                     LOG_DEBUG_DEV('CACHE stat change', stat, cacheDiff[stat])
                     cache[stat] = cacheDiff[stat]
 
-            spaDiff = cacheDiff.get('SPA', None)
-            if spaDiff:
-                synchronizeDicts(spaDiff, cache.setdefault('SPA', dict()))
-            entitlementsDiff = cacheDiff.get('entitlements', None)
-            if entitlementsDiff is not None:
-                synchronizeDicts(entitlementsDiff, cache.setdefault('entitlements', {}))
-            dynamicCurrenciesDiff = cacheDiff.get('dynamicCurrencies', None)
-            if dynamicCurrenciesDiff:
-                synchronizeDicts(dynamicCurrenciesDiff, cache.setdefault('dynamicCurrencies', dict()))
+            for stat in _CACHE_DICT_STATS:
+                statDiff = cacheDiff.get(stat, None)
+                if statDiff:
+                    synchronizeDicts(statDiff, cache.setdefault(stat, dict()))
+
         piggyBankDiff = diff.get(PIGGY_BANK_PDATA_KEY, None)
         if piggyBankDiff is not None:
             synchronizeDicts(piggyBankDiff, cache.setdefault(PIGGY_BANK_PDATA_KEY, dict()))
@@ -155,6 +155,8 @@ class Stats(object):
             synchronizeDicts(diff[_PREFERRED_MAPS_KEY], cache.setdefault(_PREFERRED_MAPS_KEY, {}))
         if _LIMITED_UI in diff:
             synchronizeDicts(diff[_LIMITED_UI], cache.setdefault(_LIMITED_UI, {}))
+        if _AB_FEATURE_TEST in diff:
+            synchronizeDicts(diff[_AB_FEATURE_TEST], cache.setdefault(_AB_FEATURE_TEST, {}))
         return
 
     def getCache(self, callback=None):
@@ -220,12 +222,12 @@ class Stats(object):
         self.__account.shop.waitForSync(partial(self.__slot_onShopSynced, callback))
         return
 
-    def buyBerths(self, callback=None):
+    def buyBerths(self, countPacksBerths, callback=None):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER, 0)
             return
-        self.__account.shop.waitForSync(partial(self.__berths_onShopSynced, callback))
+        self.__account.shop.waitForSync(partial(self.__berths_onShopSynced, countPacksBerths, callback))
         return
 
     def setMapsBlackList(self, selectedMaps, callback=None):
@@ -372,6 +374,18 @@ class Stats(object):
         self.__account._doCmdIntArr(AccountCommands.CMD_COMPLETE_PERSONAL_MISSION, [questID, int(withAdditional)], proxy)
         return
 
+    def completeQuests(self, questIDs, callback=None):
+        if self.__ignore:
+            if callback is not None:
+                callback(AccountCommands.RES_NON_PLAYER)
+            return
+        if callback is not None:
+            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
+        else:
+            proxy = None
+        self.__account._doCmdStrArr(AccountCommands.CMD_COMPLETE_QUESTS_DEV, questIDs, proxy)
+        return
+
     def rerollDailyQuest(self, token, callback=None):
         if self.__ignore:
             if callback is not None:
@@ -447,6 +461,30 @@ class Stats(object):
     @_checkIfNonPlayer()
     def changeBRPoints(self, points, ignoreUnburnableTitles=False, callback=None):
         self.__account._doCmdInt3(AccountCommands.CMD_CHANGE_BR_POINTS, points, int(ignoreUnburnableTitles), 0, _get_callback_proxy(callback))
+
+    @_checkIfNonPlayer()
+    def updateVehiclePrestige(self, vehCD=46849, points=10, callback=None):
+        if not isinstance(points, int):
+            LOG_ERROR('Wrong type of points.')
+            return
+        else:
+            if self.__ignore:
+                if callback is not None:
+                    callback(AccountCommands.RES_NON_PLAYER, 0)
+                return
+
+            def response(code, errStr='', ctx=None):
+                if code >= 0:
+                    _logger.info('Server success response: code=%r, error=%r, ctx=%r', code, errStr, ctx)
+                    return
+                _logger.warning('Server fail response: code=%r, error=%r, ctx=%r', code, errStr, ctx)
+
+            if callback is not None:
+                proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
+            else:
+                proxy = lambda requestID, resultID, errorStr, ext={}: response(resultID, errorStr, ext)
+            self.__commandsProxy.perform(AccountCommands.CMD_RECOMPUTE_PRESTIGE_POINTS, vehCD, points, proxy)
+            return
 
     def __onGetResponse(self, statName, callback, resultID):
         if resultID < 0:
@@ -537,7 +575,7 @@ class Stats(object):
         self.__account._doCmdInt3(AccountCommands.CMD_BUY_SLOT, shopRev, 0, 0, proxy)
         return
 
-    def __berths_onShopSynced(self, callback, resultID, shopRev):
+    def __berths_onShopSynced(self, countPacksBerths, callback, resultID, shopRev):
         if resultID < 0:
             if callback is not None:
                 callback(resultID)
@@ -546,5 +584,5 @@ class Stats(object):
             proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
         else:
             proxy = None
-        self.__account._doCmdInt3(AccountCommands.CMD_BUY_BERTHS, shopRev, 0, 0, proxy)
+        self.__account._doCmdInt3(AccountCommands.CMD_BUY_BERTHS, shopRev, countPacksBerths, 0, proxy)
         return

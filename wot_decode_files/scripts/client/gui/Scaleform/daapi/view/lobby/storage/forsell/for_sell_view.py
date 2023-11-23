@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/forsell/for_sell_view.py
 import nations
 from account_helpers import getAccountDatabaseID
@@ -26,7 +26,7 @@ from gui.shared.money import Money
 from gui.shared.utils.requesters.ItemsRequester import REQ_CRITERIA
 from helpers.local_cache import FileLocalCache
 from items import parseIntCompactDescr
-from gui.shared.event_dispatcher import showConfirmInStorageDialog
+from gui.shared.event_dispatcher import showSellDialog
 VERSION = 1
 _FOR_SELL_SORT_ORDER = (GUI_ITEM_TYPE.TURRET, GUI_ITEM_TYPE.ENGINE, GUI_ITEM_TYPE.GUN,
  GUI_ITEM_TYPE.RADIO, GUI_ITEM_TYPE.CHASSIS, GUI_ITEM_TYPE.SHELL)
@@ -211,7 +211,7 @@ class _SelectableDataProvider(StorageDataProvider):
 class StorageCategoryForSellView(StorageCategoryForSellViewMeta):
 
     def sellItem(self, itemId):
-        showConfirmInStorageDialog(int(itemId))
+        showSellDialog(int(itemId))
 
     def sellAll(self):
         itemSellSpecs = []

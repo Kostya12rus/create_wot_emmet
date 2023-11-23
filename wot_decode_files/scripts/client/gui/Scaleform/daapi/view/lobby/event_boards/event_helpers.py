@@ -1,15 +1,16 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/event_boards/event_helpers.py
 from io import BufferedIOBase, TextIOWrapper
 from functools import wraps
+import xmltodict
 from ResMgr import DataSection
 from constants import ARENA_GUI_TYPE, MAX_VEHICLE_LEVEL, MIN_VEHICLE_LEVEL
 from debug_utils import LOG_ERROR, LOG_DEBUG
 from gui.impl import backport
 from helpers.i18n import makeString as _ms
-from helpers import xmltodict, int2roman, dependency
+from helpers import int2roman, dependency
 from nations import NAMES as NationNames
 from bonus_readers import readBonusSection
 from skeletons.connection_mgr import IConnectionManager

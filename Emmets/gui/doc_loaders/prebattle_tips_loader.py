@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/doc_loaders/prebattle_tips_loader.py
 import sys, resource_helper
 _PREBATTLE_TIPS_XML_PATH = 'gui/prebattle_tips.xml'
@@ -25,7 +25,8 @@ def _readPreBattleTips():
            'tags': _readPossibleValues(filterSection, 'tags'), 
            'realms': _readPossibleValues(filterSection, 'realms'), 
            'preceding': _readPrecedingData(filterSection), 
-           'chassisType': filterSection.readInt('chassisType', -1)}
+           'chassisType': filterSection.readInt('chassisType', -1), 
+           'vehProperty': filterSection.readString('vehProperty', None)}
         for key in _OPTIONAL_FILTER_FLAGS:
             if filterSection.has_key(key):
                 filters[filterId][key] = filterSection.readBool(key)

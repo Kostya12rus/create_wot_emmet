@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/CompoundAppearance.py
 from functools import partial
 import logging, math
@@ -338,6 +338,10 @@ class CompoundAppearance(CommonTankAppearance, CallbackDelayer):
             _logger.warning('Component "%s" has not been found', name)
         return
 
+    def removeTempGameObjectIfExists(self, name):
+        if name in self.__tmpGameObjects:
+            self.removeTempGameObject(name)
+
     def showStickers(self, show):
         if self.vehicleStickers is not None:
             self.vehicleStickers.show = show
@@ -525,13 +529,11 @@ class CompoundAppearance(CommonTankAppearance, CallbackDelayer):
     def __onModelsRefresh(self, modelState, resourceList):
         if not self.damageState.isCurrentModelDamaged:
             _logger.error('Current model is not damaged. Wrong refresh request!')
-        if BattleReplay.isFinished():
+        if modelState != self.damageState.modelState:
+            _logger.error('Required modelState differs from actual one. Wrong refresh request!')
+        if self._vehicle is None:
             return
         else:
-            if modelState != self.damageState.modelState:
-                _logger.error('Required modelState differs from actual one. Wrong refresh request!')
-            if self._vehicle is None:
-                return
             self.highlighter.highlight(False)
             oldHolder = self.findComponentByType(CompoundHolder)
             if oldHolder is not None:

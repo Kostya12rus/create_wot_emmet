@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/crew_skin.py
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import CREW_SKINS_VIEWED
@@ -55,6 +55,13 @@ class CrewSkin(FittingItem):
     def getLastName(self):
         return self._skinData().lastNameID
 
+    def getLocalizedFullName(self):
+        if self.getFirstName():
+            fullName = '%s %s' % (i18n.makeString(self.getFirstName()), i18n.makeString(self.getLastName()))
+        else:
+            fullName = i18n.makeString(self.getLastName())
+        return fullName
+
     def getIconID(self):
         return self._skinData().iconID
 
@@ -64,9 +71,6 @@ class CrewSkin(FittingItem):
     def getDescription(self):
         return self._skinData().description
 
-    def getRoleID(self):
-        return self._skinData().roleID
-
     def getSex(self):
         return self._skinData().sex
 
@@ -75,9 +79,6 @@ class CrewSkin(FittingItem):
 
     def getRarity(self):
         return self._skinData().rarity
-
-    def getMaxCount(self):
-        return self._skinData().maxCount
 
     def getHistorical(self):
         return self._skinData().historical
@@ -92,10 +93,17 @@ class CrewSkin(FittingItem):
         return self.__tankmenIDs
 
     def isNew(self):
-        return int(self.__id) not in AccountSettings.getSettings(CREW_SKINS_VIEWED)
+        return self.getNewCount() > 0
 
-    def isStorageAvailable(self):
-        return self.__freeCount < self.getMaxCount()
+    def getTotalCount(self):
+        return self.__freeCount + len(self.__tankmenIDs)
+
+    def getNewCount(self):
+        totalCount = self.getTotalCount()
+        viewedCount = AccountSettings.getSettings(CREW_SKINS_VIEWED).get(self.__id, 0)
+        if viewedCount < totalCount:
+            return totalCount - viewedCount
+        return 0
 
     def _getDescriptor(self):
         return tankmen.getItemByCompactDescr(self.intCD)

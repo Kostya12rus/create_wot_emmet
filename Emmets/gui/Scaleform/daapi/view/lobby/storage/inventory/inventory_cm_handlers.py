@@ -1,11 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/inventory/inventory_cm_handlers.py
 from adisp import adisp_process
-from gui import DialogsInterface, shop
+from gui import shop
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
-from gui.Scaleform.daapi.view.dialogs.ConfirmModuleMeta import SellModuleMeta
 from gui.Scaleform.daapi.view.lobby.shared.cm_handlers import ContextMenu, option, CMLabel
 from gui.Scaleform.framework.managers.context_menu import CM_BUY_COLOR
 from gui.shared import event_dispatcher as shared_events
@@ -17,7 +16,7 @@ from ids_generators import SequenceIDGenerator
 from items import UNDEFINED_ITEM_CD
 from skeletons.gui.shared import IItemsCache
 from skeletons.gui.lobby_context import ILobbyContext
-from gui.shared.event_dispatcher import showConfirmInStorageDialog
+from gui.shared.event_dispatcher import showSellDialog
 _SOURCE = shop.Source.EXTERNAL
 _ORIGIN = shop.Origin.STORAGE
 
@@ -31,7 +30,7 @@ class ModulesShellsCMHandler(ContextMenu):
 
     @option(__sqGen.next(), CMLabel.SELL)
     def sell(self):
-        showConfirmInStorageDialog(self._id)
+        showSellDialog(self._id)
 
     def _getOptionCustomData(self, label):
         optionData = super(ModulesShellsCMHandler, self)._getOptionCustomData(label)
@@ -64,9 +63,8 @@ class _ArmingCMHandler(ContextMenu):
         shared_events.showStorageModuleInfo(self._id)
 
     @option(_sqGen.next(), CMLabel.SELL)
-    @adisp_process
     def sell(self):
-        yield DialogsInterface.showDialog(SellModuleMeta(self._id))
+        showSellDialog(self._id)
 
     def buy(self):
         shared_events.showShop()

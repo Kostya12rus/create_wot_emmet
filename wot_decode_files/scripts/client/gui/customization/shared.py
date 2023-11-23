@@ -1,9 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/customization/shared.py
 from collections import namedtuple, Counter, defaultdict
-import logging, typing, Math
+import logging, typing, Math, math
 from gui.Scaleform.genConsts.SEASONS_CONSTANTS import SEASONS_CONSTANTS
 from gui.customization.constants import CustomizationModes
 from gui.shared.gui_items import GUI_ITEM_TYPE, GUI_ITEM_TYPE_NAMES
@@ -297,11 +297,24 @@ def containsVehicleBound(purchaseItems):
     return any(count > item.boundInventoryCount(vehCD) for item, count in fromInventoryCounter.items())
 
 
-def getPurchaseMoneyState(price):
+def getPurchaseGoldForCredits(price):
+    _, exchangeRate, shortage = getPurchaseMoneyStateShortage(price)
+    purchaseGold = 0
+    if shortage:
+        purchaseGold = math.ceil(float(shortage.credits) / exchangeRate)
+    return purchaseGold
+
+
+def getPurchaseMoneyStateShortage(price):
     itemsCache = dependency.instance(IItemsCache)
     money = itemsCache.items.stats.money
     exchangeRate = itemsCache.items.shop.exchangeRate
     shortage = money.getShortage(price)
+    return (money, exchangeRate, shortage)
+
+
+def getPurchaseMoneyState(price):
+    money, exchangeRate, shortage = getPurchaseMoneyStateShortage(price)
     if not shortage:
         moneyState = MoneyForPurchase.ENOUGH
     else:

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/PLATOON.py
 
 
@@ -15,6 +15,7 @@ class PLATOON(object):
     HEADERBUTTON_TOOLTIPS_MAPBOXSQUAD = '#platoon:headerButton/tooltips/mapboxSquad'
     HEADERBUTTON_TOOLTIPS_INMAPBOXSQUAD = '#platoon:headerButton/tooltips/inMapboxSquad'
     HEADERBUTTON_TOOLTIPS_COMP7SQUAD = '#platoon:headerButton/tooltips/comp7Squad'
+    HEADERBUTTON_TOOLTIPS_COMP7QUALIFICATIONSQUAD = '#platoon:headerButton/tooltips/comp7QualificationSquad'
     SQUAD = '#platoon:squad'
     HEADERBUTTON_SQUAD = '#platoon:headerButton/squad'
     HEADERBUTTON_TOOLTIPS_SQUAD_HEADER = '#platoon:headerButton/tooltips/squad/header'
@@ -36,6 +37,8 @@ class PLATOON(object):
     HEADERBUTTON_TOOLTIPS_MAPBOXSQUAD_BODY = '#platoon:headerButton/tooltips/mapboxSquad/body'
     HEADERBUTTON_TOOLTIPS_COMP7SQUAD_HEADER = '#platoon:headerButton/tooltips/comp7Squad/header'
     HEADERBUTTON_TOOLTIPS_COMP7SQUAD_BODY = '#platoon:headerButton/tooltips/comp7Squad/body'
+    HEADERBUTTON_TOOLTIPS_COMP7QUALIFICATIONSQUAD_HEADER = '#platoon:headerButton/tooltips/comp7QualificationSquad/header'
+    HEADERBUTTON_TOOLTIPS_COMP7QUALIFICATIONSQUAD_BODY = '#platoon:headerButton/tooltips/comp7QualificationSquad/body'
     HEADERBUTTON_TOOLTIPS_INMAPBOXSQUAD_HEADER = '#platoon:headerButton/tooltips/inMapboxSquad/header'
     HEADERBUTTON_TOOLTIPS_INMAPBOXSQUAD_BODY = '#platoon:headerButton/tooltips/inMapboxSquad/body'
     HEADERBUTTON_TOOLTIPS_RANKEDSQUAD_HEADER = '#platoon:headerButton/tooltips/rankedSquad/header'

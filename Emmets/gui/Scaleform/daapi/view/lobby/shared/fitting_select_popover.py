@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/shared/fitting_select_popover.py
 import logging, typing
 from account_helpers.settings_core.ServerSettingsManager import UI_STORAGE_KEYS
@@ -252,6 +252,7 @@ class PopoverLogicProvider(object):
         self._needToResetDualGun = False
         self._needToResetTurboshaft = False
         self._needToResetRocketAcceleration = False
+        self._needToResetDualAccuracy = False
         self.__moduleExtenders = fittingSelectModuleExtenders()
         return
 
@@ -289,13 +290,18 @@ class PopoverLogicProvider(object):
             self._settingsCore.serverSettings.saveInUIStorage({UI_STORAGE_KEYS.TURBOSHAFT_MARK_IS_SHOWN: True})
         elif self._needToResetRocketAcceleration:
             self._settingsCore.serverSettings.saveInUIStorage2({UI_STORAGE_KEYS.ROCKET_ACCELERATION_MARK_IS_SHOWN: True})
+        elif self._needToResetDualAccuracy:
+            self._settingsCore.serverSettings.saveInUIStorage2({UI_STORAGE_KEYS.DUAL_ACCURACY_MARK_IS_SHOWN: True})
 
     def _checkCounters(self, vehicleModule):
         if vehicleModule.itemTypeID == GUI_ITEM_TYPE.GUN:
             if not self._needToResetAutoReload and vehicleModule.isAutoReloadable(self._vehicle.descriptor):
                 self._needToResetAutoReload = True
-            elif not self._needToResetDualGun and vehicleModule.isDualGun(self._vehicle.descriptor):
-                self._needToResetDualGun = True
+            else:
+                if not self._needToResetDualGun and vehicleModule.isDualGun(self._vehicle.descriptor):
+                    self._needToResetDualGun = True
+                elif not self._needToResetDualAccuracy and vehicleModule.hasDualAccuracy(self._vehicle.descriptor):
+                    self._needToResetDualAccuracy = True
         elif vehicleModule.itemTypeID == GUI_ITEM_TYPE.ENGINE:
             if not self._needToResetTurboshaft and vehicleModule.hasTurboshaftEngine():
                 self._needToResetTurboshaft = True

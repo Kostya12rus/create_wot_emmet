@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/battle_pass_secondary_entry_point.py
 from gui.Scaleform.daapi.view.meta.SecondaryEntryPointMeta import SecondaryEntryPointMeta
 from gui.impl.gen import R
@@ -75,12 +75,15 @@ class BattlePassSecondaryEntryPointWidget(SecondaryEntryPointMeta, BaseBattlePas
             shieldTemplate = 'shield_blue{}{}'
             color = '_gold' if self.isBought else '_silver'
             postfix = ''
-            if self.isCompleted and self.freePoints == 0 or not self.__battlePass.hasActiveChapter():
+            if self.isCompleted and self.freePoints == 0 or not self.isCompleted and not self.__battlePass.hasActiveChapter():
                 postfix = '_closed'
-            icon = _R_IMAGES.dyn(shieldTemplate.format(color, postfix))()
+            iconName = shieldTemplate.format(color, postfix)
         else:
-            icon = _R_IMAGES.shield_silver() if self.chapterID != 0 else _R_IMAGES.shield_silver_empty()
-        return backport.image(icon)
+            iconName = 'shield_silver' if self.chapterID != 0 else 'shield_silver_empty'
+        iconRes = _R_IMAGES.emblem.dyn(('chapter_{}').format(self.chapterID)).dyn(iconName)
+        if not iconRes.exists():
+            iconRes = _R_IMAGES.emblem.default.dyn(iconName)
+        return backport.image(iconRes())
 
     def __getAltIcon(self, isEnabled):
         if self.chapterID > 0:

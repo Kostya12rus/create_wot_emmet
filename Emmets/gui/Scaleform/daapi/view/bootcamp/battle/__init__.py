@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/bootcamp/battle/__init__.py
 import typing
 from frameworks.wulf import WindowLayer
@@ -31,7 +31,6 @@ def getViewSettings():
     from gui.Scaleform.daapi.view.bootcamp.battle import bootcamp_battle_timer
     from gui.Scaleform.daapi.view.bootcamp.battle.frag_correlation_bar import BootcampFragCorrelationBar
     from gui.Scaleform.daapi.view.bootcamp.BCIntroFadeOut import BCIntroFadeOut
-    from gui.Scaleform.daapi.view.bootcamp.BCBattleTopHint import BCBattleTopHint
     from gui.Scaleform.daapi.view.bootcamp.BCBattlePage import BCBattlePage
     from gui.Scaleform.daapi.view.bootcamp.BCHighlights import BCHighlights
     from gui.Scaleform.daapi.view.bootcamp.BCConsumablesPanel import BCConsumablesPanel
@@ -49,7 +48,6 @@ def getViewSettings():
      ViewSettings(VIEW_ALIAS.BOOTCAMP_INTRO_VIDEO, BCIntroVideoPage, 'BCIntroVideo.swf', WindowLayer.TOP_WINDOW, None, ScopeTemplates.DEFAULT_SCOPE),
      ViewSettings(VIEW_ALIAS.BOOTCAMP_BATTLE_PAGE, BCBattlePage, 'BCbattlePage.swf', WindowLayer.VIEW, None, ScopeTemplates.DEFAULT_SCOPE),
      ViewSettings(VIEW_ALIAS.BOOTCAMP_INTRO_FADEOUT, BCIntroFadeOut, 'BCIntroFadeOut.swf', WindowLayer.WINDOW, None, ScopeTemplates.TOP_WINDOW_SCOPE),
-     ComponentSettings(BATTLE_VIEW_ALIASES.BOOTCAMP_BATTLE_TOP_HINT, BCBattleTopHint, ScopeTemplates.DEFAULT_SCOPE),
      ViewSettings(VIEW_ALIAS.BOOTCAMP_BATTLE_HIGHLIGHTS, BCHighlights, 'BCHighlights.swf', WindowLayer.WINDOW, None, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(BATTLE_VIEW_ALIASES.CONSUMABLES_PANEL, BCConsumablesPanel, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(BATTLE_VIEW_ALIASES.RIBBONS_PANEL, BCRibbonsPanel, ScopeTemplates.DEFAULT_SCOPE),

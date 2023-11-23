@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/battle_queue.py
 import weakref, BigWorld
 from adisp import adisp_process, adisp_async
@@ -17,7 +17,7 @@ from gui.Scaleform.daapi.view.lobby.event_boards.formaters import getClanTag
 from gui.Scaleform.daapi.view.lobby.rally import vo_converters
 from gui.Scaleform.daapi.view.meta.BattleQueueMeta import BattleQueueMeta
 from gui.Scaleform.daapi.view.meta.BattleStrongholdsQueueMeta import BattleStrongholdsQueueMeta
-from gui.impl.lobby.comp7 import comp7_shared, comp7_i18n_helpers
+from gui.impl.lobby.comp7 import comp7_shared, comp7_i18n_helpers, comp7_model_helpers
 from gui.shared.view_helpers.blur_manager import CachedBlur
 from gui.Scaleform.framework.managers.containers import POP_UP_CRITERIA
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
@@ -56,7 +56,6 @@ TYPES_ORDERED = (
   'SPG', ITEM_TYPES.VEHICLE_TAGS_SPG_NAME))
 _LONG_WAITING_LEVELS = (9, 10)
 _HTMLTEMP_PLAYERSLABEL = 'html_templates:lobby/queue/playersLabel'
-_RANKS = 'ranks'
 
 @dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
 def needShowLongWaitingWarning(lobbyContext=None):
@@ -234,23 +233,22 @@ class _Comp7QueueProvider(RandomQueueProvider):
 
     def processQueueInfo(self, qInfo):
         info = dict(qInfo)
-        ranks = info.get(_RANKS, {})
-        self._createCommonPlayerString(info.get('players', sum(ranks)))
+        ranks = info.get('ranks', {})
+        qualPlayers = info.get('qualPlayers', 0)
+        allPlayersCount = info.get('players', sum(ranks.values()) + qualPlayers)
+        self._createCommonPlayerString(allPlayersCount)
         if ranks:
             ranksData = []
-            division = comp7_shared.getPlayerDivision()
-            for rankIdx, playersCount in enumerate(ranks):
-                rankName = rankIdx + 1
-                rankImg = R.images.gui.maps.icons.comp7.ranks.c_40.num(rankName)
-                if rankImg:
-                    ranksData.append({'type': comp7_i18n_helpers.getRankLocale(rankName), 
-                       'icon': backport.image(rankImg()), 
-                       'count': playersCount, 
-                       'highlight': division.rank == rankIdx})
+            isInQualification = comp7_shared.isQualification()
+            playerRankIdx = (isInQualification or comp7_shared.getPlayerDivision()).rank if 1 else None
+            for rankIdx, playersCount in ranks.items():
+                rankName = comp7_i18n_helpers.RANK_MAP[rankIdx]
+                ranksData.append(self.__getRankData(rankName, playersCount, rankIdx == playerRankIdx))
 
-            ranksData.reverse()
+            ranksData.append(self.__getRankData('qualification', qualPlayers, isInQualification))
             self._proxy.as_setDPS(ranksData)
-        self._proxy.as_showStartS(self._isStartButtonDisplayed(ranks))
+        self._proxy.as_showStartS(constants.IS_DEVELOPMENT and allPlayersCount > 1)
+        return
 
     def getLayoutStr(self):
         return 'comp7'
@@ -269,6 +267,15 @@ class _Comp7QueueProvider(RandomQueueProvider):
 
     def additionalInfo(self):
         return ''
+
+    def __getRankData(self, rankName, playersCount, isHighlight):
+        seasonName = comp7_model_helpers.getSeasonNameEnum().value
+        rankImg = R.images.gui.maps.icons.comp7.ranks.dyn(seasonName).c_40.dyn(rankName)
+        rankStr = R.strings.comp7.rank.dyn(rankName)
+        return {'type': backport.text(rankStr()), 
+           'icon': backport.image(rankImg()), 
+           'count': playersCount, 
+           'highlight': isHighlight}
 
 
 class _WinbackQueueProvider(RandomQueueProvider):
@@ -454,8 +461,11 @@ class BattleStrongholdsQueue(BattleStrongholdsQueueMeta, LobbySubView, ClanEmble
         clanEmblem = getTextureLinkByID(self.getMemoryTexturePath(emblem)) if emblem else None
         self.__battleQueueVO['myClanIcon'] = clanEmblem or ''
         self.as_setTypeInfoS(self.__battleQueueVO)
-        self.prbEntity.getMatchmakingInfo(callback=self.__onMatchmakingInfo)
-        return
+        if self.prbEntity is None:
+            return
+        else:
+            self.prbEntity.getMatchmakingInfo(callback=self.__onMatchmakingInfo)
+            return
 
     def onEscape(self):
         dialogsContainer = self.app.containerManager.getContainer(WindowLayer.TOP_WINDOW)

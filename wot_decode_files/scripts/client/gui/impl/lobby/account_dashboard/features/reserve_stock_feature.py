@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_dashboard/features/reserve_stock_feature.py
 import typing
 from constants import PremiumConfigs, PREMIUM_TYPE, RENEWABLE_SUBSCRIPTION_CONFIG
@@ -13,6 +13,8 @@ from helpers import dependency
 from skeletons.gui.game_control import IGameSessionController, IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
+from uilogging.wot_plus.loggers import WotPlusAccountDashboardWidgetLogger
+from uilogging.wot_plus.logging_constants import AccountDashboardFeature
 if typing.TYPE_CHECKING:
     from typing import Dict
     from gui.impl.gen.view_models.views.lobby.account_dashboard.reserve_stock_model import ReserveStockModel
@@ -86,6 +88,7 @@ class ReserveStockFeature(FeatureItem):
         submodel.setOpeningTime(getOpenTimeHelper(config, data))
 
     def __onClick(self):
+        WotPlusAccountDashboardWidgetLogger().logWidgetClickEvent(AccountDashboardFeature.RESERVE_WIDGET)
         isEnabled = self._lobbyContext.getServerSettings().getPiggyBankConfig().get('enabled', False) or self._wotPlus.isWotPlusEnabled()
         if isEnabled:
             showPiggyBankView()

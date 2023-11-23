@@ -1,12 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/IngameSoundNotifications.py
 from random import randrange
 from functools import partial
 from collections import namedtuple
 from debug_utils import LOG_WARNING
 import Math, BigWorld, ResMgr, BattleReplay, Event, SoundGroups, VSE
+from helpers import isPlayerAvatar
 from visual_script_client.contexts.sound_notifications_context import SoundNotificationsContext
 from helpers.CallbackDelayer import CallbackDelayer, TimeDeltaMeter
 
@@ -250,21 +251,20 @@ class IngameSoundNotifications(CallbackDelayer, TimeDeltaMeter):
         if not self.__queues[queueNum]:
             self.__playingEvents[queueNum] = None
             return
+        queueItem = self.__queues[queueNum][0]
+        del self.__queues[queueNum][0]
+        checkCooldown = queueItem.eventName not in self.__eventsCooldowns or not self.__eventsCooldowns[queueItem.eventName]
+        checkVehicle = queueItem.vehicleID is None or BigWorld.entity(queueItem.vehicleID) is not None
+        checkFunction = queueItem.checkFn() if isPlayerAvatar() and queueItem.checkFn else True
+        if checkFunction and checkVehicle and checkCooldown:
+            vehicle = BigWorld.entity(queueItem.vehicleID) if queueItem.vehicleID is not None else None
+            boundVehicle = BigWorld.entity(queueItem.boundVehicleID) if queueItem.boundVehicleID is not None else None
+            position = vehicle.position if vehicle else queueItem.position
+            self.__playingEvents[queueNum] = self.PlayingEvent(queueItem.eventName, vehicle, position, boundVehicle, position is None)
+            self.onPlayEvent(queueItem.eventName)
         else:
-            queueItem = self.__queues[queueNum][0]
-            del self.__queues[queueNum][0]
-            checkCooldown = queueItem.eventName not in self.__eventsCooldowns or not self.__eventsCooldowns[queueItem.eventName]
-            checkVehicle = queueItem.vehicleID is None or BigWorld.entity(queueItem.vehicleID) is not None
-            checkFunction = queueItem.checkFn() if queueItem.checkFn else True
-            if checkFunction and checkVehicle and checkCooldown:
-                vehicle = BigWorld.entity(queueItem.vehicleID) if queueItem.vehicleID is not None else None
-                boundVehicle = BigWorld.entity(queueItem.boundVehicleID) if queueItem.boundVehicleID is not None else None
-                position = vehicle.position if vehicle else queueItem.position
-                self.__playingEvents[queueNum] = self.PlayingEvent(queueItem.eventName, vehicle, position, boundVehicle, position is None)
-                self.onPlayEvent(queueItem.eventName)
-            else:
-                self.__playFirstFromQueue(queueNum)
-            return
+            self.__playFirstFromQueue(queueNum)
+        return
 
     def __readConfigs(self):
         eventsSec = ResMgr.openSection(self.__EVENTS_PATH)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/templates/regular.py
 from constants import ARENA_GUI_TYPE, MIN_VEHICLE_LEVEL
 from gui.Scaleform.genConsts.BATTLE_EFFICIENCY_TYPES import BATTLE_EFFICIENCY_TYPES
@@ -439,3 +439,4 @@ BATTLE_PASS_PROGRESS_STATS_BLOCK = progress.BattlePassProgressBlock(base.ListMet
 QUESTS_PROGRESS_STATS_BLOCK = progress.QuestsProgressBlock(base.ListMeta(), 'quests', _RECORD.PERSONAL)
 DOG_TAGS_PROGRESS_STATS_BLOCK = progress.DogTagsProgressBlock(base.ListMeta(), 'dog_tags', _RECORD.PERSONAL)
 PROGRESSIVE_REWARD_VO = progress.ProgressiveRewardVO('progressiveReward')
+PRESTIGE_PROGRESS_VO = progress.PrestigeProgressVO('prestige')

@@ -1,17 +1,19 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/cond_formatters/__init__.py
 from collections import namedtuple
-import nations
-from personal_missions_constants import CONDITION_ICON
-from soft_exception import SoftException
+import typing
 from gui.Scaleform.locale.QUESTS import QUESTS
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.server_events.conditions import GROUP_TYPE
 from gui.server_events.formatters import RELATIONS_SCHEME, RELATIONS
 from gui.shared.formatters import text_styles
-from helpers import i18n, int2roman
+from helpers import i18n
+from personal_missions_constants import CONDITION_ICON
+from soft_exception import SoftException
+if typing.TYPE_CHECKING:
+    from gui.server_events.conditions import BattleResults
 MAX_CONDITIONS_IN_OR_SECTION_SUPPORED = 2
 TOP_RANGE_HIGHEST = 1
 TOP_RANGE_LOWEST = 15
@@ -55,6 +57,7 @@ BATTLE_RESULTS_KEYS = {'capturePoints': CONDITION_ICON.BASE_CAPTURE,
    'fortResource': CONDITION_ICON.FOLDER, 
    'freeXP': CONDITION_ICON.EXPERIENCE, 
    'subtotalXP': CONDITION_ICON.EXPERIENCE, 
+   'factualXP': CONDITION_ICON.EXPERIENCE, 
    'health': CONDITION_ICON.SAVE_HP, 
    'inBattleMaxPiercingSeries': CONDITION_ICON.HIT, 
    'inBattleMaxSniperSeries': CONDITION_ICON.HIT, 
@@ -138,8 +141,8 @@ def packSimpleTitle(title):
     return FormattableField(FORMATTER_IDS.SIMPLE_TITLE, (i18n.makeString(title),))
 
 
-def packText(label):
-    return {'text': label}
+def packText(text, styler=None):
+    return {'text': text, 'styler': styler}
 
 
 def intersperse(sequence, item):
@@ -162,7 +165,7 @@ def getSeparator(groupType=GROUP_TYPE.AND):
 def getSeparatorBlock(groupType=GROUP_TYPE.AND):
     label = getSeparator(groupType)
     if label:
-        item = packText(text_styles.standard(label))
+        item = packText(text=label, styler=text_styles.standard)
         item.update(isSeparator=True)
         return item
     else:

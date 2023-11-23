@@ -1,42 +1,32 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/crewOperations/CrewOperationsPopOver.py
 from CurrentVehicle import g_currentVehicle
+from gui import SystemMessages
 from gui.ClientUpdateManager import g_clientUpdateManager
-from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
-from gui.Scaleform.daapi.view.lobby.hangar.Crew import Crew
 from gui.Scaleform.daapi.view.meta.CrewOperationsPopOverMeta import CrewOperationsPopOverMeta
-from gui.Scaleform.framework import ScopeTemplates
-from gui.Scaleform.framework.managers.loaders import SFViewLoadParams, GuiImplViewLoadParams
 from gui.Scaleform.locale.CREW_OPERATIONS import CREW_OPERATIONS
-from gui.impl.gen import R
-from gui.impl.lobby.crew_books.crew_books_view import CrewBooksView, CrewBooksLackView
-from gui.impl.auxiliary.crew_books_helper import crewBooksViewedCache
+from gui.impl.dialogs.dialogs import showRetrainDialog
 from gui.prb_control import prb_getters
-from gui.shared import EVENT_BUS_SCOPE, g_eventBus, events
-from gui.shared.events import LoadViewEvent
 from gui.shared.gui_items import GUI_ITEM_TYPE
-from gui.shared.gui_items.Tankman import TankmenComparator
-from gui.shared.gui_items.processors.tankman import TankmanReturn
-from gui.shared.utils.requesters.ItemsRequester import REQ_CRITERIA
+from gui.shared.gui_items.processors.tankman import TankmanReturn, TankmanUnload
+from gui.shared.utils import decorators
 from helpers import dependency
 from helpers import i18n
-from gui.shared.utils import decorators
-from gui import SystemMessages
 from items import tankmen
 from skeletons.gui.shared import IItemsCache
-from skeletons.gui.lobby_context import ILobbyContext
 OPERATION_RETRAIN = 'retrain'
 OPERATION_RETURN = 'return'
 OPERATION_DROP_IN_BARRACK = 'dropInBarrack'
-OPERATION_CREW_BOOKS = 'crewBooks'
 
 class CrewOperationsPopOver(CrewOperationsPopOverMeta):
     itemsCache = dependency.descriptor(IItemsCache)
+    __slots__ = ('_ctxData', )
 
-    def __init__(self, _=None):
+    def __init__(self, ctx):
         super(CrewOperationsPopOver, self).__init__()
+        self._ctxData = ctx.get('data')
 
     def _populate(self):
         super(CrewOperationsPopOver, self)._populate()
@@ -61,40 +51,27 @@ class CrewOperationsPopOver(CrewOperationsPopOverMeta):
 
     def invokeOperation(self, operationName):
         if operationName == OPERATION_RETRAIN:
-            self.fireEvent(LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.RETRAIN_CREW)), EVENT_BUS_SCOPE.LOBBY)
+            if self._ctxData:
+                tankmenIds = self._ctxData.get('tankmenIds', [])
+                vehicleCD = self._ctxData.get('vehicleCD', None)
+                showRetrainDialog(tankmenIds, vehicleCD)
         elif operationName == OPERATION_RETURN:
             self.__processReturnCrew()
-        elif operationName == OPERATION_CREW_BOOKS:
-            availableBooksCount = self.__getAvailableBooksCount()
-            if availableBooksCount > 0:
-                self.__openCrewBooksView()
-            else:
-                self.__openCrewBooksLackView()
         else:
-            Crew.unloadCrew()
+            self.__unloadCrew()
+        return
 
     def onInventoryUpdate(self, invDiff):
         if GUI_ITEM_TYPE.TANKMAN in invDiff:
             self.__update()
 
     def __update(self):
-        lobbyContext = dependency.instance(ILobbyContext)
         vehicle = g_currentVehicle.item
         dataForUpdate = {'operationsArray': [
                              self.__getRetrainOperationData(vehicle),
                              self.__getReturnOperationData(vehicle),
                              self.__getDropInBarrackOperationData(vehicle)]}
-        if lobbyContext.getServerSettings().isCrewBooksEnabled():
-            dataForUpdate['operationsArray'].append(self.__getCrewBooksOperationData(vehicle))
         self.as_updateS(dataForUpdate)
-
-    def __getCrewBooksOperationData(self, vehicle):
-        if vehicle.isDisabled:
-            return self.__getInitCrewOperationObject(OPERATION_CREW_BOOKS, 'locked')
-        else:
-            if vehicle.isInBattle:
-                return self.__getInitCrewOperationObject(OPERATION_CREW_BOOKS, None, CREW_OPERATIONS.CREWBOOKS_WARNING_MEMBERSINBATTLE_TOOLTIP)
-            return self.__getInitCrewOperationObject(OPERATION_CREW_BOOKS)
 
     def __getRetrainOperationData(self, vehicle):
         crew = vehicle.crew
@@ -112,44 +89,36 @@ class CrewOperationsPopOver(CrewOperationsPopOverMeta):
         else:
             crew = vehicle.crew
             lastCrewIDs = vehicle.lastCrew
-            tmen = self.itemsCache.items.getTankmen().values()
-            berths = self.itemsCache.items.stats.tankmenBerthsCount
-            tankmenInBarracks = 0
-            for tankman in sorted(tmen, TankmenComparator(self.itemsCache.items.getVehicle)):
-                if not tankman.isInTank:
-                    tankmenInBarracks += 1
-
-            freeBerths = berths - tankmenInBarracks
+            if lastCrewIDs is None:
+                return self.__getInitCrewOperationObject(OPERATION_RETURN, 'noPrevious')
+            freeBerths = self.itemsCache.items.freeTankmenBerthsCount()
             tankmenToBarracksCount = 0
-            for tankman in crew:
-                if tankman[1] is not None:
-                    tankmenToBarracksCount += 1
-
             demobilizedMembersCounter = 0
             isCrewAlreadyInCurrentVehicle = True
-            if lastCrewIDs is not None:
-                for lastTankmenInvID in lastCrewIDs:
-                    actualLastTankman = self.itemsCache.items.getTankman(lastTankmenInvID)
-                    if actualLastTankman is not None:
-                        if actualLastTankman.isInTank:
-                            lastTankmanVehicle = self.itemsCache.items.getVehicle(actualLastTankman.vehicleInvID)
-                            if lastTankmanVehicle:
-                                if lastTankmanVehicle.isLocked:
-                                    return self.__getInitCrewOperationObject(OPERATION_RETURN, None, CREW_OPERATIONS.RETURN_WARNING_MEMBERSINBATTLE_TOOLTIP)
-                                if lastTankmanVehicle.invID != vehicle.invID:
-                                    isCrewAlreadyInCurrentVehicle = False
-                                elif lastTankmanVehicle.invID == vehicle.invID:
-                                    tankmenToBarracksCount -= 1
-                        else:
-                            isCrewAlreadyInCurrentVehicle = False
-                            freeBerths += 1
-                    else:
-                        demobilizedMembersCounter += 1
+            for _, tankman in crew:
+                if tankman is not None:
+                    tankmenToBarracksCount += 1
 
-                if tankmenToBarracksCount > 0 and tankmenToBarracksCount > freeBerths:
-                    return self.__getInitCrewOperationObject(OPERATION_RETURN, None, CREW_OPERATIONS.RETURN_WARNING_NOSPACE_TOOLTIP)
-            else:
-                return self.__getInitCrewOperationObject(OPERATION_RETURN, 'noPrevious')
+            for lastTankmenInvID in lastCrewIDs:
+                actualLastTankman = self.itemsCache.items.getTankman(lastTankmenInvID)
+                if actualLastTankman is None or actualLastTankman.isDismissed:
+                    demobilizedMembersCounter += 1
+                    continue
+                if actualLastTankman.isInTank:
+                    lastTankmanVehicle = self.itemsCache.items.getVehicle(actualLastTankman.vehicleInvID)
+                    if lastTankmanVehicle:
+                        if lastTankmanVehicle.isLocked:
+                            return self.__getInitCrewOperationObject(OPERATION_RETURN, None, CREW_OPERATIONS.RETURN_WARNING_MEMBERSINBATTLE_TOOLTIP)
+                        if lastTankmanVehicle.invID != vehicle.invID:
+                            isCrewAlreadyInCurrentVehicle = False
+                        else:
+                            tankmenToBarracksCount -= 1
+                else:
+                    isCrewAlreadyInCurrentVehicle = False
+                    freeBerths += 1
+
+            if tankmenToBarracksCount > 0 and tankmenToBarracksCount > freeBerths:
+                return self.__getInitCrewOperationObject(OPERATION_RETURN, None, CREW_OPERATIONS.RETURN_WARNING_NOSPACE_TOOLTIP)
             if demobilizedMembersCounter > 0 and demobilizedMembersCounter == len(lastCrewIDs):
                 return self.__getInitCrewOperationObject(OPERATION_RETURN, 'allDemobilized')
             if isCrewAlreadyInCurrentVehicle:
@@ -167,6 +136,8 @@ class CrewOperationsPopOver(CrewOperationsPopOverMeta):
                 return self.__getInitCrewOperationObject(OPERATION_DROP_IN_BARRACK, None, CREW_OPERATIONS.DROPINBARRACK_WARNING_INBATTLE_TOOLTIP)
             if self.__isNotEnoughSpaceInBarrack(crew):
                 return self.__getInitCrewOperationObject(OPERATION_DROP_IN_BARRACK, None, CREW_OPERATIONS.DROPINBARRACK_WARNING_NOSPACE_TOOLTIP)
+            if vehicle.isCrewLocked:
+                return self.__getInitCrewOperationObject(OPERATION_DROP_IN_BARRACK, None, CREW_OPERATIONS.DROPINBARRACK_WARNING_CREWISLOCKED_TOOLTIP)
             return self.__getInitCrewOperationObject(OPERATION_DROP_IN_BARRACK)
 
     def __isTopCrewForCurrentVehicle(self, crew, vehicle):
@@ -186,21 +157,13 @@ class CrewOperationsPopOver(CrewOperationsPopOverMeta):
 
     def __isNotEnoughSpaceInBarrack(self, crew):
         berthsNeeded = len([ (role, t) for role, t in crew if t is not None ])
-        barracksTmen = self.itemsCache.items.getTankmen(~REQ_CRITERIA.TANKMAN.IN_TANK | REQ_CRITERIA.TANKMAN.ACTIVE)
-        tmenBerthsCount = self.itemsCache.items.stats.tankmenBerthsCount
-        return berthsNeeded > 0 and berthsNeeded > tmenBerthsCount - len(barracksTmen)
+        return 0 < berthsNeeded > self.itemsCache.items.freeTankmenBerthsCount()
 
     @decorators.adisp_process('crewReturning')
     def __processReturnCrew(self):
         result = yield TankmanReturn(g_currentVehicle.item).request()
         if result.userMsg:
             SystemMessages.pushI18nMessage(result.userMsg, type=result.sysMsgType)
-
-    def __openCrewBooksView(self):
-        g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.crew_books.crew_books_view.CrewBooksView(), CrewBooksView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
-
-    def __openCrewBooksLackView(self):
-        g_eventBus.handleEvent(events.LoadGuiImplViewEvent(GuiImplViewLoadParams(R.views.lobby.crew_books.crew_books_lack_view.CrewBooksLackView(), CrewBooksLackView, ScopeTemplates.LOBBY_SUB_SCOPE)), scope=EVENT_BUS_SCOPE.LOBBY)
 
     def __getInitCrewOperationObject(self, operationId, errorId=None, warningId='', operationAvailable=False):
         context = '#crew_operations:%s'
@@ -216,38 +179,19 @@ class CrewOperationsPopOver(CrewOperationsPopOverMeta):
         if warningId != '':
             warningInfo = {'operationAvailable': operationAvailable, 'tooltipId': warningId}
         return {'id': operationId, 'iconPath': iconPathContext % (operationId, '.png'), 
-           'title': self.__getItemTitle(operationId, cOpId), 
+           'title': i18n.makeString(cOpId + '/title'), 
            'description': i18n.makeString(cOpId + '/description'), 
            'error': errorText, 
            'warning': warningInfo, 
            'btnLabel': btnLabelText, 
-           'btnNotificationEnabled': self.__getNotificationEnabledFlag(operationId)}
-
-    def __getItemTitle(self, operationId, cOpId):
-        if operationId == OPERATION_CREW_BOOKS:
-            count = self.__getAvailableBooksCount()
-            return i18n.makeString(cOpId + '/title').format(count=count)
-        return i18n.makeString(cOpId + '/title')
-
-    def __getNotificationEnabledFlag(self, operationId):
-        if operationId == OPERATION_CREW_BOOKS:
-            return crewBooksViewedCache().haveNewCrewBooks()
-        return False
-
-    def __getAvailableBooksCount(self):
-        nation = g_currentVehicle.item.nationName
-
-        def filterBooks(book):
-            if book.getNation() == nation or book.hasNoNation():
-                return True
-
-        allCrewBooks = self.itemsCache.items.getItems(GUI_ITEM_TYPE.CREW_BOOKS, REQ_CRITERIA.CREW_ITEM.IN_ACCOUNT)
-        availableCrewBooksTypes = allCrewBooks.filter(filterBooks)
-        count = 0
-        for crewBook in availableCrewBooksTypes.values():
-            count = count + crewBook.getFreeCount()
-
-        return count
+           'btnNotificationEnabled': False}
 
     def __unitMgrOnUnitLeft(self, _, __):
         self._destroy()
+
+    @staticmethod
+    @decorators.adisp_process('unloading')
+    def __unloadCrew():
+        result = yield TankmanUnload(g_currentVehicle.item.invID).request()
+        if result.userMsg:
+            SystemMessages.pushI18nMessage(result.userMsg, type=result.sysMsgType)

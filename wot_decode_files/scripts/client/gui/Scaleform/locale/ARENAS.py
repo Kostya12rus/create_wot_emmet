@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/ARENAS.py
 from debug_utils import LOG_WARNING
 
@@ -158,6 +158,10 @@ class ARENAS(object):
     C_252_BR_BATTLE_CITY4_DESCRIPTION = '#arenas:252_br_battle_city4/description'
     C_128_LAST_FRONTIER_V_NAME = '#arenas:128_last_frontier_v/name'
     C_128_LAST_FRONTIER_V_DESCRIPTION = '#arenas:128_last_frontier_v/description'
+    C_108_NORMANDY_NOM_NAME = '#arenas:108_normandy_nom/name'
+    C_108_NORMANDY_NOM_DESCRIPTION = '#arenas:108_normandy_nom/description'
+    C_14_SIEGFRIED_LINE_NOM_NAME = '#arenas:14_siegfried_line_nom/name'
+    C_14_SIEGFRIED_LINE_NOM_DESCRIPTION = '#arenas:14_siegfried_line_nom/description'
     C_121_LOST_PARADISE_V_NAME = '#arenas:121_lost_paradise_v/name'
     C_121_LOST_PARADISE_V_DESCRIPTION = '#arenas:121_lost_paradise_v/description'
     TYPE_WINBACK_NAME = '#arenas:type/winback/name'
@@ -318,6 +322,10 @@ class ARENAS(object):
      C_252_BR_BATTLE_CITY4_DESCRIPTION,
      C_128_LAST_FRONTIER_V_NAME,
      C_128_LAST_FRONTIER_V_DESCRIPTION,
+     C_108_NORMANDY_NOM_NAME,
+     C_108_NORMANDY_NOM_DESCRIPTION,
+     C_14_SIEGFRIED_LINE_NOM_NAME,
+     C_14_SIEGFRIED_LINE_NOM_DESCRIPTION,
      C_121_LOST_PARADISE_V_NAME,
      C_121_LOST_PARADISE_V_DESCRIPTION,
      TYPE_WINBACK_NAME,

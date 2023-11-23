@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/__init__.py
 from frameworks.wulf import WindowLayer
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -29,7 +29,7 @@ def getViewSettings():
     from gui.Scaleform.daapi.view.lobby.vehicle_preview.info.bottom_panel_style_buying import VehiclePreviewBottomPanelStyleBuying
     from gui.Scaleform.daapi.view.lobby.vehicle_preview.info.bottom_panel_showcase_style_buying import VehiclePreviewBottomPanelShowcaseStyleBuying
     from gui.Scaleform.daapi.view.lobby.vehicle_preview.info.bottom_panel_style_progression import VehiclePreviewBottomPanelStyleProgression
-    from gui.Scaleform.daapi.view.lobby.vehicle_preview.wot_plus_vehicle_preview import VehiclePreviewBottomPanelWotPlus
+    from gui.Scaleform.daapi.view.lobby.vehicle_preview.rental_vehicle_preview import VehiclePreviewBottomPanelRental
     from gui.Scaleform.daapi.view.lobby.vehicle_preview.info.bottom_panel_resource_well import VehiclePreviewBottomPanelResourceWell
     return (
      ComponentSettings(VEHPREVIEW_CONSTANTS.PARAMETERS_PY_ALIAS, VehiclePreviewParameters, ScopeTemplates.DEFAULT_SCOPE),
@@ -47,7 +47,7 @@ def getViewSettings():
      ComponentSettings(VEHPREVIEW_CONSTANTS.CREW_LINKAGE, VehiclePreviewCrewTab, ScopeTemplates.DEFAULT_SCOPE),
      GroupedViewSettings(VIEW_ALIAS.PACK_ITEM_POPOVER, PackItemsPopover, 'packItemsPopover.swf', WindowLayer.WINDOW, VIEW_ALIAS.PACK_ITEM_POPOVER, VIEW_ALIAS.PACK_ITEM_POPOVER, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(VEHPREVIEW_CONSTANTS.TRADE_OFF_WIDGET_ALIAS, TradeOffWidget, ScopeTemplates.DEFAULT_SCOPE),
-     ComponentSettings(VEHPREVIEW_CONSTANTS.BOTTOM_PANEL_WOT_PLUS_LINKAGE, VehiclePreviewBottomPanelWotPlus, ScopeTemplates.DEFAULT_SCOPE))
+     ComponentSettings(VEHPREVIEW_CONSTANTS.BOTTOM_PANEL_WOT_PLUS_LINKAGE, VehiclePreviewBottomPanelRental, ScopeTemplates.DEFAULT_SCOPE))
 
 
 def getBusinessHandlers():

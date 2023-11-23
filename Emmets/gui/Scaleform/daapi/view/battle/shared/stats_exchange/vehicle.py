@@ -1,12 +1,14 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/stats_exchange/vehicle.py
-from gui.shared.badges import buildBadge
 from gui.Scaleform.daapi.view.battle.shared.stats_exchange import broker
 from gui.Scaleform.settings import ICONS_SIZES
 from gui.battle_control.arena_info import vos_collections
+from gui.prestige.prestige_helpers import MAX_GRADE_ID
+from gui.shared.badges import buildBadge
 from helpers import dependency
+from prestige_system import PrestigeConstants
 from skeletons.gui.battle_session import IBattleSessionProvider
 
 class ISortedIDsComposer(object):
@@ -115,6 +117,10 @@ class VehicleInfoComponent(broker.ExchangeComponent):
         isTeamKiller = playerVO.isTeamKiller or battleCtx.isTeamKiller(vehicleID, sessionID) or overrides.isTeamKiller(vInfoVO)
         parts = self._ctx.getPlayerFullName(vInfoVO)
         hasPrefixBadge = bool(vInfoVO.selectedBadge or vInfoVO.overriddenBadge)
+        prestigeLevel = vInfoVO.prestigeLevel
+        prestigeGradeMarkID = vInfoVO.prestigeGradeMarkID
+        if prestigeGradeMarkID == PrestigeConstants.MAX_GRADE_MARK_ID:
+            prestigeGradeMarkID = MAX_GRADE_ID
         data = {'accountDBID': accountDBID, 
            'sessionID': sessionID, 
            'playerName': parts.playerName, 
@@ -137,7 +143,9 @@ class VehicleInfoComponent(broker.ExchangeComponent):
            'vehicleAction': overrides.getAction(vInfoVO), 
            'isVehiclePremiumIgr': vTypeVO.isPremiumIGR, 
            'teamColor': overrides.getColorScheme(), 
-           'hasSelectedBadge': hasPrefixBadge}
+           'hasSelectedBadge': hasPrefixBadge, 
+           'prestigeLevel': prestigeLevel, 
+           'prestigeMarkId': prestigeGradeMarkID}
         if vInfoVO.overriddenBadge:
             data['badge'] = {'icon': ('override_badge_{}').format(vInfoVO.overriddenBadge), 'content': None, 
                'sizeContent': ICONS_SIZES.X24, 

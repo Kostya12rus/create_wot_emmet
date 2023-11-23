@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/crew_books_constants.py
 CREW_BOOKS_XML_FILE = 'crewBooks.xml'
 CREW_BOOKS_PRICE_GROUPS_XML_FILE = 'priceGroups.xml'
@@ -29,9 +29,11 @@ class CREW_BOOK_RARITY:
     CREW_EPIC = 'crewBook'
     PERSONAL = 'personalBook'
     UNIVERSAL = 'universalBook'
+    UNIVERSAL_GUIDE = 'universalGuide'
+    UNIVERSAL_BROCHURE = 'universalBrochure'
     ALL_TYPES = (
-     CREW_COMMON, CREW_RARE, CREW_EPIC, PERSONAL, UNIVERSAL)
-    NO_NATION_TYPES = (PERSONAL, UNIVERSAL)
+     CREW_COMMON, CREW_RARE, CREW_EPIC, PERSONAL, UNIVERSAL_BROCHURE, UNIVERSAL_GUIDE, UNIVERSAL)
+    NO_NATION_TYPES = (PERSONAL, UNIVERSAL, UNIVERSAL_GUIDE, UNIVERSAL_BROCHURE)
     ORDER = dict(zip(ALL_TYPES, range(len(ALL_TYPES))))
 
 
@@ -41,15 +43,3 @@ class CREW_BOOK_SPREAD:
     CREW_BOOK_NO_NATION = 'universalBook'
     ALL_SPREADS = (
      CREW_BOOK, PERSONAL_BOOK, CREW_BOOK_NO_NATION)
-
-
-class CREW_BOOK_INVALID_TYPE(object):
-    EMPTY_CREW = 'emptyCrew'
-    INCOMPLETE_CREW = 'incompleteCrew'
-    INVALID_SPECIALITY = 'invalidSpeciality'
-    INVALID_SKILL = 'invalidSkill'
-
-
-CREW_BOOK_RESTRICTIONS = {CREW_BOOK_PROPERTIES_MASKS.ROLE_LEVEL: CREW_BOOK_INVALID_TYPE.INVALID_SKILL, 
-   CREW_BOOK_PROPERTIES_MASKS.SPECIALIZATION: CREW_BOOK_INVALID_TYPE.INVALID_SPECIALITY, 
-   CREW_BOOK_PROPERTIES_MASKS.FULL_CREW: CREW_BOOK_INVALID_TYPE.INCOMPLETE_CREW}

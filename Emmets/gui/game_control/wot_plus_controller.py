@@ -1,23 +1,29 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/wot_plus_controller.py
-import logging, typing, AccountCommands, BigWorld
+import logging, BigWorld, typing, AccountCommands, constants
 from Event import Event
 from PlayerEvents import g_playerEvents
 from bootcamp.Bootcamp import g_bootcamp
-from constants import RENEWABLE_SUBSCRIPTION_CONFIG, IS_CHINA
+from constants import RENEWABLE_SUBSCRIPTION_CONFIG
 from gui import SystemMessages
+from gui.Scaleform.daapi.view.lobby.missions.awards_formatters import CurtailingAwardsComposer
 from gui.impl import backport
 from gui.impl.gen import R
+from gui.platform.products_fetcher.user_subscriptions.controller import SubscriptionStatus
+from gui.platform.products_fetcher.user_subscriptions.user_subscription import UserSubscription, SUBSCRIPTION_CANCEL_STATUSES, SubscriptionRequestPlatform
 from gui.server_events import settings
+from gui.server_events.awards_formatters import AWARDS_SIZES
+from gui.server_events.bonuses import GoldBank, IdleCrewXP, ExcludedMap, FreeEquipmentDemounting, WoTPlusExclusiveVehicle, AttendanceReward, SimpleBonus
 from gui.shared.gui_items.artefacts import OptionalDevice
 from gui.shared.utils.requesters.ItemsRequester import REQ_CRITERIA
 from helpers import dependency
+from items.vehicles import getItemByCompactDescr
 from messenger.m_constants import SCH_CLIENT_MSG_TYPE
 from messenger.proto.bw.wrappers import ServiceChannelMessage
 from piggy_bank_common.settings_constants import PIGGY_BANK_PDATA_KEY
-from renewable_subscription_common.settings_constants import RS_PDATA_KEY, IDLE_CREW_XP_PDATA_KEY, SUBSCRIPTION_DURATION_LENGTH, IDLE_CREW_VEH_INV_ID, RS_EXPIRATION_TIME, WotPlusState
+from renewable_subscription_common.settings_constants import RS_PDATA_KEY, IDLE_CREW_XP_PDATA_KEY, SUBSCRIPTION_DURATION_LENGTH, IDLE_CREW_VEH_INV_ID, RS_EXPIRATION_TIME, WotPlusState, RS_ENABLED
 from shared_utils.account_helpers.diff_utils import synchronizeDicts
 from skeletons.gui.game_control import IWotPlusController, ISteamCompletionController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -27,9 +33,13 @@ from skeletons.gui.system_messages import ISystemMessages
 from wg_async import wg_async, wg_await
 from wotdecorators import condition
 if typing.TYPE_CHECKING:
-    from typing import Dict, Optional, Callable, Any
+    from typing import Dict, Optional, Callable, Any, List
     from gui.shared.gui_items import ItemsCollection
     from gui.game_control.account_completion import SteamCompletionController
+    from gui.server_events.bonuses import WoTPlusBonus
+    from items.vehicles import VehicleType
+    from gui.platform.products_fetcher.user_subscriptions.controller import UserSubscriptionsFetchController
+    from gui.platform.products_fetcher.user_subscriptions.fetch_result import UserSubscriptionFetchResult
 _logger = logging.getLogger(__name__)
 _SECONDS_IN_DAY = 86400
 
@@ -71,7 +81,7 @@ class WotPlusController(IWotPlusController):
     _steamCompletionCtrl = dependency.descriptor(ISteamCompletionController)
     _itemsCache = dependency.descriptor(IItemsCache)
     _systemMessages = dependency.descriptor(ISystemMessages)
-    _userSubscriptionFetchCtrl = dependency.descriptor(IUserSubscriptionsFetchController)
+    _userSubscriptionsFetchController = dependency.descriptor(IUserSubscriptionsFetchController)
     ifAccount = condition('_account')
 
     def __init__(self):
@@ -80,7 +90,10 @@ class WotPlusController(IWotPlusController):
         self._cache = {}
         self._account = None
         self._state = WotPlusState.INACTIVE
+        self._hasSteamSubscription = False
         self.onDataChanged = Event()
+        self.onAttendanceUpdated = Event()
+        self.onIntroShown = Event()
         self.onPendingRentChanged = Event()
         return
 
@@ -94,7 +107,7 @@ class WotPlusController(IWotPlusController):
         self._lobbyContext.getServerSettings().onServerSettingsChange += self._onServerSettingsChange
         self.processSwitchNotifications()
         self._validSessionStarted = False if g_bootcamp.isRunning() else True
-        self._resolveState()
+        self._resolveSubscriptionAndSteamState()
 
     def onAccountBecomePlayer(self):
         self._account = BigWorld.player()
@@ -144,8 +157,20 @@ class WotPlusController(IWotPlusController):
     def getState(self):
         return self._state
 
+    def hasSteamSubscription(self):
+        return self._hasSteamSubscription
+
     def getExpiryTime(self):
         return self._cache.get(RS_EXPIRATION_TIME, 0)
+
+    def getNextBillingTime(self):
+        fetchResult = self._userSubscriptionsFetchController._fetchResult
+        if fetchResult.isProductsReady:
+            for subscriptionProduct in fetchResult.products:
+                if subscriptionProduct.nextBillingTime:
+                    return subscriptionProduct.nextBillingTime
+
+        return
 
     def getStartTime(self):
         return self.getExpiryTime() - SUBSCRIPTION_DURATION_LENGTH
@@ -162,24 +187,48 @@ class WotPlusController(IWotPlusController):
     def getExclusiveVehicles(self):
         return self._itemsCache.items.getVehicles(REQ_CRITERIA.VEHICLE.WOT_PLUS_VEHICLE)
 
-    def setRentPending(self, vehCD):
-        with settings.wotPlusSettings() as (dt):
-            dt.setRentPending(vehCD)
-        self.onPendingRentChanged(vehCD)
+    def getActiveExclusiveVehicle(self):
+        vehicleInfo = self._lobbyContext.getServerSettings().getWotPlusExclusiveVehicleInfo()
+        if vehicleInfo:
+            return getItemByCompactDescr(vehicleInfo['vehTypeCompDescr'])
+        else:
+            return
 
-    def getRentPending(self):
-        return settings.getWotPlusSettings().rentPendingVehCD
+    def getActiveExclusiveVehicleName(self):
+        vehicle = self.getActiveExclusiveVehicle()
+        if vehicle is not None:
+            return vehicle.userString
+        else:
+            return ''
 
-    def resetRentPending(self):
-        self.setRentPending(None)
-        return
+    def getEnabledBonuses(self):
+        serverSettings = self._lobbyContext.getServerSettings()
+        enabledBonuses = []
+        if serverSettings.isWoTPlusExclusiveVehicleEnabled():
+            enabledBonuses.append(WoTPlusExclusiveVehicle())
+        if serverSettings.isRenewableSubGoldReserveEnabled():
+            enabledBonuses.append(GoldBank())
+        if serverSettings.isRenewableSubPassiveCrewXPEnabled():
+            enabledBonuses.append(IdleCrewXP())
+        if serverSettings.isWotPlusExcludedMapEnabled():
+            enabledBonuses.append(ExcludedMap())
+        if serverSettings.isFreeEquipmentDemountingEnabled():
+            enabledBonuses.append(FreeEquipmentDemounting())
+        if serverSettings.isDailyAttendancesEnabled():
+            enabledBonuses.append(AttendanceReward())
+        return enabledBonuses
 
     @ifAccount
     def toggleWotPlusDev(self):
         self._account._doCmdInt(AccountCommands.CMD_TOGGLE_RENEWABLE_SUB_DEV, 0, self._onCmdResponseReceived)
 
+    @ifAccount
+    def giveAttendanceRewardDev(self):
+        self._account._doCmdInt(AccountCommands.CMD_GIVE_ATTENDANCE_REWARD_DEV, 0, self._onCmdResponseReceived)
+
     def setWotPlusStateDev(self, state):
         self._state = WotPlusState(state)
+        self._userSubscriptionsFetchController.reset()
         self.onDataChanged(self._cache)
 
     @ifAccount
@@ -188,9 +237,6 @@ class WotPlusController(IWotPlusController):
 
     def simulateNewGameDay(self):
         self._account._doCmdInt(AccountCommands.CMD_WOT_PLUS_NEW_GAME_DAY, 0, self._onCmdResponseReceived)
-
-    def simulateRentTank(self, tankId):
-        self._account._doCmdInt(AccountCommands.CMD_WOT_PLUS_RENT_TANK, tankId, self._onCmdResponseReceived)
 
     @ifAccount
     def setReservesDev(self, creditsVal, goldVal):
@@ -213,18 +259,30 @@ class WotPlusController(IWotPlusController):
             return False
         return True
 
+    def onDailyAttendanceUpdate(self):
+        with settings.wotPlusSettings() as (dt):
+            dt.increaseDailyAttendance()
+        self.onAttendanceUpdated()
+
+    def isDailyAttendanceQuest(self, questID):
+        dailyAttendancePrefix = self._lobbyContext.getServerSettings().getDailyAttendanceQuestPrefix()
+        return questID.startswith(dailyAttendancePrefix)
+
+    def getFormattedDailyAttendanceBonuses(self, bonuses):
+        composer = CurtailingAwardsComposer(displayedAwardsCount=constants.WoTPlusDailyAttendance.MAXIMUM_DISPLAYED_REWARDS)
+        return composer.getFormattedBonuses(bonuses, AWARDS_SIZES.BIG)
+
     def processSwitchNotifications(self):
         if g_bootcamp.isRunning():
             return
         serverSettings = self._lobbyContext.getServerSettings()
         isWotPlusEnabled = self.isWotPlusEnabled()
-        isEntryPointsEnabled = serverSettings.isWotPlusNewSubscriptionEnabled()
         isGoldReserveEnabled = serverSettings.isRenewableSubGoldReserveEnabled()
         isPassiveXpEnabled = serverSettings.isRenewableSubPassiveCrewXPEnabled()
         isFreeDemountingEnabled = serverSettings.isFreeEquipmentDemountingEnabled()
         isExcludedMapEnabled = serverSettings.isWotPlusExcludedMapEnabled()
+        isDailyAttendancesEnabled = serverSettings.isDailyAttendancesEnabled()
         with settings.wotPlusSettings() as (dt):
-            dt.setEntryPointsEnabledState(isEntryPointsEnabled)
             dt.setWotPlusEnabledState(isWotPlusEnabled)
             hasSubscription = self.isEnabled()
             if not isWotPlusEnabled and not hasSubscription:
@@ -238,26 +296,36 @@ class WotPlusController(IWotPlusController):
                     strategy.notifyClient(dt.isPassiveXpEnabled, isPassiveXpEnabled, SCH_CLIENT_MSG_TYPE.WOTPLUS_PASSIVEXP_ENABLED, SCH_CLIENT_MSG_TYPE.WOTPLUS_PASSIVEXP_DISABLED)
                     strategy.notifyClient(dt.isFreeDemountingEnabled, isFreeDemountingEnabled, SCH_CLIENT_MSG_TYPE.WOTPLUS_FREE_DEMOUNT_ENABLED, SCH_CLIENT_MSG_TYPE.WOTPLUS_FREE_DEMOUNT_DISABLED)
                     strategy.notifyClient(dt.isExcludedMapEnabled, isExcludedMapEnabled, SCH_CLIENT_MSG_TYPE.BONUS_EXCLUDED_MAP_ENABLED, SCH_CLIENT_MSG_TYPE.BONUS_EXCLUDED_MAP_DISABLED)
+                    strategy.notifyClient(dt.isDailyAttendancesEnabled, isDailyAttendancesEnabled, SCH_CLIENT_MSG_TYPE.WOTPLUS_DAILY_ATTENDANCES_ENABLED, SCH_CLIENT_MSG_TYPE.WOTPLUS_DAILY_ATTENDANCES_DISABLED)
             dt.setIsFirstTime(not hasSubscription)
             dt.setGoldReserveEnabledState(isGoldReserveEnabled)
             dt.setPassiveXpState(isPassiveXpEnabled)
             dt.setFreeDemountingState(isFreeDemountingEnabled)
             dt.setExcludedMapState(isExcludedMapEnabled)
+            dt.setDailyAttendancesState(isDailyAttendancesEnabled)
 
     @wg_async
-    def _resolveState(self):
-        if not self.isEnabled():
-            self._state = WotPlusState.INACTIVE
+    def _resolveSubscriptionAndSteamState(self, clearCache=False):
+        self._state = WotPlusState.ACTIVE if self.isEnabled() else WotPlusState.INACTIVE
+        self._hasSteamSubscription = False
+        if not self.isEnabled() or constants.IS_CHINA:
             return
-        if IS_CHINA:
-            self._state = WotPlusState.ACTIVE
+        fetchResult = yield wg_await(self._userSubscriptionsFetchController.getSubscriptions(clearCache))
+        userSubscriptions = fetchResult.products
+        if not fetchResult.isProductsReady:
             return
-        subscriptions = yield wg_await(self._userSubscriptionFetchCtrl.getProducts(False))
-        activeSubsCount = len(subscriptions.products) if subscriptions.isProcessed and subscriptions.products else 0
-        if activeSubsCount:
-            self._state = WotPlusState.ACTIVE
-        else:
-            self._state = WotPlusState.CANCELLED
+        activeSubscriptions = [ subscription for subscription in userSubscriptions if subscription.status == SubscriptionStatus.ACTIVE
+                              ]
+        if not activeSubscriptions:
+            hasCancelled = any(subscription.status in SUBSCRIPTION_CANCEL_STATUSES for subscription in userSubscriptions)
+            if hasCancelled:
+                self._state = WotPlusState.CANCELLED
+        self._hasSteamSubscription = any(userSubscription.platform == SubscriptionRequestPlatform.STEAM for userSubscription in userSubscriptions)
+
+    def shouldRedirectToSteam(self):
+        if not self._userSubscriptionsFetchController._fetchResult.isProductsReady:
+            return self._steamCompletionCtrl.isSteamAccount
+        return self.hasSteamSubscription()
 
     @wg_async
     def _onClientUpdate(self, diff, _):
@@ -268,7 +336,7 @@ class WotPlusController(IWotPlusController):
             itemDiff[PIGGY_BANK_PDATA_KEY] = diff[PIGGY_BANK_PDATA_KEY]
         if itemDiff:
             synchronizeDicts(itemDiff, self._cache)
-            yield wg_await(self._resolveState())
+            yield wg_await(self._resolveSubscriptionAndSteamState(clearCache=RS_ENABLED in itemDiff))
             self.onDataChanged(itemDiff)
 
     def _getStrategy(self):

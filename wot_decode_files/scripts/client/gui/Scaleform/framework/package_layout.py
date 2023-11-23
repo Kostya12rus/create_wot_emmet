@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/package_layout.py
 import importlib, logging
 from frameworks.wulf import WindowLayer
@@ -48,11 +48,11 @@ class PackageBusinessHandler(object):
         self._listeners = ()
         return
 
-    def loadViewWithDefName(self, alias, name=None, *args, **kwargs):
-        self._app.loadView(SFViewLoadParams(alias, name), *args, **kwargs)
+    def loadViewWithDefName(self, alias, name=None, parent=None, *args, **kwargs):
+        self._app.loadView(SFViewLoadParams(alias, name=name, parent=parent), *args, **kwargs)
 
-    def loadViewWithGenName(self, alias, *args, **kwargs):
-        self._app.loadView(SFViewLoadParams(alias, ('rw{0}').format(self.__counter.next())), *args, **kwargs)
+    def loadViewWithGenName(self, alias, parent=None, *args, **kwargs):
+        self._app.loadView(SFViewLoadParams(alias, name=('rw{0}').format(self.__counter.next()), parent=parent), *args, **kwargs)
 
     def loadViewBySharedEvent(self, event):
         self._app.loadView(event.loadParams)

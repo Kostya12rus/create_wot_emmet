@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/battle_booster.py
 import logging
 from gui.impl import backport
@@ -106,6 +106,9 @@ class BattleBoosterBlockTooltipData(BlocksTooltipData):
         inventoryBlock = BattleBoosterInventoryBlockConstructor(module, statsConfig, leftPadding, rightPadding).construct()
         if inventoryBlock:
             items.append(formatters.packBuildUpBlockData(inventoryBlock, padding=formatters.packPadding(left=12, right=rightPadding, top=topPadding, bottom=-8), gap=textGap))
+        boosterIsUseless = BoosterHasNoEffectBlockConstructor(module, statusConfig).construct()
+        if boosterIsUseless:
+            items.append(formatters.packBuildUpBlockData(boosterIsUseless, gap=-4, padding=formatters.packPadding(left=leftPadding, right=rightPadding, top=topPadding, bottom=bottomPadding), stretchBg=False))
         return items
 
 
@@ -176,3 +179,15 @@ class EffectsBlockConstructor(BattleBoosterTooltipBlockConstructor):
         return (
          text_styles.main(replaceText),
          text_styles.main(boostText))
+
+
+class BoosterHasNoEffectBlockConstructor(BattleBoosterTooltipBlockConstructor):
+
+    def construct(self):
+        block = list()
+        module = self.module
+        vehicle = self.configuration.vehicle
+        if vehicle is not None and not module.isAffectsOnVehicle(vehicle, self.configuration.eqSetupIDx):
+            block.append(formatters.packTextBlockData(text_styles.statusAlert(backport.text(R.strings.tooltips.battleBooster.useless.header()))))
+            block.append(formatters.packTextBlockData(text=text_styles.main(backport.text(R.strings.tooltips.battleBooster.useless.body())), padding=formatters.packPadding(top=8)))
+        return block

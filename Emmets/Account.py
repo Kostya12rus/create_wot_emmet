@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/Account.py
 import cPickle, copy, logging, weakref, zlib
 from collections import namedtuple
@@ -33,6 +33,7 @@ from account_helpers.gift_system import GiftSystem
 from account_helpers.trade_in import TradeIn
 from account_helpers.winback import Winback
 from account_shared import NotificationItem, readClientServerVersion
+from gui.prb_control import prbEntityProperty
 from items import tankmen
 from adisp import adisp_process
 from bootcamp.Bootcamp import g_bootcamp
@@ -587,7 +588,10 @@ class PlayerAccount(BigWorld.Entity, ClientChat):
         if currentVehInvID > 0:
             AccountSettings.setFavorites(CURRENT_VEHICLE, currentVehInvID)
         events.isPlayerEntityChanging = False
-        events.onAccountShowGUI(ctx)
+        if ctx.get('skipShowGUI', False):
+            events.onAccountShowGUISkipped(ctx)
+        else:
+            events.onAccountShowGUI(ctx)
 
     def receiveQueueInfo(self, queueInfo):
         events.onQueueInfoReceived(queueInfo)
@@ -690,11 +694,11 @@ class PlayerAccount(BigWorld.Entity, ClientChat):
         self._doCmdIntArrStrArr(AccountCommands.CMD_REQ_PLAYERS_GLOBAL_RATING, accountIDs, [], proxy)
         return
 
-    def enqueueRandom(self, vehInvID, gameplaysMask=ARENA_GAMEPLAY_MASK_DEFAULT, arenaTypeID=0, isOnly10ModeEnabled=False):
+    def enqueueRandom(self, vehInvID, gameplaysMask=ARENA_GAMEPLAY_MASK_DEFAULT, arenaTypeID=0, randomFlags=0):
         if events.isPlayerEntityChanging:
             return
         self.base.doCmdIntArr(AccountCommands.REQUEST_ID_NO_RESPONSE, AccountCommands.CMD_ENQUEUE_IN_BATTLE_QUEUE, [
-         QUEUE_TYPE.RANDOMS, vehInvID, gameplaysMask, arenaTypeID, isOnly10ModeEnabled])
+         QUEUE_TYPE.RANDOMS, vehInvID, gameplaysMask, arenaTypeID, randomFlags])
 
     def dequeueRandom(self):
         if not events.isPlayerEntityChanging:
@@ -1195,7 +1199,7 @@ class PlayerAccount(BigWorld.Entity, ClientChat):
 
     def _update(self, triggerEvents, diff):
         LOG_DEBUG_DEV('_update', diff if triggerEvents else 'full sync')
-        isFullSync = diff.get('prevRev', None) is None
+        isFullSync = AccountSyncData.isFullSyncDiff(diff)
         if not self.syncData.updatePersistentCache(diff, isFullSync):
             return False
         else:
@@ -1379,6 +1383,10 @@ class PlayerAccount(BigWorld.Entity, ClientChat):
 
             return
 
+    @prbEntityProperty
+    def _prbEntity(self):
+        return
+
     def __getRequestID(self):
         if g_accountRepository is None:
             return
@@ -1441,7 +1449,7 @@ class _AccountRepository(object):
         self.serverSettings = copy.copy(initialServerSettings)
         self.syncData = AccountSyncData.AccountSyncData()
         self.inventory = Inventory.Inventory(self.syncData, self.commandProxy)
-        self.stats = Stats.Stats(self.syncData)
+        self.stats = Stats.Stats(self.syncData, self.commandProxy)
         self.questProgress = QuestProgress.QuestProgress(self.syncData)
         self.shop = Shop.Shop()
         self.dossierCache = DossierCache.DossierCache(name, className)

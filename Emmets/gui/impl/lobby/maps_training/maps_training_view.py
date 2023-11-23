@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/maps_training/maps_training_view.py
 import ArenaType, BigWorld, Math
 from AvatarInputHandler.cameras import getViewProjectionMatrix
@@ -79,7 +79,6 @@ class MapsTrainingView(MapsTrainingBaseView, IGlobalListener):
         if self.__isDataLoaded and self.__selectedMap:
             with self.viewModel.transaction() as (model):
                 self.__updateAllSelections(model)
-        self.show()
 
     def createToolTipContent(self, event, contentID):
         if contentID == R.views.lobby.maps_training.ScenarioTooltip():

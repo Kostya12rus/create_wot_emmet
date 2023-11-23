@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/quest_xml_source.py
 import time, ArenaType, ResMgr, nations
 from soft_exception import SoftException
 from copy import deepcopy
 from pprint import pformat
-from bonus_readers import readBonusSection, readUTC, timeDataToUTC
+from bonus_readers import readBonusSection, readUTC, timeDataToUTC, checkLogExtInfoLen
 from constants import VEHICLE_CLASS_INDICES, ARENA_BONUS_TYPE, EVENT_TYPE, IGR_TYPE, ATTACK_REASONS, QUEST_RUN_FLAGS, DEFAULT_QUEST_START_TIME, DEFAULT_QUEST_FINISH_TIME, ROLE_LABEL_TO_TYPE, ACCOUNT_ATTR, QUESTS_SUPPORTED_EXCLUDE_TAGS
 from debug_utils import LOG_WARNING
 from dossiers2.custom.layouts import accountDossierLayout, vehicleDossierLayout, StaticSizeBlockBuilder, BinarySetDossierBlockBuilder
@@ -226,6 +226,7 @@ class Source(object):
             return testTime
 
         id = questSection.readString('id', '')
+        checkLogExtInfoLen(id, 'quests')
         if not id:
             raise SoftException('Quest id must be specified.')
         if questSection.has_key('name'):
@@ -370,7 +371,7 @@ class Source(object):
            'premiumVip': self.__readCondition_bool, 
            'isPremiumQuestsEnabled': self.__readCondition_bool, 
            'wotPlus': self.__readCondition_bool, 
-           'isFreeDirectivesEnabled': self.__readCondition_bool, 
+           'wotPlusDailyAttendance': self.__readCondition_bool, 
            'daily': self.__readCondition_true, 
            'weekly': self.__readCondition_true, 
            'bonusLimit': self.__readCondition_int, 

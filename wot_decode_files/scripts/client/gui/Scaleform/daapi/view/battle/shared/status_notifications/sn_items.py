@@ -1,9 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/status_notifications/sn_items.py
 import typing, BigWorld
 from AvatarInputHandler import AvatarInputHandler
+from arena_bonus_type_caps import ARENA_BONUS_TYPE_CAPS
 from constants import VEHICLE_MISC_STATUS
 from gui.Scaleform.daapi.view.battle.shared.status_notifications.components import StatusNotificationItem
 from gui.Scaleform.genConsts.BATTLE_NOTIFICATIONS_TIMER_TYPES import BATTLE_NOTIFICATIONS_TIMER_TYPES
@@ -303,6 +304,9 @@ class _OverturnedBaseSN(LocalizationProvider, DestroyMiscTimerSN):
         return VEHICLE_MISC_STATUS.VEHICLE_IS_OVERTURNED
 
     def _getDescription(self, value=None):
+        liftOverEnabled = ARENA_BONUS_TYPE_CAPS.checkAny(BigWorld.player().arenaBonusType, ARENA_BONUS_TYPE_CAPS.LIFT_OVER)
+        if liftOverEnabled:
+            return backport.text(R.strings.ingame_gui.destroyTimer.liftOver())
         return ''
 
 

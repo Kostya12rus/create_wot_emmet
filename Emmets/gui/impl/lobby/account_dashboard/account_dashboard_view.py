@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_dashboard/account_dashboard_view.py
 import logging, WWISE
 from frameworks.wulf import ViewFlags, ViewSettings
@@ -20,6 +20,7 @@ from gui.shared.event_dispatcher import showHangar
 from helpers import dependency
 from shared_utils import CONST_CONTAINER
 from skeletons.gui.lobby_context import ILobbyContext
+from uilogging.wot_plus.loggers import WotPlusAccountDashboardLogger
 _logger = logging.getLogger(__name__)
 
 class Feature(CONST_CONTAINER):
@@ -42,7 +43,7 @@ class SOUNDS(CONST_CONTAINER):
 
 
 class AccountDashboardView(ViewImpl):
-    __slots__ = ('_features', 'modelDataControllers')
+    __slots__ = ('_features', 'modelDataControllers', '_wotPlusUILogger')
     __lobbyContext = dependency.descriptor(ILobbyContext)
 
     def __init__(self, layoutID):
@@ -59,6 +60,7 @@ class AccountDashboardView(ViewImpl):
            Feature.EXCLUDED_MAPS: ExcludedMapsFeature(self.viewModel), 
            Feature.DOG_TAGS: DogTagsFeature(self.viewModel), 
            Feature.PARENTAL_CONTROL: ParentalControlFeature(self.viewModel)}
+        self._wotPlusUILogger = WotPlusAccountDashboardLogger()
         self.modelDataControllers = {}
         Waiting.show('loadPage')
 
@@ -67,13 +69,13 @@ class AccountDashboardView(ViewImpl):
         return self.getViewModel()
 
     def createPopOverContent(self, event):
-        for feature in self._features.itervalues():
+        for feature in self._features.values():
             content = feature.createPopOverContent(event)
             if content:
                 return content
 
     def createToolTipContent(self, event, contentID):
-        for feature in self._features.itervalues():
+        for feature in self._features.values():
             content = feature.createToolTipContent(event, contentID)
             if content:
                 return content
@@ -84,7 +86,7 @@ class AccountDashboardView(ViewImpl):
     def _onLoading(self, *args, **kwargs):
         super(AccountDashboardView, self)._onLoading(*args, **kwargs)
         with self.viewModel.transaction() as (tx):
-            for feature in self._features.itervalues():
+            for feature in self._features.values():
                 feature.fill(tx)
 
     def _initialize(self, *args, **kwargs):
@@ -92,18 +94,21 @@ class AccountDashboardView(ViewImpl):
         self.viewModel.onClose += self.__onClose
         WWISE.WW_setState(SOUNDS.STATE_PLACE, SOUNDS.STATE_PLACE_AD)
         WWISE.WW_eventGlobal(SOUNDS.EVENT_ENTER)
-        for feature in self._features.itervalues():
+        for feature in self._features.values():
             feature.initialize()
 
+        self._wotPlusUILogger.onViewInitialize()
         Waiting.hide('loadPage')
 
     def _finalize(self):
         super(AccountDashboardView, self)._finalize()
         WWISE.WW_eventGlobal(SOUNDS.EVENT_EXIT)
         self.viewModel.onClose -= self.__onClose
-        for feature in self._features.itervalues():
+        for feature in self._features.values():
             feature.finalize()
 
-    @staticmethod
-    def __onClose():
+        self._wotPlusUILogger.onViewFinalize()
+
+    def __onClose(self):
+        self._wotPlusUILogger.logCloseEvent()
         showHangar()

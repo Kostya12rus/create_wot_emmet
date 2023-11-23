@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/tooltips/battle_pass_in_progress_tooltip_view.py
 from collections import OrderedDict
 from battle_pass_common import BattlePassConsts
@@ -66,7 +66,8 @@ class BattlePassInProgressTooltipView(ViewImpl):
                 model.setCurrentPoints(curPoints)
                 model.setMaxPoints(limitPoints)
                 model.setIsBattlePassPurchased(isBattlePassPurchased)
-                model.setBattleType(getPreQueueName(battleType).lower())
+                if battleType:
+                    model.setBattleType(getPreQueueName(battleType).lower())
                 model.setNotChosenRewardCount(self.__battlePass.getNotChosenRewardCount())
                 model.setExpireTime(self.__battlePass.getChapterRemainingTime(chapterID))
                 model.setIsExtra(self.__battlePass.isExtraChapter(chapterID))

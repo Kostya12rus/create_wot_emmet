@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/CREW_OPERATIONS.py
 
 
@@ -10,6 +10,7 @@ class CREW_OPERATIONS(object):
     RETURN_WARNING_NOSPACE_TOOLTIP = '#crew_operations:return/warning/noSpace/tooltip'
     DROPINBARRACK_WARNING_NOSPACE_TOOLTIP = '#crew_operations:dropInBarrack/warning/noSpace/tooltip'
     DROPINBARRACK_WARNING_INBATTLE_TOOLTIP = '#crew_operations:dropInBarrack/warning/inBattle/tooltip'
+    DROPINBARRACK_WARNING_CREWISLOCKED_TOOLTIP = '#crew_operations:dropInBarrack/warning/crewIsLocked/tooltip'
     CREWBOOKS_WARNING_MEMBERSINBATTLE_TOOLTIP = '#crew_operations:crewBooks/warning/membersInBattle/tooltip'
     WINDOW_TITLE = '#crew_operations:window/title'
     CREWOPERATIONS_BTN_TOOLTIP_HEADER = '#crew_operations:crewOperations/btn/tooltip/header'
@@ -41,11 +42,8 @@ class CREW_OPERATIONS(object):
     DROPINBARRACK_WARNING_NOSPACE_TOOLTIP_BODY = '#crew_operations:dropInBarrack/warning/noSpace/tooltip/body'
     DROPINBARRACK_WARNING_INBATTLE_TOOLTIP_HEADER = '#crew_operations:dropInBarrack/warning/inBattle/tooltip/header'
     DROPINBARRACK_WARNING_INBATTLE_TOOLTIP_BODY = '#crew_operations:dropInBarrack/warning/inBattle/tooltip/body'
-    ROLECHANGE_WINDOWTITLE = '#crew_operations:roleChange/windowTitle'
-    ROLECHANGE_ACCEPTBUTTON = '#crew_operations:roleChange/acceptButton'
-    ROLECHANGE_VEHICLESELECTLABEL = '#crew_operations:roleChange/vehicleSelectlabel'
-    ROLECHANGE_ROLESELECTLABEL = '#crew_operations:roleChange/roleSelectLabel'
-    ROLECHANGE_FOOTERINFO = '#crew_operations:roleChange/footerInfo'
+    DROPINBARRACK_WARNING_CREWISLOCKED_TOOLTIP_HEADER = '#crew_operations:dropInBarrack/warning/crewIsLocked/tooltip/header'
+    DROPINBARRACK_WARNING_CREWISLOCKED_TOOLTIP_BODY = '#crew_operations:dropInBarrack/warning/crewIsLocked/tooltip/body'
     CREWBOOKS_TITLE = '#crew_operations:crewBooks/title'
     CREWBOOKS_DESCRIPTION = '#crew_operations:crewBooks/description'
     CREWBOOKS_BUTTON_LABEL = '#crew_operations:crewBooks/button/label'

@@ -1,10 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_matters/battle_matters_main_reward_view.py
 import logging, typing
-from account_helpers import AccountSettings
-from account_helpers.AccountSettings import BATTLEMATTERS_SEEN
 from frameworks.wulf import ViewFlags, ViewSettings
 from gui.Scaleform.locale.VEHICLE_PREVIEW import VEHICLE_PREVIEW
 from gui.impl.gen import R
@@ -43,7 +41,7 @@ class BattleMattersMainRewardView(ViewImpl):
 
     def __init__(self):
         settings = ViewSettings(R.views.lobby.battle_matters.BattleMattersMainRewardView())
-        settings.flags = ViewFlags.COMPONENT
+        settings.flags = ViewFlags.VIEW
         settings.model = BattleMattersMainRewardViewModel()
         super(BattleMattersMainRewardView, self).__init__(settings)
 
@@ -60,13 +58,16 @@ class BattleMattersMainRewardView(ViewImpl):
         if findFirst((lambda v: v.getVehCD() == vehCD), self.viewModel.getVehicles()).getIsInHangar():
             selectVehicleInHangar(vehCD)
         else:
-            showVehiclePreviewWithoutBottomPanel(vehCD, backCallback=showBattleMattersMainReward, itemsPack=[
-             ItemPackEntry(type=ItemPackType.CREW_100, count=1, groupID=1)], backBtnLabel=VEHICLE_PREVIEW.HEADER_BACKBTN_DESCRLABEL_BATTLEMATTERSMAINREWARD)
 
-    @staticmethod
-    def onStart():
-        AccountSettings.setCounters(BATTLEMATTERS_SEEN, True)
-        showBattleMatters()
+            def subscriptionFunc():
+                controller = dependency.instance(IBattleMattersController)
+                if not controller.isEnabled() or controller.isPaused():
+                    showHangar()
+
+            showVehiclePreviewWithoutBottomPanel(vehCD, backCallback=showBattleMattersMainReward, itemsPack=[
+             ItemPackEntry(type=ItemPackType.CREW_100, count=1, groupID=1)], backBtnLabel=VEHICLE_PREVIEW.HEADER_BACKBTN_DESCRLABEL_BATTLEMATTERSMAINREWARD, subscriptions=[
+             [
+              self.__battleMattersController.onStateChanged, subscriptionFunc]])
 
     @staticmethod
     def onBack():
@@ -84,8 +85,6 @@ class BattleMattersMainRewardView(ViewImpl):
         return (
          (
           self.viewModel.onPreview, self.onPreview),
-         (
-          self.viewModel.onStart, self.onStart),
          (
           self.viewModel.onBack, self.onBack),
          (
@@ -110,7 +109,6 @@ class BattleMattersMainRewardView(ViewImpl):
         else:
             vehicleVMs = sorted(BattleMattersVehiclesBonusUIPacker.pack(vehiclesBonus), cmp=_vehiclesSortOrder)
             with self.viewModel.transaction() as (tx):
-                tx.setIsWelcomeScreen(not AccountSettings.getCounters(BATTLEMATTERS_SEEN))
                 vehicles = tx.getVehicles()
                 vehicles.clear()
                 for vehicle in vehicleVMs:

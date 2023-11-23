@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/options.py
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -797,14 +797,23 @@ class GameplaySetting(StorageAccountSetting):
 
 
 class RandomOnly10ModeSetting(StorageAccountSetting):
-    _RandomOnly10ModeSettingStruct = namedtuple('_RandomOnly10ModeSettingStruct', 'current options extraData')
     lobbyContext = dependency.descriptor(ILobbyContext)
 
     def pack(self):
-        return self._RandomOnly10ModeSettingStruct(self._get(), self._getOptions(), self.getExtraData())._asdict()
+        return SettingsExtraData(self._get(), self._getOptions(), self.getExtraData())._asdict()
 
     def getExtraData(self):
         return {'enabled': self.lobbyContext.getServerSettings().isOnly10ModeEnabled()}
+
+
+class DevMapsSetting(StorageAccountSetting):
+    lobbyContext = dependency.descriptor(ILobbyContext)
+
+    def pack(self):
+        return SettingsExtraData(self._get(), self._getOptions(), self.getExtraData())._asdict()
+
+    def getExtraData(self):
+        return {'enabled': self.lobbyContext.getServerSettings().isMapsInDevelopmentEnabled()}
 
 
 class TripleBufferedSetting(SettingAbstract):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/messages/player_messages.py
 import logging
 from typing import TYPE_CHECKING
@@ -29,7 +29,7 @@ class PlayerMessages(fading_messages.FadingMessages):
         super(PlayerMessages, self)._addGameListeners()
         ctrl = self.sessionProvider.shared.messages
         if ctrl is not None:
-            ctrl.onShowPlayerMessageByCode += self.__onShowPlayerMessageByCode
+            ctrl.onShowPlayerMessageByCode += self._onShowPlayerMessageByCode
             ctrl.onShowPlayerMessageByKey += self.__onShowPlayerMessageByKey
             ctrl.onShowDestructibleEntityMessageByCode += self.__onShowDestructibleEntityMessageByCode
         ctrl = self.sessionProvider.shared.equipments
@@ -41,7 +41,7 @@ class PlayerMessages(fading_messages.FadingMessages):
     def _removeGameListeners(self):
         ctrl = self.sessionProvider.shared.messages
         if ctrl is not None:
-            ctrl.onShowPlayerMessageByCode -= self.__onShowPlayerMessageByCode
+            ctrl.onShowPlayerMessageByCode -= self._onShowPlayerMessageByCode
             ctrl.onShowPlayerMessageByKey -= self.__onShowPlayerMessageByKey
             ctrl.onShowDestructibleEntityMessageByCode -= self.__onShowDestructibleEntityMessageByCode
         ctrl = self.sessionProvider.shared.equipments
@@ -57,7 +57,7 @@ class PlayerMessages(fading_messages.FadingMessages):
         self.showMessage(code, {'target': _ID_TO_DESTRUCTIBLE_ENTITY_NAME[entityID], 
            'attacker': getFullName(attackerID, showClan=False)})
 
-    def __onShowPlayerMessageByCode(self, code, postfix, targetID, attackerID, equipmentID, ignoreMessages):
+    def _onShowPlayerMessageByCode(self, code, postfix, targetID, attackerID, equipmentID, ignoreMessages):
         _logger.debug('onShowPlayerMessage %r %r %r %r %r', code, postfix, targetID, attackerID, equipmentID)
         if ignoreMessages:
             return

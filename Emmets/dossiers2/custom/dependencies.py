@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/dossiers2/custom/dependencies.py
 import time
 from functools import partial
@@ -326,8 +326,8 @@ SINGLE_ACHIEVEMENTS_DEPENDENCIES = {}
 
 def _set_SINGLE_ACHIEVEMENTS_DEPENDENCIES():
     global SINGLE_ACHIEVEMENTS_DEPENDENCIES
-    SINGLE_ACHIEVEMENTS_DEPENDENCIES.update({'bootcampMedal': [
-                       _updateSteamBootcamp]})
+    SINGLE_ACHIEVEMENTS_DEPENDENCIES.update({'onboardingMedal': [
+                         _updateSteamOnboarding]})
 
 
 STEAM_ACHIEVEMENT_DEPENDENCIES = {}
@@ -1030,7 +1030,7 @@ def _updateSteamMileageMedal(dossierDescr, dossierBlockDescr, key, value, prevVa
         dossierBlockDescr['steamMileageMedal'] = True
 
 
-def _updateSteamBootcamp(dossierDescr, dossierBlockDescr, value, added):
+def _updateSteamOnboarding(dossierDescr, dossierBlockDescr, value, added):
     if dossierDescr.isBlockInLayout('steamAchievements') and added:
         dossierDescr['steamAchievements']['steamBootcampMedal'] = True
 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/client_recycle_bin.py
 from functools import partial
 import AccountCommands
@@ -53,16 +53,17 @@ class ClientRecycleBin(object):
         self.__syncData.waitForSync(partial(self.__onGetItemsResponse, itemsType, callback))
         return
 
-    def restoreTankman(self, tmanInvID, callback):
+    def restoreTankman(self, tmanInvID, useBerth, groupID, groupSize, callback):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER)
             return
         if callback is not None:
-            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID, errorStr)
+            proxy = lambda requestID, resultID, errStr='', ext=None: callback(resultID, errStr, ext)
         else:
             proxy = None
-        self.__account._doCmdInt3(AccountCommands.CMD_TMAN_RESTORE, tmanInvID, 0, 0, proxy)
+        arr = [tmanInvID, useBerth, groupID, groupSize]
+        self.__account._doCmdIntArr(AccountCommands.CMD_TMAN_RESTORE, arr, proxy)
         return
 
     def __onGetCacheResponse(self, callback, resultID):

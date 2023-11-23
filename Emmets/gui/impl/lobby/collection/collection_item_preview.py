@@ -1,39 +1,44 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/collection/collection_item_preview.py
+import logging
 from functools import partial
-from gui.impl.auxiliary.vehicle_helper import fillVehicleInfo
-from gui.impl.wrappers.function_helpers import replaceNoneKwargsModel
-from shared_utils import first
 from PlayerEvents import g_playerEvents
 from frameworks.wulf import ViewSettings, WindowFlags
+from gui.Scaleform.Waiting import Waiting
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
+from gui.Scaleform.daapi.view.lobby.profile.sound_constants import ACHIEVEMENTS_SOUND_SPACE
 from gui.Scaleform.framework.entities.View import ViewKey
-from gui.collection.collections_helpers import getItemInfo, showCollectionStylePreview, getVehicleForStyleItem
-from gui.collection.sounds import COLLECTIONS_SOUND_SPACE
+from gui.collection.collections_helpers import getItemInfo, getVehicleForStyleItem, showCollectionStylePreview
+from gui.collection.resources.cdn.models import Group, makeImageID
 from gui.impl import backport
+from gui.impl.auxiliary.vehicle_helper import fillVehicleInfo
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.collection.collection_item_preview_model import CollectionItemPreviewModel, ItemType
+from gui.impl.gen.view_models.views.lobby.collection.pages_blurred_background_model import PagesBlurredBackgroundModel
 from gui.impl.pub import ViewImpl, WindowImpl
-from gui.shared.event_dispatcher import showHangar, showCollectionWindow
+from gui.impl.wrappers.function_helpers import replaceNoneKwargsModel
+from gui.shared.event_dispatcher import showCollectionWindow, showHangar
 from gui.sounds.filters import switchHangarOverlaySoundFilter
 from helpers import dependency
 from items.components.c11n_components import splitIntDescr
 from items.components.c11n_constants import CustomizationType
+from shared_utils import first
 from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.game_control import ICollectionsSystemController
 from skeletons.gui.impl import IGuiLoader
+_logger = logging.getLogger(__name__)
 
 class CollectionItemPreview(ViewImpl):
     __slots__ = ('__itemId', '__collectionId', '__page', '__collection', '__backCallback',
-                 '__backBtnText')
-    _COMMON_SOUND_SPACE = COLLECTIONS_SOUND_SPACE
+                 '__backBtnText', '__content', '__pagesCount')
+    _COMMON_SOUND_SPACE = ACHIEVEMENTS_SOUND_SPACE
     __appLoader = dependency.descriptor(IAppLoader)
     __collectionsSystem = dependency.descriptor(ICollectionsSystemController)
     __guiLoader = dependency.descriptor(IGuiLoader)
 
-    def __init__(self, layoutID, itemId, collectionId, page, backCallback, backBtnText):
+    def __init__(self, layoutID, itemId, collectionId, page, pagesCount, backCallback, backBtnText):
         settings = ViewSettings(layoutID)
         settings.model = CollectionItemPreviewModel()
         self.__itemId = itemId
@@ -42,6 +47,8 @@ class CollectionItemPreview(ViewImpl):
         self.__collection = self.__collectionsSystem.getCollection(collectionId)
         self.__backCallback = backCallback
         self.__backBtnText = backBtnText
+        self.__content = {}
+        self.__pagesCount = pagesCount
         super(CollectionItemPreview, self).__init__(settings)
 
     def _onLoading(self, *args, **kwargs):
@@ -59,10 +66,14 @@ class CollectionItemPreview(ViewImpl):
             tx.setPage(self.__page)
             if itemType == ItemType.STYLE3D:
                 self.__fillVehicleInfo(model=tx)
+        self.__updateContentData()
 
     def _finalize(self):
         switchHangarOverlaySoundFilter(on=False)
+        self.__collection = None
+        self.__backCallback = None
         super(CollectionItemPreview, self)._finalize()
+        return
 
     @property
     def viewModel(self):
@@ -86,6 +97,33 @@ class CollectionItemPreview(ViewImpl):
         if vehicle is not None:
             fillVehicleInfo(model.vehicleInfo, vehicle)
         return
+
+    @replaceNoneKwargsModel
+    def __fillPagesBlurredBackgrounds(self, model=None):
+        pagesBlurredBackgroundsModels = model.getPagesBlurredBackgrounds()
+        pagesBlurredBackgroundsModels.clear()
+        for _ in range(1, self.__pagesCount + 1):
+            pageBlurredBackgroundsModel = PagesBlurredBackgroundModel()
+            pageBg = self.__getContent(Group.BG, self.__collection.name, 'bgMain')
+            if pageBg:
+                pageBlurredBackgroundsModel.setMain(pageBg)
+            pagesBlurredBackgroundsModels.addViewModel(pageBlurredBackgroundsModel)
+
+        pagesBlurredBackgroundsModels.invalidate()
+
+    def __updateContentData(self):
+        Waiting.show('loadContent')
+        self.__collectionsSystem.cache.getImagesPaths(self.__generateContentData(), self.__onContentUpdated)
+
+    def __generateContentData(self):
+        return [
+         makeImageID(Group.BG, self.__collection.name, 'bgMain')]
+
+    def __onContentUpdated(self, isOk, data):
+        if isOk:
+            self.__content = data
+            self.__fillPagesBlurredBackgrounds()
+        Waiting.hide('loadContent')
 
     def __onClosePreview(self):
         self.destroyWindow()
@@ -116,11 +154,17 @@ class CollectionItemPreview(ViewImpl):
     def __onDisconnected(self):
         self.destroyWindow()
 
+    def __getContent(self, group, sub, name):
+        path = self.__content.get(group, {}).get(sub, {}).get(name, '')
+        if not path:
+            _logger.warning('Resource: %s not found', ('/').join((group, sub, name)))
+        return path
+
 
 class CollectionItemPreviewWindow(WindowImpl):
 
-    def __init__(self, itemId, collectionId, page, backCallback, backBtnText):
-        super(CollectionItemPreviewWindow, self).__init__(WindowFlags.WINDOW | WindowFlags.WINDOW_FULLSCREEN, content=CollectionItemPreview(R.views.lobby.collection.CollectionItemPreview(), itemId, collectionId, page, backCallback, backBtnText), parent=None)
+    def __init__(self, itemId, collectionId, page, pagesCount, backCallback, backBtnText):
+        super(CollectionItemPreviewWindow, self).__init__(WindowFlags.WINDOW | WindowFlags.WINDOW_FULLSCREEN, content=CollectionItemPreview(R.views.lobby.collection.CollectionItemPreview(), itemId, collectionId, page, pagesCount, backCallback, backBtnText), parent=None)
         return
 
 

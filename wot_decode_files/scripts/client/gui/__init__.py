@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/__init__.py
 import logging
 from collections import defaultdict
@@ -24,7 +24,6 @@ DEPTH_OF_PlayerBonusesPanel = 0.2
 DEPTH_OF_Aim = 0.6
 DEPTH_OF_GunMarker = 0.56
 DEPTH_OF_VehicleMarker = 0.9
-CLIENT_ENCODING = '1251'
 TANKMEN_ROLES_ORDER_DICT = {'plain': ('commander', 'gunner', 'driver', 'radioman', 'loader'), 
    'enum': ('commander', 'gunner1', 'gunner2', 'driver', 'radioman1', 'radioman2', 'loader1',
  'loader2')}

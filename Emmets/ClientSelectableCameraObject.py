@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/ClientSelectableCameraObject.py
 import CGF
 from ClientSelectableObject import ClientSelectableObject
@@ -31,7 +31,7 @@ class ClientSelectableCameraObject(ClientSelectableObject):
         return self.state != CameraMovementStates.FROM_OBJECT
 
     @classmethod
-    def switchCamera(cls, clickedObject=None, cameraName=None):
+    def switchCamera(cls, clickedObject=None, cameraName=None, instantly=False):
         if not cls.hangarSpace.spaceInited:
             return
         else:
@@ -42,10 +42,10 @@ class ClientSelectableCameraObject(ClientSelectableObject):
             cls.deselectAll()
             cameraManager = CGF.getManager(cls.hangarSpace.spaceID, HangarCameraManager)
             if cameraName is None:
-                cameraManager.switchToTank(False)
+                cameraManager.switchToTank(instantly)
             else:
-                cameraManager.switchByCameraName(cameraName, False)
-            clickedObject.onSelect()
+                cameraManager.switchByCameraName(cameraName, instantly)
+            clickedObject.onSelect(instantly)
             return
 
     @classmethod
@@ -53,9 +53,10 @@ class ClientSelectableCameraObject(ClientSelectableObject):
         for cameraObject in ClientSelectableCameraObject.allCameraObjects:
             cameraObject.onDeselect()
 
-    def onSelect(self):
+    def onSelect(self, instantly=False):
         self.setEnable(False)
-        self.setState(CameraMovementStates.MOVING_TO_OBJECT)
+        if not instantly:
+            self.setState(CameraMovementStates.MOVING_TO_OBJECT)
         self.setState(CameraMovementStates.ON_OBJECT)
 
     def onDeselect(self):

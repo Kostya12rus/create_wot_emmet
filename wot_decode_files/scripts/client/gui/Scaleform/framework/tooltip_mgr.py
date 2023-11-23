@@ -1,10 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/tooltip_mgr.py
-import inspect, itertools, logging, BigWorld, Keys
+import inspect, itertools, logging
 from collections import namedtuple
+import BigWorld, Keys
 from Event import SafeEvent, EventManager
+from PlayerEvents import g_playerEvents
+from frameworks.wulf import ViewStatus
 from gui import InputHandler
 from gui.Scaleform.framework.entities.abstract.ToolTipMgrMeta import ToolTipMgrMeta
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -107,7 +110,7 @@ class ToolTip(ToolTipMgrMeta):
                 uniprof.enterToRegion(region, LOADING_REGION_COLOR)
                 BigWorld.notify(BigWorld.EventType.LOADING_VIEW, name, id, name)
                 try:
-                    data = builder.build(self, stateType, self.__isAdvancedKeyPressed, *args)
+                    data, drawData, linkage = builder.build(stateType, self.__isAdvancedKeyPressed, *args)
                 except:
                     BigWorld.notify(BigWorld.EventType.LOAD_FAILED, name, id, name)
                     uniprof.exitFromRegion(region)
@@ -115,8 +118,11 @@ class ToolTip(ToolTipMgrMeta):
 
                 BigWorld.notify(BigWorld.EventType.VIEW_LOADED, name, id, name)
                 uniprof.exitFromRegion(region)
+                if drawData:
+                    self.show(drawData, linkage)
             else:
                 _logger.warning('Tooltip can not be displayed: type "%s" is not found', tooltipType)
+                BigWorld.notify(BigWorld.EventType.LOAD_FAILED, name, id, name)
                 return
             self.__cacheTooltipData(_TOOLTIP_VARIANT_TYPED, tooltipType, args, stateType)
             self.onShow(tooltipType, args, self.__isAdvancedKeyPressed)
@@ -132,13 +138,14 @@ class ToolTip(ToolTipMgrMeta):
         else:
             builder = self._builders.getBuilder(tooltipType)
             if builder is not None:
-                data = builder.build(self, None, self.__isAdvancedKeyPressed, *args)
+                data = builder.build(None, self.__isAdvancedKeyPressed, *args)
             else:
                 _logger.warning('Tooltip can not be displayed: type "%s" is not found', tooltipType)
                 return
             window = data.getDisplayableData(*args)
             window.load()
             window.move(x, y)
+            window.onStatusChanged += self._onWulfWindowStatusChanged
             self.__tooltipWindowId = window.uniqueID
             self.__cacheTooltipData(_TOOLTIP_VARIANT_WULF, tooltipType, args, (x, y))
             self.onShow(tooltipType, args, self.__isAdvancedKeyPressed)
@@ -153,7 +160,9 @@ class ToolTip(ToolTipMgrMeta):
             info = ToolTipInfo(id, region, None)
             self.__tooltipInfos.append(info)
             uniprof.enterToRegion(region, LIVE_REGION_COLOR)
-            self._complex.build(self, stateType, self.__isAdvancedKeyPressed, tooltipID)
+            _, drawData, linkage = self._complex.build(stateType, self.__isAdvancedKeyPressed, tooltipID)
+            if drawData:
+                self.show(drawData, linkage)
             self.__cacheTooltipData(_TOOLTIP_VARIANT_COMPLEX, tooltipID, tuple(), stateType)
             self.onShow(tooltipID, None, self.__isAdvancedKeyPressed)
             return
@@ -173,15 +182,21 @@ class ToolTip(ToolTipMgrMeta):
         self.onHide(hideTooltipId)
         return
 
+    def _onWulfWindowStatusChanged(self, state):
+        if state == ViewStatus.DESTROYED:
+            self.onHideTooltip(self.__tooltipID)
+
     def _populate(self):
         super(ToolTip, self)._populate()
         self.appLoader.onGUISpaceEntered += self.__onGUISpaceEntered
         self.addListener(events.AppLifeCycleEvent.CREATING, self.__onAppCreating)
+        g_playerEvents.onAccountBecomeNonPlayer += self.__onAccountBecomeNonPlayer
         InputHandler.g_instance.onKeyDown += self.handleKeyEvent
         InputHandler.g_instance.onKeyUp += self.handleKeyEvent
 
     def _dispose(self):
         self._builders.clear()
+        g_playerEvents.onAccountBecomeNonPlayer -= self.__onAccountBecomeNonPlayer
         self.appLoader.onGUISpaceEntered -= self.__onGUISpaceEntered
         self.removeListener(events.AppLifeCycleEvent.CREATING, self.__onAppCreating)
         while self._dynamic:
@@ -193,6 +208,10 @@ class ToolTip(ToolTipMgrMeta):
         self.__destroyTooltipWindow()
         self.__em.clear()
         super(ToolTip, self)._dispose()
+
+    def __onAccountBecomeNonPlayer(self):
+        _logger.debug('Cancel tooltips on account become non player')
+        self.hide()
 
     def __onGUISpaceEntered(self, spaceID):
         self._isAllowedTypedTooltip = spaceID not in self._noTooltipSpaceIDs

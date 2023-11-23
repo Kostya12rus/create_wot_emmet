@@ -1,10 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_matters/battle_matters_hints.py
-import typing, BigWorld
+import BigWorld
 from PlayerEvents import g_playerEvents
-from account_helpers.AccountSettings import AccountSettings, BattleMatters
 from account_helpers.settings_core.settings_constants import OnceOnlyHints
 from constants import QUEUE_TYPE, ARENA_BONUS_TYPE, IS_DEVELOPMENT
 from gui.Scaleform.daapi.view.lobby.header import battle_selector_items
@@ -25,17 +24,15 @@ from skeletons.tutorial import ITutorialLoader
 
 class BattleMattersHintsHelper(object):
     __settingsCache = dependency.descriptor(ISettingsCache)
-    __slots__ = ('__hints', '__hasHintListeners', '__battleMattersController', '__entryPointHintBattlesCounter')
+    __slots__ = ('__hints', '__hasHintListeners', '__battleMattersController')
 
     def __init__(self, controller):
         super(BattleMattersHintsHelper, self).__init__()
         self.__hasHintListeners = False
         self.__battleMattersController = controller
         self.__hints = self.__getDefaultHints()
-        self.__entryPointHintBattlesCounter = None
         self.__addHintsListeners()
         g_playerEvents.onDisconnected += self.__onDisconnected
-        return
 
     def fini(self):
         self.__removeHintsListeners()
@@ -67,7 +64,6 @@ class BattleMattersHintsHelper(object):
 
     def __onDisconnected(self):
         self.__hints = self.__getDefaultHints()
-        self.__stopEntryPointHintBattlesCounter()
         if not self.__hasHintListeners:
             self.__addHintsListeners()
 
@@ -94,34 +90,19 @@ class BattleMattersHintsHelper(object):
             self.__removeHintsListeners()
 
     def __startHints(self):
-        if self.__bmIsAvailable():
+        if self.__battleMattersController.isActive():
             for hint in self.__hints:
                 hint.start()
-                if hint.getName() == EntryPointHint.CONTROL_NAME:
-                    self.__startEntryPointHintBattlesCounter()
 
     def __stopHints(self):
         for hint in self.__hints:
             hint.stop()
 
     def __onStateChanged(self):
-        if self.__bmIsAvailable():
+        if self.__battleMattersController.isActive():
             self.__startHints()
         else:
             self.__stopHints()
-            self.__stopEntryPointHintBattlesCounter()
-
-    def __bmIsAvailable(self):
-        return self.__battleMattersController.isEnabled() and not self.__battleMattersController.isPaused()
-
-    def __startEntryPointHintBattlesCounter(self):
-        if not self.__entryPointHintBattlesCounter:
-            self.__entryPointHintBattlesCounter = EntryPointHintBattlesCounter()
-        self.__entryPointHintBattlesCounter.startListenBattles()
-
-    def __stopEntryPointHintBattlesCounter(self):
-        if self.__entryPointHintBattlesCounter:
-            self.__entryPointHintBattlesCounter.stopListenBattles()
 
 
 class _BMManualTriggeredHint(object):
@@ -155,14 +136,12 @@ class _BMManualTriggeredHint(object):
             self.__addTutorialListeners()
             self._eventsCache.onSyncCompleted += self._onEventsCacheSyncCompleted
             self._onStart()
-            self._isStarted = True
 
     def stop(self):
         if self._isStarted:
             self.__removeTutorialListeners()
             self._eventsCache.onSyncCompleted -= self._onEventsCacheSyncCompleted
             self._onStop()
-            self._isStarted = False
             self._isHintVisible = False
 
     def canBeShownInFuture(self):
@@ -173,10 +152,10 @@ class _BMManualTriggeredHint(object):
         return {}
 
     def _onStart(self):
-        raise NotImplementedError
+        self._isStarted = True
 
     def _onStop(self):
-        raise NotImplementedError
+        self._isStarted = False
 
     def _onEventsCacheSyncCompleted(self):
         raise NotImplementedError
@@ -235,6 +214,7 @@ class _BMManualTriggeredHint(object):
     def __removeTutorialListeners(self):
         removeListener = g_eventBus.removeListener
         removeListener(events.TutorialEvent.ON_COMPONENT_FOUND, self._onItemFound, scope=EVENT_BUS_SCOPE.GLOBAL)
+        removeListener(events.TutorialEvent.ON_COMPONENT_LOST, self._onItemLost, scope=EVENT_BUS_SCOPE.GLOBAL)
         if self._getTutorialTriggers():
             removeListener(events.TutorialEvent.ON_TRIGGER_ACTIVATED, self._onTriggerActivated, scope=EVENT_BUS_SCOPE.GLOBAL)
 
@@ -261,7 +241,7 @@ class FightBtnMultiShowHint(_BMManualTriggeredHint, IGlobalListener):
         if result and not self._eventsCache.waitForSync:
             quests = self._battleMattersController.getRegularBattleMattersQuests()
             firstQuestIsNotCompleted = quests and not quests[0].isCompleted()
-            result = result and firstQuestIsNotCompleted
+            result = firstQuestIsNotCompleted
         return result
 
     @staticmethod
@@ -269,6 +249,7 @@ class FightBtnMultiShowHint(_BMManualTriggeredHint, IGlobalListener):
         return {'updateRuntime': True}
 
     def _onStart(self):
+        super(FightBtnMultiShowHint, self)._onStart()
         self.__waitingBattle = False
         if self.canBeShownInFuture():
             if self.prbDispatcher is None:
@@ -281,6 +262,7 @@ class FightBtnMultiShowHint(_BMManualTriggeredHint, IGlobalListener):
         return
 
     def _onStop(self):
+        super(FightBtnMultiShowHint, self)._onStop()
         if not self.__waitingBattle:
             g_playerEvents.onAvatarBecomePlayer -= self.__onAvatarBecomePlayer
         self.stopGlobalListening()
@@ -337,13 +319,8 @@ class FightBtnMultiShowHint(_BMManualTriggeredHint, IGlobalListener):
 class EntryPointHint(_BMManualTriggeredHint):
     __itemsCache = dependency.descriptor(IItemsCache)
     CONTROL_NAME = 'BattleMattersEntryPoint'
-    COUNT_BATTLES_WITHOUT_PROGRESS = 30
     _HINT_NAME = OnceOnlyHints.BATTLE_MATTERS_ENTRY_POINT_BUTTON_HINT
     __slots__ = ()
-
-    def canBeShownInFuture(self):
-        self._controlIsEnabled = not self._battleMattersController.isFinished() and self._battleMattersController.hasAccessToken()
-        return self._controlIsEnabled
 
     @staticmethod
     def _getHintSettings():
@@ -355,22 +332,20 @@ class EntryPointHint(_BMManualTriggeredHint):
            'positionValue': 0.5}
 
     def _onStart(self):
+        super(EntryPointHint, self)._onStart()
         self.__checkHint()
-        self.__checkHintProgressData()
 
     def _onStop(self):
+        super(EntryPointHint, self)._onStop()
         self._hide()
 
     def _onEventsCacheSyncCompleted(self):
         self.__checkHint()
-        self.__checkHintProgressData()
 
     def _isReadyToShow(self):
         result = False
         if self._controlOnScene and not self._eventsCache.waitForSync:
-            result = len(self._battleMattersController.getCompletedBattleMattersQuests()) >= 1
-            battlesWithoutProgress = AccountSettings.getBattleMattersSetting(BattleMatters.BATTLES_COUNT_WITHOUT_PROGRESS)
-            result = result and not self.isShown() or battlesWithoutProgress >= self.COUNT_BATTLES_WITHOUT_PROGRESS
+            result = self._battleMattersController.getCompletedBattleMattersQuestsCount() >= 1 and not self.isShown()
         return result
 
     def _onItemFound(self, event):
@@ -389,35 +364,3 @@ class EntryPointHint(_BMManualTriggeredHint):
     def __checkHint(self):
         if self._isReadyToShow():
             self._show()
-
-    def __checkHintProgressData(self):
-        currentQuest = self._battleMattersController.getCurrentQuest()
-        if currentQuest:
-            currentQuestIdx = currentQuest.getOrder()
-            questIdx = AccountSettings.getBattleMattersSetting(BattleMatters.QUEST_IDX_FOR_LAST_UPDATED_PORGRESS)
-            if questIdx != currentQuestIdx:
-                AccountSettings.setBattleMattersSetting(BattleMatters.QUEST_IDX_FOR_LAST_UPDATED_PORGRESS, currentQuestIdx)
-                AccountSettings.setBattleMattersSetting(BattleMatters.BATTLES_COUNT_WITHOUT_PROGRESS, 0)
-
-
-class EntryPointHintBattlesCounter(object):
-    __slots__ = ('__settingsCore', '__isStarted')
-
-    def __init__(self):
-        super(EntryPointHintBattlesCounter, self).__init__()
-        self.__isStarted = False
-
-    def startListenBattles(self):
-        if not self.__isStarted:
-            g_playerEvents.onAvatarBecomePlayer += self.__onEnterInBattle
-            self.__isStarted = True
-
-    def stopListenBattles(self):
-        if self.__isStarted:
-            g_playerEvents.onAvatarBecomePlayer -= self.__onEnterInBattle
-            self.__isStarted = False
-
-    @staticmethod
-    def __onEnterInBattle():
-        count = AccountSettings.getBattleMattersSetting(BattleMatters.BATTLES_COUNT_WITHOUT_PROGRESS)
-        AccountSettings.setBattleMattersSetting(BattleMatters.BATTLES_COUNT_WITHOUT_PROGRESS, count + 1)

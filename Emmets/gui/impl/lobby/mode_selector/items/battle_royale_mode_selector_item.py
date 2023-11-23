@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/mode_selector/items/battle_royale_mode_selector_item.py
 from gui import GUI_SETTINGS
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -40,7 +40,9 @@ class BattleRoyaleModeSelectorItem(ModeSelectorLegacyItem):
         return GUI_SETTINGS.checkAndReplaceWebBridgeMacros(url)
 
     def _onInitializing(self):
-        super(BattleRoyaleModeSelectorItem, self)._onInitializing()
+        ModeSelectorLegacyItem._onInitializing(self)
+        self.viewModel.setName(backport.text(R.strings.mode_selector.mode.battleRoyaleQueue.title()))
+        self.viewModel.setPriority(self._legacySelectorItem.getOrder())
         self.__battleRoyaleController.onPrimeTimeStatusUpdated += self.__onUpdate
         self.__battleRoyaleController.onUpdated += self.__onUpdate
         self.brProgression.onProgressPointsUpdated += self.__fillWidgetData

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/ranked_battles_controller.py
 import logging, operator, sys
 from collections import defaultdict
@@ -8,7 +8,7 @@ import typing, BigWorld, Event, season_common
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import RANKED_LAST_CYCLE_ID, RANKED_WEB_INFO, RANKED_WEB_INFO_UPDATE
 from adisp import adisp_process
-from constants import ARENA_BONUS_TYPE, EVENT_TYPE
+from constants import ARENA_BONUS_TYPE, EVENT_TYPE, BATTLE_MODE_VEHICLE_TAGS
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.Scaleform.genConsts.RANKEDBATTLES_ALIASES import RANKEDBATTLES_ALIASES
@@ -717,7 +717,7 @@ class RankedBattlesController(IRankedBattlesController, Notifiable, SeasonProvid
         isYearGap = self.isYearGap()
         isYearLBEnabled = self.isYearLBEnabled()
         hasCurSeason = self.getCurrentSeason() is not None
-        passedSeasons = self.getSeasonPassed()
+        passedSeasons = self.getSeasonsPassed()
         if isEnabled:
             if self.isFrozen() or not passedSeasons and not hasCurSeason:
                 self.__showPreSeason()
@@ -1160,7 +1160,7 @@ class RankedBattlesController(IRankedBattlesController, Notifiable, SeasonProvid
         criteria = criteria | REQ_CRITERIA.VEHICLE.LEVELS(vehLevels)
         criteria |= ~REQ_CRITERIA.VEHICLE.CLASSES(self.__rankedSettings.forbiddenClassTags)
         criteria |= ~REQ_CRITERIA.VEHICLE.SPECIFIC_BY_CD(self.__rankedSettings.forbiddenVehTypes)
-        criteria |= ~REQ_CRITERIA.VEHICLE.EVENT_BATTLE | ~REQ_CRITERIA.VEHICLE.EPIC_BATTLE
+        criteria |= ~REQ_CRITERIA.VEHICLE.HAS_ANY_TAG(BATTLE_MODE_VEHICLE_TAGS)
         return criteria
 
     def __showBetweenSeason(self):

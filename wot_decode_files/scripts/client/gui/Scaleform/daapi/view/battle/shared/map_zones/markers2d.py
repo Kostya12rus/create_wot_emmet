@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/map_zones/markers2d.py
 import logging, Math, typing
 from gui.Scaleform.daapi.view.battle.shared.map_zones.mixins import MapZonesListener
@@ -24,7 +24,8 @@ class MapZonesPlugin(plugins.MarkerPlugin, MapZonesListener):
         mapZones = self.sessionProvider.shared.mapZones
         if mapZones:
             for zoneMarker, matrix in mapZones.getZoneMarkers().itervalues():
-                self.__addMarkerToZone(zoneMarker, matrix)
+                if zoneMarker.isVisibleOn3DScene:
+                    self.__addMarkerToZone(zoneMarker, matrix)
 
         self.startListen()
 
@@ -34,13 +35,16 @@ class MapZonesPlugin(plugins.MarkerPlugin, MapZonesListener):
         super(MapZonesPlugin, self).stop()
 
     def _onMarkerToZoneAdded(self, zoneMarker, matrix):
-        self.__addMarkerToZone(zoneMarker, matrix)
+        if zoneMarker.isVisibleOn3DScene:
+            self.__addMarkerToZone(zoneMarker, matrix)
 
     def _onMarkerFromZoneRemoved(self, zoneMarker):
-        self.__removeMarkerFromZone(zoneMarker)
+        if zoneMarker.isVisibleOn3DScene:
+            self.__removeMarkerFromZone(zoneMarker)
 
     def _onMarkerProgressUpdated(self, zoneMarker):
-        self.__updateProgress(zoneMarker)
+        if zoneMarker.isVisibleOn3DScene:
+            self.__updateProgress(zoneMarker)
 
     def __addMarkerToZone(self, zoneMarker, matrix):
         self.__markers[zoneMarker.id] = markerID = self._createMarkerWithMatrix(symbol=self.MINIMAP_ENTRY_SYMBOL, matrixProvider=matrix)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/common/vehicle_carousel/carousel_data_provider.py
 import typing
 from CurrentVehicle import g_currentVehicle
@@ -74,7 +74,7 @@ def getVehicleDataVO(vehicle, bootcampCtrl=None):
 
 def _getVehicleDataVO(vehicle, bootcampCtrl):
     rentInfoText = ''
-    if not vehicle.isWotPlusRent and not vehicle.isTelecomRent:
+    if not vehicle.isTelecomRent:
         rentInfoText = RentLeftFormatter(vehicle.rentInfo, vehicle.isPremiumIGR).getRentLeftStr()
     vState, vStateLvl = vehicle.getState()
     if vState == Vehicle.VEHICLE_STATE.AMMO_NOT_FULL and bootcampCtrl.isInBootcamp():
@@ -108,7 +108,6 @@ def _getVehicleDataVO(vehicle, bootcampCtrl):
     tankType = ('{}_elite').format(vehicle.type) if vehicle.isElite else vehicle.type
     current, maximum = vehicle.getCrystalsEarnedInfo()
     isCrystalsLimitReached = current == maximum
-    isWotPlusSlot = (vehicle.isWotPlus or vehicle.isTelecomRent) and not vehicle.rentExpiryState
     showIcon = vehicle.isTelecomRent and not vehicle.rentExpiryState
     extraImage = RES_ICONS.MAPS_ICONS_LIBRARY_RENT_ICO_BIG if showIcon else ''
     return {'id': vehicle.invID, 
@@ -143,7 +142,7 @@ def _getVehicleDataVO(vehicle, bootcampCtrl):
        'isCrystalsLimitReached': isCrystalsLimitReached, 
        'isUseRightBtn': True, 
        'tooltip': TOOLTIPS_CONSTANTS.CAROUSEL_VEHICLE, 
-       'isWotPlusSlot': isWotPlusSlot, 
+       'isWotPlusSlot': vehicle.isWotPlus, 
        'extraImage': extraImage}
 
 
@@ -298,10 +297,15 @@ class CarouselDataProvider(SortableDAAPIDataProvider):
             self.__sortedIndices = sortedIndices(self._vehicles, self._vehicleComparisonKey, reverse)
         return self.__sortedIndices
 
+    def _populate(self):
+        super(CarouselDataProvider, self)._populate()
+        g_currentVehicle.onChanged += self.__updateCurrentVehicle
+
     def _dispose(self):
         self._filter = None
         self._itemsCache = None
         self._randomStats = None
+        g_currentVehicle.onChanged -= self.__updateCurrentVehicle
         super(CarouselDataProvider, self)._dispose()
         return
 
@@ -417,3 +421,7 @@ class CarouselDataProvider(SortableDAAPIDataProvider):
 
     def __resetSortedIndices(self):
         self.__sortedIndices = []
+
+    def __updateCurrentVehicle(self):
+        self._currentVehicleInvID = g_currentVehicle.invID
+        self.applyFilter()

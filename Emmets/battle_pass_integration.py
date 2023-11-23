@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/battle_pass_integration.py
 from copy import copy
 from collections import namedtuple
@@ -148,6 +148,7 @@ _BATTLEPASS_BY_GAMEMODE = {ARENA_BONUS_TYPE.REGULAR: BattlePassIntegrationRandom
    ARENA_BONUS_TYPE.MAPBOX: BattlePassIntegrationRandom(teamSize=15, bonusTypeName='MAPBOX'), 
    ARENA_BONUS_TYPE.COMP7: BattlePassIntegrationComp7(teamSize=7, bonusTypeName='COMP7'), 
    ARENA_BONUS_TYPE.WINBACK: BattlePassIntegrationRandom(teamSize=15, bonusTypeName='WINBACK'), 
+   ARENA_BONUS_TYPE.RANDOM_NP2: BattlePassIntegrationRandom(teamSize=15, bonusTypeName='RANDOM_NP2'), 
    ARENA_BONUS_TYPE.EPIC_BATTLE: BattlePassIntegrationEpicBattle(teamSize=30, bonusTypeName='EPIC_BATTLE'), 
    ARENA_BONUS_TYPE.BATTLE_ROYALE_SOLO: BattlePassIntegrationBattleRoyale(teamSize=20, bonusTypeName='BATTLE_ROYALE_SOLO'), 
    ARENA_BONUS_TYPE.BATTLE_ROYALE_SQUAD: BattlePassIntegrationBattleRoyale(teamSize=10, bonusTypeName='BATTLE_ROYALE_SQUAD')}

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/base/squad/entity.py
 from debug_utils import LOG_ERROR
 from gui.prb_control.ctrl_events import g_prbCtrlEvents
@@ -81,8 +81,8 @@ class SquadEntity(UnitEntity):
     def getSquadLevelBounds(self):
         return (0, 0)
 
-    def showDialog(self, meta, callback):
-        self.__showDefaultDialog(meta, callback)
+    def showDialog(self, meta, callback, parent=None):
+        self.__showDefaultDialog(meta, callback, parent=parent)
 
     def doSelectAction(self, action):
         name = action.actionName
@@ -152,13 +152,14 @@ class SquadEntity(UnitEntity):
             return current
 
     @wg_async
-    def __showDefaultDialog(self, meta, callback):
+    def __showDefaultDialog(self, meta, callback, parent=None):
         from gui.shared.event_dispatcher import showDynamicButtonInfoDialogBuilder
         key = meta.getKey()
         res = self.__resourceSplitter(key)
         if res:
             app = self.__appLoader.getApp()
-            parent = app.containerManager.getViewByKey(ViewKey(VIEW_ALIAS.LOBBY))
+            if parent is None:
+                parent = app.containerManager.getViewByKey(ViewKey(VIEW_ALIAS.LOBBY))
             result = yield wg_await(showDynamicButtonInfoDialogBuilder(res, None, '', parent))
             callback(result)
         return

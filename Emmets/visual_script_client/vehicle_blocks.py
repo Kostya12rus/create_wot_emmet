@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/visual_script_client/vehicle_blocks.py
 import weakref, random, BigWorld, GenericComponents
 from visual_script.block import Block, InitParam, buildStrKeysValue
@@ -55,7 +55,8 @@ class OnAnyVehicleDestroyed(TunableEventBlock, VehicleMeta):
             errorVScript(self, 'can not subscribe on event')
 
     def onFinishScript(self):
-        BigWorld.player().arena.onVehicleKilled -= self.__onVehicleKilled
+        if hasattr(BigWorld.player(), 'arena'):
+            BigWorld.player().arena.onVehicleKilled -= self.__onVehicleKilled
 
     @TunableEventBlock.eventProcessor
     def __onVehicleKilled(self, targetID, attackerID, equipmentID, reason, numVehiclesAffected):
@@ -102,7 +103,8 @@ class OnAnyVehicleDamaged(TunableEventBlock, VehicleMeta):
             errorVScript(self, 'can not subscribe on event')
 
     def onFinishScript(self):
-        BigWorld.player().arena.onVehicleHealthChanged -= self.__onDamageReceived
+        if hasattr(BigWorld.player(), 'arena'):
+            BigWorld.player().arena.onVehicleHealthChanged -= self.__onDamageReceived
 
     @TunableEventBlock.eventProcessor
     def __onDamageReceived(self, vehicleId, attackerId, damage):
@@ -152,7 +154,7 @@ class NoCrewCritical(NoCrewCriticalBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class NoInnerDeviceDamaged(NoInnerDeviceDamagedBase):
@@ -162,7 +164,7 @@ class NoInnerDeviceDamaged(NoInnerDeviceDamagedBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class OptionalDevices(OptionalDevicesBase):
@@ -172,7 +174,7 @@ class OptionalDevices(OptionalDevicesBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class GetTankOptDevicesHPMod(GetTankOptDevicesHPModBase):
@@ -182,7 +184,7 @@ class GetTankOptDevicesHPMod(GetTankOptDevicesHPModBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class VehicleClass(VehicleClassBase):
@@ -203,7 +205,7 @@ class VehicleClass(VehicleClassBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class GunTypeInfo(GunTypeInfoBase):
@@ -213,7 +215,7 @@ class GunTypeInfo(GunTypeInfoBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class VehicleForwardSpeed(VehicleForwardSpeedBase):
@@ -223,7 +225,7 @@ class VehicleForwardSpeed(VehicleForwardSpeedBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class VehicleCooldownEquipment(VehicleCooldownEquipmentBase):
@@ -245,7 +247,7 @@ class VehicleCooldownEquipment(VehicleCooldownEquipmentBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class VehicleClipFullAndReady(VehicleClipFullAndReadyBase):
@@ -255,7 +257,7 @@ class VehicleClipFullAndReady(VehicleClipFullAndReadyBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class GetNearestAliveVehicle(Block, VehicleMeta):
@@ -374,7 +376,7 @@ class IsInHangar(IsInHangarBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]
 
 
 class VehicleRadioDistance(VehicleRadioDistanceBase):
@@ -384,4 +386,4 @@ class VehicleRadioDistance(VehicleRadioDistanceBase):
 
     @classmethod
     def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.SERVER]
+        return [ASPECT.CLIENT]

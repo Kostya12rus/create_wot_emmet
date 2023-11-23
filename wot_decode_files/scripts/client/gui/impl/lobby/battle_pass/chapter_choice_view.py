@@ -1,10 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/chapter_choice_view.py
 from functools import partial
 import typing
 from PlayerEvents import g_playerEvents
+from account_helpers.AccountSettings import IS_BATTLE_PASS_COLLECTION_SEEN, AccountSettings
 from battle_pass_common import CurrencyBP, FinalReward
 from frameworks.wulf import ViewFlags, ViewSettings
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -12,10 +13,11 @@ from gui.Scaleform.daapi.view.lobby.storage.storage_helpers import getVehicleCDF
 from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getBattlePassCoinProductsUrl, getBattlePassPointsProductsUrl
 from gui.Scaleform.genConsts.VEHPREVIEW_CONSTANTS import VEHPREVIEW_CONSTANTS
 from gui.battle_pass.battle_pass_constants import ChapterState
-from gui.battle_pass.battle_pass_helpers import chaptersIDsComparator, getInfoPageURL, getStyleForChapter
-from gui.collection.collections_helpers import getCollectionRes
+from gui.battle_pass.battle_pass_helpers import chaptersIDsComparator, getInfoPageURL, getStyleForChapter, getAllFinalRewards
+from gui.collection.collections_helpers import getCollectionRes, loadBattlePassFromCollections
 from gui.impl import backport
 from gui.impl.auxiliary.collections_helper import fillCollectionModel
+from gui.impl.auxiliary.rewards_helper import setRewards
 from gui.impl.auxiliary.vehicle_helper import fillVehicleInfo
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.battle_pass.chapter_choice_view_model import ChapterChoiceViewModel
@@ -25,7 +27,7 @@ from gui.impl.pub import ViewImpl
 from gui.impl.wrappers.function_helpers import replaceNoneKwargsModel
 from gui.server_events.events_dispatcher import showMissionsBattlePass
 from gui.shared import events, EVENT_BUS_SCOPE
-from gui.shared.event_dispatcher import hideVehiclePreview, showBattlePassBuyWindow, showBattlePassHowToEarnPointsView, showBrowserOverlayView, showHangar, showShop, showStylePreview, showStyleProgressionPreview, showCollectionWindow
+from gui.shared.event_dispatcher import hideVehiclePreview, showBattlePassBuyWindow, showBattlePassHowToEarnPointsView, showBrowserOverlayView, showHangar, showShop, showStylePreview, showStyleProgressionPreview, showCollectionWindow, showBattlePassTankmenVoiceover
 from helpers import dependency
 from skeletons.gui.game_control import IBattlePassController, ICollectionsSystemController
 from skeletons.gui.shared import IItemsCache
@@ -47,7 +49,7 @@ class ChapterChoiceView(ViewImpl):
 
     def __init__(self, *args, **kwargs):
         settings = ViewSettings(R.views.lobby.battle_pass.ChapterChoiceView())
-        settings.flags = ViewFlags.COMPONENT
+        settings.flags = ViewFlags.VIEW
         settings.model = ChapterChoiceViewModel()
         super(ChapterChoiceView, self).__init__(settings)
 
@@ -55,14 +57,12 @@ class ChapterChoiceView(ViewImpl):
     def viewModel(self):
         return super(ChapterChoiceView, self).getViewModel()
 
-    def startListeners(self):
+    def activate(self):
         self._subscribe()
-
-    def stopListeners(self):
-        self._unsubscribe()
-
-    def updateData(self):
         self._fillModel()
+
+    def deactivate(self):
+        self._unsubscribe()
 
     def _onLoading(self, *args, **kwargs):
         super(ChapterChoiceView, self)._onLoading(*args, **kwargs)
@@ -91,6 +91,8 @@ class ChapterChoiceView(ViewImpl):
          (
           self.viewModel.collectionEntryPoint.openCollection, self.__openCollection),
          (
+          self.viewModel.showTankmen, self.__showTankmen),
+         (
           self.__battlePass.onBattlePassSettingsChange, self.__checkBPState),
          (
           self.__battlePass.onExtraChapterExpired, self.__checkBPState),
@@ -117,10 +119,7 @@ class ChapterChoiceView(ViewImpl):
     def _getListeners(self):
         return (
          (
-          events.CollectionsEvent.NEW_ITEM_SHOWN, self.__onCollectionsUpdated, EVENT_BUS_SCOPE.LOBBY),
-         (
-          events.CollectionsEvent.BATTLE_PASS_ENTRY_POINT_VISITED, self.__onCollectionsUpdated,
-          EVENT_BUS_SCOPE.LOBBY))
+          events.CollectionsEvent.NEW_ITEM_SHOWN, self.__onCollectionsUpdated, EVENT_BUS_SCOPE.LOBBY),)
 
     def _fillModel(self):
         with self.viewModel.transaction() as (model):
@@ -131,17 +130,20 @@ class ChapterChoiceView(ViewImpl):
             self.__updateBPBitCount(model=model)
             self.__updateFreePoints(model=model)
             model.setIsBattlePassCompleted(self.__battlePass.isCompleted())
+            model.setIsCustomSeason(self.__battlePass.isCustomSeason())
+            model.setSpecialVoiceTankmenCount(len(self.__battlePass.getSpecialVoiceTankmen()))
+            model.setSeasonNum(self.__battlePass.getSeasonNum())
 
     def __updateChapters(self, chapters):
         chapters.clear()
         for chapterID in sorted(self.__battlePass.getChapterIDs(), cmp=chaptersIDsComparator):
             model = ChapterModel()
-            if self.__battlePass.getRewardType(chapterID) == FinalReward.STYLE:
+            if {FinalReward.PROGRESSIVE_STYLE, FinalReward.STYLE}.intersection(getAllFinalRewards(chapterID)):
                 style = getStyleForChapter(chapterID)
                 model.setStyleName(style.userName)
                 self.__fillVehicle(style, model)
             model.setChapterID(chapterID)
-            model.setFinalReward(self.__battlePass.getRewardType(chapterID).value)
+            setRewards(model, chapterID)
             model.setIsBought(self.__battlePass.isBought(chapterID=chapterID))
             model.setIsExtra(self.__battlePass.isExtraChapter(chapterID))
             self.__fillProgression(chapterID, model)
@@ -204,8 +206,9 @@ class ChapterChoiceView(ViewImpl):
         if self.__battlePass.isPaused():
             showMissionsBattlePass()
             return
-        if len(self.__battlePass.getChapterIDs()) != len(self.viewModel.getChapters()):
-            with self.viewModel.transaction() as (model):
+        with self.viewModel.transaction() as (model):
+            model.setIsCustomSeason(self.__battlePass.isCustomSeason())
+            if len(self.__battlePass.getChapterIDs()) != len(self.viewModel.getChapters()):
                 self.__updateChapters(model.getChapters())
 
     @staticmethod
@@ -270,6 +273,13 @@ class ChapterChoiceView(ViewImpl):
         showHangar()
 
     def __openCollection(self):
+        if not AccountSettings.getSettings(IS_BATTLE_PASS_COLLECTION_SEEN):
+            AccountSettings.setSettings(IS_BATTLE_PASS_COLLECTION_SEEN, True)
+            self.__onCollectionsUpdated()
         backText = backport.text(getCollectionRes(self.__battlePass.getCurrentCollectionId()).featureName())
-        backCallback = partial(showMissionsBattlePass, R.views.lobby.battle_pass.ChapterChoiceView())
+        backCallback = partial(loadBattlePassFromCollections, R.views.lobby.battle_pass.ChapterChoiceView())
         showCollectionWindow(collectionId=self.__battlePass.getCurrentCollectionId(), backCallback=backCallback, backBtnText=backText)
+
+    @staticmethod
+    def __showTankmen():
+        showBattlePassTankmenVoiceover()

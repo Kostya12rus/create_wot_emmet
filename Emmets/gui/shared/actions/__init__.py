@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/actions/__init__.py
 import BigWorld
 from adisp import adisp_process
@@ -19,7 +19,7 @@ from skeletons.gameplay import IGameplayLogic
 from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.login_manager import ILoginManager
-from constants import WINBACK_CALL_BATTLE_TOKEN_DRAW_REASON
+from constants import WINBACK_BATTLE_TOKEN_DRAW_REASON
 __all__ = ('LeavePrbModalEntity', 'DisconnectFromPeriphery', 'ConnectToPeriphery',
            'PrbInvitesInit', 'ActionsChain')
 
@@ -360,6 +360,6 @@ class LeaveWinbackModeEntity(Action):
         return False
 
     def __doLeave(self):
-        leaveWinbackMode(WINBACK_CALL_BATTLE_TOKEN_DRAW_REASON.SQUAD)
+        leaveWinbackMode(WINBACK_BATTLE_TOKEN_DRAW_REASON.SQUAD)
         self._completed = True
         self._running = False

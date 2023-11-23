@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/player_subscriptions/player_subscriptions_view.py
 import logging, typing
 from frameworks.wulf import ViewFlags, ViewSettings
@@ -16,21 +16,23 @@ from gui.impl.gen.view_models.views.lobby.player_subscriptions.wot_subscription_
 from gui.impl.pub import ViewImpl
 from gui.platform.base.statuses.constants import StatusTypes
 from gui.platform.products_fetcher.fetch_result import FetchResult
-from gui.shared.event_dispatcher import showOfferGiftsWindow, showBrowserOverlayView, showShop, showWotPlusInfoPage, showSteamRedirectWotPlus, showWotPlusProductPage
+from gui.platform.products_fetcher.subscriptions.subscription_descriptors import WotPlusDescriptor
+from gui.shared.event_dispatcher import showOfferGiftsWindow, showBrowserOverlayView, showShop, showWotPlusInfoPage, showWotPlusProductPage, showWotPlusSteamSubscriptionManagementPage
 from helpers import dependency
 from skeletons.gui.game_control import IExternalLinksController, ISteamCompletionController, IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
-from skeletons.gui.platform.product_fetch_controller import ISubscriptionsFetchController
+from skeletons.gui.platform.product_fetch_controller import ISubscriptionProductsFetchController
 from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
-from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource
+from uilogging.wot_plus.loggers import WotPlusSubscriptionViewLogger
+from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource, SubscriptionPageKeys
 from wg_async import wg_await, wg_async
 _logger = logging.getLogger(__name__)
 if typing.TYPE_CHECKING:
-    from typing import Optional, Dict, Any
-    from gui.platform.products_fetcher.subscriptions.subscriptions_descriptor import SubscriptionDescriptor, WotPlusDescriptor
+    from typing import Optional, Dict, Any, List
+    from gui.platform.products_fetcher.subscriptions.subscription_descriptors import SubscriptionDescriptor
     from gui.platform.wgnp.steam_account.statuses import SteamAccEmailStatus
     from gui.impl.gen.view_models.views.lobby.player_subscriptions.subscription_model import SubscriptionModel
-_PLAYER_SUBSCRIPTIONS_URL = 'playerSubscriptionsURL'
+    from gui.platform.products_fetcher import SubscriptionProductsFetchController
 
 def __makeWotPlusSubscriptionModel(subscriptionDescr):
     subscriptionModel = WotSubscriptionModel()
@@ -40,6 +42,7 @@ def __makeWotPlusSubscriptionModel(subscriptionDescr):
     subscriptionModel.setDescription(subscriptionDescr.description)
     subscriptionModel.setImageUriLarge(subscriptionDescr.largeImageURL)
     subscriptionModel.setImageUriMedium(subscriptionDescr.mediumImageURL)
+    subscriptionModel.setImageUriSmall(subscriptionDescr.smallImageURL)
     subscriptionModel.setRefreshTime(subscriptionDescr.expirationTime)
     subscriptionModel.setWotSubscriptionState(subscriptionDescr.state)
     return subscriptionModel
@@ -64,13 +67,14 @@ _SUBSCRIPTION_TYPE_FACTORIES = {SubscriptionTypeEnum.EXTERNALSUBSCRIPTION: __mak
    SubscriptionTypeEnum.WOTSUBSCRIPTION: __makeWotPlusSubscriptionModel}
 
 class PlayerSubscriptionsView(ViewImpl):
-    _playerSubscriptionsController = dependency.descriptor(ISubscriptionsFetchController)
+    _subscriptionProductsFetchController = dependency.descriptor(ISubscriptionProductsFetchController)
     _externalBrowser = dependency.descriptor(IExternalLinksController)
     _lobbyContext = dependency.descriptor(ILobbyContext)
     _wgnpSteamAccCtrl = dependency.descriptor(IWGNPSteamAccRequestController)
     _steamCompletionCtrl = dependency.descriptor(ISteamCompletionController)
     _wotPlusCtrl = dependency.descriptor(IWotPlusController)
-    __slots__ = ('__subscriptionsFetchResult', '__incompleteSteamAccount', '__subscriptions')
+    __slots__ = ('__subscriptionsFetchResult', '__incompleteSteamAccount', '__subscriptions',
+                 '_wotPlusUILogger')
 
     def __init__(self, layoutID=R.views.lobby.player_subscriptions.PlayerSubscriptions()):
         settings = ViewSettings(layoutID)
@@ -79,15 +83,18 @@ class PlayerSubscriptionsView(ViewImpl):
         self.__subscriptionsFetchResult = None
         self.__subscriptions = {}
         self.__incompleteSteamAccount = False
+        self._wotPlusUILogger = WotPlusSubscriptionViewLogger()
         super(PlayerSubscriptionsView, self).__init__(settings)
         return
 
     def _initialize(self, *args, **kwargs):
         super(PlayerSubscriptionsView, self)._initialize(*args, **kwargs)
         self._wotPlusCtrl.onDataChanged += self.__onWotPlusStatusChanged
+        self._wotPlusUILogger.onViewInitialize()
 
     def _finalize(self):
         self._wotPlusCtrl.onDataChanged -= self.__onWotPlusStatusChanged
+        self._wotPlusUILogger.onViewFinalize()
         super(PlayerSubscriptionsView, self)._finalize()
 
     @wg_async
@@ -100,9 +107,9 @@ class PlayerSubscriptionsView(ViewImpl):
                 if not status.typeIs(StatusTypes.CONFIRMED):
                     self.__incompleteSteamAccount = True
                 else:
-                    fetchResult = yield wg_await(self._playerSubscriptionsController.getProducts())
+                    fetchResult = yield wg_await(self._subscriptionProductsFetchController.getProducts())
             else:
-                fetchResult = yield wg_await(self._playerSubscriptionsController.getProducts())
+                fetchResult = yield wg_await(self._subscriptionProductsFetchController.getProducts())
             self.__subscriptionsFetchResult = fetchResult
             self.__updateViewModel()
         finally:
@@ -145,7 +152,10 @@ class PlayerSubscriptionsView(ViewImpl):
             self.__subscriptions.clear()
             if self.__subscriptionsFetchResult.isProcessed and self.__subscriptionsFetchResult.products:
                 subscriptions.reserve(len(self.__subscriptionsFetchResult.products))
-                for subscriptionDescr in self.__subscriptionsFetchResult.products:
+                products = self.__getSortedProducts(self.__subscriptionsFetchResult.products)
+                for subscriptionDescr in products:
+                    if self.isSubscriptionAvailable(subscriptionDescr):
+                        continue
                     subsModel = _SUBSCRIPTION_TYPE_FACTORIES[subscriptionDescr.type](subscriptionDescr)
                     subscriptions.addViewModel(subsModel)
                     self.__subscriptions[subscriptionDescr.productID] = subscriptionDescr.type
@@ -154,18 +164,17 @@ class PlayerSubscriptionsView(ViewImpl):
                 model.setWarningTitle(R.strings.player_subscriptions.noSubscriptions())
             subscriptions.invalidate()
 
+    def __getSortedProducts(self, products):
+        return sorted(products, key=(lambda product: not isinstance(product, WotPlusDescriptor)))
+
     def __onBackClick(self):
+        self._wotPlusUILogger.logCloseEvent()
         self.destroyWindow()
 
     def __onCardClick(self, args):
         id_ = args['subscriptionId']
         if self.__subscriptions[id_] == SubscriptionTypeEnum.WOTSUBSCRIPTION:
-            if self._steamCompletionCtrl.isSteamAccount:
-                showSteamRedirectWotPlus()
-            elif self._wotPlusCtrl.isEnabled():
-                showWotPlusProductPage()
-            else:
-                showWotPlusInfoPage(WotPlusInfoPageSource.SUBSCRIPTION_PAGE)
+            showWotPlusInfoPage(WotPlusInfoPageSource.SUBSCRIPTION_PAGE, includeSubscriptionInfo=True)
             return
         if self.__subscriptions[id_] == SubscriptionTypeEnum.EXTERNALSUBSCRIPTION:
             url = GUI_SETTINGS.playerSubscriptionsURL
@@ -174,22 +183,27 @@ class PlayerSubscriptionsView(ViewImpl):
     def __onButtonClick(self, args):
         id_ = args['subscriptionId']
         if self.__subscriptions[id_] == SubscriptionTypeEnum.WOTSUBSCRIPTION:
-            if self._steamCompletionCtrl.isSteamAccount:
-                showSteamRedirectWotPlus()
-            else:
-                if self._wotPlusCtrl.isEnabled():
-                    showWotPlusProductPage()
+            self._wotPlusUILogger.logClickEvent(SubscriptionPageKeys.CTA_BUTTON)
+            if self._wotPlusCtrl.isEnabled():
+                if self._wotPlusCtrl.shouldRedirectToSteam():
+                    showWotPlusSteamSubscriptionManagementPage()
                 else:
-                    showShop(getWotPlusShopUrl())
-                return
-            subcriptionDescriptor = self.__subscriptionsFetchResult.getProductByID(id_)
-            if not subcriptionDescriptor:
-                _logger.warning('Subscription descriptor with id=%s was not found', id_)
-                return
-            subcriptionDescriptor.isRewardsClaimed() or self._externalBrowser.open(subcriptionDescriptor.claimURL)
+                    showWotPlusProductPage()
+            else:
+                showShop(getWotPlusShopUrl())
+            return
+        subcriptionDescriptor = self.__subscriptionsFetchResult.getProductByID(id_)
+        if not subcriptionDescriptor:
+            _logger.warning('Subscription descriptor with id=%s was not found', id_)
+            return
+        if not subcriptionDescriptor.isRewardsClaimed():
+            self._externalBrowser.open(subcriptionDescriptor.claimURL)
         elif subcriptionDescriptor.hasDepotRewards():
             showOfferGiftsWindow(subcriptionDescriptor.getOfferID())
 
     def __onServerSettingsChange(self, *args, **kwargs):
         if not self._lobbyContext.getServerSettings().isPlayerSubscriptionsEnabled():
             self.destroyWindow()
+
+    def isSubscriptionAvailable(self, subscription):
+        return subscription.type == SubscriptionTypeEnum.WOTSUBSCRIPTION and not self._wotPlusCtrl.isWotPlusEnabled()

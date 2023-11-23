@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/radial_menu.py
 import logging
 from collections import namedtuple, defaultdict
@@ -203,6 +203,14 @@ class RadialMenu(RadialMenuMeta, BattleGUIKeyHandler, CallbackDelayer):
 
     def onHideCompleted(self):
         self.__setVisibility(False)
+        ctrl = self.sessionProvider.shared.calloutCtrl
+        if ctrl is not None and ctrl.isRadialMenuOpened():
+            ctrl.resetRadialMenuData()
+        if self.app is not None:
+            self.app.unregisterGuiKeyHandler(self)
+            if self.app.hasGuiControlModeConsumers(self.getAlias()):
+                self.app.leaveGuiControlMode(self.getAlias())
+        return
 
     def onRefresh(self):
         if self.__isVisible:

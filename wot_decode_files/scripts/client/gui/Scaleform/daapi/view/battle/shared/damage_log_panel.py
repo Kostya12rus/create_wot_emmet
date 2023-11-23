@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/damage_log_panel.py
 from collections import defaultdict
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE as _BET
@@ -476,6 +476,7 @@ class DamageLogPanel(BattleDamageLogPanelMeta):
         self.__vehStateCtrl = self.sessionProvider.shared.vehicleState
         self.__isVisible = False
         self.__isFullStatsShown = False
+        self.__isWinnerScreenShown = False
         self.__logViewMode = _VIEW_MODE.SHOW_ALWAYS
         self.__totalDamageContentMask = 0
         self.__totalValues = defaultdict(int)
@@ -513,6 +514,9 @@ class DamageLogPanel(BattleDamageLogPanelMeta):
         if self.__vehStateCtrl is not None:
             self.__vehStateCtrl.onPostMortemSwitched += self._onPostMortemSwitched
             self.__vehStateCtrl.onVehicleControlling += self._onVehicleControlling
+        deathScreenCtrl = self.sessionProvider.dynamic.deathScreen
+        if deathScreenCtrl:
+            deathScreenCtrl.onWinnerScreen += self.__onWinnerScreen
         self.addListener(gui_events.GameEvent.SHOW_EXTENDED_INFO, self._handleShowExtendedInfo, scope=EVENT_BUS_SCOPE.BATTLE)
         self.addListener(gui_events.GameEvent.SHOW_CURSOR, self._handleShowCursor, EVENT_BUS_SCOPE.GLOBAL)
         self.addListener(gui_events.GameEvent.HIDE_CURSOR, self._handleHideCursor, EVENT_BUS_SCOPE.GLOBAL)
@@ -527,6 +531,9 @@ class DamageLogPanel(BattleDamageLogPanelMeta):
         if self.__vehStateCtrl is not None:
             self.__vehStateCtrl.onPostMortemSwitched -= self._onPostMortemSwitched
             self.__vehStateCtrl.onVehicleControlling -= self._onVehicleControlling
+        deathScreenCtrl = self.sessionProvider.dynamic.deathScreen
+        if deathScreenCtrl:
+            deathScreenCtrl.onWinnerScreen -= self.__onWinnerScreen
         self.settingsCore.onSettingsChanged -= self._onSettingsChanged
         if self.__efficiencyCtrl is not None:
             self.__efficiencyCtrl.onTotalEfficiencyUpdated -= self._onTotalEfficiencyUpdated
@@ -590,23 +597,22 @@ class DamageLogPanel(BattleDamageLogPanelMeta):
             self.__bottomLog.addToLog(events)
 
     def _invalidatePanelVisibility(self):
-        if self.__isFullStatsShown:
+        if self.__isFullStatsShown or self.__isWinnerScreenShown:
             return
-        else:
+        isVisible = True
+        if self.sessionProvider.getCtx().isPlayerObserver():
             isVisible = True
-            if self.sessionProvider.getCtx().isPlayerObserver():
-                isVisible = True
-            elif self.__vehStateCtrl is None:
+        elif self.__vehStateCtrl is None:
+            isVisible = self.__isVisible
+        elif self.__vehStateCtrl.isInPostmortem:
+            if self.__arenaDP is None:
                 isVisible = self.__isVisible
-            elif self.__vehStateCtrl.isInPostmortem:
-                if self.__arenaDP is None:
-                    isVisible = self.__isVisible
-                else:
-                    isVisible = self.isSwitchToVehicle()
-            if self.__isVisible != isVisible:
-                self.__isVisible = isVisible
-                self._setSettings(self.__isVisible, bool(self.settingsCore.getSetting(GRAPHICS.COLOR_BLIND)))
-            return
+            else:
+                isVisible = self.isSwitchToVehicle()
+        if self.__isVisible != isVisible:
+            self.__isVisible = isVisible
+            self._setSettings(self.__isVisible, bool(self.settingsCore.getSetting(GRAPHICS.COLOR_BLIND)))
+        return
 
     def _onSettingsChanged(self, diff):
         for key in _TOTAL_DAMAGE_SETTINGS_TO_CONTENT_MASK.iterkeys():
@@ -641,6 +647,9 @@ class DamageLogPanel(BattleDamageLogPanelMeta):
         self.__isFullStatsShown = event.ctx['isDown']
         if not self.__isFullStatsShown:
             self._invalidatePanelVisibility()
+
+    def __onWinnerScreen(self):
+        self.__isWinnerScreenShown = True
 
     def _setTotalValue(self, etype, value):
         if BitmaskHelper.hasAnyBitSet(self.__totalDamageContentMask, etype):

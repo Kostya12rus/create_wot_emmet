@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/utils/common.py
 import typing
 from enum import Enum
@@ -8,15 +8,21 @@ from constants import EMAIL_CONFIRMATION_QUEST_ID
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.impl.gen import R
+from gui.server_events.bonuses import getNonQuestBonuses
 from gui.shared import g_eventBus, events, EVENT_BUS_SCOPE
-from gui.shared.missions.packers.bonus import packBonusModelAndTooltipData, getDefaultBonusPacker
+from gui.shared.missions.packers.bonus import packMissionsBonusModelAndTooltipData, getDefaultBonusPacker
 from gui.shared.money import Currency
 from helpers import dependency
+from shared_utils import first
 from skeletons.gui.server_events import IEventsCache
 if typing.TYPE_CHECKING:
     from gui.impl.gen.view_models.views.lobby.account_completion.add_credentials_model import AddCredentialsModel
     from gui.impl.gen.view_models.views.lobby.account_completion.common.base_wgnp_overlay_view_model import BaseWgnpOverlayViewModel
+    from gui.impl.gen.view_models.views.lobby.account_completion.steam_email_confirm_rewards_view_model import SteamEmailConfirmRewardsViewModel
+    from gui.impl.gen.view_models.views.lobby.account_completion.tooltips.hangar_tooltip_model import HangarTooltipModel
     from gui.impl.backport import TooltipData
+    from gui.server_events.event_items import TokenQuest
+    from typing import Optional, List, Dict, Union
 _BONUSES_ORDER = (
  'vehicles', 'premium', Currency.CRYSTAL, Currency.GOLD, 'freeXP', 'freeXPFactor',
  Currency.CREDITS, 'creditsFactor', 'tankmen', 'items', 'slots', 'berths', 'dossier',
@@ -37,21 +43,28 @@ def _keyBonusesOrder(bonus):
     return len(_BONUSES_ORDER)
 
 
-def getBonuses():
-    eventsCache = dependency.instance(IEventsCache)
-    quest = eventsCache.getHiddenQuests().get(EMAIL_CONFIRMATION_QUEST_ID)
-    if quest is not None:
-        return quest.getBonuses()
+@dependency.replace_none_kwargs(eventsCache=IEventsCache)
+def getEmailConfirmationQuest(eventsCache=None):
+    quests = eventsCache.getHiddenQuests(filterFunc=(lambda quest: quest.getID() == EMAIL_CONFIRMATION_QUEST_ID))
+    if not quests:
+        return None
     else:
-        return []
+        return first(quests.values())
 
 
-def fillRewards(model, bonuses=None, tooltipItems=None):
-    bonuses = bonuses or getBonuses()
-    bonuses.sort(key=_keyBonusesOrder)
+def getSteamEmailConfirmBonuses(rewards=None):
+    if rewards:
+        bonuses = _createSteamEmailConfirmBonuses(rewards)
+    else:
+        bonuses = _getSteamEmailConfirmBonusesFromQuest()
+    return sorted(bonuses, key=_keyBonusesOrder)
+
+
+def fillRewards(model, rewards=None, tooltipItems=None):
+    bonuses = getSteamEmailConfirmBonuses(rewards)
     bonusesListModel = model.getBonuses()
     bonusesListModel.clear()
-    packBonusModelAndTooltipData(bonuses=bonuses, packer=getDefaultBonusPacker(), model=bonusesListModel, tooltipData=tooltipItems)
+    packMissionsBonusModelAndTooltipData(bonuses=bonuses, packer=getDefaultBonusPacker(), model=bonusesListModel, tooltipData=tooltipItems)
     bonusesListModel.invalidate()
 
 
@@ -64,3 +77,21 @@ def showAccountAlreadyHasEmail(viewModel):
 
 def openMenu():
     g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_MENU)), scope=EVENT_BUS_SCOPE.LOBBY)
+
+
+def _createSteamEmailConfirmBonuses(rewards):
+    bonuses = []
+    for key, value in rewards.items():
+        bonus = getNonQuestBonuses(key, value)
+        if bonus:
+            bonuses.extend(bonus)
+
+    return bonuses
+
+
+def _getSteamEmailConfirmBonusesFromQuest():
+    emailConfirmationQuest = getEmailConfirmationQuest()
+    if emailConfirmationQuest is None:
+        return []
+    else:
+        return emailConfirmationQuest.getBonuses()

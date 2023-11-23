@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/comp7_tooltips.py
 import logging, typing
 from gui import g_htmlTemplates
@@ -159,19 +159,38 @@ class BattleResultsPrestigePointsTooltip(BlocksTooltipData):
         items.append(self.__packDescriptionBlock())
         return items
 
-    @classmethod
-    def __packHeaderBlock(cls):
+    def __packHeaderBlock(self):
         blocks = [
          formatters.packTextBlockData(text_styles.highTitle(backport.text(R.strings.comp7.battleResult.personal.tooltip.title()))),
          formatters.packTextBlockData(text_styles.main(backport.text(R.strings.comp7.battleResult.personal.tooltip.descr())))]
         return formatters.packBuildUpBlockData(blocks=blocks)
 
-    @classmethod
-    def __packDescriptionBlock(cls):
+    def __packDescriptionBlock(self):
         blocks = [
          formatters.packTextBlockData(text_styles.alert(backport.text(R.strings.comp7.battleResult.personal.tooltip.loseTitle())), padding=formatters.packPadding(top=-6, bottom=4)),
          formatters.packTextBlockData(text_styles.main(backport.text(R.strings.comp7.battleResult.personal.tooltip.loseDescr())))]
         return formatters.packBuildUpBlockData(blocks=blocks, linkage=BLOCKS_TOOLTIP_TYPES.TOOLTIP_BUILDUP_BLOCK_WHITE_BG_LINKAGE)
+
+
+class BattleResultsTournamentPrestigePointsTooltip(BlocksTooltipData):
+
+    def __init__(self, ctx):
+        super(BattleResultsTournamentPrestigePointsTooltip, self).__init__(ctx, None)
+        self._setContentMargin(top=14, left=20, bottom=10, right=20)
+        self._setMargins(afterBlock=10)
+        self._setWidth(350)
+        return
+
+    def _packBlocks(self, *args):
+        items = super(BattleResultsTournamentPrestigePointsTooltip, self)._packBlocks()
+        items.append(self.__packHeaderBlock())
+        return items
+
+    def __packHeaderBlock(self):
+        blocks = [
+         formatters.packTextBlockData(text_styles.highTitle(backport.text(R.strings.comp7.battleResult.personal.tooltip.title()))),
+         formatters.packTextBlockData(text_styles.main(backport.text(R.strings.comp7.tournament.battleResult.personal.tooltip.descr())))]
+        return formatters.packBuildUpBlockData(blocks=blocks)
 
 
 def getRoleEquipmentTooltipParts(equipment):

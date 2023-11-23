@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/carousels/basic/carousel_data_provider.py
 import typing, BigWorld
 from account_helpers.telecom_rentals import TelecomRentals
@@ -96,10 +96,10 @@ class HangarCarouselDataProvider(CarouselDataProvider):
         isVehicleRemoved = not set(vehiclesCDs or ()).issubset(newRentalsVehicles)
         isVehicleAdded = not set(vehiclesCDs or ()).issubset(rentalVehicles)
         if changeInRentals or isVehicleRemoved or isVehicleAdded:
-            rentPendingVehCD = self._telecomRentals.getRentsPending()
-            rentPendingVehCD = rentPendingVehCD.intersection(newRentalsVehicles)
-            if isVehicleAdded and rentPendingVehCD:
-                self._telecomRentals.resetRentsPending(rentPendingVehCD)
+            telecomPendingVehCD = self._telecomRentals.getRentsPending()
+            telecomPendingVehCD = telecomPendingVehCD.intersection(newRentalsVehicles)
+            if isVehicleAdded and telecomPendingVehCD:
+                self._telecomRentals.resetRentsPending(telecomPendingVehCD)
             self.buildList()
             return
         super(HangarCarouselDataProvider, self).updateVehicles(vehiclesCDs, filterCriteria, forceUpdate)

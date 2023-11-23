@@ -1,22 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/CREW_SKINS.py
 
 
 class CREW_SKINS(object):
-    FEATURE_HEADER = '#crew_skins:feature/Header'
     FEATURE_INUSE = '#crew_skins:feature/inUse'
     FEATURE_INSTORAGE = '#crew_skins:feature/inStorage'
-    FEATURE_SKINSTABHEADER = '#crew_skins:feature/skinsTabHeader'
-    FEATURE_SOUND_HEADER = '#crew_skins:feature/sound/header'
-    FEATURE_TAB_RESTRICTIONS = '#crew_skins:feature/tab/restrictions'
-    FEATURE_TAB_ALLUSED = '#crew_skins:feature/tab/allUsed'
-    FEATURE_SOUND_NOSOUND = '#crew_skins:feature/sound/noSound'
-    FEATURE_NOCONTENT_HEADER = '#crew_skins:feature/noContent/header'
-    FEATURE_NOCONTENT_DESC1 = '#crew_skins:feature/noContent/desc1'
-    FEATURE_NOCONTENT_DESC2 = '#crew_skins:feature/noContent/desc2'
-    FEATURE_SKINUSEDWARNING = '#crew_skins:feature/skinUsedWarning'
     RYBALKO_NAME = '#crew_skins:Rybalko/Name'
     RYBALKO_LASTNAME = '#crew_skins:Rybalko/LastName'
     RYBALKO_DESCR = '#crew_skins:Rybalko/Descr'
@@ -212,3 +202,6 @@ class CREW_SKINS(object):
     COSM_GEORGE_NAME = '#crew_skins:cosm_george/Name'
     COSM_GEORGE_LASTNAME = '#crew_skins:cosm_george/LastName'
     COSM_GEORGE_DESCR = '#crew_skins:cosm_george/Descr'
+    ERMELINDA_NAME = '#crew_skins:ermelinda/Name'
+    ERMELINDA_LASTNAME = '#crew_skins:ermelinda/LastName'
+    ERMELINDA_DESCR = '#crew_skins:ermelinda/Descr'

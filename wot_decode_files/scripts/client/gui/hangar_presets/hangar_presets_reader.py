@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/hangar_presets/hangar_presets_reader.py
 import ResMgr
 from gui.hangar_presets.hangar_gui_config import HangarGuiPreset, HangarGuiSettings, PresetSettings
@@ -125,3 +125,30 @@ class DefaultPresetReader(IPresetReader):
             baseHiddenComponents[compName] = compSettings
 
         return HangarGuiPreset(baseVisibleComponents, baseHiddenComponents)
+
+
+class DefaultSubPresetReader(DefaultPresetReader):
+    _SUB_TYPES_KEY = 'subTypes'
+
+    @staticmethod
+    def isDefault():
+        return False
+
+    @classmethod
+    def _getPreset(cls, presetName, config):
+        if not config.has_key(cls._SUB_TYPES_KEY):
+            raise SoftException(('Missing {} section for {}').format(cls._SUB_TYPES_KEY, cls._CONFIG_PATH))
+        return {subType: presetName for subType in map(int, config[cls._SUB_TYPES_KEY].asString.split())}
+
+    @classmethod
+    def _updateItems(cls, items, queueType, preset):
+        presets = items.get(queueType, {})
+        if not presets:
+            items[queueType] = preset
+        else:
+            items[queueType].update(preset)
+
+
+class SpecBattlePresetReader(DefaultSubPresetReader):
+    _CONFIG_PATH = 'gui/hangar_gui_spec_presets.xml'
+    _SUB_TYPES_KEY = 'guiTypes'

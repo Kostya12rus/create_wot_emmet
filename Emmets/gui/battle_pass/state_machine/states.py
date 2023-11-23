@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/state_machine/states.py
 from functools import partial
 import typing
 from battle_pass_common import BattlePassRewardReason, get3DStyleProgressToken
 from frameworks.state_machine import ConditionTransition, State, StateEvent, StateFlags
-from gui.battle_pass.battle_pass_helpers import getStyleInfoForChapter, showVideo, getStyleForChapter
+from gui.battle_pass.battle_pass_helpers import asBPVideoName, getStyleForChapter, getStyleInfoForChapter, makeChapterMediaName, makeProgressionStyleMediaName, showBPFullscreenVideo
 from gui.battle_pass.state_machine import lockNotificationManager
 from gui.battle_pass.state_machine.state_machine_helpers import isProgressionComplete, packToken, processRewardsToChoose
 from gui.impl.gen import R
@@ -141,6 +141,7 @@ class PreviewState(State):
 
 
 class VideoState(State):
+    __battlePass = dependency.descriptor(IBattlePassController)
     __slots__ = ()
 
     def __init__(self):
@@ -150,12 +151,16 @@ class VideoState(State):
         machine = self.getMachine()
         if machine is not None:
             chapter = machine.getChosenStyleChapter()
-            intCD, level = getStyleInfoForChapter(chapter)
-            videoSource = R.videos.battle_pass.dyn(('c_{}_{}').format(intCD, level))
-            if not videoSource.exists():
-                machine.post(StateEvent())
-                return
-            showVideo(videoSource, isAutoClose=True, onVideoClosed=partial(machine.post, StateEvent()))
+            if chapter is not None:
+                _, level = getStyleInfoForChapter(chapter)
+                mediaName = makeProgressionStyleMediaName(chapter, level)
+                showBPFullscreenVideo(asBPVideoName(mediaName), mediaName, partial(machine.post, StateEvent()))
+            else:
+                _, data, _ = machine.getRewardsData()
+                chapterID = data.get('chapter')
+                if self.__battlePass.isExtraChapter(chapterID):
+                    mediaName = makeChapterMediaName(chapterID)
+                    showBPFullscreenVideo(asBPVideoName(mediaName), mediaName, partial(machine.post, StateEvent()))
         return
 
 
@@ -275,5 +280,8 @@ class RewardAnyState(State):
         if machine is not None:
             machine.clearSelf()
             machine.post(StateEvent())
-        showBattlePassBuyWindow()
+        callBack = None
+        if not self.__battlePass.getCurrentChapterID():
+            callBack = partial(showMissionsBattlePass, R.views.lobby.battle_pass.ChapterChoiceView())
+        showBattlePassBuyWindow({'backCallback': callBack})
         return

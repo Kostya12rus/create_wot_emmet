@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/comp7/comp7_bonus_packer.py
 import logging, typing
 from comp7_common import COMP7_TOKEN_WEEKLY_REWARD_NAME
@@ -34,6 +34,10 @@ _TOKENS_REWARDS_BONUSES_ORDER = (
  BonusTypes.ACHIEVEMENT, BonusTypes.DELUXE_DEVICE, BonusTypes.CREWBOOK, BonusTypes.PREMIUM,
  BonusTypes.CRYSTAL, BonusTypes.CREDITS, BonusTypes.OPTIONAL_DEVICE, BonusTypes.BOOSTER,
  BonusTypes.BATTLE_BOOSTER, BonusTypes.EQUIPMENT)
+_QUALIFICATION_REWARDS_BONUSES_ORDER = (
+ BonusTypes.STYLE_PROGRESS, BonusTypes.BADGE_SUFFIX, BonusTypes.BADGE,
+ BonusTypes.DOGTAG_BACKGROUND, BonusTypes.DOGTAG_ENGRAVING,
+ BonusTypes.CRYSTAL, BonusTypes.STYLE, BonusTypes.RENT_VEHICLE)
 
 def getComp7BonusPacker():
     mapping = getDefaultBonusPackersMap()
@@ -217,6 +221,15 @@ def packRanksRewardsQuestBonuses(quest, periodicQuest=None):
 def packTokensRewardsQuestBonuses(quest):
     bonuses = quest.getBonuses()
     return packQuestBonuses(bonuses, bonusPacker=getComp7BonusPacker(), order=_TOKENS_REWARDS_BONUSES_ORDER)
+
+
+def packQualificationRewardsQuestBonuses(quests):
+    bonuses = []
+    quests.sort(key=(lambda q: q.getID()))
+    for quest in quests:
+        bonuses.extend(quest.getBonuses())
+
+    return packQuestBonuses(bonuses, bonusPacker=getComp7BonusPacker(), order=_QUALIFICATION_REWARDS_BONUSES_ORDER)
 
 
 def _getSortKey(order):

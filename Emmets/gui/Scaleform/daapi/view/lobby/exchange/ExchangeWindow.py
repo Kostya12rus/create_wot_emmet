@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/exchange/ExchangeWindow.py
 from gui import SystemMessages
 from gui.ClientUpdateManager import g_clientUpdateManager
@@ -16,6 +16,10 @@ class ExchangeWindow(ExchangeWindowMeta):
     itemsCache = dependency.descriptor(IItemsCache)
     wallet = dependency.descriptor(IWalletController)
 
+    def __init__(self, ctx):
+        super(ExchangeWindow, self).__init__()
+        self.currencyValue = ctx.get('currencyValue', 0)
+
     def _populate(self):
         super(ExchangeWindow, self)._populate()
         stats = self.itemsCache.items.stats
@@ -25,6 +29,7 @@ class ExchangeWindow(ExchangeWindowMeta):
            'actionValue': self.itemsCache.items.shop.exchangeRate, 
            'actionMode': True})
         self.as_setWalletStatusS(self.wallet.componentsStatuses)
+        self.as_setDefaultPrimaryCurrencyValueS(self.currencyValue)
 
     @decorators.adisp_process('transferMoney')
     def exchange(self, gold):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/repositories.py
 from typing import TYPE_CHECKING
 from constants import ARENA_GUI_TYPE
@@ -8,11 +8,11 @@ from debug_utils import LOG_ERROR, LOG_DEBUG
 from gui.battle_control.arena_info.interfaces import IArenaController
 from gui.battle_control.battle_constants import BATTLE_CTRL_ID, REUSABLE_BATTLE_CTRL_IDS, getBattleCtrlName
 from gui.battle_control.controllers import arena_border_ctrl, arena_load_ctrl, battle_field_ctrl, avatar_stats_ctrl, bootcamp_ctrl, chat_cmd_ctrl, consumables, debug_ctrl, drr_scale_ctrl, dyn_squad_functional, feedback_adaptor, game_messages_ctrl, hit_direction_ctrl, interfaces, msgs_ctrl, period_ctrl, personal_efficiency_ctrl, respawn_ctrl, team_bases_ctrl, vehicle_state_ctrl, view_points_ctrl, epic_respawn_ctrl, progress_circle_ctrl, ingame_help_ctrl, epic_maps_ctrl, default_maps_ctrl, epic_spectator_ctrl, epic_missions_ctrl, game_notification_ctrl, epic_team_bases_ctrl, anonymizer_fakes_ctrl, game_restrictions_msgs_ctrl, callout_ctrl, deathzones_ctrl, dog_tags_ctrl, team_health_bar_ctrl, battle_notifier_ctrl, prebattle_setups_ctrl, perk_ctrl
+from gui.battle_control.controllers import aiming_sounds_ctrl
 from gui.battle_control.controllers import battle_hints_ctrl
 from gui.battle_control.controllers import map_zones_ctrl
 from gui.battle_control.controllers import points_of_interest_ctrl
 from gui.battle_control.controllers.appearance_cache_ctrls.comp7_appearance_cache_ctrl import Comp7AppearanceCacheController
-from gui.battle_control.controllers.auto_shoot_guns import auto_shoot_gun_ctrl
 from gui.battle_control.controllers.appearance_cache_ctrls.default_appearance_cache_ctrl import DefaultAppearanceCacheController
 from gui.battle_control.controllers.appearance_cache_ctrls.event_appearance_cache_ctrl import EventAppearanceCacheController
 from gui.battle_control.controllers.appearance_cache_ctrls.maps_training_appearance_cache_ctrl import MapsTrainingAppearanceCacheController
@@ -195,8 +195,8 @@ class SharedControllersLocator(_ControllersLocator, ISharedControllersLocator):
         return self._repository.getController(BATTLE_CTRL_ID.MAP_ZONES_CONTROLLER)
 
     @property
-    def autoShootGunCtrl(self):
-        return self._repository.getController(BATTLE_CTRL_ID.AUTOSHOOT_GUN_CTRL)
+    def aimingSounds(self):
+        return self._repository.getController(BATTLE_CTRL_ID.AIMING_SOUNDS_CTRL)
 
 
 class DynamicControllersLocator(_ControllersLocator, IDynamicControllersLocator):
@@ -310,6 +310,10 @@ class DynamicControllersLocator(_ControllersLocator, IDynamicControllersLocator)
     def comp7VOIPController(self):
         return self._repository.getController(BATTLE_CTRL_ID.COMP7_VOIP_CTRL)
 
+    @property
+    def overrideSettingsController(self):
+        return self._repository.getController(BATTLE_CTRL_ID.OVERRIDE_SETTINGS)
+
 
 class _EmptyRepository(interfaces.IBattleControllersRepository):
     __slots__ = ()
@@ -420,7 +424,7 @@ class SharedControllersRepository(_ControllersRepository):
         repository.addArenaController(deathzones_ctrl.DeathZonesController(), setup)
         repository.addController(ingame_help_ctrl.IngameHelpController(setup))
         repository.addController(map_zones_ctrl.MapZonesController(setup))
-        repository.addController(auto_shoot_gun_ctrl.AutoShootGunController(setup))
+        repository.addController(aiming_sounds_ctrl.AimingSoundsCtrl())
         return repository
 
 
@@ -537,7 +541,7 @@ class Comp7ControllerRepository(ClassicControllersRepository):
     @classmethod
     def create(cls, setup):
         repository = super(Comp7ControllerRepository, cls).create(setup)
-        repository.addArenaViewController(Comp7PrebattleSetupController(), setup)
+        repository.addArenaViewController(Comp7PrebattleSetupController(setup), setup)
         repository.addArenaController(Comp7VOIPController(), setup)
         repository.addController(Comp7BattleSoundController())
         return repository
@@ -556,3 +560,4 @@ for guiType in ARENA_GUI_TYPE.STRONGHOLD_RANGE:
 registerBattleControllerRepo(ARENA_GUI_TYPE.EVENT_BATTLES, EventControllerRepository)
 registerBattleControllerRepo(ARENA_GUI_TYPE.MAPS_TRAINING, MapsTrainingControllerRepository)
 registerBattleControllerRepo(ARENA_GUI_TYPE.COMP7, Comp7ControllerRepository)
+registerBattleControllerRepo(ARENA_GUI_TYPE.TOURNAMENT_COMP7, Comp7ControllerRepository)

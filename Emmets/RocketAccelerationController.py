@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/RocketAccelerationController.py
 import logging, BigWorld, CGF
 from Event import Event
@@ -22,11 +22,12 @@ class RocketAccelerationController(BigWorld.DynamicScriptComponent):
         self.__reloadTime = 0.0
         self.__deployTme = 0.0
         self.__inited = False
+        self.init()
         return
 
     @noexcept
     def init(self):
-        if self.__inited:
+        if self.__inited or not self.entity or not self.entity.typeDescriptor:
             return
         self.__effectsPrefab = self.entity.typeDescriptor.type.rocketAccelerationParams.effectsPrefab
         self.__duration = self.entity.typeDescriptor.type.rocketAccelerationParams.duration

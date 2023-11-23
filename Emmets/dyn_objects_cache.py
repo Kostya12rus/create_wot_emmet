@@ -1,11 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/dyn_objects_cache.py
 import logging
 from collections import namedtuple
 import typing, BigWorld, CGF, resource_helper
 from constants import ARENA_GUI_TYPE
+from gui.shared.system_factory import registerDynObjCache, collectDynObjCache
 from gui.shared.utils.graphics import isRendererPipelineDeferred
 from items.components.component_constants import ZERO_FLOAT
 from shared_utils import first
@@ -183,6 +184,14 @@ class _BerserkerTurretEffect(_SimpleEffect):
     _SECTION_NAME = 'berserkerTurretEffect'
 
 
+class _VehicleRespawnEffect(object):
+    _SECTION_NAME = 'VehicleRespawn'
+
+    def __init__(self, dataSection):
+        super(_VehicleRespawnEffect, self).__init__()
+        self.effectPrefabPath = dataSection[self._SECTION_NAME].readString('prefab')
+
+
 class DynObjectsBase(object):
 
     def __init__(self):
@@ -278,6 +287,7 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
         self.__repairPoint = None
         self.__botDeliveryEffect = None
         self.__botClingDeliveryEffect = None
+        self.__vehicleRespawnEffect = None
         self.__botDeliveryMarker = None
         self.__dropPlane = None
         self.__airDrop = None
@@ -298,6 +308,8 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
             self.__botDeliveryMarker = _BattleRoyaleBotDeliveryMarkerArea(dataSection)
             self.__minesEffects = _MinesEffects(plantEffect=_MinesPlantEffect(dataSection), idleEffect=_MinesIdleEffect(dataSection), destroyEffect=_MinesDestroyEffect(dataSection), placeMinesEffect='minesDecalEffect', blowUpEffectName='minesBlowUpEffect', activationEffect=None)
             self.__berserkerEffects = _BerserkerEffects(turretEffect=_BerserkerTurretEffect(dataSection), hullEffect=_BerserkerHullEffect(dataSection), transformPath=dataSection.readString('berserkerTransformPath'))
+            self.__vehicleRespawnEffect = _VehicleRespawnEffect(dataSection)
+            CGF.cacheGameObjects([self.__vehicleRespawnEffect.effectPrefabPath], False)
             prerequisites = set()
             self.__dropPlane = _createDropPlane(dataSection['dropPlane'], prerequisites)
             self.__airDrop = _createAirDrop(dataSection['airDrop'], prerequisites)
@@ -341,6 +353,9 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
 
     def getBerserkerEffects(self):
         return self.__berserkerEffects
+
+    def getVehicleRespawnEffect(self):
+        return self.__vehicleRespawnEffect
 
     def clear(self):
         pass
@@ -485,13 +500,14 @@ class _PointsOfInterestConfig(object):
         return cls(points)
 
 
-_CONF_STORAGES = {ARENA_GUI_TYPE.SORTIE_2: _StrongholdDynObjects, 
-   ARENA_GUI_TYPE.FORT_BATTLE_2: _StrongholdDynObjects, 
-   ARENA_GUI_TYPE.BATTLE_ROYALE: _BattleRoyaleDynObjects, 
-   ARENA_GUI_TYPE.EPIC_BATTLE: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.EPIC_TRAINING: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.EVENT_BATTLES: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.COMP7: _Comp7DynObjects}
+registerDynObjCache(ARENA_GUI_TYPE.SORTIE_2, _StrongholdDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.FORT_BATTLE_2, _StrongholdDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.BATTLE_ROYALE, _BattleRoyaleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EPIC_BATTLE, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EPIC_TRAINING, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EVENT_BATTLES, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.COMP7, _Comp7DynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.TOURNAMENT_COMP7, _Comp7DynObjects)
 
 class BattleDynamicObjectsCache(IBattleDynamicObjectsCache):
 
@@ -507,11 +523,13 @@ class BattleDynamicObjectsCache(IBattleDynamicObjectsCache):
         _, section = resource_helper.getRoot(_CONFIG_PATH)
         if arenaType in self.__configStorage:
             self.__configStorage[arenaType].init(section)
-        elif arenaType in _CONF_STORAGES:
-            confStorage = _CONF_STORAGES[arenaType]()
-            self.__configStorage[arenaType] = confStorage
-            confStorage.init(section)
-            resource_helper.purgeResource(_CONFIG_PATH)
+        else:
+            cache = collectDynObjCache(arenaType)
+            if cache:
+                confStorage = cache()
+                self.__configStorage[arenaType] = confStorage
+                confStorage.init(section)
+                resource_helper.purgeResource(_CONFIG_PATH)
 
     def unload(self, arenaType):
         for cV in self.__configStorage.itervalues():

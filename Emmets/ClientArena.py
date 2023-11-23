@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/ClientArena.py
 import cPickle, zlib
 from collections import namedtuple, defaultdict
@@ -399,7 +399,9 @@ class ClientArena(object):
            'maxHealth': info[24], 
            'vehPostProgression': info[25], 
            'customRoleSlotTypeId': info[26], 
-           'botDisplayStatus': info[27]}
+           'botDisplayStatus': info[27], 
+           'prestigeLevel': info[28], 
+           'prestigeGradeMarkID': info[29]}
         return (
          info[0], infoAsDict)
 
@@ -412,6 +414,19 @@ class ClientArena(object):
     def __vehicleStatisticsAsDict(self, stats):
         return (
          stats[0], {'frags': stats[1]})
+
+    def runVsePlan(self, planName, params, key='', context=None):
+        if self._vsePlans is not None:
+            self._vsePlans.startPlan(planName, params, key, context)
+        return
+
+    def stopVsePlan(self, planName, key=''):
+        if self._vsePlans is not None:
+            self._vsePlans.stopPlan(planName, key)
+        return
+
+    def getVseContextInstance(self, contextName):
+        pass
 
     def __preprocessVehicleInfo(self, info):
         if not info['avatarSessionID']:

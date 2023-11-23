@@ -1,9 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/events.py
-import logging, typing
+import logging
 from collections import namedtuple
+import typing
 from gui.shared.event_bus import SharedEvent
 from shared_utils import CONST_CONTAINER
 if typing.TYPE_CHECKING:
@@ -15,7 +16,7 @@ __all__ = ('ArgsEvent', 'ComponentEvent', 'LoadViewEvent', 'LoadGuiImplViewEvent
            'HangarCustomizationEvent', 'GameEvent', 'BootcampEvent', 'ViewEventType',
            'OpenLinkEvent', 'ChannelManagementEvent', 'PreBattleChannelEvent', 'AmmunitionSetupViewEvent',
            'HasCtxEvent', 'DogTagsEvent', 'FullscreenModeSelectorEvent', 'ModeSelectorPopoverEvent',
-           'ModeSelectorLoadedEvent', 'ModeSubSelectorEvent')
+           'ModeSubSelectorEvent')
 _logger = logging.getLogger(__name__)
 
 class HasCtxEvent(SharedEvent):
@@ -203,13 +204,10 @@ class ShowDialogEvent(SharedEvent):
     SHOW_BUTTON_DLG = 'showButtonDialog'
     SHOW_ICON_DIALOG = 'showIconDialog'
     SHOW_ICON_PRICE_DIALOG = 'showIconPriceDialog'
-    SHOW_CREW_SKINS_COMPENSATION_DIALOG = 'showCrewSkinsCompensationDialog'
     SHOW_PM_CONFIRMATION_DIALOG = 'showPMConfirmationDialog'
     SHOW_CONFIRM_MODULE = 'showConfirmModule'
     SHOW_CONFIRM_BOOSTER = 'showConfirmBooster'
     SHOW_SYSTEM_MESSAGE_DIALOG = 'showSystemMessageDialog'
-    SHOW_DISMISS_TANKMAN_DIALOG = 'showDismissTankmanDialog'
-    SHOW_RESTORE_TANKMAN_DIALOG = 'showRestoreTankmanDialog'
     SHOW_CYBER_SPORT_DIALOG = 'showCyberSportDialog'
     SHOW_CONFIRM_ORDER_DIALOG = 'showConfirmOrderDialog'
     SHOW_PUNISHMENT_DIALOG = 'showPunishmentDialog'
@@ -223,11 +221,12 @@ class ShowDialogEvent(SharedEvent):
     SHOW_CONFIRM_C11N_BUY_DIALOG = 'showConfirmC11nBuyDialog'
     SHOW_CONFIRM_C11N_SELL_DIALOG = 'showConfirmC11nSellDialog'
 
-    def __init__(self, meta, handler):
+    def __init__(self, meta, handler, parent=None):
         super(ShowDialogEvent, self).__init__(ViewEventType.LOAD_VIEW)
         self.alias = meta.getEventType()
         self.meta = meta
         self.handler = handler
+        self.parent = parent
 
 
 class LoginEvent(SharedEvent):
@@ -363,10 +362,7 @@ class FightButtonEvent(LobbySimpleEvent):
 
 class LobbyHeaderMenuEvent(LobbySimpleEvent):
     TOGGLE_VISIBILITY = 'toggleVisibilityHeaderMenu'
-
-
-class SkillDropEvent(SharedEvent):
-    SKILL_DROPPED_SUCCESSFULLY = 'skillDroppedSuccess'
+    MENU_CLICK = 'headerMenuClick'
 
 
 class CloseWindowEvent(SharedEvent):
@@ -560,6 +556,7 @@ class OpenLinkEvent(SharedEvent):
     FRONTLINE_CHANGES = 'frontlineChangesURL'
     WOT_PLUS_STEAM_SHOP = 'wotPlusSteamURL'
     WOT_PLUS_SHOP = 'wotPlusShopURL'
+    STEAM_SUBSCRIPTION_MANAGEMENT = 'steamSubscriptionManagementURL'
 
     def __init__(self, eventType, url='', title='', params=None):
         super(OpenLinkEvent, self).__init__(eventType)
@@ -683,6 +680,7 @@ class AirDropEvent(HasCtxEvent):
     AIR_DROP_LANDED = 'onAirDropLanded'
     AIR_DROP_LOOP_ENTERED = 'onAirDropLootEntered'
     AIR_DROP_LOOP_LEFT = 'onAirDropLootLeft'
+    AIR_DROP_NXT_SPAWNED = 'onAirDropNxtSpawned'
 
 
 class ProfilePageEvent(HasCtxEvent):
@@ -786,10 +784,6 @@ class ModeSelectorPopoverEvent(HasCtxEvent):
     NAME = 'ModeSelectorPopoverEvent'
 
 
-class ModeSelectorLoadedEvent(SharedEvent):
-    NAME = 'ModeSelectorLoadedEvent'
-
-
 class ModeSubSelectorEvent(HasCtxEvent):
     CHANGE_VISIBILITY = 'subSelectorViewEvent/changeVisibility'
     CLICK_PROCESSING = 'subSelectorViewEvent/clickProcessing'
@@ -816,10 +810,21 @@ class RoleSkillEvent(HasCtxEvent):
 
 class CollectionsEvent(HasCtxEvent):
     NEW_ITEM_SHOWN = 'newItemShown'
-    BATTLE_PASS_ENTRY_POINT_VISITED = 'battlePassEntryPointVisited'
+    TAB_COUNTER_UPDATED = 'tabCounterUpdated'
+    COLLECTION_VIEW_CLOSED = 'collectionViewClosed'
+    COLLECTION_INTRO_CLOSED = 'collectionIntroClosed'
 
 
 class Achievements20Event(HasCtxEvent):
     LAYOUT_CHANGED = 'layoutChanged'
     CLOSE_SUMMARY_VIEW = 'closeSummaryView'
     CLOSE_EDIT_VIEW = 'closeEditView'
+
+
+class PrebattleEvent(HasCtxEvent):
+    SWITCHED = 'PrebattleEvent/SWITCHED'
+    NOT_SWITCHED = 'PrebattleEvent/NOT_SWITCHED'
+
+
+class HangarCrewWidgetViewEvent(HasCtxEvent):
+    GF_RESIZED = 'hangarCrewWidgetViewEvent/gfResized'

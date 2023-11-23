@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/rankedBattles/ranked_battles_intro.py
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import GUI_START_BEHAVIOR
@@ -82,7 +82,7 @@ class RankedBattlesIntro(LobbySubView, RankedBattlesIntroMeta):
         self.__state = RANKEDBATTLES_CONSTS.INTRO_STATE_NORMAL
         if self.__rankedController.isFrozen():
             self.__state = RANKEDBATTLES_CONSTS.INTRO_STATE_DISABLED
-            if not self.__rankedController.getSeasonPassed() and not self.__rankedController.getCurrentSeason():
+            if not self.__rankedController.getSeasonsPassed() and not self.__rankedController.getCurrentSeason():
                 self.__state = RANKEDBATTLES_CONSTS.INTRO_STATE_BEFORE_SEASON
         if self.__state == RANKEDBATTLES_CONSTS.INTRO_STATE_DISABLED:
             self.as_setAlertMessageBlockDataS({'alertIcon': backport.image(R.images.gui.maps.icons.library.alertBigIcon()), 

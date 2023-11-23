@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/ingame_help/detailed_help_pages.py
 import logging, typing, CommandMapping
 from constants import ARENA_GUI_TYPE, ARENA_BONUS_TYPE, ROLE_TYPE, ACTION_TYPE_TO_LABEL, ROLE_TYPE_TO_LABEL
@@ -23,17 +23,18 @@ _logger = logging.getLogger(__name__)
 
 class HelpPagePriority(object):
     DEFAULT = 0
-    MAPBOX = 1
+    MAPS = 1
     TRACK_WITHIN_TRACK = 2
     ROCKET_ACCELERATION = 3
     TURBOSHAFT_ENGINE = 4
-    BATTLE_ROYALE = 5
-    DUAL_GUN = 6
-    WHEELED = 7
-    BURNOUT = 8
-    SIEGE_MODE = 9
-    ROLE_TYPE = 10
-    COMP7 = 11
+    DUAL_ACCURACY = 5
+    BATTLE_ROYALE = 6
+    DUAL_GUN = 7
+    WHEELED = 8
+    BURNOUT = 9
+    SIEGE_MODE = 10
+    ROLE_TYPE = 11
+    COMP7 = 12
 
 
 def addPage(datailedList, headerTitle, title, descr, vKeys, buttons, image, roleImage=None, roleActions=None, hintCtx=None):
@@ -307,6 +308,27 @@ class RocketAccelerationPagesBuilder(DetailedHelpPagesBuilder):
         return
 
 
+class DualAccuracyPagesBuilder(DetailedHelpPagesBuilder):
+    _SUITABLE_CTX_KEYS = ('hasDualAccuracy', )
+
+    @classmethod
+    def priority(cls):
+        return HelpPagePriority.DUAL_ACCURACY
+
+    @classmethod
+    def buildPages(cls, ctx):
+        pages = []
+        addPage(pages, buildTitle(ctx), backport.text(R.strings.ingame_help.detailsHelp.dualAccuracy.mechanics.title()), text_styles.mainBig(backport.text(R.strings.ingame_help.detailsHelp.dualAccuracy.mechanics())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.dualAccuracy.mechanics()), hintCtx=HelpHintContext.MECHANICS)
+        return pages
+
+    @classmethod
+    def _collectHelpCtx(cls, ctx, arenaVisitor, vehicle):
+        hasDualAccuracy = vehicle is not None and vehicle.typeDescriptor.hasDualAccuracy
+        ctx['hasUniqueVehicleHelpScreen'] = ctx.get('hasUniqueVehicleHelpScreen') or hasDualAccuracy
+        ctx['hasDualAccuracy'] = hasDualAccuracy
+        return
+
+
 class RoleTypePagesBuilder(DetailedHelpPagesBuilder):
     _SUITABLE_CTX_KEYS = ('roleType', )
 
@@ -355,7 +377,7 @@ class Comp7PagesBuilder(DetailedHelpPagesBuilder):
 
     @classmethod
     def _collectHelpCtx(cls, ctx, arenaVisitor, vehicle):
-        ctx['isComp7'] = arenaVisitor.getArenaGuiType() == ARENA_GUI_TYPE.COMP7
+        ctx['isComp7'] = arenaVisitor.getArenaGuiType() in ARENA_GUI_TYPE.COMP7_RANGE
 
 
 class MapboxPagesBuilder(DetailedHelpPagesBuilder):
@@ -364,16 +386,16 @@ class MapboxPagesBuilder(DetailedHelpPagesBuilder):
 
     @classmethod
     def priority(cls):
-        return HelpPagePriority.MAPBOX
+        return HelpPagePriority.MAPS
 
     @classmethod
     def buildPages(cls, ctx):
         pages = []
         header = backport.text(cls._STR_PATH.headerTitle())
         hintCtx = HelpHintContext.MAPBOX
-        addPage(pages, header, backport.text(cls._STR_PATH.markers.title()), text_styles.mainBig(backport.text(cls._STR_PATH.markers.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.markers()), hintCtx)
-        addPage(pages, header, backport.text(cls._STR_PATH.environment.title()), text_styles.mainBig(backport.text(cls._STR_PATH.environment.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.environment()), hintCtx)
-        addPage(pages, header, backport.text(cls._STR_PATH.artefacts.title()), text_styles.mainBig(backport.text(cls._STR_PATH.artefacts.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.artefacts()), hintCtx)
+        addPage(pages, header, backport.text(cls._STR_PATH.markers.title()), text_styles.mainBig(backport.text(cls._STR_PATH.markers.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.markers()), hintCtx=hintCtx)
+        addPage(pages, header, backport.text(cls._STR_PATH.environment.title()), text_styles.mainBig(backport.text(cls._STR_PATH.environment.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.environment()), hintCtx=hintCtx)
+        addPage(pages, header, backport.text(cls._STR_PATH.artefacts.title()), text_styles.mainBig(backport.text(cls._STR_PATH.artefacts.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.mapbox.artefacts()), hintCtx=hintCtx)
         return pages
 
     @classmethod
@@ -381,7 +403,30 @@ class MapboxPagesBuilder(DetailedHelpPagesBuilder):
         ctx['isMapbox'] = arenaVisitor.getArenaGuiType() == ARENA_GUI_TYPE.MAPBOX
 
 
+class DevMapsPagesBuilder(DetailedHelpPagesBuilder):
+    _SUITABLE_CTX_KEYS = ('isDevMaps', )
+    _STR_PATH = R.strings.ingame_help.detailsHelp.devMaps
+
+    @classmethod
+    def priority(cls):
+        return HelpPagePriority.MAPS
+
+    @classmethod
+    def buildPages(cls, ctx):
+        pages = []
+        header = backport.text(cls._STR_PATH.headerTitle())
+        hintCtx = HelpHintContext.DEV_MAPS
+        addPage(pages, header, backport.text(cls._STR_PATH.title()), text_styles.mainBig(backport.text(cls._STR_PATH.markers.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.devMaps.markers()), hintCtx=hintCtx)
+        addPage(pages, header, backport.text(cls._STR_PATH.title()), text_styles.mainBig(backport.text(cls._STR_PATH.zone.description())), [], [], backport.image(R.images.gui.maps.icons.battleHelp.devMaps.zone()), hintCtx=hintCtx)
+        return pages
+
+    @classmethod
+    def _collectHelpCtx(cls, ctx, arenaVisitor, vehicle):
+        ctx['isDevMaps'] = arenaVisitor.extra.isMapsInDevelopmentEnabled()
+
+
 registerIngameHelpPagesBuilders((
  SiegeModePagesBuilder, BurnOutPagesBuilder, WheeledPagesBuilder, TrackWithinTrackPagesBuilder,
  DualGunPagesBuilder, BattleRoyalePagesBuilder, TurboshaftEnginePagesBuilder, RoleTypePagesBuilder,
- RocketAccelerationPagesBuilder, Comp7PagesBuilder, MapboxPagesBuilder))
+ RocketAccelerationPagesBuilder, Comp7PagesBuilder, MapboxPagesBuilder,
+ DualAccuracyPagesBuilder, DevMapsPagesBuilder))

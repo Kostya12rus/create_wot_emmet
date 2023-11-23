@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/PoiCaptureBlockerComponent.py
 import logging, typing
 from PoiBaseComponent import PoiBaseComponent
@@ -17,7 +17,8 @@ class PoiCaptureBlockerComponent(PoiBaseComponent):
         return
 
     def onDestroy(self):
-        self._poiGameObject.removeComponent(self.__stateComponent)
+        if self._poiGameObject is not None and self._poiGameObject.isValid():
+            self._poiGameObject.removeComponent(self.__stateComponent)
         self.__stateComponent = None
         super(PoiCaptureBlockerComponent, self).onDestroy()
         return
@@ -28,13 +29,10 @@ class PoiCaptureBlockerComponent(PoiBaseComponent):
         return
 
     def _onAvatarReady(self):
-        if self._poiGameObject is None:
-            _logger.warning('PoiGameObject is not valid! Could not create PoiCaptureBlockerStateComponent')
-            return
-        else:
+        if self._poiGameObject is not None and self._poiGameObject.isValid():
             blockReasons = self.__getBlockReasons()
             self.__stateComponent = self._poiGameObject.createComponent(PoiCaptureBlockerStateComponent, self.pointID, blockReasons)
-            return
+        return
 
     def __getBlockReasons(self):
         return tuple(fixed_dict.getStatusWithTimeInterval(reason, PoiBlockReasons) for reason in self.blockReasons)

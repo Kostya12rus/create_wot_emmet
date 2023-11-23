@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/base/unit/ctx.py
 from account_helpers import gameplay_ctx
 from external_strings_utils import truncate_utf8
@@ -251,8 +251,8 @@ class DeclineSearchUnitCtx(UnitRequestCtx):
 
 @ReprInjector.withParent(('selectVehInvID', 'selectVehInvID'), ('getGamePlayMask',
                                                                 'gamePlayMask'), ('getDemoArenaTypeID',
-                                                                                  'getDemoArenaTypeID'), ('isOnly10ModeEnabled',
-                                                                                                          'isOnly10ModeEnabled'))
+                                                                                  'getDemoArenaTypeID'), ('getRandomFlags',
+                                                                                                          'randomFlags'))
 class BattleQueueUnitCtx(AutoSearchUnitCtx):
     __slots__ = ('selectVehInvID', '__isActionStartBattle', 'mmData')
 
@@ -270,8 +270,8 @@ class BattleQueueUnitCtx(AutoSearchUnitCtx):
     def getDemoArenaTypeID(self):
         return self.mmData
 
-    def isOnly10ModeEnabled(self):
-        return gameplay_ctx.isOnly10ModeEnabled()
+    def getRandomFlags(self):
+        return gameplay_ctx.getRandomFlags()
 
 
 class RosterSlotCtx(object):

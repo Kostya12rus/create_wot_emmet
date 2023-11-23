@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/common/base_credentials_overlay_view.py
 from constants import EMAIL_CONFIRMATION_QUEST_ID
 from gui.impl.backport.backport_tooltip import createBackportTooltipContent
@@ -10,7 +10,7 @@ from gui.impl.gen.view_models.views.lobby.account_completion.tooltips.tooltip_co
 from gui.impl.lobby.account_completion.common import errors
 from gui.impl.lobby.account_completion.common.base_wgnp_overlay_view import BaseWGNPOverlayView
 from gui.impl.lobby.account_completion.common.field_presenters import EmailPresenter, PasswordPresenter
-from gui.impl.lobby.account_completion.utils.common import fillRewards, getBonuses, DISABLE_BUTTON_TIME
+from gui.impl.lobby.account_completion.utils.common import fillRewards, DISABLE_BUTTON_TIME
 from helpers import dependency
 from skeletons.gui.server_events import IEventsCache
 _WARNING_TIMEOUT = DISABLE_BUTTON_TIME
@@ -39,7 +39,7 @@ class BaseCredentialsOverlayView(BaseWGNPOverlayView):
                 rewardTooltipID = event.getArgument('rewardTooltipID')
                 if rewardTooltipID:
                     itemIndex = rewardTooltipID.split(':').pop()
-                    tooltipData = self._tooltipItems.get(int(itemIndex))
+                    tooltipData = self._tooltipItems.get(itemIndex)
                     if tooltipData is not None:
                         return createBackportTooltipContent(tooltipData=tooltipData)
             return super(BaseCredentialsOverlayView, self).createToolTipContent(event, contentID)
@@ -75,11 +75,11 @@ class BaseCredentialsOverlayView(BaseWGNPOverlayView):
         self.viewModel.setQuestID(EMAIL_CONFIRMATION_QUEST_ID)
         self.viewModel.setRewardsTitle(self._REWARDS_TITLE)
 
-    def _finalize(self):
-        super(BaseCredentialsOverlayView, self)._finalize()
+    def _doFinalize(self):
         self._email.dispose()
         self._password.dispose()
         self._tooltipItems = None
+        super(BaseCredentialsOverlayView, self)._doFinalize()
         return
 
     def _inputValueChangeHandler(self):
@@ -98,7 +98,8 @@ class BaseCredentialsOverlayView(BaseWGNPOverlayView):
         self.viewModel.setIsConfirmEnabled(not haveTimedWarning and not anyFieldIsEmpty and not anyFieldIsInvalid)
 
     def _fillRewards(self, model):
-        fillRewards(model, getBonuses(), self._tooltipItems)
+        self._tooltipItems.clear()
+        fillRewards(model, tooltipItems=self._tooltipItems)
 
     def _onSyncCompleted(self, *args):
         with self.viewModel.transaction() as (model):

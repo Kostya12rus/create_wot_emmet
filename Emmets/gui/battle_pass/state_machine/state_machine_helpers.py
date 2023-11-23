@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/state_machine/state_machine_helpers.py
 import logging, typing
 from battle_pass_common import BATTLE_PASS_OFFER_TOKEN_PREFIX, BATTLE_PASS_TOKEN_3D_STYLE, BattlePassConsts, BattlePassRewardReason, BattlePassState, getBattlePassPassEntitlementName, getBattlePassShopEntitlementName
@@ -25,37 +25,20 @@ def isProgressionComplete(_, battlePass=None):
     return isCompleteState and isAllChosen and isAllChaptersBought
 
 
-@dependency.replace_none_kwargs(battlePass=IBattlePassController, offers=IOffersDataProvider)
-def separateRewards(rewards, battlePass=None, offers=None):
-    rewardsToChoose = []
+def separateRewards(rewards):
     styleTokens = []
     chosenStyle = None
     defaultRewards = rewards[:]
     blocksToRemove = []
-    hasRareRewardToChoose = False
-    if battlePass.isOfferEnabled():
-        for reward in defaultRewards:
-            for tokenID in reward.get('tokens', {}).iterkeys():
-                if _isRewardChoiceToken(tokenID, offers=offers):
-                    splitToken = tokenID.split(':')
-                    if battlePass.isRareLevel(chapterID=int(splitToken[-2]), level=int(splitToken[-1])):
-                        hasRareRewardToChoose = True
-                        break
-
     for index, rewardBlock in enumerate(defaultRewards):
         if 'tokens' in rewardBlock:
             for tokenID in rewardBlock['tokens'].iterkeys():
-                if hasRareRewardToChoose and _isRewardChoiceToken(tokenID, offers=offers):
-                    rewardsToChoose.append(tokenID)
-                elif tokenID.startswith(BATTLE_PASS_TOKEN_3D_STYLE):
+                if tokenID.startswith(BATTLE_PASS_TOKEN_3D_STYLE):
                     styleTokens.append(tokenID)
                     chapter = int(tokenID.split(':')[3])
                     intCD, _ = getStyleInfoForChapter(chapter)
                     if intCD is not None:
                         chosenStyle = chapter
-
-        for tokenID in rewardsToChoose:
-            rewardBlock.get('tokens', {}).pop(tokenID, None)
 
         for tokenID in styleTokens:
             rewardBlock.get('tokens', {}).pop(tokenID, None)
@@ -69,9 +52,7 @@ def separateRewards(rewards, battlePass=None, offers=None):
     for index in sorted(blocksToRemove, reverse=True):
         defaultRewards.pop(index)
 
-    rewardsToChoose.sort(key=(lambda x: (int(x.split(':')[-1]), x.split(':')[-2])))
-    return (
-     rewardsToChoose, defaultRewards, chosenStyle)
+    return (defaultRewards, chosenStyle)
 
 
 @dependency.replace_none_kwargs(battlePass=IBattlePassController)
@@ -88,6 +69,7 @@ def packStartEvent(rewards, data, packageRewards, eventMethod, battlePass=None):
         newLevel = data['newLevel']
         chapter = data['chapter']
         prevLevel = data['prevLevel']
+        data.update({'needVideo': needToShowLevelUpVideo(chapter, newLevel, battlePass=battlePass)})
         isFinalLevel = battlePass.isFinalLevel(chapter, newLevel)
         isRareLevel = False
         if newLevel is not None:
@@ -124,6 +106,11 @@ def defaultEventMethod(rewards, data, packageRewards, battlePass=None):
 
 def packToken(tokenID):
     return {'tokens': {tokenID: {'count': 1, 'expires': {'after': 1}}}}
+
+
+@dependency.replace_none_kwargs(battlePass=IBattlePassController)
+def needToShowLevelUpVideo(chapterID, level, battlePass=None):
+    return battlePass.isFinalLevel(chapterID, level) and battlePass.isExtraChapter(chapterID)
 
 
 @dependency.replace_none_kwargs(offers=IOffersDataProvider)

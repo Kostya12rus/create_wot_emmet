@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/ammunition_setup/base_hangar.py
 from BWUtil import AsyncReturn
 import adisp
@@ -16,6 +16,7 @@ from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.tank_setup.ammunition_setup_view_model import AmmunitionSetupViewModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.base_setup_model import BaseSetupModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.tank_setup_constants import TankSetupConstants
+from gui.impl.gen.view_models.views.lobby.tank_setup.tooltips.warning_tooltip_view_model import WarningDescription
 from gui.impl.lobby.tank_setup.ammunition_setup.base import BaseAmmunitionSetupView
 from gui.impl.lobby.tank_setup.backports.context_menu import getContextMenuData
 from gui.impl.lobby.tank_setup.backports.tooltips import getSlotTooltipData, getShellsPriceDiscountTooltipData, getSlotSpecTooltipData
@@ -57,17 +58,16 @@ class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
     def __init__(self, layoutID=R.views.lobby.tanksetup.HangarAmmunitionSetup(), **kwargs):
         settings = ViewSettings(layoutID)
         settings.model = AmmunitionSetupViewModel()
-        settings.flags = ViewFlags.COMPONENT
+        settings.flags = ViewFlags.VIEW
         settings.kwargs = kwargs
         super(BaseHangarAmmunitionSetupView, self).__init__(settings)
         self.__blur = CachedBlur()
         self.__isClosed = False
         self.__closeConfirmatorHelper = TankSetupCloseConfirmatorsHelper()
         self.__moneyCache = self._itemsCache.items.stats.money
-        self._previousSectionName = None
+        self._previousSectionName = kwargs.get('selectedSection')
         self.onClose = Event()
         self.onAnimationEnd = Event()
-        return
 
     @prbDispatcherProperty
     def prbDispatcher(self):
@@ -86,7 +86,7 @@ class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
                 if tooltipId == TankSetupConstants.EQUIP_COIN_INFO_TOOLTIP:
                     return createBackportTooltipContent(specialAlias=tooltipId, specialArgs=[])
             if contentID == R.views.lobby.tanksetup.tooltips.WarningTooltipView():
-                reason = event.getArgument('reason')
+                reason = WarningDescription(event.getArgument('reason'))
                 isCritical = event.getArgument('isCritical')
                 return WarningTooltipView(reason, isCritical)
             return

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/__init__.py
 import imghdr, itertools, sys, inspect, uuid, struct
 from collections import namedtuple
@@ -19,6 +19,8 @@ RELOAD_TIME_PROP_NAME = 'reloadTime'
 RELOAD_MAGAZINE_TIME_PROP_NAME = 'reloadMagazineTime'
 SHELL_RELOADING_TIME_PROP_NAME = 'shellReloadingTime'
 DISPERSION_RADIUS_PROP_NAME = 'dispersionRadius'
+SHOT_DISPERSION_ANGLE = 'shotDispersionAngle'
+DISPERSION_RADIUS = 'dispertionRadius'
 AIMING_TIME_PROP_NAME = 'aimingTime'
 PIERCING_POWER_PROP_NAME = 'piercingPower'
 DAMAGE_PROP_NAME = 'damage'
@@ -31,6 +33,10 @@ UNICHARGED_VEHICLES_PROP_NAME = 'uniChargedVehicles'
 VEHICLES_PROP_NAME = 'vehicles'
 CLIP_VEHICLES_CD_PROP_NAME = 'clipVehiclesCD'
 MAX_STEERING_LOCK_ANGLE = 'maxSteeringLockAngle'
+BURST_FIRE_RATE = 'burstFireRate'
+BURST_TIME_INTERVAL = 'burstTimeInterval'
+BURST_COUNT = 'burstCount'
+BURST_SIZE = 'burstSize'
 WHEELED_SWITCH_ON_TIME = 'wheeledSwitchOnTime'
 WHEELED_SWITCH_OFF_TIME = 'wheeledSwitchOffTime'
 WHEELED_SWITCH_TIME = 'wheeledSwitchTime'
@@ -47,6 +53,8 @@ ROCKET_ACCELERATION_SPEED_LIMITS = 'rocketAccelerationSpeedLimits'
 ROCKET_ACCELERATION_REUSE_AND_DURATION = 'rocketAccelerationReuseAndDuration'
 DUAL_GUN_CHARGE_TIME = 'chargeTime'
 DUAL_GUN_RATE_TIME = 'rateTime'
+DUAL_ACCURACY_AFTER_SHOT_DISPERSION_ANGLE = 'dualAccuracyAfterShotDispersionAngle'
+DUAL_ACCURACY_COOLING_DELAY = 'dualAccuracyCoolingDelay'
 GUN_RELOADING_TYPE = 'gunReloadingType'
 CHASSIS_REPAIR_TIME = 'chassisRepairTime'
 CHASSIS_REPAIR_TIME_YOH = 'chassisRepairTimeYoh'

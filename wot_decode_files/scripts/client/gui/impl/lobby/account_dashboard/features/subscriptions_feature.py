@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_dashboard/features/subscriptions_feature.py
 from constants import PLAYER_SUBSCRIPTIONS_CONFIG
 from gui.impl.gen.view_models.views.lobby.account_dashboard.subscriptions_entry_point_model import SubscriptionsEntryPointModel
@@ -9,6 +9,8 @@ from gui.impl.wrappers.function_helpers import replaceNoneKwargsModel
 from gui.shared.event_dispatcher import showSubscriptionsPage
 from helpers import dependency
 from skeletons.gui.lobby_context import ILobbyContext
+from uilogging.wot_plus.loggers import WotPlusAccountDashboardWidgetLogger
+from uilogging.wot_plus.logging_constants import AccountDashboardFeature
 
 class SubscriptionsFeature(FeatureItem):
     __lobbyContext = dependency.descriptor(ILobbyContext)
@@ -38,4 +40,5 @@ class SubscriptionsFeature(FeatureItem):
 
     @staticmethod
     def __onClick():
+        WotPlusAccountDashboardWidgetLogger().logWidgetClickEvent(AccountDashboardFeature.SUBSCRIPTION_WIDGET)
         showSubscriptionsPage()

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/composer.py
 from constants import ARENA_BONUS_TYPE
 from gui.battle_results import templates
@@ -45,6 +45,7 @@ class StatsComposer(IStatsComposer):
         self._block.addNextComponent(self._getBattlePassBlock().clone())
         self._block.addNextComponent(templates.QUESTS_PROGRESS_STATS_BLOCK.clone())
         self._block.addNextComponent(templates.DOG_TAGS_PROGRESS_STATS_BLOCK.clone())
+        self._block.addNextComponent(templates.PRESTIGE_PROGRESS_VO.clone())
         self._block.addNextComponent(common)
         self._block.addNextComponent(personal)
         self._block.addNextComponent(teams)
@@ -253,6 +254,18 @@ class Comp7StatsComposer(StatsComposer):
         return templates.COMP7_BATTLE_PASS_PROGRESS_STATS_BLOCK
 
 
+class TournamentComp7StatsComposer(StatsComposer):
+
+    def __init__(self, reusable):
+        super(TournamentComp7StatsComposer, self).__init__(reusable, templates.TOURNAMENT_COMP7_COMMON_STATS_BLOCK.clone(), templates.TOURNAMENT_COMP7_PERSONAL_STATS_BLOCK.clone(), templates.COMP7_TEAMS_STATS_BLOCK.clone(), templates.REGULAR_TEXT_STATS_BLOCK.clone())
+        self._block.addNextComponent(templates.PROGRESSIVE_REWARD_VO.clone())
+        self._block.addNextComponent(templates.EFFICIENCY_TITLE_WITH_SKILLS_VO.clone())
+
+    @staticmethod
+    def _getBattlePassBlock():
+        return templates.COMP7_BATTLE_PASS_PROGRESS_STATS_BLOCK
+
+
 def createComposer(reusable):
     bonusType = reusable.common.arenaBonusType
     composer = collectBattleResultsComposer(bonusType)
@@ -272,3 +285,4 @@ for bt in ARENA_BONUS_TYPE.BATTLE_ROYALE_RANGE:
 registerBattleResultsComposer(ARENA_BONUS_TYPE.BOOTCAMP, BootcampStatsComposer)
 registerBattleResultsComposer(ARENA_BONUS_TYPE.MAPS_TRAINING, MapsTrainingStatsComposer)
 registerBattleResultsComposer(ARENA_BONUS_TYPE.COMP7, Comp7StatsComposer)
+registerBattleResultsComposer(ARENA_BONUS_TYPE.TOURNAMENT_COMP7, TournamentComp7StatsComposer)

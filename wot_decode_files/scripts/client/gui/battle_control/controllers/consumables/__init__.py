@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/consumables/__init__.py
 from constants import ARENA_BONUS_TYPE
 from gui.battle_control.controllers.consumables import ammo_ctrl
@@ -9,6 +9,7 @@ from gui.battle_control.controllers.consumables import opt_devices_ctrl
 from gui.battle_control.controllers.consumables import comp7_equipment_ctrl
 from gui.battle_control.controllers.consumables import epic_equipment_ctrl
 _EQUIPMENT_CONTROLLERS = {ARENA_BONUS_TYPE.COMP7: comp7_equipment_ctrl.Comp7EquipmentController, 
+   ARENA_BONUS_TYPE.TOURNAMENT_COMP7: comp7_equipment_ctrl.Comp7EquipmentController, 
    ARENA_BONUS_TYPE.EPIC_BATTLE: epic_equipment_ctrl.EpicEquipmentsController}
 _REPLAY_EQUIPMENT_CONTROLLERS = {ARENA_BONUS_TYPE.COMP7: comp7_equipment_ctrl.Comp7ReplayEquipmentController, 
    ARENA_BONUS_TYPE.EPIC_BATTLE: epic_equipment_ctrl.EpicReplayEquipmentController}

@@ -1,32 +1,32 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/items_parameters/comparator.py
 import collections, sys, typing
 from constants import BonusTypes
 from gui.shared.gui_items import KPI
 from gui.shared.items_parameters import params_cache
 from shared_utils import first
-from gui.shared.utils import WHEELED_SWITCH_ON_TIME, WHEELED_SWITCH_OFF_TIME, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_INVISIBILITY_STILL_FACTOR, TURBOSHAFT_INVISIBILITY_MOVING_FACTOR, CHASSIS_REPAIR_TIME, TURBOSHAFT_SWITCH_TIME, DUAL_GUN_RATE_TIME
+from gui.shared.utils import WHEELED_SWITCH_ON_TIME, WHEELED_SWITCH_OFF_TIME, DUAL_GUN_CHARGE_TIME, SHOT_DISPERSION_ANGLE, TURBOSHAFT_INVISIBILITY_STILL_FACTOR, TURBOSHAFT_INVISIBILITY_MOVING_FACTOR, DISPERSION_RADIUS, CHASSIS_REPAIR_TIME, TURBOSHAFT_SWITCH_TIME, DUAL_GUN_RATE_TIME, DUAL_ACCURACY_COOLING_DELAY, BURST_FIRE_RATE, BURST_TIME_INTERVAL
 if typing.TYPE_CHECKING:
     from gui.shared.items_parameters.params import _PenaltyInfo
 BACKWARD_QUALITY_PARAMS = frozenset([
  'aimingTime',
  'autoReloadTime',
- 'dispertionRadius',
+ DISPERSION_RADIUS,
  'fireStartingChance',
  'reloadMagazineTime',
  'reloadTimeSecs',
  'shellReloadingTime',
- 'shotDispersionAngle',
+ SHOT_DISPERSION_ANGLE,
  'weight',
  'turboshaftBurstFireRate',
- 'burstFireRate',
+ BURST_FIRE_RATE,
+ BURST_TIME_INTERVAL,
  'switchOnTime',
  'switchOffTime',
  CHASSIS_REPAIR_TIME,
  DUAL_GUN_CHARGE_TIME,
- KPI.Name.ART_NOTIFICATION_DELAY_FACTOR,
  KPI.Name.CREW_REPEATED_STUN_DURATION,
  KPI.Name.CREW_STUN_DURATION,
  KPI.Name.DAMAGE_AND_PIERCING_DISTRIBUTION_UPPER_BOUND,
@@ -53,19 +53,32 @@ BACKWARD_QUALITY_PARAMS = frozenset([
  WHEELED_SWITCH_ON_TIME,
  TURBOSHAFT_SWITCH_TIME,
  KPI.Name.VEHICLE_RAM_CHASSIS_DAMAGE_RESISTANCE,
- KPI.Name.DAMAGED_MODULES_DETECTION_TIME,
  KPI.Name.WOUNDED_CREW_EFFICIENCY,
- DUAL_GUN_RATE_TIME])
+ DUAL_GUN_RATE_TIME,
+ DUAL_ACCURACY_COOLING_DELAY,
+ KPI.Name.ART_NOTIFICATION_DELAY_FACTOR,
+ KPI.Name.DAMAGED_MODULES_DETECTION_TIME])
 NEGATIVE_PARAMS = [
  'switchOnTime', 'switchOffTime']
+PARAMS_WITH_IGNORED_EMPTY_VALUES = {
+ SHOT_DISPERSION_ANGLE, DISPERSION_RADIUS}
+
+def normalizeShotDispersionValue(value):
+    if len(value) == 1:
+        return [None] + value
+    else:
+        return value
+
+
+PARAMS_NORMALIZATION_MAP = {SHOT_DISPERSION_ANGLE: normalizeShotDispersionValue}
 _CUSTOM_QUALITY_PARAMS = {'vehicleWeight': (
                    True, False), 
    'clipFireRate': (
                   True, True, False), 
-   'burstFireRate': (
-                   True, False), 
+   BURST_FIRE_RATE: (
+                   True, False, False), 
    'turboshaftBurstFireRate': (
-                             True, False), 
+                             True, False, False), 
    'pitchLimits': (
                  True, False)}
 
@@ -79,11 +92,15 @@ class PARAM_STATE(object):
 DEFAULT_AVG_VALUE = (
  sys.maxint, -1)
 
-def getParamExtendedData(paramName, value, otherValue, penalties=None, customQualityParams=None, isSituational=False):
+def getParamExtendedData(paramName, value, otherValue, penalties=None, customQualityParams=None, isSituational=False, hasNormalization=False):
     possibleBonuses, bonuses, inactive, penalties = penalties if penalties is not None else ([], [], [], [])
     if paramName not in NEGATIVE_PARAMS:
         if otherValue is None or otherValue == DEFAULT_AVG_VALUE:
             otherValue = value
+    if hasNormalization and paramName in PARAMS_NORMALIZATION_MAP:
+        func = PARAMS_NORMALIZATION_MAP[paramName]
+        value = func(value)
+        otherValue = func(otherValue)
     return _ParameterInfo(paramName, value, rateParameterState(paramName, value, otherValue, customQualityParams=customQualityParams), possibleBonuses, inactive, bonuses, penalties, isSituational)
 
 
@@ -103,8 +120,8 @@ class ItemsComparator(object):
 
         return result
 
-    def getExtendedData(self, paramName):
-        return getParamExtendedData(paramName, self._currentParams.get(paramName), self._otherParams.get(paramName), self._getPenaltiesAndBonuses(paramName))
+    def getExtendedData(self, paramName, hasNormalization=False):
+        return getParamExtendedData(paramName, self._currentParams.get(paramName), self._otherParams.get(paramName), self._getPenaltiesAndBonuses(paramName), hasNormalization=hasNormalization)
 
     def getPenalties(self, _):
         return []
@@ -117,7 +134,7 @@ class VehiclesComparator(ItemsComparator):
 
     def __init__(self, currentVehicleParams, otherVehicleParams, suitableArtefacts=None, bonuses=None, penalties=None):
         super(VehiclesComparator, self).__init__(currentVehicleParams, otherVehicleParams)
-        self.__suitableArtefacts = suitableArtefacts or set()
+        self.__suitableArtefacts = set(suitableArtefacts or set())
         self.__bonuses = bonuses or set()
         self.__penalties = penalties or dict()
 
@@ -273,19 +290,19 @@ CONDITIONAL_BONUSES = {('invisibilityMovingFactor', 'invisibilityStillFactor', T
                                                                                                                    'trophyBasicTankRammer', BonusTypes.OPTIONAL_DEVICE),
                                                                                                                   (
                                                                                                                    'trophyUpgradedTankRammer', BonusTypes.OPTIONAL_DEVICE))}, 
-   ('clipFireRate', 'autoReloadTime'): {(('improvedVentilationBattleBooster', BonusTypes.BATTLE_BOOSTER),): (
-                                                                                                           (
-                                                                                                            'improvedVentilation_tier1', BonusTypes.OPTIONAL_DEVICE),
-                                                                                                           (
-                                                                                                            'improvedVentilation_tier2', BonusTypes.OPTIONAL_DEVICE),
-                                                                                                           (
-                                                                                                            'improvedVentilation_tier3', BonusTypes.OPTIONAL_DEVICE),
-                                                                                                           (
-                                                                                                            'deluxImprovedVentilation', BonusTypes.OPTIONAL_DEVICE),
-                                                                                                           (
-                                                                                                            'trophyBasicImprovedVentilation', BonusTypes.OPTIONAL_DEVICE),
-                                                                                                           (
-                                                                                                            'trophyUpgradedImprovedVentilation', BonusTypes.OPTIONAL_DEVICE))}, 
+   ('clipFireRate', 'autoReloadTime', 'dualAccuracyCoolingDelay'): {(('improvedVentilationBattleBooster', BonusTypes.BATTLE_BOOSTER),): (
+                                                                                                                                       (
+                                                                                                                                        'improvedVentilation_tier1', BonusTypes.OPTIONAL_DEVICE),
+                                                                                                                                       (
+                                                                                                                                        'improvedVentilation_tier2', BonusTypes.OPTIONAL_DEVICE),
+                                                                                                                                       (
+                                                                                                                                        'improvedVentilation_tier3', BonusTypes.OPTIONAL_DEVICE),
+                                                                                                                                       (
+                                                                                                                                        'deluxImprovedVentilation', BonusTypes.OPTIONAL_DEVICE),
+                                                                                                                                       (
+                                                                                                                                        'trophyBasicImprovedVentilation', BonusTypes.OPTIONAL_DEVICE),
+                                                                                                                                       (
+                                                                                                                                        'trophyUpgradedImprovedVentilation', BonusTypes.OPTIONAL_DEVICE))}, 
    ('circularVisionRadius', ): {(('improvedVentilationBattleBooster', BonusTypes.BATTLE_BOOSTER),): (
                                                                                                    (
                                                                                                     'improvedVentilation_tier1', BonusTypes.OPTIONAL_DEVICE),
@@ -475,6 +492,8 @@ def _getParamStateInfo(paramName, val1, val2, customReverted=False):
         return (PARAM_STATE.WORSE, diff)
     else:
         if diff == 0:
+            if hasNoParam and paramName in PARAMS_WITH_IGNORED_EMPTY_VALUES:
+                return (PARAM_STATE.NOT_APPLICABLE, diff)
             return (PARAM_STATE.NORMAL, diff)
         isInverted = paramName in BACKWARD_QUALITY_PARAMS or customReverted
         if isInverted and diff > 0 or not isInverted and diff < 0:

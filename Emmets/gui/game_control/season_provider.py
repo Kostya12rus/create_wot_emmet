@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/season_provider.py
 from collections import defaultdict
 from operator import itemgetter
@@ -197,7 +197,7 @@ class SeasonProvider(ISeasonProvider):
             return self._PERIOD_INFO_CLASS(now, periodType, PeriodInfo.leftSeasonBorder(currSeason), PeriodInfo.rightSeasonBorder(currSeason), PeriodInfo.leftCycleBorder(currCycle), PeriodInfo.rightCycleBorder(currCycle), primeDelta)
 
     def getPreviousSeason(self, now=None):
-        seasonsPassed = self.getSeasonPassed(now)
+        seasonsPassed = self.getSeasonsPassed(now)
         if seasonsPassed:
             seasonID, _ = max(seasonsPassed, key=itemgetter(1))
             return self.getSeason(seasonID)
@@ -280,7 +280,7 @@ class SeasonProvider(ISeasonProvider):
         else:
             return
 
-    def getSeasonPassed(self, now=None):
+    def getSeasonsPassed(self, now=None):
         now = now or self.__getNow()
         settings = self.__getSeasonSettings()
         seasonsPassed = []
@@ -290,6 +290,9 @@ class SeasonProvider(ISeasonProvider):
                 seasonsPassed.append((seasonID, endSeason))
 
         return seasonsPassed
+
+    def getAllSeasons(self):
+        return sorted(list(self.getSeason(sID) for sID in self.__getSeasonSettings().seasons.keys()), key=(lambda s: s.getNumber()))
 
     def getTimer(self, now=None, peripheryID=None):
         now = now or self.__getNow()

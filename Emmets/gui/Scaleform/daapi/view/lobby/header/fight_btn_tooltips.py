@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/header/fight_btn_tooltips.py
 from __future__ import absolute_import
 import typing
@@ -103,6 +103,9 @@ def getEpicFightBtnTooltipData(result):
     elif state == PREBATTLE_RESTRICTION.CREW_NOT_FULL:
         header = backport.text(_STR_PATH.crewNotFull.header())
         body = backport.text(_STR_PATH.crewNotFull.body(), crewList=getAbsenceCrewList())
+    elif state == PREBATTLE_RESTRICTION.VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE:
+        header = backport.text(_STR_PATH.wotPlusExclusiveUnavailable.header())
+        body = backport.text(_STR_PATH.wotPlusExclusiveUnavailable.body())
     else:
         return ''
     return makeTooltip(header, body)
@@ -117,7 +120,8 @@ def getMapsTrainingTooltipData():
 def getEpicBattlesOnlyVehicleTooltipData(result):
     state = result.restriction
     if state in (PREBATTLE_RESTRICTION.VEHICLE_NOT_SUPPORTED, UNIT_RESTRICTION.VEHICLE_WRONG_MODE,
-     PREBATTLE_RESTRICTION.VEHICLE_RENTALS_IS_OVER, PREBATTLE_RESTRICTION.VEHICLE_TELECOM_RENTALS_IS_OVER):
+     PREBATTLE_RESTRICTION.VEHICLE_RENTALS_IS_OVER, PREBATTLE_RESTRICTION.VEHICLE_TELECOM_RENTALS_IS_OVER,
+     PREBATTLE_RESTRICTION.VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE):
         header = backport.text(R.strings.menu.headerButtons.fightBtn.tooltip.notSupported.header())
         body = backport.text(R.strings.menu.headerButtons.fightBtn.tooltip.notSupported.body())
         return makeTooltip(header, body)
@@ -127,7 +131,8 @@ def getEpicBattlesOnlyVehicleTooltipData(result):
 def getComp7BattlesOnlyVehicleTooltipData(result):
     state = result.restriction
     if state in (PREBATTLE_RESTRICTION.VEHICLE_NOT_SUPPORTED, UNIT_RESTRICTION.VEHICLE_WRONG_MODE,
-     PREBATTLE_RESTRICTION.VEHICLE_RENTALS_IS_OVER, PREBATTLE_RESTRICTION.VEHICLE_TELECOM_RENTALS_IS_OVER):
+     PREBATTLE_RESTRICTION.VEHICLE_RENTALS_IS_OVER, PREBATTLE_RESTRICTION.VEHICLE_TELECOM_RENTALS_IS_OVER,
+     PREBATTLE_RESTRICTION.VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE):
         header = backport.text(R.strings.menu.headerButtons.fightBtn.tooltip.comp7BattleOnly.header())
         body = backport.text(R.strings.menu.headerButtons.fightBtn.tooltip.comp7BattleOnly.body())
         return makeTooltip(header, body)
@@ -168,6 +173,9 @@ def getRandomTooltipData(result):
     elif state == PREBATTLE_RESTRICTION.VEHICLE_TELECOM_RENTALS_IS_OVER:
         header = backport.text(_STR_PATH.telecomRentalIsOver.header())
         body = backport.text(_STR_PATH.telecomRentalIsOver.body())
+    elif state == PREBATTLE_RESTRICTION.VEHICLE_WOT_PLUS_EXCLUSIVE_UNAVAILABLE:
+        header = backport.text(_STR_PATH.wotPlusExclusiveUnavailable.header())
+        body = backport.text(_STR_PATH.wotPlusExclusiveUnavailable.body())
     else:
         return ''
     return makeTooltip(header, body)
@@ -234,6 +242,9 @@ def getComp7FightBtnTooltipData(result):
     elif state == PRE_QUEUE_RESTRICTION.BAN_IS_SET:
         header = backport.text(resShortCut.comp7BanIsSet.header())
         body = backport.text(resShortCut.comp7BanIsSet.body())
+    elif state == PRE_QUEUE_RESTRICTION.QUALIFICATION_RESULTS_PROCESSING:
+        header = backport.text(resShortCut.comp7RatingCalculation.header())
+        body = backport.text(resShortCut.comp7RatingCalculation.body())
     else:
         return ''
     return makeTooltip(header, body)

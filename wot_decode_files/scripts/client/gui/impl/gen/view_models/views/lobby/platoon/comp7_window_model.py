@@ -1,16 +1,23 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/platoon/comp7_window_model.py
+from enum import Enum
 from frameworks.wulf import Array
 from gui.impl.gen.view_models.views.lobby.platoon.comp7_header_model import Comp7HeaderModel
 from gui.impl.gen.view_models.views.lobby.platoon.comp7_slot_model import Comp7SlotModel
 from gui.impl.gen.view_models.views.lobby.platoon.members_window_model import MembersWindowModel
 
+class SeasonName(Enum):
+    FIRST = 'first'
+    SECOND = 'second'
+    THIRD = 'third'
+
+
 class Comp7WindowModel(MembersWindowModel):
     __slots__ = ()
 
-    def __init__(self, properties=19, commands=3):
+    def __init__(self, properties=20, commands=3):
         super(Comp7WindowModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -21,11 +28,17 @@ class Comp7WindowModel(MembersWindowModel):
     def getHeaderType():
         return Comp7HeaderModel
 
+    def getSeasonName(self):
+        return SeasonName(self._getString(18))
+
+    def setSeasonName(self, value):
+        self._setString(18, value.value)
+
     def getSlots(self):
-        return self._getArray(18)
+        return self._getArray(19)
 
     def setSlots(self, value):
-        self._setArray(18, value)
+        self._setArray(19, value)
 
     @staticmethod
     def getSlotsType():
@@ -34,4 +47,5 @@ class Comp7WindowModel(MembersWindowModel):
     def _initialize(self):
         super(Comp7WindowModel, self)._initialize()
         self._addViewModelProperty('header', Comp7HeaderModel())
+        self._addStringProperty('seasonName')
         self._addArrayProperty('slots', Array())

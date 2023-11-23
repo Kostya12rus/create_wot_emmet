@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/hangar_presets/hangar_gui_controller.py
 import typing
 from constants import QUEUE_TYPE
@@ -98,7 +98,9 @@ class HangarGuiController(IHangarGuiController, IPrbListener):
         return [ k for k, v in preset.visibleComponents.items() if v.isChangeable ]
 
     def __getCurrentPresetGetter(self):
-        if self.prbEntity is None:
+        prbEntity = self.prbEntity
+        if prbEntity is None:
             return
         else:
-            return self.__presetsGetters.get(self.prbEntity.getQueueType(), self.__presetsGetters[QUEUE_TYPE.RANDOMS])
+            presetsGetter = self.__presetsGetters.get(self.prbEntity.getQueueType(), self.__presetsGetters[QUEUE_TYPE.RANDOMS])
+            return presetsGetter.createByPrbEntity(prbEntity)

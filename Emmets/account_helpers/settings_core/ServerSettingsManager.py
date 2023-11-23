@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/ServerSettingsManager.py
 import weakref
 from collections import namedtuple
@@ -92,6 +92,10 @@ class UI_STORAGE_KEYS(CONST_CONTAINER):
     POST_PROGRESSION_INTRO_SHOWN = 'post_progression_intro_shown'
     VEH_PREVIEW_POST_PROGRESSION_BULLET_SHOWN = 'veh_preview_post_progression_bullet_shown'
     ACHIEVEMENT_EDIT_VIEW_VISITED = 'achievement_edit_view_visited'
+    DUAL_ACCURACY_HIGHLIGHTS_COUNTER = 'dual_accuracy_highlights_count'
+    DUAL_ACCURACY_MARK_IS_SHOWN = 'dual_accuracy_mark_shown'
+    STEAM_ADD_EMAIL_OVERLAY_SHOWN = 'steam_add_email_overlay_shown'
+    IS_CONFIRM_EMAIL_OVERLAY_ALLOWED = 'is_confirm_email_overlay_allowed'
 
 
 class BATTLE_MATTERS_KEYS(CONST_CONTAINER):
@@ -194,7 +198,8 @@ class ServerSettingsManager(object):
                                          GAME.SNIPER_ZOOM: Offset(27, 3 << 27)}), 
        SETTINGS_SECTIONS.GAME_EXTENDED_2: Section(masks={GAME.SHOW_ARTY_HIT_ON_MAP: 0, 
                                            GAME.GAMEPLAY_ONLY_10_MODE: 1, 
-                                           GAME.SCROLL_SMOOTHING: 4}, offsets={GAME.CUSTOMIZATION_DISPLAY_TYPE: Offset(2, 3 << 2)}), 
+                                           GAME.SCROLL_SMOOTHING: 4, 
+                                           GAME.GAMEPLAY_DEV_MAPS: 5}, offsets={GAME.CUSTOMIZATION_DISPLAY_TYPE: Offset(2, 3 << 2)}), 
        SETTINGS_SECTIONS.GAMEPLAY: Section(masks={}, offsets={GAME.GAMEPLAY_MASK: Offset(0, 65535)}), 
        SETTINGS_SECTIONS.GRAPHICS: Section(masks={GAME.LENS_EFFECT: 1}, offsets={}), 
        SETTINGS_SECTIONS.SOUND: Section(masks={}, offsets={SOUND.ALT_VOICES: Offset(0, 255)}), 
@@ -441,12 +446,16 @@ class ServerSettingsManager(object):
                                               GuiSettingsBehavior.RANKED_WELCOME_VIEW_SHOWED: 1, 
                                               GuiSettingsBehavior.RANKED_WELCOME_VIEW_STARTED: 2, 
                                               GuiSettingsBehavior.EPIC_RANDOM_CHECKBOX_CLICKED: 3, 
+                                              GuiSettingsBehavior.COMP7_SEASON_STATISTICS_SHOWN: 22, 
+                                              GuiSettingsBehavior.PRESTIGE_FIRST_ENTRY_NOTIFICATION_SHOWN: 23, 
                                               GuiSettingsBehavior.CREW_22_WELCOME_SHOWN: 24, 
                                               GuiSettingsBehavior.DISPLAY_PLATOON_MEMBER_CLICKED: 25, 
                                               GuiSettingsBehavior.VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW: 26, 
                                               GuiSettingsBehavior.BIRTHDAY_CALENDAR_INTRO_SHOWED: 27, 
                                               GuiSettingsBehavior.RESOURCE_WELL_INTRO_SHOWN: 28, 
-                                              GuiSettingsBehavior.COMP7_INTRO_SHOWN: 30}, offsets={}), 
+                                              GuiSettingsBehavior.COMP7_WHATS_NEW_SHOWN: 29, 
+                                              GuiSettingsBehavior.COMP7_INTRO_SHOWN: 30, 
+                                              GuiSettingsBehavior.IS_PRESTIGE_ONBOARDING_VIEWED: 31}, offsets={}), 
        SETTINGS_SECTIONS.EULA_VERSION: Section(masks={}, offsets={'version': Offset(0, 4294967295)}), 
        SETTINGS_SECTIONS.MARKS_ON_GUN: Section(masks={}, offsets={GAME.SHOW_MARKS_ON_GUN: Offset(0, 4294967295)}), 
        SETTINGS_SECTIONS.CONTACTS: Section(masks={CONTACTS.SHOW_OFFLINE_USERS: 0, 
@@ -572,7 +581,11 @@ class ServerSettingsManager(object):
                                       UI_STORAGE_KEYS.DUAL_GUN_HIGHLIGHTS_COUNTER: Offset(19, 3670016), 
                                       UI_STORAGE_KEYS.TURBOSHAFT_HIGHLIGHTS_COUNTER: Offset(23, 58720256)}), 
        SETTINGS_SECTIONS.UI_STORAGE_2: Section(masks={UI_STORAGE_KEYS.ROCKET_ACCELERATION_MARK_IS_SHOWN: 0, 
-                                        UI_STORAGE_KEYS.ACHIEVEMENT_EDIT_VIEW_VISITED: 4}, offsets={UI_STORAGE_KEYS.ROCKET_ACCELERATION_HIGHLIGHTS_COUNTER: Offset(1, 14)}), 
+                                        UI_STORAGE_KEYS.ACHIEVEMENT_EDIT_VIEW_VISITED: 4, 
+                                        UI_STORAGE_KEYS.DUAL_ACCURACY_MARK_IS_SHOWN: 8, 
+                                        UI_STORAGE_KEYS.STEAM_ADD_EMAIL_OVERLAY_SHOWN: 9, 
+                                        UI_STORAGE_KEYS.IS_CONFIRM_EMAIL_OVERLAY_ALLOWED: 10}, offsets={UI_STORAGE_KEYS.ROCKET_ACCELERATION_HIGHLIGHTS_COUNTER: Offset(1, 14), 
+                                        UI_STORAGE_KEYS.DUAL_ACCURACY_HIGHLIGHTS_COUNTER: Offset(5, 224)}), 
        SETTINGS_SECTIONS.BATTLE_MATTERS_QUESTS: Section(masks={}, offsets={BATTLE_MATTERS_KEYS.QUESTS_SHOWN: Offset(0, 255), 
                                                  BATTLE_MATTERS_KEYS.QUEST_PROGRESS: Offset(8, 4294967040)}), 
        SETTINGS_SECTIONS.QUESTS_PROGRESS: Section(masks={}, offsets={QUESTS_PROGRESS.VIEW_TYPE: Offset(0, 3), 
@@ -771,6 +784,7 @@ class ServerSettingsManager(object):
     _MAX_DUAL_GUN_HIGHLIGHTS_COUNT = 5
     _MAX_TURBOSHAFT_HIGHLIGHTS_COUNT = 5
     _MAX_ROCKET_ACCELERATION_HIGHLIGHTS_COUNT = 5
+    _MAX_DUAL_ACCURACY_HIGHLIGHTS_COUNT = 5
 
     def __init__(self, core):
         self._core = weakref.proxy(core)
@@ -878,6 +892,9 @@ class ServerSettingsManager(object):
 
     def checkRocketAccelerationHighlights(self, increase=False):
         return self.__checkUIHighlights(UI_STORAGE_KEYS.ROCKET_ACCELERATION_HIGHLIGHTS_COUNTER, self._MAX_ROCKET_ACCELERATION_HIGHLIGHTS_COUNT, increase)
+
+    def checkDualAccuracyHighlights(self, increase=False):
+        return self.__checkUIHighlights(UI_STORAGE_KEYS.DUAL_ACCURACY_HIGHLIGHTS_COUNTER, self._MAX_DUAL_ACCURACY_HIGHLIGHTS_COUNT, increase)
 
     def updateUIStorageCounter(self, key, step=1):
         storageSection = self.getSection(SETTINGS_SECTIONS.UI_STORAGE)
@@ -1135,7 +1152,7 @@ class ServerSettingsManager(object):
     @adisp_process
     def _updateToVersion(self, callback=None):
         currentVersion = self.settingsCache.getVersion()
-        data = {'gameData': {}, 'gameExtData': {}, 'gameExtData2': {}, 'gameplayData': {}, 'controlsData': {}, 'aimData': {}, 'markersData': {}, 'graphicsData': {}, 'marksOnGun': {}, 'fallout': {}, 'carousel_filter': {}, 'feedbackDamageIndicator': {}, 'feedbackDamageLog': {}, 'feedbackBattleEvents': {}, 'onceOnlyHints': {}, 'onceOnlyHints2': {}, 'uiStorage': {}, SETTINGS_SECTIONS.UI_STORAGE_2: {}, 'epicCarouselFilter2': {}, 'rankedCarouselFilter1': {}, 'rankedCarouselFilter2': {}, 'comp7CarouselFilter1': {}, 'comp7CarouselFilter2': {}, 'sessionStats': {}, 'battleComm': {}, 'dogTags': {}, 'battleHud': {}, 'spgAim': {}, GUI_START_BEHAVIOR: {}, 'battlePassStorage': {}, SETTINGS_SECTIONS.CONTOUR: {}, SETTINGS_SECTIONS.ROYALE_CAROUSEL_FILTER_1: {}, SETTINGS_SECTIONS.ROYALE_CAROUSEL_FILTER_2: {}, 'clear': {}, 'delete': [], SETTINGS_SECTIONS.LIMITED_UI_1: {}, SETTINGS_SECTIONS.LIMITED_UI_2: {}}
+        data = {'gameData': {}, 'gameExtData': {}, 'gameExtData2': {}, 'gameplayData': {}, 'controlsData': {}, 'aimData': {}, 'markersData': {}, 'graphicsData': {}, 'marksOnGun': {}, 'fallout': {}, 'carousel_filter': {}, 'feedbackDamageIndicator': {}, 'feedbackDamageLog': {}, 'feedbackBattleEvents': {}, 'onceOnlyHints': {}, 'onceOnlyHints2': {}, 'uiStorage': {}, SETTINGS_SECTIONS.UI_STORAGE_2: {}, 'epicCarouselFilter2': {}, 'rankedCarouselFilter1': {}, 'rankedCarouselFilter2': {}, 'comp7CarouselFilter1': {}, 'comp7CarouselFilter2': {}, 'sessionStats': {}, 'battleComm': {}, 'dogTags': {}, 'battleHud': {}, 'spgAim': {}, GUI_START_BEHAVIOR: {}, 'battlePassStorage': {}, SETTINGS_SECTIONS.CONTOUR: {}, SETTINGS_SECTIONS.ROYALE_CAROUSEL_FILTER_1: {}, SETTINGS_SECTIONS.ROYALE_CAROUSEL_FILTER_2: {}, 'clear': {}, 'delete': [], SETTINGS_SECTIONS.LIMITED_UI_1: {}, SETTINGS_SECTIONS.LIMITED_UI_2: {}, SETTINGS_SECTIONS.BATTLE_MATTERS_QUESTS: {}}
         yield migrateToVersion(currentVersion, self._core, data)
         self._setSettingsSections(data)
         callback(self)

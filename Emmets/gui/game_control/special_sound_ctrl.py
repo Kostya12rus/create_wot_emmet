@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/special_sound_ctrl.py
 from collections import namedtuple
 import logging, ResMgr, SoundGroups, nations
@@ -41,6 +41,7 @@ class SpecialSoundCtrl(ISpecialSoundCtrl):
         self.__voiceoverByTankman = {}
         self.__voiceoverSpecialModes = {}
         self.__arenaMusicByStyle = {}
+        self.__specialVoiceTags = set()
         self.__currentMode = None
         self.__arenaMusicSetup = None
         return
@@ -70,12 +71,19 @@ class SpecialSoundCtrl(ISpecialSoundCtrl):
         self.__arenaMusicByStyle = None
         self.__arenaMusicSetup = None
         self.__currentMode = None
+        self.__specialVoiceTags = None
         g_playerEvents.onAvatarBecomeNonPlayer -= self.__onAvatarBecomeNonPlayer
         return
 
     def setPlayerVehicle(self, vehiclePublicInfo, isPlayerVehicle):
         self.__setVoiceoverByVehicleOrTankman(vehiclePublicInfo, isPlayerVehicle)
         self.__setArenaMusicByStyle(vehiclePublicInfo, isPlayerVehicle)
+
+    def getVoiceoverByTankmanTagOrVehicle(self, tag):
+        return self.__voiceoverByTankman.get(tag) or self.__voiceoverByVehicle.get(tag)
+
+    def checkTagForSpecialVoice(self, tag):
+        return tag in self.__specialVoiceTags
 
     def __setVoiceoverByVehicleOrTankman(self, vehiclePublicInfo, isPlayerVehicle):
         vehicleType = VehicleDescr(vehiclePublicInfo.compDescr).type
@@ -137,6 +145,7 @@ class SpecialSoundCtrl(ISpecialSoundCtrl):
             if voiceoverSection is not None:
                 for source, paramSection in voiceoverSection.items():
                     tag = paramSection.readString('tag')
+                    self.__specialVoiceTags.add(tag)
                     onlyInNational = paramSection.readBool('onlyInNational')
                     genderStr = paramSection.readString('gender')
                     gender = _genderStrToSwitch.get(genderStr, CREW_GENDER_SWITCHES.DEFAULT)
@@ -199,7 +208,7 @@ class SpecialSoundCtrl(ISpecialSoundCtrl):
             return False
 
     def __setSpecialVoiceByCommanderSkinID(self, isFemale, commanderSkinID):
-        if commanderSkinID != NO_CREW_SKIN_ID and self.__lobbyContext.getServerSettings().isCrewSkinsEnabled():
+        if commanderSkinID != NO_CREW_SKIN_ID:
             skin = tankmen.g_cache.crewSkins().skins.get(commanderSkinID)
             if skin is not None and skin.soundSetID != NO_CREW_SKIN_SOUND_SET:
                 params = _VoiceoverParams(languageMode=skin.soundSetID, genderSwitch=CREW_GENDER_SWITCHES.GENDER_ALL[isFemale], onlyInNational=False)
