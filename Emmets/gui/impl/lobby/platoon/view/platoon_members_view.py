@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/platoon/view/platoon_members_view.py
 import logging, typing
 from enum import Enum
@@ -49,7 +49,7 @@ from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
 from messenger.proto.events import g_messengerEvents
 from shared_utils import findFirst
-from skeletons.gui.game_control import IPlatoonController, IComp7Controller
+from skeletons.gui.game_control import IPlatoonController, IComp7Controller, IEpicBattleMetaGameController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
@@ -59,7 +59,7 @@ from gui.impl.pub.tooltip_window import SimpleTooltipContent
 from messenger.ext import channel_num_gen
 from adisp import adisp_process
 if typing.TYPE_CHECKING:
-    from helpers.server_settings import Comp7PrestigeRanksConfig
+    from helpers.server_settings import Comp7RanksConfig
     from comp7_ranks_common import Comp7Division
 _logger = logging.getLogger(__name__)
 _strButtons = R.strings.platoon.buttons
@@ -521,7 +521,7 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
 
     @adisp_process
     def _onSwitchReady(self):
-        result = yield self._platoonCtrl.togglePlayerReadyAction()
+        result = yield self._platoonCtrl.togglePlayerReadyAction(checkAmmo=True)
         if result:
             with self.viewModel.transaction() as (model):
                 model.btnSwitchReady.setIsEnabled(False)
@@ -543,7 +543,8 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
             return
         isInQueue = self._platoonCtrl.isInQueue()
         actionButtonStateVO = self.__getActionButtonStateVO()
-        simpleState = actionButtonStateVO.getSimpleState()
+        prbType = self._platoonCtrl.getPrbEntityType()
+        simpleState = actionButtonStateVO.getSimpleState(prbType)
         onlyReadinessText = actionButtonStateVO.isReadinessTooltip()
         with self.viewModel.transaction() as (model):
             if not self._platoonCtrl.isInCoolDown(REQUEST_TYPE.SET_PLAYER_STATE):
@@ -571,7 +572,7 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
         self.__updateVoiceChatToggleState()
 
     def _onLeavePlatoon(self):
-        self._platoonCtrl.leavePlatoon()
+        self._platoonCtrl.leavePlatoon(parent=self)
 
     def __onServerSettingsChange(self, diff):
         if 'unit_assembler_config' in diff:
@@ -656,6 +657,13 @@ class SquadMembersView(ViewImpl, CallbackDelayer):
 class EventMembersView(SquadMembersView):
     _prebattleType = PrebattleTypes.EVENT
 
+    @adisp_process
+    def _onSwitchReady(self):
+        result = yield self._platoonCtrl.togglePlayerReadyAction(checkAmmo=False)
+        if result:
+            with self.viewModel.transaction() as (model):
+                model.btnSwitchReady.setIsEnabled(False)
+
     def _addSubviews(self):
         self._addSubviewToLayout(ChatSubview())
 
@@ -688,10 +696,11 @@ class EventMembersView(SquadMembersView):
 
 class EpicMembersView(SquadMembersView):
     _prebattleType = PrebattleTypes.EPIC
+    _epicMetaGameCtrl = dependency.descriptor(IEpicBattleMetaGameController)
 
     def _getWindowInfoTooltipHeaderAndBody(self):
         header = backport.text(R.strings.platoon.members.header.tooltip.epic.header())
-        body = backport.text(R.strings.platoon.members.header.tooltip.epic.body())
+        body = backport.text(R.strings.platoon.members.header.tooltip.epic.body(), level=self._epicMetaGameCtrl.getSuitableForQueueVehicleLevelStr())
         return (header, body)
 
     def _setBonusInformation(self, bonusState):
@@ -709,9 +718,9 @@ class EpicMembersView(SquadMembersView):
                     bonusesArray.addViewModel(creditBonusModel)
                 bonusesArray.invalidate()
             else:
-                infoText = R.strings.messenger.dialogs.squadChannel.headerMsg.epicBattleFormationRestriction()
+                infoText = backport.text(R.strings.messenger.dialogs.squadChannel.headerMsg.epicBattleFormationRestriction(), level=self._epicMetaGameCtrl.getSuitableForQueueVehicleLevelStr())
                 model.noBonusPlaceholder.setText(infoText)
-                model.noBonusPlaceholder.setIcon(R.images.gui.maps.icons.battleTypes.c_64x64.epicbattle())
+                model.noBonusPlaceholder.setIcon(R.images.gui.maps.icons.battleTypes.c_64x64.epicQueue())
         self._currentBonusState = bonusState
 
 
@@ -894,7 +903,7 @@ class Comp7MembersView(SquadMembersView):
 
     @classmethod
     def __getDivision(cls, rank, rating):
-        ranksConfig = cls._lobbyContext.getServerSettings().comp7PrestigeRanksConfig
+        ranksConfig = cls._lobbyContext.getServerSettings().comp7RanksConfig
         division = findFirst((lambda d: rating in d.range), ranksConfig.divisionsByRank.get(rank, ()))
         return division
 

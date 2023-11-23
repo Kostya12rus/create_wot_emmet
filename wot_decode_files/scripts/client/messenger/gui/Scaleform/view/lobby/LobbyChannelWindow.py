@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/view/lobby/LobbyChannelWindow.py
 from constants import PREBATTLE_TYPE
 from gui.Scaleform.managers.windows_stored_data import DATA_TYPE, TARGET_ID
@@ -30,6 +30,7 @@ class LobbyChannelWindow(LobbyChannelWindowMeta):
         channel = self._controller.getChannel()
         if self._controller.hasUntrustedMembers() and antispam_message.isShown():
             self.as_showWarningS(('{} {}\n{}').format(icons.markerBlocked(), text_styles.error(i18n.makeString(MESSENGER.CHAT_PERSONALMESSAGE_WARNINGHEAD)), i18n.makeString(MESSENGER.CHAT_PERSONALMESSAGE_WARNINGBODY)))
+        self.as_setIsPrivateS(channel.isPrivate())
         if channel.haveMembers():
             membersDP = MembersDataProvider()
             membersDP.setFlashObject(self.as_getMembersDPS())

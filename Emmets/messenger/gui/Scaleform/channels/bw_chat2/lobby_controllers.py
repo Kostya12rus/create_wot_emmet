@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/channels/bw_chat2/lobby_controllers.py
 from gui.prb_control.entities.base.legacy.listener import ILegacyListener
 from gui.prb_control.settings import PREBATTLE_ROSTER
@@ -47,11 +47,11 @@ class UnitChannelController(LobbyLayout):
     def _broadcast(self, message):
         self._getChat().broadcast(message)
 
-    def _format(self, message, doFormatting=True):
+    def _format(self, message, doFormatting=True, shouldAddTextLink=False):
         if not doFormatting:
             return message.text
         dbID = message.accountDBID
-        return self._mBuilder.setGuiType(dbID).setName(dbID, message.accountName).setTime(message.sentAt).setText(message.text).build()
+        return self._mBuilder.setGuiType(dbID).setName(dbID, message.accountName).setTime(message.sentAt).setText(message.text).setTextLink(dbID, message.accountName, shouldAddTextLink).build()
 
     def _fireInitEvent(self):
         g_eventBus.handleEvent(MessengerEvent(MessengerEvent.PRB_CHANNEL_CTRL_INITED, {'prbType': self._channel.getPrebattleType(), 

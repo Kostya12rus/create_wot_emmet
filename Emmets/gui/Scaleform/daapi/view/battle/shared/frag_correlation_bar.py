@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/frag_correlation_bar.py
 from collections import namedtuple
 import typing
@@ -22,18 +22,20 @@ class _FragBarViewState(BitmaskHelper):
     SHOW_TIER_GROUPING = 4
     SHOW_VEHICLES_COUNTER = 8
     SHOW_HP_BAR = 16
+    AUTO_SIZE = 32
 
 
 GuiTypeViewStateBehaviour = namedtuple('GuiTypeViewStateBehaviour', ('allowHPBar',
                                                                      'allowHPVal',
                                                                      'allowDiff',
                                                                      'allowTierGrp',
-                                                                     'allowVehIcons'))
-_DEFAULT_GUI_TYPE = GuiTypeViewStateBehaviour(True, True, True, True, True)
-_GUI_TYPE_VIEW_STATE_BEHAVIOUR = {ARENA_GUI_TYPE.TRAINING: GuiTypeViewStateBehaviour(True, True, True, IS_DEVELOPMENT, True), 
-   ARENA_GUI_TYPE.BOOTCAMP: GuiTypeViewStateBehaviour(True, True, True, False, True), 
-   ARENA_GUI_TYPE.EPIC_RANDOM: GuiTypeViewStateBehaviour(True, True, True, False, False), 
-   ARENA_GUI_TYPE.EPIC_RANDOM_TRAINING: GuiTypeViewStateBehaviour(True, True, True, False, False)}
+                                                                     'allowVehIcons',
+                                                                     'autoSize'))
+_DEFAULT_GUI_TYPE = GuiTypeViewStateBehaviour(True, True, True, True, True, False)
+_GUI_TYPE_VIEW_STATE_BEHAVIOUR = {ARENA_GUI_TYPE.TRAINING: GuiTypeViewStateBehaviour(True, True, True, IS_DEVELOPMENT, True, False), 
+   ARENA_GUI_TYPE.BOOTCAMP: GuiTypeViewStateBehaviour(True, True, True, False, True, False), 
+   ARENA_GUI_TYPE.EPIC_RANDOM: GuiTypeViewStateBehaviour(True, True, True, False, False, False), 
+   ARENA_GUI_TYPE.EPIC_RANDOM_TRAINING: GuiTypeViewStateBehaviour(True, True, True, False, False, False)}
 
 class FragCorrelationBar(FragCorrelationBarMeta, IBattleFieldListener):
     sessionProvider = dependency.descriptor(IBattleSessionProvider)
@@ -88,6 +90,7 @@ class FragCorrelationBar(FragCorrelationBarMeta, IBattleFieldListener):
         mask = self.__changeSetting(mask, arenaType.allowDiff and showDiff and showBar, _FragBarViewState.SHOW_HP_DIFFERENCE)
         mask = self.__changeSetting(mask, arenaType.allowTierGrp and showTiers and showVeh, _FragBarViewState.SHOW_TIER_GROUPING)
         mask = self.__changeSetting(mask, arenaType.allowVehIcons and showVeh, _FragBarViewState.SHOW_VEHICLES_COUNTER)
+        mask = self.__changeSetting(mask, arenaType.autoSize, _FragBarViewState.AUTO_SIZE)
         self.__viewSettings = mask
         self.as_updateViewSettingS(self.__viewSettings)
 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/ammunition_panel/hangar_view.py
 import logging
 from CurrentVehicle import g_currentVehicle
@@ -16,6 +16,7 @@ from gui.shared.events import AmmunitionPanelViewEvent
 from gui.shared.gui_items.Vehicle import Vehicle
 from helpers import dependency
 from skeletons.account_helpers.settings_core import ISettingsCore
+from skeletons.gui.game_control import IHalloweenController
 _logger = logging.getLogger(__name__)
 _AMMUNITION_PANEL_HINTS = (
  OnceOnlyHints.AMMUNITION_PANEL_HINT, OnceOnlyHints.AMUNNITION_PANEL_EPIC_BATTLE_ABILITIES_HINT)
@@ -25,6 +26,7 @@ _HINT_TO_RULE_ID = {OnceOnlyHints.AMMUNITION_PANEL_HINT: LuiRules.AP_ZONE_HINT,
 class HangarAmmunitionPanelView(BaseAmmunitionPanelView):
     _settingsCore = dependency.descriptor(ISettingsCore)
     _limitedUIController = dependency.descriptor(ILimitedUIController)
+    _hwController = dependency.descriptor(IHalloweenController)
 
     def update(self, fullUpdate=True):
         with self.viewModel.transaction():
@@ -60,7 +62,10 @@ class HangarAmmunitionPanelView(BaseAmmunitionPanelView):
     @wg_async
     def _onPanelSectionSelected(self, args):
         selectedSection = args['selectedSection']
+        isEventHangar = self._hwController.isEventHangar()
         yield showIntro(selectedSection, self.getParentWindow())
+        if isEventHangar and not self._hwController.isEnabled():
+            return
         if self.viewStatus != ViewStatus.LOADED:
             return
         super(HangarAmmunitionPanelView, self)._onPanelSectionSelected(args)

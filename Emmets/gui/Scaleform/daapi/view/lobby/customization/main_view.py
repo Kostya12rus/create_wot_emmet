@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/main_view.py
 import logging, typing
 from collections import namedtuple
@@ -181,6 +181,13 @@ class _CustomizationCloseConfirmatorsHelper(CloseConfirmatorsHelper):
         result = super(_CustomizationCloseConfirmatorsHelper, self).getRestrictedSfViews()
         result.append(VIEW_ALIAS.LOBBY_HANGAR)
         return result
+
+    def getRestrictedGuiImplViews(self):
+        return super(_CustomizationCloseConfirmatorsHelper, self).getRestrictedGuiImplViews() + [
+         R.views.lobby.common.BrowserView(),
+         R.views.lobby.personal_reserves.ReservesActivationView(),
+         R.views.lobby.personal_reserves.ReservesConversionView(),
+         R.views.lobby.personal_reserves.ReservesIntroView()]
 
     def start(self, closeConfirmator):
         super(_CustomizationCloseConfirmatorsHelper, self).start(closeConfirmator)
@@ -472,7 +479,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         return
 
     def __onCustomizationClearLocked(self):
-        if self.__ctx.modeId != CustomizationModes.EDITABLE_STYLE:
+        if self.__ctx.modeId not in (CustomizationModes.STYLED, CustomizationModes.EDITABLE_STYLE):
             return
         filterMethod = REQ_CRITERIA.CUSTOM((lambda item: not item.isUnlockedByToken()))
         modifiedOutfits = self.__ctx.mode.getModifiedOutfits()

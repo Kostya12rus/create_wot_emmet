@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/hangar_vehicle_appearance.py
 import logging, weakref, math
 from collections import namedtuple
@@ -548,11 +548,11 @@ class HangarVehicleAppearance(ScriptGameObject):
         return
 
     def __onItemsCacheSyncCompleted(self, updateReason, _):
-        if updateReason == CACHE_SYNC_REASON.DOSSIER_RESYNC and self.__vehicleStickers is not None and self._getThisVehicleDossierInsigniaRank() != self.__vehicleStickers.getCurrentInsigniaRank():
+        if updateReason == CACHE_SYNC_REASON.DOSSIER_RESYNC and self.__vehicleStickers is not None and self.getThisVehicleDossierInsigniaRank() != self.__vehicleStickers.getCurrentInsigniaRank():
             self.refresh()
         return
 
-    def _getThisVehicleDossierInsigniaRank(self):
+    def getThisVehicleDossierInsigniaRank(self):
         if self.__vDesc and self.__showMarksOnGun:
             vehicleDossier = self.itemsCache.items.getVehicleDossier(self.__vDesc.type.compactDescr)
             return vehicleDossier.getRandomStats().getAchievement(MARK_ON_GUN_RECORD).getValue()
@@ -823,7 +823,7 @@ class HangarVehicleAppearance(ScriptGameObject):
     def __updateDecals(self, outfit):
         if self.__vehicleStickers is not None:
             self.__vehicleStickers.detach()
-        self.__vehicleStickers = VehicleStickers.VehicleStickers(self.__spaceId, self.__vDesc, self._getThisVehicleDossierInsigniaRank(), outfit)
+        self.__vehicleStickers = VehicleStickers.VehicleStickers(self.__spaceId, self.__vDesc, self.getThisVehicleDossierInsigniaRank(), outfit)
         self.__vehicleStickers.alpha = self.__currentEmblemsAlpha
         self.__vehicleStickers.attach(self.__vEntity.model, self.__isVehicleDestroyed, False)
         self._requestClanDBIDForStickers(self.__onClanDBIDRetrieved)

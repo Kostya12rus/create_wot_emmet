@@ -1,9 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/tankStructure.py
 from collections import namedtuple
-import random
 
 class CgfTankNodes(object):
     TANK_ROOT = 'Tank.Root'
@@ -191,19 +190,6 @@ def getCrashedSkeleton(vehicleDesc):
     return result
 
 
-def chooseCrashSkin(partModelSets):
-    crashSetsCount = 0
-    for setName in partModelSets:
-        if setName.find('alterCrash') != -1:
-            crashSetsCount += 1
-
-    crashSkinNum = random.randint(0, crashSetsCount)
-    if crashSkinNum == 0:
-        return partModelSets['default']
-    crashSkinName = 'alterCrash' + str(crashSkinNum)
-    return partModelSets[crashSkinName]
-
-
 def getPartModelsFromDesc(vehicleDesc, modelsSetParams):
     skinName = modelsSetParams.skin
     paths = []
@@ -211,8 +197,6 @@ def getPartModelsFromDesc(vehicleDesc, modelsSetParams):
         part = getattr(vehicleDesc, partName)
         if skinName in part.modelsSets:
             skin = part.modelsSets[skinName]
-        elif modelsSetParams.state != 'undamaged':
-            skin = chooseCrashSkin(part.modelsSets)
         else:
             skin = part.models
         path = skin.getPathByStateName(modelsSetParams.state)

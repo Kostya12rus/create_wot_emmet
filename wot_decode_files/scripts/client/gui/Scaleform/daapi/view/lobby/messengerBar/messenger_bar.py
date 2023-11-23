@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/messengerBar/messenger_bar.py
 from account_helpers.settings_core.settings_constants import SESSION_STATS
 from adisp import adisp_process
@@ -111,6 +111,10 @@ class MessengerBar(MessengerBarMeta, IGlobalListener):
     _limitedUIController = dependency.descriptor(ILimitedUIController)
     _NEW_PLAYER_BATTLES = 2
 
+    def __init__(self):
+        super(MessengerBar, self).__init__()
+        self.__disableReferralQueues = {QUEUE_TYPE.HALLOWEEN_BATTLES}
+
     @prbDispatcherProperty
     def prbDispatcher(self):
         return
@@ -184,8 +188,12 @@ class MessengerBar(MessengerBarMeta, IGlobalListener):
         self.as_setReferralBtnLimitIndicationS(self._referralCtrl.isScoresLimitReached())
 
     def __handleFightButtonUpdated(self, event):
+        self.__updateReferralBtnEnabled()
+
+    def __updateReferralBtnEnabled(self):
         state = self.prbDispatcher.getFunctionalState()
-        self.as_setReferralButtonEnabledS(not state.isNavigationDisabled())
+        enabled = self.prbEntity.getQueueType() not in self.__disableReferralQueues
+        self.as_setReferralButtonEnabledS(not state.isNavigationDisabled() and enabled)
 
     def __manageWindow(self, eventType):
         manager = self.app.containerManager

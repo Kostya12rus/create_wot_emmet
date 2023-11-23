@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/classic/__init__.py
 from frameworks.wulf import WindowLayer
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -22,6 +22,7 @@ def getViewSettings():
     from gui.Scaleform.daapi.view.battle.shared import frag_correlation_bar
     from gui.Scaleform.daapi.view.battle.classic import full_stats
     from gui.Scaleform.daapi.view.battle.classic import players_panel
+    from gui.Scaleform.daapi.view.battle.classic import map_info_tip
     from gui.Scaleform.daapi.view.battle.classic import stats_exchange
     from gui.Scaleform.daapi.view.battle.classic import team_bases_panel
     from gui.Scaleform.daapi.view.battle.classic import minimap
@@ -61,7 +62,8 @@ def getViewSettings():
      ComponentSettings(BATTLE_VIEW_ALIASES.PLAYER_MESSAGES, messages.PlayerMessages, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(BATTLE_VIEW_ALIASES.PREBATTLE_AMMUNITION_PANEL, prebattle_ammunition_panel_inject.PrebattleAmmunitionPanelInject, ScopeTemplates.DEFAULT_SCOPE),
      ComponentSettings(BATTLE_VIEW_ALIASES.POSTMORTEM_PANEL, postmortem_panel.PostmortemPanel, ScopeTemplates.DEFAULT_SCOPE),
-     ComponentSettings(BATTLE_VIEW_ALIASES.PREBATTLE_TIMER, battle_timers.PreBattleTimer, ScopeTemplates.DEFAULT_SCOPE))
+     ComponentSettings(BATTLE_VIEW_ALIASES.PREBATTLE_TIMER, battle_timers.PreBattleTimer, ScopeTemplates.DEFAULT_SCOPE),
+     ComponentSettings(BATTLE_VIEW_ALIASES.MAP_INFO_TIP, map_info_tip.MapInfoTip, ScopeTemplates.DEFAULT_SCOPE))
 
 
 def getBusinessHandlers():

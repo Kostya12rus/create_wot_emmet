@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/timers_panel.py
 import logging, math, weakref
 from collections import defaultdict
 import BigWorld
 from battle_royale.gui.constants import BattleRoyaleEquipments
-import BattleReplay, SoundGroups
+import BattleReplay, SoundGroups, Windowing
 from AvatarInputHandler import AvatarInputHandler
 from constants import StunTypes
 from ReplayEvents import g_replayEvents
@@ -35,6 +35,8 @@ _TIMERS_PRIORITY = {(_TIMER_STATES.OVERTURNED, _TIMER_STATES.CRITICAL_VIEW): 1,
    (_TIMER_STATES.DANGER_ZONE, _TIMER_STATES.CRITICAL_VIEW): 3, 
    (_TIMER_STATES.STUN, _TIMER_STATES.WARNING_VIEW): 4, 
    (_TIMER_STATES.STUN_FLAME, _TIMER_STATES.WARNING_VIEW): 4, 
+   (_TIMER_STATES.MAP_DEATH_ZONE, _TIMER_STATES.WARNING_VIEW): 4, 
+   (_TIMER_STATES.WARNING_ZONE, _TIMER_STATES.WARNING_VIEW): 5, 
    (_TIMER_STATES.DROWN, _TIMER_STATES.CRITICAL_VIEW): 5, 
    (_TIMER_STATES.DROWN, _TIMER_STATES.WARNING_VIEW): 6, 
    (_TIMER_STATES.FIRE, _TIMER_STATES.WARNING_VIEW): 7, 
@@ -412,6 +414,7 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
         if crosshairCtrl is not None:
             crosshairCtrl.onCrosshairViewChanged += self.__onCrosshairViewChanged
         self.__equipmentCtrl = self.sessionProvider.shared.equipments
+        Windowing.addWindowAccessibilitynHandler(self.__onWindowAccessibilityChanged)
         self.__initData()
         return
 
@@ -432,17 +435,19 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
          self._getNotificationTimerData(_TIMER_STATES.DROWN, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.DROWN_ICON, link),
          self._getNotificationTimerData(_TIMER_STATES.OVERTURNED, overturnedIcon, link, description=overturnedText, color=overturnedColor, iconOffsetY=iconOffsetY),
          self._getNotificationTimerData(_TIMER_STATES.FIRE, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.FIRE_ICON, link),
-         self._getNotificationTimerData(_TIMER_STATES.DANGER_ZONE, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.DANGER_ICON, link, text=INGAME_GUI.DANGER_ZONE_INDICATOR, iconOffsetY=-20)]
+         self._getNotificationTimerData(_TIMER_STATES.DANGER_ZONE, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.DANGER_ICON, link, text=INGAME_GUI.DANGER_ZONE_INDICATOR, iconOffsetY=-10),
+         self._getNotificationTimerData(_TIMER_STATES.MAP_DEATH_ZONE, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.DANGER_ICON, link, color=BATTLE_NOTIFICATIONS_TIMER_COLORS.GRAY),
+         self._getNotificationTimerData(_TIMER_STATES.WARNING_ZONE, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.WARNING_ICON, link, color=BATTLE_NOTIFICATIONS_TIMER_COLORS.YELLOW, text=INGAME_GUI.WARNING_ZONE_INDICATOR)]
         return data
 
     def _generateSecondaryTimersData(self):
         link = BATTLE_NOTIFICATIONS_TIMER_LINKAGES.SECONDARY_TIMER_UI
         data = [
-         self._getNotificationTimerData(_TIMER_STATES.STUN, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.STUN_ICON, link, BATTLE_NOTIFICATIONS_TIMER_COLORS.ORANGE, noiseVisible=True, text=INGAME_GUI.STUN_INDICATOR),
+         self._getNotificationTimerData(_TIMER_STATES.STUN, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.STUN_ICON, link, noiseVisible=True, text=INGAME_GUI.STUN_INDICATOR),
          self._getNotificationTimerData(_TIMER_STATES.STUN_FLAME, BATTLE_NOTIFICATIONS_TIMER_LINKAGES.STUN_FLAME_ICON, link, BATTLE_NOTIFICATIONS_TIMER_COLORS.ORANGE, noiseVisible=True, text=INGAME_GUI.STUNFLAME_INDICATOR)]
         return data
 
-    def _getNotificationTimerData(self, typeId, iconName, linkage, color='', noiseVisible=False, pulseVisible=False, text='', countdownVisible=True, isCanBeMainType=False, priority=10000, iconOffsetY=0, description=''):
+    def _getNotificationTimerData(self, typeId, iconName, linkage, color=BATTLE_NOTIFICATIONS_TIMER_COLORS.ORANGE, noiseVisible=False, pulseVisible=False, text='', countdownVisible=True, isCanBeMainType=False, priority=10000, iconOffsetY=0, description=''):
         return {'typeId': typeId, 
            'iconName': iconName, 
            'linkage': linkage, 
@@ -468,6 +473,7 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
         if handler is not None:
             if isinstance(handler, AvatarInputHandler):
                 handler.onCameraChanged -= self.__onCameraChanged
+        Windowing.removeWindowAccessibilityHandler(self.__onWindowAccessibilityChanged)
         self.__hideAll()
         self._timers.clear()
         self._mapping.clear()
@@ -492,6 +498,20 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
             self._timers.addTimer(_TIMER_STATES.FIRE, _TIMER_STATES.WARNING_VIEW, 0, None)
         else:
             self._hideTimer(_TIMER_STATES.FIRE)
+        return
+
+    def __setVehicleInWaringZone(self, value):
+        if value.needToCloseTimer():
+            self._hideTimer(_TIMER_STATES.WARNING_ZONE)
+        else:
+            self._timers.addTimer(_TIMER_STATES.WARNING_ZONE, _TIMER_STATES.WARNING_VIEW, 0, None)
+        return
+
+    def __setVehicleInMapDeathZone(self, value):
+        if value.needToCloseTimer():
+            self._hideTimer(_TIMER_STATES.MAP_DEATH_ZONE)
+        else:
+            self._timers.addTimer(_TIMER_STATES.MAP_DEATH_ZONE, _TIMER_STATES.WARNING_VIEW, 0, None)
         return
 
     def _showTimer(self, typeID, totalTime, level, finishTime, startTime=None):
@@ -666,6 +686,8 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
          VEHICLE_VIEW_STATE.STUN,
          VEHICLE_VIEW_STATE.CAPTURE_BLOCKED,
          VEHICLE_VIEW_STATE.DANGER_ZONE,
+         VEHICLE_VIEW_STATE.WARNING_ZONE,
+         VEHICLE_VIEW_STATE.MAP_DEATH_ZONE,
          VEHICLE_VIEW_STATE.SMOKE,
          VEHICLE_VIEW_STATE.INSPIRE,
          VEHICLE_VIEW_STATE.DOT_EFFECT)
@@ -720,9 +742,21 @@ class TimersPanel(TimersPanelMeta, MethodsRules):
             self.__updateRepairingTimer(**value)
         elif state == VEHICLE_VIEW_STATE.DANGER_ZONE:
             self.__updateDangerZoneWarningNotification(value)
+        elif state == VEHICLE_VIEW_STATE.WARNING_ZONE:
+            self.__setVehicleInWaringZone(value)
+        elif state == VEHICLE_VIEW_STATE.MAP_DEATH_ZONE:
+            self.__setVehicleInMapDeathZone(value)
         elif state in (VEHICLE_VIEW_STATE.DESTROYED, VEHICLE_VIEW_STATE.CREW_DEACTIVATED):
             self.__hideAll()
 
     def __onCameraChanged(self, ctrlMode, vehicleID=None):
         if ctrlMode == 'video':
             self.__hideAll()
+
+    def __onWindowAccessibilityChanged(self, isAccessible):
+        ctrl = self.sessionProvider.shared.vehicleState
+        if isAccessible and ctrl:
+            vehicle = ctrl.getControllingVehicle()
+            if vehicle is not None:
+                self.__onVehicleControlling(vehicle)
+        return

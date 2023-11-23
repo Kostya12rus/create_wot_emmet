@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/cond_formatters/requirements.py
 import types, nations
 from constants import EVENT_TYPE, IGR_TYPE, IS_CHINA
@@ -188,6 +188,7 @@ class SingleGroupFormatter(ConditionsFormatter):
     def __init__(self):
         super(SingleGroupFormatter, self).__init__({'premiumAccount': PremiumAccountFormatter(), 
            'premiumPlusAccount': PremiumPlusAccountFormatter(), 
+           'wotPlus': WotPlusFormatter(), 
            'inClan': InClanRequirementFormatter(), 
            'igrType': IgrTypeRequirementFormatter(), 
            'GR': GlobalRatingRequirementFormatter(), 
@@ -246,6 +247,7 @@ class RecursiveGroupFormatter(RecursiveFormatter):
     def __init__(self, formatters=None):
         super(RecursiveGroupFormatter, self).__init__(formatters=formatters or {'premiumAccount': PremiumAccountFormatter(), 
            'premiumPlusAccount': PremiumPlusAccountFormatter(), 
+           'wotPlus': WotPlusFormatter(), 
            'inClan': InClanRequirementFormatter(), 
            'igrType': IgrTypeRequirementFormatter(), 
            'GR': GlobalRatingRequirementFormatter(), 
@@ -362,6 +364,7 @@ class TQRecursiveGroupFormatter(RecursiveGroupFormatter):
     def __init__(self):
         super(TQRecursiveGroupFormatter, self).__init__(formatters={'premiumAccount': PremiumAccountFormatter(), 
            'premiumPlusAccount': PremiumPlusAccountFormatter(), 
+           'wotPlus': WotPlusFormatter(), 
            'inClan': InClanRequirementFormatter(), 
            'igrType': IgrTypeRequirementFormatter(), 
            'GR': GlobalRatingRequirementFormatter(), 
@@ -395,6 +398,17 @@ class PremiumPlusAccountFormatter(ConditionFormatter):
             labelKey = 'notPremiumAccount'
         label = backport.text(R.strings.quests.details.requirements.dyn(labelKey)())
         style = styler(condition.isAvailable())
+        return [
+         packText(style(label))]
+
+
+class WotPlusFormatter(ConditionFormatter):
+
+    @classmethod
+    def format(cls, condition, event, styler):
+        style = styler(condition.isAvailable())
+        labelKey = 'wotPlus' if condition.isWotPlusNeeded() else 'withoutWotPlus'
+        label = backport.text(R.strings.quests.details.requirements.dyn(labelKey)())
         return [
          packText(style(label))]
 

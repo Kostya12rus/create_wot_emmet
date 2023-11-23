@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/resource_well/entry_point.py
 from PlayerEvents import g_playerEvents
 from frameworks.wulf import ViewFlags, ViewSettings
@@ -51,7 +51,7 @@ class EntryPoint(ViewImpl):
 
     def __init__(self):
         settings = ViewSettings(R.views.lobby.resource_well.EntryPoint())
-        settings.flags = ViewFlags.COMPONENT
+        settings.flags = ViewFlags.VIEW
         settings.model = EntryPointModel()
         super(EntryPoint, self).__init__(settings)
 
@@ -95,14 +95,14 @@ class EntryPoint(ViewImpl):
         self.__setLastState()
 
     def __getEventState(self):
+        if self.__resourceWell.isNotStarted():
+            return EventState.NOTSTARTED
         if isForbiddenAccount(resourceWell=self.__resourceWell):
             return EventState.FORBIDDEN
         if self.__resourceWell.isPaused():
             return EventState.PAUSED
         if self.__resourceWell.isCompleted():
             return EventState.COMPLETED
-        if self.__resourceWell.isNotStarted():
-            return EventState.NOTSTARTED
         return EventState.ACTIVE
 
     def __getProgress(self):

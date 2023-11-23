@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/INVITES.py
 
 
@@ -29,6 +29,7 @@ class INVITES(object):
     INVITES_TEXT_SQUAD = '#invites:invites/text/SQUAD'
     INVITES_TEXT_EVENT = '#invites:invites/text/EVENT'
     INVITES_TEXT_BATTLE_ROYALE = '#invites:invites/text/BATTLE_ROYALE'
+    INVITES_TEXT_HALLOWEEN_BATTLES = '#invites:invites/text/HALLOWEEN_BATTLES'
     INVITES_TEXT_FALLOUT = '#invites:invites/text/FALLOUT'
     INVITES_TEXT_FALLOUT_FALLOUT_CLASSIC = '#invites:invites/text/FALLOUT/FALLOUT_CLASSIC'
     INVITES_TEXT_FALLOUT_FALLOUT_MULTITEAM = '#invites:invites/text/FALLOUT/FALLOUT_MULTITEAM'
@@ -62,6 +63,8 @@ class INVITES(object):
     INVITES_STATE_ERROR = '#invites:invites/state/ERROR'
     INVITES_NOTE_SERVERSELECTIONISREMEMBERED = '#invites:invites/note/serverSelectionIsRemembered'
     INVITES_NOTE_SERVER_CHANGE = '#invites:invites/note/server_change'
+    INVITES_NOTE_CHANGE_AND_LEAVE_QUEUE_HALLOWEEN_BATTLES = '#invites:invites/note/change_and_leave/QUEUE_HALLOWEEN_BATTLES'
+    INVITES_NOTE_LEAVE_QUEUE_HALLOWEEN_BATTLES = '#invites:invites/note/leave/QUEUE_HALLOWEEN_BATTLES'
     INVITES_NOTE_CHANGE_AND_LEAVE_QUEUE_EVENT_BATTLES = '#invites:invites/note/change_and_leave/QUEUE_EVENT_BATTLES'
     INVITES_NOTE_LEAVE_QUEUE_EVENT_BATTLES = '#invites:invites/note/leave/QUEUE_EVENT_BATTLES'
     INVITES_NOTE_CHANGE_AND_LEAVE_PREBATTLE_EVENT = '#invites:invites/note/change_and_leave/PREBATTLE_EVENT'

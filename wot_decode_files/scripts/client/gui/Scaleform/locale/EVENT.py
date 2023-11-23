@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/EVENT.py
 from debug_utils import LOG_WARNING
 
@@ -12,6 +12,10 @@ class EVENT(object):
     CRAFTMACHINE_TITLE = '#event:craftMachine/title'
     CRAFTMACHINE_SUBTITLE = '#event:craftMachine/subTitle'
     CRAFTMACHINE_ENDDATETEXT = '#event:craftMachine/endDateText'
+    DAILYREWARD_TEXT = '#event:dailyReward/text'
+    DAILYREWARD_BUTTON_READY = '#event:dailyReward/button/ready'
+    DAILYREWARD_BUTTON_DETAILS = '#event:dailyReward/button/details'
+    GLOBALPROGRESSION_LABEL = '#event:globalProgression/label'
     ALL_ENUM = (
      PUNISHMENTWINDOW_REASON_EVENT_DESERTER,
      PUNISHMENTWINDOW_REASON_EVENT_AFK,
@@ -19,7 +23,11 @@ class EVENT(object):
      BATTLEHINTS_TESTMESSAGEWITHPARAMS,
      CRAFTMACHINE_TITLE,
      CRAFTMACHINE_SUBTITLE,
-     CRAFTMACHINE_ENDDATETEXT)
+     CRAFTMACHINE_ENDDATETEXT,
+     DAILYREWARD_TEXT,
+     DAILYREWARD_BUTTON_READY,
+     DAILYREWARD_BUTTON_DETAILS,
+     GLOBALPROGRESSION_LABEL)
 
     @classmethod
     def all(cls, key0):

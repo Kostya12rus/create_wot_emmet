@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/carousels/epicBattle/carousel_data_provider.py
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import UNLOCK_VEHICLES_IN_BATTLE_HINTS
@@ -124,12 +124,12 @@ class EpicBattleCarouselDataProvider(HangarCarouselDataProvider):
         state, _ = vehicle.getState()
         resShortCut = R.strings.epic_battle.epicBattlesCarousel
         if state == Vehicle.VEHICLE_STATE.UNSUITABLE_TO_QUEUE:
-            header = resShortCut.lockedTooltip.header()
+            header = backport.text(resShortCut.lockedTooltip.header())
             if vehicle.level in self.__epicController.getValidVehicleLevels():
-                body = resShortCut.wrongMode.body()
+                body = backport.text(resShortCut.wrongMode.body())
             else:
-                body = resShortCut.lockedTooltip.body()
-            result['lockedTooltip'] = makeTooltip(backport.text(header), backport.text(body))
+                body = backport.text(resShortCut.lockedTooltip.body(), level=self.__epicController.getSuitableForQueueVehicleLevelStr())
+            result['lockedTooltip'] = makeTooltip(header, body)
         if state == Vehicle.VEHICLE_STATE.WILL_BE_UNLOCKED_IN_BATTLE:
             result['unlockedInBattle'] = True
         result['xpImgSource'] = ''

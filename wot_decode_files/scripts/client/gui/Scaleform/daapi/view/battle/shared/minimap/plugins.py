@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/minimap/plugins.py
 import logging, math
 from collections import defaultdict, namedtuple
@@ -44,7 +44,8 @@ _LOCATION_SUBTYPE_TO_FLASH_SYMBOL_NAME = {LocationMarkerSubType.SPG_AIM_AREA_SUB
    LocationMarkerSubType.PREBATTLE_WAYPOINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.LOCATION_MARKER, 
    LocationMarkerSubType.ATTENTION_TO_MARKER_SUBTYPE: settings.ENTRY_SYMBOL_NAME.ATTENTION_MARKER, 
    LocationMarkerSubType.SHOOTING_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.SHOOTING_POINT_MARKER, 
-   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.NAVIGATION_POINT_MARKER}
+   LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.NAVIGATION_POINT_MARKER, 
+   LocationMarkerSubType.FLAG_POINT_SUBTYPE: settings.ENTRY_SYMBOL_NAME.FLAG_POINT_MARKER}
 _PING_FLASH_MINIMAP_SUBTYPES = {
  LocationMarkerSubType.GOING_TO_MARKER_SUBTYPE,
  LocationMarkerSubType.ATTENTION_TO_MARKER_SUBTYPE,
@@ -265,8 +266,8 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
             if entryID:
                 yield (
                  entryID, name, active)
-        if _CTRL_MODE.STRATEGIC in modes or _CTRL_MODE.ARTY in modes or _CTRL_MODE.FLAMETHROWER in modes:
-            if self._isInStrategicMode() or self._isInArtyMode() or self._isInFlamethrowerMode():
+        if _CTRL_MODE.STRATEGIC in modes or _CTRL_MODE.ARTY in modes or _CTRL_MODE.SPG_ONLY_ARTY_MODE in modes:
+            if self._isInStrategicMode() or self._isInArtyMode() or self._isInOnlyArtyMode():
                 matrix = matrix_factory.makeStrategicCameraMatrix()
                 active = True
             else:
@@ -293,7 +294,7 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
 
     def __updateCameraEntries(self):
         activateID = self.__cameraIDs[_S_NAME.ARCADE_CAMERA]
-        if self._isInStrategicMode() or self._isInArtyMode() or self._isInFlamethrowerMode():
+        if self._isInStrategicMode() or self._isInArtyMode() or self._isInOnlyArtyMode():
             activateID = self.__cameraIDs[_S_NAME.STRATEGIC_CAMERA]
             matrix = matrix_factory.makeStrategicCameraMatrix()
         else:
@@ -301,10 +302,7 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
                 matrix = matrix_factory.makeArcadeCameraMatrix()
             else:
                 if self._isInPostmortemMode():
-                    if self.__killerVehicleID:
-                        matrix = matrix_factory.getEntityMatrix(self.__killerVehicleID)
-                    else:
-                        matrix = matrix_factory.makePostmortemCameraMatrix()
+                    matrix = matrix_factory.getEntityMatrix(self.__killerVehicleID) or matrix_factory.makePostmortemCameraMatrix()
                 elif self._isInVideoMode():
                     activateID = self.__cameraIDs[_S_NAME.VIDEO_CAMERA]
                     matrix = matrix_factory.makeDefaultCameraMatrix()
@@ -323,10 +321,7 @@ class PersonalEntriesPlugin(common.SimplePlugin, IArenaVehiclesController):
 
     def __updateViewPointEntry(self, vehicleID=0):
         isActive = self._isInPostmortemMode() and vehicleID and vehicleID != self.__playerVehicleID or self._isInVideoMode() and self.__isAlive or not (self._isInPostmortemMode() or self._isInVideoMode() or self.__isObserver)
-        if self.__killerVehicleID:
-            ownMatrix = matrix_factory.getEntityMatrix(self.__killerVehicleID)
-        else:
-            ownMatrix = matrix_factory.makeAttachedVehicleMatrix()
+        ownMatrix = matrix_factory.getEntityMatrix(self.__killerVehicleID) or matrix_factory.makeAttachedVehicleMatrix()
         if self.__viewPointID:
             self._setActive(self.__viewPointID, active=isActive)
             self._setMatrix(self.__viewPointID, ownMatrix)
@@ -584,8 +579,8 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
                  '__destroyDuration', '__isSPG', '__replayRegistrator', '__canShowVehicleHp',
                  '__tempHealthStorage', '__aoiEstimateRadius')
 
-    def __init__(self, parent):
-        super(ArenaVehiclesPlugin, self).__init__(parent, clazz=entries.VehicleEntry)
+    def __init__(self, parent, clazz=None):
+        super(ArenaVehiclesPlugin, self).__init__(parent, clazz=clazz or entries.VehicleEntry)
         self.__playerVehicleID = 0
         self.__isObserver = False
         self.__isSPG = False
@@ -773,6 +768,7 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
             self.__clearAoIToFarCallback(vehicleID)
             if location == VEHICLE_LOCATION.FAR:
                 entry.updatePosition(position)
+                self._setInAoI(entry, True)
                 self.__setActive(entry, True)
             elif location in (VEHICLE_LOCATION.UNDEFINED, VEHICLE_LOCATION.AOI_TO_FAR):
                 self._setInAoI(entry, True)
@@ -799,10 +795,13 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
     def _getPlayerVehicleID(self):
         return self.__playerVehicleID
 
-    def _setVehicleInfo(self, vehicleID, entry, vInfo, guiProps, isSpotted=False):
+    def _getDisplayedName(self, vInfo):
         vehicleType = vInfo.vehicleType
-        classTag = vehicleType.classTag
-        name = vehicleType.shortNameWithPrefix
+        return vehicleType.shortNameWithPrefix
+
+    def _setVehicleInfo(self, vehicleID, entry, vInfo, guiProps, isSpotted=False):
+        classTag = vInfo.vehicleType.classTag
+        name = self._getDisplayedName(vInfo)
         if classTag is not None:
             entry.setVehicleInfo(not guiProps.isFriend, guiProps.name(), classTag, vInfo.isAlive())
             animation = self.__getSpottedAnimation(entry, isSpotted)
@@ -816,7 +815,7 @@ class ArenaVehiclesPlugin(common.EntriesPlugin, IVehiclesAndPositionsController)
             return
         if currH > maxH:
             self.__tempHealthStorage[vehicleID] = currH
-            _logger.warning('Max Vehicle Health is less then current. Health will be updated after max health update')
+            _logger.debug('Max Vehicle Health is less then current. Health will be updated after max health update')
             return
         self._invoke(self._entries[vehicleID].getID(), 'setVehicleHealth', normalizeHealthPercent(currH, maxH))
 

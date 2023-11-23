@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/reusable/shared.py
 import functools, operator
 from account_shared import getFairPlayViolationName
@@ -306,6 +306,10 @@ class _VehicleInfo(object):
         raise NotImplementedError
 
     @property
+    def hwXP(self):
+        raise NotImplementedError
+
+    @property
     def xpForAttack(self):
         raise NotImplementedError
 
@@ -388,7 +392,7 @@ class VehicleDetailedInfo(_VehicleInfo):
                  '_xpPenalty', '_numDefended', '_vehicleNumCaptured', '_numRecovered',
                  '_destructiblesNumDestroyed', '_destructiblesDamageDealt', '_achievedLevel',
                  '_prestigePoints', '_roleSkillUsed', '_healthRepair', '_alliedHealthRepair',
-                 '_entityCaptured')
+                 '_entityCaptured', '_hwXP', '_hwBaseCaptured')
 
     def __init__(self, vehicleID, vehicle, player, deathReason=DEATH_REASON_ALIVE):
         super(VehicleDetailedInfo, self).__init__(vehicleID, player, deathReason)
@@ -449,6 +453,8 @@ class VehicleDetailedInfo(_VehicleInfo):
         self._healthRepair = 0
         self._alliedHealthRepair = 0
         self._entityCaptured = {}
+        self._hwXP = 0
+        self._hwBaseCaptured = []
 
     @property
     def vehicle(self):
@@ -603,6 +609,14 @@ class VehicleDetailedInfo(_VehicleInfo):
         return self._xp
 
     @property
+    def hwXP(self):
+        return self._hwXP
+
+    @property
+    def hwBaseCaptured(self):
+        return self._hwBaseCaptured
+
+    @property
     def isTeamKiller(self):
         return self._isTeamKiller
 
@@ -728,6 +742,8 @@ class VehicleDetailedInfo(_VehicleInfo):
             info._xp = vehicleRecords['originalXP']
         else:
             info._xp = vehicleRecords['xp'] - vehicleRecords['achievementXP']
+        info._hwXP = vehicleRecords['hwXP'] if 'hwXP' in vehicleRecords else 0
+        info._hwBaseCaptured = vehicleRecords['hwBaseCaptured'] if 'hwBaseCaptured' in vehicleRecords else []
         info._xpOther = vehicleRecords['xp/other']
         info._xpForAssist = vehicleRecords['xp/assist']
         info._xpForAttack = vehicleRecords['xp/attack']
@@ -958,6 +974,10 @@ class VehicleSummarizeInfo(_VehicleInfo):
     @property
     def xp(self):
         return self._accumulate('xp')
+
+    @property
+    def hwXP(self):
+        return self._accumulate('hwXP')
 
     @property
     def xpForAttack(self):

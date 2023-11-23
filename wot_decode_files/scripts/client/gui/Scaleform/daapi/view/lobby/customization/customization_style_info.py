@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/customization_style_info.py
 from collections import namedtuple
 from CurrentVehicle import g_currentVehicle
@@ -142,10 +142,10 @@ class CustomizationStyleInfo(CustomizationStyleInfoMeta, CallbackDelayer):
            'insertion_close': _INSERTION_CLOSE_TAG})
         styleInfoBig = text_styles.mainBig(styleInfoText % {'insertion_open': _INSERTION_OPEN_TAG_BIG, 
            'insertion_close': _INSERTION_CLOSE_TAG})
-        suitableText = getSuitableText(style, g_currentVehicle.item)
+        suitableText = getSuitableText(style, g_currentVehicle.item, formatVehicle=False)
         if suitableText:
             suitableBlock = text_styles.mainBig(backport.text(R.strings.vehicle_customization.styleInfo.suitable()))
-            suitableBlock += suitableText
+            suitableBlock += text_styles.mainBig(suitableText)
         else:
             suitableBlock = text_styles.mainBig(backport.text(R.strings.vehicle_customization.styleInfo.suitableAll()))
         return StyleInfoVO(styleName=styleName, styleInfo=styleInfo, styleInfoBig=styleInfoBig, suitableBlock=suitableBlock, styleParams=styleParams)._asdict()

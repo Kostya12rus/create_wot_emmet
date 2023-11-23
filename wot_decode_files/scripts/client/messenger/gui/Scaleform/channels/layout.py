@@ -1,13 +1,15 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/channels/layout.py
 import BattleReplay
 from debug_utils import LOG_DEBUG, LOG_ERROR
 from gui import SystemMessages
 from messenger import g_settings
 from messenger.ext import isBattleChatEnabled
+from messenger.ext.player_helpers import isCurrentPlayer
 from messenger.formatters.chat_message import LobbyMessageBuilder
+from messenger.gui import events_dispatcher
 from messenger.gui.Scaleform import FILL_COLORS
 from messenger.gui.Scaleform.data.MembersDataProvider import MembersDataProvider
 from messenger.gui.interfaces import IChannelController, IBattleChannelView
@@ -106,7 +108,8 @@ class LobbyLayout(IChannelController):
         return result
 
     def addMessage(self, message, doFormatting=True):
-        text = self._format(message, doFormatting)
+        shouldAddTextLink = self._channel.isPrivate() and not isCurrentPlayer(message.accountDBID)
+        text = self._format(message, doFormatting, shouldAddTextLink)
         if self._activated:
             for view in self._views:
                 view.as_addMessageS(text)
@@ -145,10 +148,22 @@ class LobbyLayout(IChannelController):
             self._membersDP.buildList(self._channel.getMembers())
             self._membersDP.refresh()
 
+    def _updatePrivateCarouselMembers(self):
+        if not self._channel.isPrivate():
+            return
+        for member in self._channel.getMembers():
+            memberDBID = member.getDatabaseID()
+            if isCurrentPlayer(memberDBID):
+                continue
+            clientID = self._channel.getClientID()
+            memberUsername = member.getFullName()
+            events_dispatcher.updatePrivateCarouselMembers(clientID, memberDBID, memberUsername)
+            break
+
     def _broadcast(self, message):
         raise NotImplementedError
 
-    def _format(self, message, doFormatting=True):
+    def _format(self, message, doFormatting=True, addTextLink=False):
         raise NotImplementedError
 
     def _fireInitEvent(self):

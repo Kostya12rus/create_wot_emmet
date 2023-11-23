@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/debut_boxes_controller.py
 import logging, typing, Event
 from Event import EventManager
@@ -29,7 +29,7 @@ if typing.TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 UNSUPPORTED_TAGS = (
  VEHICLE_TAGS.EVENT, VEHICLE_TAGS.EPIC_BATTLES, VEHICLE_TAGS.BATTLE_ROYALE,
- VEHICLE_TAGS.MAPS_TRAINING, VEHICLE_TAGS.FUN_RANDOM)
+ VEHICLE_TAGS.MAPS_TRAINING)
 _SETTINGS_SECTIONS = (
  CAROUSEL_FILTER_2, RANKED_CAROUSEL_FILTER_2, COMP7_CAROUSEL_FILTER_2)
 

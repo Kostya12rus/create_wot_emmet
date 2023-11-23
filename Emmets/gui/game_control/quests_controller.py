@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/quests_controller.py
 import weakref, typing
 from constants import EVENT_TYPE, PremiumConfigs
@@ -15,6 +15,7 @@ from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
 from gui.server_events.events_helpers import isBattleMattersQuestID, isPremium, isBattleRoyale, isDailyEpic, isDailyQuest, isFunRandomQuest
 from gui.ranked_battles.ranked_helpers import isRankedQuestID
+from skeletons.gui.game_control import IHalloweenController
 if typing.TYPE_CHECKING:
     from Vehicle import Vehicle
     from gui.server_events.event_items import Quest
@@ -131,6 +132,7 @@ class QuestsController(IQuestsController):
     eventsCache = dependency.descriptor(IEventsCache)
     lobbyContext = dependency.descriptor(ILobbyContext)
     __battleRoyaleController = dependency.descriptor(IBattleRoyaleController)
+    _hwController = dependency.descriptor(IHalloweenController)
 
     def __init__(self):
         super(QuestsController, self).__init__()
@@ -184,6 +186,12 @@ class QuestsController(IQuestsController):
         if self.__battleRoyaleController.isBattleRoyaleMode():
             if vehicle.isOnlyForBattleRoyaleBattles:
                 return list(self.__battleRoyaleController.getQuests().values())
+        if self._hwController.isEventPrbActive():
+            if notCompleted:
+                quests = [ q for q in self.getQuestForVehicle(vehicle) if q.shouldBeShown() and not q.isCompleted()
+                         ]
+                return quests
+            return [ q for q in self.getQuestForVehicle(vehicle) if q.shouldBeShown() ]
         if notCompleted:
             quests = [ q for q in self.getQuestForVehicle(vehicle) if _isAvailableForMode(q) and q.shouldBeShown() and not q.isCompleted()
                      ]

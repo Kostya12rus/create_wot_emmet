@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/common_tank_appearance.py
 import math, random, logging, BigWorld, CGF, GenericComponents, Triggers, Math, DataLinks, Vehicular, NetworkFilters, material_kinds
 from constants import IS_EDITOR, VEHICLE_SIEGE_STATE
@@ -404,7 +404,8 @@ class CommonTankAppearance(ScriptGameObject):
 
     def receiveShotImpulse(self, direction, impulse):
         if not VehicleDamageState.isDamagedModel(self.damageState.modelState):
-            self.swingingAnimator.receiveShotImpulse(direction, impulse)
+            if self.swingingAnimator is not None:
+                self.swingingAnimator.receiveShotImpulse(direction, impulse)
             if self.crashedTracksController is not None:
                 self.crashedTracksController.receiveShotImpulse(direction, impulse)
         return
@@ -413,14 +414,17 @@ class CommonTankAppearance(ScriptGameObject):
         self._initiateRecoil(TankNodeNames.GUN_INCLINATION, 'HP_gunFire', self.gunRecoil)
 
     def multiGunRecoil(self, indexes):
-        gunAnimators = self.gunAnimators
-        for index in indexes:
-            typeDescr = self.typeDescriptor
-            gunNodeName = typeDescr.turret.multiGun[index].node
-            gunFireNodeName = typeDescr.turret.multiGun[index].gunFire
-            self._initiateRecoil(gunNodeName, gunFireNodeName, gunAnimators[index].findComponentByType(Vehicular.RecoilAnimator) if gunAnimators else None)
+        if self.gunAnimators is None:
+            return
+        else:
+            for index in indexes:
+                typeDescr = self.typeDescriptor
+                gunNodeName = typeDescr.turret.multiGun[index].node
+                gunFireNodeName = typeDescr.turret.multiGun[index].gunFire
+                gunAnimator = self.gunAnimators[index].findComponentByType(Vehicular.RecoilAnimator)
+                self._initiateRecoil(gunNodeName, gunFireNodeName, gunAnimator)
 
-        return
+            return
 
     def computeFullVehicleLength(self):
         vehicleLength = 0.0
@@ -434,8 +438,7 @@ class CommonTankAppearance(ScriptGameObject):
         impulseDir = Math.Matrix(gunNode).applyVector(Math.Vector3(0, 0, -1))
         impulseValue = self.typeDescriptor.gun.impulse
         self.receiveShotImpulse(impulseDir, impulseValue)
-        if gunAnimator is not None:
-            gunAnimator.recoil()
+        gunAnimator.recoil()
         return impulseDir
 
     def _connectCollider(self):
@@ -539,14 +542,14 @@ class CommonTankAppearance(ScriptGameObject):
 
     def _attachStickers(self):
         _logger.debug('Attaching VehicleStickers for vehicle: %s', self._vehicle)
+        isCurrentModelDamaged = self.damageState.isCurrentModelDamaged
         if self.vehicleStickers is None:
-            _logger.error('Failed to attach VehicleStickers. Missing VehicleStickers. Vehicle: %s', self._vehicle)
+            if not isCurrentModelDamaged:
+                _logger.error('Failed to attach VehicleStickers. Missing VehicleStickers. Vehicle: %s', self._vehicle)
             return
-        else:
-            isCurrentModelDamaged = self.damageState.isCurrentModelDamaged
-            self.vehicleStickers.alpha = DEFAULT_STICKERS_ALPHA
-            self.vehicleStickers.attach(compoundModel=self.compoundModel, isDamaged=isCurrentModelDamaged, showDamageStickers=not isCurrentModelDamaged)
-            return
+        self.vehicleStickers.alpha = DEFAULT_STICKERS_ALPHA
+        self.vehicleStickers.attach(compoundModel=self.compoundModel, isDamaged=isCurrentModelDamaged, showDamageStickers=not isCurrentModelDamaged)
+        return
 
     def _detachStickers(self):
         _logger.debug('Detaching VehicleStickers for vehicle: %s', self._vehicle)

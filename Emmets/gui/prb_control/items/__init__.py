@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/items/__init__.py
 from collections import namedtuple
 from constants import PREBATTLE_TYPE, QUEUE_TYPE
@@ -62,6 +62,12 @@ class FunctionalState(object):
         if not self.hasModalEntity:
             return False
         if self.isInPreQueue(QUEUE_TYPE.BATTLE_ROYALE) and prbType == PREBATTLE_TYPE.BATTLE_ROYALE:
+            return False
+        if self.isInPreQueue(QUEUE_TYPE.BATTLE_ROYALE_TOURNAMENT) and prbType == PREBATTLE_TYPE.BATTLE_ROYALE_TOURNAMENT:
+            return False
+        isHalloween = self.entityTypeID in (QUEUE_TYPE.HALLOWEEN_BATTLES, QUEUE_TYPE.HALLOWEEN_BATTLES_WHEEL)
+        isHalloween = isHalloween and prbType == PREBATTLE_TYPE.HALLOWEEN_BATTLES
+        if isHalloween:
             return False
         if self.isInPreQueue(QUEUE_TYPE.BATTLE_ROYALE_TOURNAMENT) and prbType == PREBATTLE_TYPE.BATTLE_ROYALE_TOURNAMENT:
             return False

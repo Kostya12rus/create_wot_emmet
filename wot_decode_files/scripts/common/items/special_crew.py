@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/special_crew.py
 import typing
 from items import tankmen
@@ -41,6 +41,10 @@ def isWitchesCrewCompleted(vehicleType, tankmenGroups):
     return len(actualGroupIDs & requiredGroupIDs) == len(uniqueRoles)
 
 
+def isHWCrewCompleted(vehicleType, tankmenGroups):
+    return _isHW23CrewCompleted(vehicleType, tankmenGroups, SPECIAL_CREW_TAG.HW_CREW)
+
+
 def _hasTagInTankmenGroup(tankmanDescr, tag):
     return tankmen.hasTagInTankmenGroup(tankmanDescr.nationID, tankmanDescr.gid, tankmanDescr.isPremium, tag)
 
@@ -53,3 +57,19 @@ def _isCrewCompleted(vehicleType, tankmenGroups, tag):
     if len(actualCrew) <= len(requiredCrew):
         return set(actualCrew) <= requiredCrew
     return requiredCrew < set(actualCrew)
+
+
+def _isHW23CrewCompleted(vehicleType, tankmenGroups, tag):
+    _, _, isPremium = tankmen.unpackCrewParams(tankmenGroups[0])
+    nationID, _ = vehicleType.id
+    requiredCrew = tankmen.getTankmenWithTag(nationID, isPremium, tag)
+    actualCrew = [ tankmen.unpackCrewParams(tGroup)[0] for tGroup in tankmenGroups ]
+    lenRequired = len(requiredCrew)
+    uniqueRequiredCount = len(requiredCrew & set(actualCrew))
+    if uniqueRequiredCount == lenRequired:
+        return True
+    lenActual = len(actualCrew)
+    if lenActual < lenRequired:
+        if uniqueRequiredCount == lenActual:
+            return True
+    return False

@@ -1,11 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/inventory/opt_devices_tab.py
 from collections import OrderedDict
 from enum import IntEnum
 from PlayerEvents import g_playerEvents
-from gui.shared.event_dispatcher import showConfirmInStorageDialog
+from gui.shared.event_dispatcher import showSellDialog
 from gui.Scaleform.daapi.view.meta.StorageDevicesTabViewMeta import StorageDevicesTabViewMeta
 from gui.Scaleform.daapi.view.lobby.storage.inventory.inventory_view import TABS_SORT_ORDER, IN_GROUP_COMPARATOR
 from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getBuyOptionalDevicesUrl
@@ -30,19 +30,19 @@ _TYPE_FILTER_ITEMS = [
     'label': backport.text(R.strings.storage.devices.filters.all())},
  {'id': int(_OptDeviceTypeFilter.SIMPLE), 
     'label': backport.text(R.strings.storage.devices.filters.simple())},
- {'id': int(_OptDeviceTypeFilter.DELUXE), 
-    'label': backport.text(R.strings.storage.devices.filters.deluxe())},
  {'id': int(_OptDeviceTypeFilter.TROPHY), 
     'label': backport.text(R.strings.storage.devices.filters.trophy())},
+ {'id': int(_OptDeviceTypeFilter.DELUXE), 
+    'label': backport.text(R.strings.storage.devices.filters.deluxe())},
  {'id': int(_OptDeviceTypeFilter.MODERNIZED), 
     'label': backport.text(R.strings.storage.devices.filters.modernized())}]
 _BIT_TO_DEVICE_TYPE_MAP = OrderedDict((
  (
   _OptDeviceTypeFilter.SIMPLE, REQ_CRITERIA.OPTIONAL_DEVICE.SIMPLE),
  (
-  _OptDeviceTypeFilter.DELUXE, REQ_CRITERIA.OPTIONAL_DEVICE.DELUXE),
- (
   _OptDeviceTypeFilter.TROPHY, REQ_CRITERIA.OPTIONAL_DEVICE.TROPHY),
+ (
+  _OptDeviceTypeFilter.DELUXE, REQ_CRITERIA.OPTIONAL_DEVICE.DELUXE),
  (
   _OptDeviceTypeFilter.MODERNIZED, REQ_CRITERIA.OPTIONAL_DEVICE.MODERNIZED)))
 
@@ -106,7 +106,7 @@ class OptDevicesTabView(StorageDevicesTabViewMeta):
         self.as_showDummyScreenS(not self._dataProvider.collection)
 
     def sellItem(self, itemId):
-        showConfirmInStorageDialog(int(itemId))
+        showSellDialog(int(itemId))
 
     def __onClientUpdate(self, diff, _):
         if Currency.EQUIP_COIN in diff.get('stats', {}):

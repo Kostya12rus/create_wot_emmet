@@ -1,10 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/vehicle.py
 import logging
 from itertools import chain
-import typing, constants
+import typing, BigWorld, constants
 from gui.impl.backport.backport_tooltip import DecoratedTooltipWindow
 from gui.Scaleform.daapi.view.lobby.techtree.settings import UnlockProps
 from gui.Scaleform.genConsts.BLOCKS_TOOLTIP_TYPES import BLOCKS_TOOLTIP_TYPES
@@ -33,7 +33,7 @@ from gui.shared.money import Currency
 from gui.shared.tooltips import formatters, ToolTipBaseData
 from gui.shared.tooltips import getComplexStatus, getUnlockPrice, TOOLTIP_TYPE
 from gui.shared.tooltips.common import BlocksTooltipData, makeCompoundPriceBlock, CURRENCY_SETTINGS
-from gui.shared.utils import MAX_STEERING_LOCK_ANGLE, WHEELED_SWITCH_TIME, WHEELED_SPEED_MODE_SPEED, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_SPEED_MODE_SPEED, ROCKET_ACCELERATION_SPEED_LIMITS
+from gui.shared.utils import MAX_STEERING_LOCK_ANGLE, WHEELED_SWITCH_TIME, WHEELED_SPEED_MODE_SPEED, SHOT_DISPERSION_ANGLE, DUAL_GUN_CHARGE_TIME, TURBOSHAFT_SPEED_MODE_SPEED, ROCKET_ACCELERATION_SPEED_LIMITS, DUAL_ACCURACY_COOLING_DELAY
 from gui.impl.lobby.crew.tooltips.vehicle_params_tooltip_view import BaseVehicleParamsTooltipView, BaseVehicleAdvancedParamsTooltipView, VehicleAdvancedParamsTooltipView, VehicleAvgParamsTooltipView
 from helpers import i18n, time_utils, int2roman, dependency
 from helpers.i18n import makeString as _ms
@@ -65,6 +65,18 @@ _CREW_TOOLTIP_PARAMS = {Tankman.ROLES.COMMANDER: {'paramName': TOOLTIPS.VEHICLEP
 
 def _makeModuleFitTooltipError(reason):
     return ('#tooltips:moduleFits/{}').format(reason)
+
+
+def _idealCrewComparator(vehicle):
+    from gui.prb_control.dispatcher import g_prbLoader
+    from constants import QUEUE_TYPE, PREBATTLE_TYPE
+    prbDispatcher = g_prbLoader.getDispatcher()
+    isEvent = prbDispatcher is not None and (prbDispatcher.getFunctionalState().isInPreQueue(QUEUE_TYPE.HALLOWEEN_BATTLES) or prbDispatcher.getFunctionalState().isInUnit(PREBATTLE_TYPE.HALLOWEEN_BATTLES) or prbDispatcher.getFunctionalState().isInPreQueue(QUEUE_TYPE.HALLOWEEN_BATTLES_WHEEL))
+    hwEqCtrl = BigWorld.player().components.get('HWAccountEquipmentController', None)
+    if not hwEqCtrl or not isEvent:
+        return params_helper.idealCrewComparator(vehicle)
+    else:
+        return hwEqCtrl.getVehicleIdealCrewParamsComparator(vehicle)
 
 
 _SHORTEN_TOOLTIP_CASES = (
@@ -109,7 +121,8 @@ class VehicleInfoTooltipData(BlocksTooltipData):
         telecomBlock = TelecomBlockConstructor(vehicle, valueWidth, leftPadding, rightPadding).construct()
         if telecomBlock:
             headerBlockItems.append(formatters.packBuildUpBlockData(telecomBlock, padding=leftRightPadding))
-        self.__createStatusBlock(vehicle, headerBlockItems, statsConfig, paramsConfig, valueWidth)
+        if not vehicle.isEvent:
+            self.__createStatusBlock(vehicle, headerBlockItems, statsConfig, paramsConfig, valueWidth)
         items.append(formatters.packBuildUpBlockData(headerBlockItems, gap=-4, padding=formatters.packPadding(bottom=-12)))
         if vehicle.isWotPlus:
             wotPlusBlock, linkage = WotPlusBlockConstructor(vehicle, statsConfig, leftPadding, rightPadding).construct()
@@ -140,7 +153,7 @@ class VehicleInfoTooltipData(BlocksTooltipData):
         if statsBlockConstructor is not None:
             items.append(formatters.packBuildUpBlockData(statsBlockConstructor(vehicle, paramsConfig, self.context.getParams(), valueWidth, leftPadding, rightPadding).construct(), gap=textGap, padding=blockPadding))
         priceBlock, invalidWidth = PriceBlockConstructor(vehicle, statsConfig, self.context.getParams(), valueWidth, leftPadding, rightPadding).construct()
-        shouldBeCut = self.calledBy and self.calledBy in _SHORTEN_TOOLTIP_CASES or vehicle.isOnlyForEpicBattles or vehicle.isOnlyForClanWarsBattles
+        shouldBeCut = self.calledBy and self.calledBy in _SHORTEN_TOOLTIP_CASES or vehicle.isOnlyForEpicBattles or vehicle.isOnlyForClanWarsBattles or vehicle.isEvent
         if priceBlock and not shouldBeCut:
             self._setWidth(_TOOLTIP_MAX_WIDTH if invalidWidth else _TOOLTIP_MIN_WIDTH)
             items.append(formatters.packBuildUpBlockData(priceBlock, linkage=BLOCKS_TOOLTIP_TYPES.TOOLTIP_BUILDUP_BLOCK_WHITE_BG_LINKAGE, gap=5, padding=formatters.packPadding(left=98), layout=BLOCKS_TOOLTIP_TYPES.LAYOUT_HORIZONTAL))
@@ -179,7 +192,7 @@ class VehicleInfoTooltipData(BlocksTooltipData):
             items.append(formatters.packTextParameterBlockData(name=text_styles.main(backport.text(rentText)), value='', valueWidth=valueWidth + 18))
             if formattedTime:
                 items.append(formatters.packTextParameterWithIconBlockData(name=text_styles.gold(backport.text(R.strings.tooltips.vehicle.telecomRental.remainingTime.dyn(timeKey)()) % {'time': formattedTime}), value='', icon=ICON_TEXT_FRAMES.RENTALS, iconYOffset=2, gap=0, valueWidth=valueWidth, padding=formatters.packPadding(left=2, bottom=-10)))
-        if statsConfig.rentals and not vehicle.isPremiumIGR and not frontlineBlock and not (vehicle.isWotPlusRent or vehicle.isTelecomRent):
+        if statsConfig.rentals and not vehicle.isPremiumIGR and not frontlineBlock and not vehicle.isTelecomRent:
             if statsConfig.futureRentals:
                 rentLeftKey = '#tooltips:vehicle/rentLeftFuture/%s'
                 rentInfo = RentalInfoProvider(time=ctxParams.get('rentExpiryTime'), battles=ctxParams.get('rentBattlesLeft'), wins=ctxParams.get('rentWinsLeft'), seasonRent=ctxParams.get('rentSeason'), isRented=True)
@@ -445,6 +458,8 @@ class HeaderBlockConstructor(VehicleTooltipBlockConstructor):
         if self.vehicle.role != constants.ROLE_TYPE.NOT_DEFINED:
             roleLabel = self.vehicle.roleLabel
             headerBlocks.append(formatters.packTextBlockData(text_styles.main(backport.text(R.strings.menu.roleExp.roleLabel()) + ' ' + backport.text(R.strings.menu.roleExp.roleName.dyn(roleLabel)(), groupName=backport.text(R.strings.menu.roleExp.roleGroupName.dyn(roleLabel)()))), padding=formatters.packPadding(top=-9, left=leftOffset, bottom=9)))
+        if self.vehicle.isEvent:
+            headerBlocks.append(formatters.packTextBlockData(text_styles.main(backport.text(R.strings.hw_lobby.common.tooltips.eventBattlesVehicle())), padding=formatters.packPadding(top=9, left=99, bottom=0)))
         block.append(formatters.packBuildUpBlockData(headerBlocks, stretchBg=False, linkage=bgLinkage, padding=formatters.packPadding(left=-self.leftPadding)))
         return block
 
@@ -644,7 +659,7 @@ class FrontlineRentBlockConstructor(VehicleTooltipBlockConstructor):
                 if rentInfo.getActiveSeasonRent() is not None:
                     rentFormatter = RentLeftFormatter(rentInfo)
                     rentLeftInfo = rentFormatter.getRentLeftStr(rentLeftKey)
-                    if rentLeftInfo and not (rentInfo.isWotPlus or rentInfo.isTelecomRent):
+                    if rentLeftInfo and not rentInfo.isTelecomRent:
                         block.append(formatters.packTextParameterWithIconBlockData(name=text_styles.neutral(rentLeftInfo), value='', icon=ICON_TEXT_FRAMES.RENTALS, valueWidth=self._valueWidth, padding=paddings))
                 return block
         return
@@ -662,7 +677,8 @@ class CommonStatsBlockConstructor(VehicleTooltipBlockConstructor):
        VEHICLE_CLASS_NAME.SPG: ('avgDamage', 'stunMaxDuration', 'reloadTimeSecs', 'aimingTime', 'explosionRadius'), 
        VEHICLE_CLASS_NAME.AT_SPG: ('avgPiercingPower', 'shotDispersionAngle', 'avgDamagePerMinute', 'speedLimits', 'chassisRotationSpeed',
  'switchTime'), 
-       'roles': {constants.ROLE_TYPE.SPG_FLAME: ('avgDamage', 'flameMaxDistance', 'stunMaxDuration', 'enginePowerPerTon', 'speedLimits')}, 
+       'roles': {constants.ROLE_TYPE.SPG_FLAME: ('avgDamage', 'flameMaxDistance', 'stunMaxDuration', 'enginePowerPerTon', 'speedLimits'), 
+                 constants.ROLE_TYPE.SPG_ASSAULT: ('avgDamagePerMinute', 'avgPiercingPower', 'aimingTime', 'speedLimits', 'hullArmor')}, 
        'default': ('speedLimits', 'enginePower', 'chassisRotationSpeed')}
     __CONDITIONAL_PARAMS = (
      (
@@ -676,7 +692,7 @@ class CommonStatsBlockConstructor(VehicleTooltipBlockConstructor):
         paramsDict = params_helper.getParameters(self.vehicle)
         block = []
         highlightedParams = self.__getHighlightedParams()
-        comparator = params_helper.idealCrewComparator(self.vehicle)
+        comparator = _idealCrewComparator(self.vehicle)
         if self.configuration.params and not self.configuration.simplifiedOnly:
             for paramName in self.__getShownParameters(paramsDict):
                 paramInfo = comparator.getExtendedData(paramName)
@@ -697,6 +713,9 @@ class CommonStatsBlockConstructor(VehicleTooltipBlockConstructor):
             params.append(TURBOSHAFT_SPEED_MODE_SPEED)
         if descr.hasRocketAcceleration and serverSettings.checkRocketAccelerationHighlights(increase=True):
             params.append(ROCKET_ACCELERATION_SPEED_LIMITS)
+        if descr.hasDualAccuracy and serverSettings.checkDualAccuracyHighlights(increase=True):
+            params.append(DUAL_ACCURACY_COOLING_DELAY)
+            params.append(SHOT_DISPERSION_ANGLE)
         return params
 
     def __getShownParameters(self, paramsDict):
@@ -736,7 +755,7 @@ class SimplifiedStatsBlockConstructor(VehicleTooltipBlockConstructor):
     def construct(self):
         block = []
         if self.configuration.params:
-            comparator = params_helper.idealCrewComparator(self.vehicle)
+            comparator = _idealCrewComparator(self.vehicle)
             stockParams = params_helper.getParameters(self.itemsCache.items.getStockVehicle(self.vehicle.intCD))
             for paramName in RELATIVE_PARAMS:
                 paramInfo = comparator.getExtendedData(paramName)

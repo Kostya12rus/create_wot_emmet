@@ -1,18 +1,17 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/comp7/tooltips/general_rank_tooltip_model.py
 from enum import IntEnum
 from frameworks.wulf import ViewModel
 
 class Rank(IntEnum):
-    FIRST = 1
-    SECOND = 2
-    THIRD = 3
-    FOURTH = 4
-    FIFTH = 5
-    SIXTH = 6
-    SEVENTH = 7
+    FIRST = 6
+    SECOND = 5
+    THIRD = 4
+    FOURTH = 3
+    FIFTH = 2
+    SIXTH = 1
 
 
 class GeneralRankTooltipModel(ViewModel):
@@ -48,6 +47,6 @@ class GeneralRankTooltipModel(ViewModel):
     def _initialize(self):
         super(GeneralRankTooltipModel, self)._initialize()
         self._addNumberProperty('rank')
-        self._addStringProperty('divisions', 'D, C, B, A')
+        self._addStringProperty('divisions', 'E, D, C, B, A')
         self._addNumberProperty('from', 1000)
         self._addNumberProperty('to', 2000)

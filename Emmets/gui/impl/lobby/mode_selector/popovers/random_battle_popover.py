@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/mode_selector/popovers/random_battle_popover.py
 from collections import OrderedDict
 from account_helpers.settings_core.settings_constants import GAME
@@ -15,16 +15,19 @@ from gui.shared import g_eventBus
 from gui.shared.events import ModeSelectorPopoverEvent
 from helpers import dependency
 from skeletons.account_helpers.settings_core import ISettingsCore
+from skeletons.gui.lobby_context import ILobbyContext
 _GAMEPLAY_STANDARD = 'gameplay_standard'
 _subLocaleBySettingID = OrderedDict()
 _subLocaleBySettingID[_GAMEPLAY_STANDARD] = 'default'
 _subLocaleBySettingID[GAME.GAMEPLAY_DOMINATION] = 'domination'
 _subLocaleBySettingID[GAME.GAMEPLAY_ASSAULT] = 'assault'
 _subLocaleBySettingID[GAME.GAMEPLAY_EPIC_STANDARD] = 'epicStandard'
+_subLocaleBySettingID[GAME.GAMEPLAY_DEV_MAPS] = 'devMaps'
 
 class RandomBattlePopover(PopOverViewImpl):
     __slots__ = ('__initialItems', '__currentItems')
     settingsCore = dependency.descriptor(ISettingsCore)
+    lobbyContext = dependency.descriptor(ILobbyContext)
 
     def __init__(self):
         settings = ViewSettings(layoutID=R.views.lobby.mode_selector.popovers.RandomBattlePopover(), model=RandomBattlePopoverModel())
@@ -44,7 +47,9 @@ class RandomBattlePopover(PopOverViewImpl):
 
     def _onLoading(self, *args, **kwargs):
         self.viewModel.onItemChanged += self._itemChangeHandler
-        for setting in [GAME.GAMEPLAY_DOMINATION, GAME.GAMEPLAY_ASSAULT, GAME.GAMEPLAY_EPIC_STANDARD]:
+        settings = [
+         GAME.GAMEPLAY_DOMINATION, GAME.GAMEPLAY_ASSAULT, GAME.GAMEPLAY_EPIC_STANDARD, GAME.GAMEPLAY_DEV_MAPS]
+        for setting in settings:
             self.__initialItems[setting] = self.__currentItems[setting] = self.settingsCore.getSetting(setting)
 
         self._update()
@@ -70,7 +75,8 @@ class RandomBattlePopover(PopOverViewImpl):
             settingsList = model.getSettingsList()
             settingsList.clear()
             for itemType, itemLocale in _subLocaleBySettingID.iteritems():
-                settingsList.addViewModel(self._createItem(itemType, titlesR.dyn(itemLocale)(), tooltipsR.dyn(itemLocale), enabled=itemType != _GAMEPLAY_STANDARD))
+                if itemType != GAME.GAMEPLAY_DEV_MAPS or self.lobbyContext.getServerSettings().isMapsInDevelopmentEnabled():
+                    settingsList.addViewModel(self._createItem(itemType, titlesR.dyn(itemLocale)(), tooltipsR.dyn(itemLocale), enabled=itemType != _GAMEPLAY_STANDARD))
 
             settingsList.invalidate()
 

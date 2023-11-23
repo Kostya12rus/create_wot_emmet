@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/arena_visitor.py
 import functools, weakref, math, BigWorld, win_points
 from arena_bonus_type_caps import ARENA_BONUS_TYPE_CAPS as _CAPS
@@ -87,7 +87,7 @@ class _ArenaTypeSkeleton(object):
     squadTeamNumbers = []
     boundingBox = ((0, 0), (0, 0))
     minimap = ''
-    minimapLayers = []
+    minimapLayers = {}
     overviewmap = ''
     winPointsSettings = None
     battleCountdownTimerSound = ''
@@ -277,6 +277,9 @@ class _ArenaGuiTypeVisitor(IArenaVisitor):
     def isEventBattle(self):
         return self._guiType == _GUI_TYPE.EVENT_BATTLES
 
+    def isHalloweenBattle(self):
+        return self._guiType == _GUI_TYPE.HALLOWEEN_BATTLES
+
     def isMultiTeam(self):
         return self._guiType == _GUI_TYPE.FALLOUT_MULTITEAM
 
@@ -306,6 +309,9 @@ class _ArenaGuiTypeVisitor(IArenaVisitor):
 
     def isWinback(self):
         return self._guiType == _GUI_TYPE.WINBACK
+
+    def isVersusAI(self):
+        return self._guiType == _GUI_TYPE.VERSUS_AI
 
     def isMapsTraining(self):
         return self._guiType == _GUI_TYPE.MAPS_TRAINING
@@ -413,6 +419,9 @@ class _ArenaExtraDataVisitor(IArenaVisitor):
 
     def isLowLevelBattle(self):
         return 0 < self._extra.get('battleLevel', 0) < 4
+
+    def isMapsInDevelopmentEnabled(self):
+        return self._extra.get('isRandomEventsAllowed', False)
 
     def getValue(self, key, default=None):
         return self._extra.get(key, default)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/trainings/TrainingRoomBase.py
 import BigWorld, ArenaType
 from adisp import adisp_process
@@ -125,7 +125,7 @@ class TrainingRoomBase(LobbySubView, TrainingRoomBaseMeta, ILegacyListener):
             self.as_enabledCloseButtonS(True)
 
     def closeTrainingRoom(self):
-        self._doLeave(False)
+        self._doLeave(isExit=False, parent=self.getParentWindow())
 
     def onSettingUpdated(self, entity, settingName, settingValue):
         if settingName in (PREBATTLE_SETTING_NAME.ARENA_TYPE_ID, PREBATTLE_SETTING_NAME.LIMITS):
@@ -350,8 +350,8 @@ class TrainingRoomBase(LobbySubView, TrainingRoomBaseMeta, ILegacyListener):
         return
 
     @adisp_process
-    def _doLeave(self, isExit=True):
-        yield self.prbDispatcher.doLeaveAction(LeavePrbAction(isExit=isExit))
+    def _doLeave(self, isExit=True, parent=None):
+        yield self.prbDispatcher.doLeaveAction(LeavePrbAction(isExit=isExit, parent=parent))
 
     @adisp_process
     def __changeTrainingRoomSettings(self, settings):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/battle_pass_controller.py
 import bisect, logging
 from collections import namedtuple
@@ -22,6 +22,7 @@ from helpers import dependency, time_utils
 from helpers.events_handler import EventsHandler
 from helpers.server_settings import serverSettingsChangeListener
 from shared_utils import findFirst, first
+from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.game_control import IBattlePassController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.offers import IOffersDataProvider
@@ -35,6 +36,7 @@ class BattlePassController(IBattlePassController, EventsHandler):
     __itemsCache = dependency.descriptor(IItemsCache)
     __lobbyContext = dependency.descriptor(ILobbyContext)
     __offersProvider = dependency.descriptor(IOffersDataProvider)
+    __settingsCore = dependency.descriptor(ISettingsCore)
 
     def __init__(self):
         self.__oldPoints = 0
@@ -71,6 +73,8 @@ class BattlePassController(IBattlePassController, EventsHandler):
         self.__rewardLogic.start()
         self.onBattlePassSettingsChange(self.__getConfig().mode, self.__currentMode)
         self.__currentMode = self.__getConfig().mode
+        storageData = self.__settingsCore.serverSettings.getBPStorage()
+        self.__settingsCore.serverSettings.updateBPStorageData(storageData)
 
     def onAvatarBecomePlayer(self):
         self.__stop()

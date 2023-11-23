@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/inventory/crew_books_tab.py
 from gui.Scaleform.daapi.view.lobby.storage.inventory.filters.filter_by_nation import FiltrableInventoryCategoryByNationTabView
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
@@ -42,11 +42,16 @@ _TYPE_FILTER_ITEMS = [
     'selected': False, 
     'tooltip': makeTooltip(body=TOOLTIPS.CREWBOOKS_STORAGE_FILTERS_UNIVERSALBOOK_TITLE), 
     'icon': RES_ICONS.MAPS_ICONS_STORAGE_FILTERS_ICON_BUTTON_UNIVERSAL}]
-_TYPE_ID_BIT_TO_TYPE_ID_MAP = {_CrewBooksFilterBit.RARE_1: CREW_BOOK_RARITY.CREW_COMMON, 
-   _CrewBooksFilterBit.RARE_2: CREW_BOOK_RARITY.CREW_RARE, 
-   _CrewBooksFilterBit.RARE_3: CREW_BOOK_RARITY.CREW_EPIC, 
-   _CrewBooksFilterBit.PERSONAL: CREW_BOOK_RARITY.PERSONAL, 
-   _CrewBooksFilterBit.UNIVERSAL: CREW_BOOK_RARITY.UNIVERSAL}
+_TYPE_ID_BIT_TO_TYPE_ID_MAP = {_CrewBooksFilterBit.RARE_1: (
+                              CREW_BOOK_RARITY.CREW_COMMON,), 
+   _CrewBooksFilterBit.RARE_2: (
+                              CREW_BOOK_RARITY.CREW_RARE,), 
+   _CrewBooksFilterBit.RARE_3: (
+                              CREW_BOOK_RARITY.CREW_EPIC,), 
+   _CrewBooksFilterBit.PERSONAL: (
+                                CREW_BOOK_RARITY.PERSONAL,), 
+   _CrewBooksFilterBit.UNIVERSAL: (
+                                 CREW_BOOK_RARITY.UNIVERSAL, CREW_BOOK_RARITY.UNIVERSAL_GUIDE, CREW_BOOK_RARITY.UNIVERSAL_BROCHURE)}
 
 class CrewBooksTabView(FiltrableInventoryCategoryByNationTabView):
     __lobbyContext = dependency.descriptor(ILobbyContext)
@@ -60,8 +65,11 @@ class CrewBooksTabView(FiltrableInventoryCategoryByNationTabView):
 
     def _getFilteredCriteria(self):
         criteria = super(CrewBooksTabView, self)._getFilteredCriteria() | REQ_CRITERIA.CREW_ITEM.IN_ACCOUNT
-        kindsList = [ _TYPE_ID_BIT_TO_TYPE_ID_MAP[bit] for bit in _TYPE_ID_BIT_TO_TYPE_ID_MAP.iterkeys() if self._filterMask & bit
-                    ]
+        kindsList = []
+        for bit, kinds in _TYPE_ID_BIT_TO_TYPE_ID_MAP.iteritems():
+            if self._filterMask & bit:
+                kindsList.extend(kinds)
+
         if kindsList:
             criteria |= REQ_CRITERIA.CREW_ITEM.BOOK_RARITIES(kindsList)
         return criteria

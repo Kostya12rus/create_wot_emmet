@@ -1,10 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/epic/battle_carousel.py
 import logging, weakref, BigWorld, Event
-from account_helpers.AccountSettings import EPICBATTLE_CAROUSEL_FILTER_1, EPICBATTLE_CAROUSEL_FILTER_2
-from account_helpers.AccountSettings import EPICBATTLE_CAROUSEL_FILTER_CLIENT_1
+from account_helpers.AccountSettings import EPICBATTLE_CAROUSEL_FILTER_1, EPICBATTLE_CAROUSEL_FILTER_2, EPICBATTLE_CAROUSEL_FILTER_CLIENT_1, EPICBATTLE_CAROUSEL_FILTER_CLIENT_2
 from gui import GUI_NATIONS_ORDER_INDEX
 from gui.Scaleform import getButtonsAssetPath
 from gui.Scaleform.daapi.view.common.filter_contexts import getFilterSetupContexts
@@ -30,26 +29,19 @@ _CAROUSEL_FILTERS = (FILTER_KEYS.FAVORITE, FILTER_KEYS.PREMIUM)
 
 class BattleCarouselFilter(CarouselFilter):
     __epicController = dependency.descriptor(IEpicBattleMetaGameController)
-    FILTER_KEY_SEASON = 'epicBattleSeason'
 
     def __init__(self):
         super(BattleCarouselFilter, self).__init__()
-        self._serverSections = (EPICBATTLE_CAROUSEL_FILTER_1, EPICBATTLE_CAROUSEL_FILTER_2)
-        self._clientSections = (EPICBATTLE_CAROUSEL_FILTER_CLIENT_1,)
-        self.__currentSeasonID = 0
+        clientFilter = EPICBATTLE_CAROUSEL_FILTER_CLIENT_1 if self.__epicController.isUnlockVehiclesInBattleEnabled() else EPICBATTLE_CAROUSEL_FILTER_CLIENT_2
+        self._serverSections = (
+         EPICBATTLE_CAROUSEL_FILTER_1, EPICBATTLE_CAROUSEL_FILTER_2)
+        self._clientSections = (clientFilter,)
 
     def save(self):
-        self.__currentSeasonID = self.__epicController.getCurrentSeasonID()
-        self._filters[self.FILTER_KEY_SEASON] = self.__currentSeasonID
-        super(BattleCarouselFilter, self).save()
+        pass
 
     def load(self):
-        super(BattleCarouselFilter, self).load()
-        currentSeason = self.__epicController.getCurrentSeasonID()
-        lastSeason = self._filters.get(self.FILTER_KEY_SEASON, currentSeason)
-        if lastSeason != currentSeason:
-            self.reset(save=False)
-        self.__currentSeasonID = currentSeason
+        self.reset(save=False)
 
     def _setCriteriaGroups(self):
         self._criteriesGroups = (

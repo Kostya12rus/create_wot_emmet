@@ -1,18 +1,19 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/tank_setup/main_tank_setup_model.py
 from frameworks.wulf import ViewModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.battle_boosters_setup_model import BattleBoostersSetupModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.consumables_setup_model import ConsumablesSetupModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.frontline_setup_model import FrontlineSetupModel
+from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.hw_consumables_setup_model import HwConsumablesSetupModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.opt_devices_setup_model import OptDevicesSetupModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.sub_views.shells_setup_model import ShellsSetupModel
 
 class MainTankSetupModel(ViewModel):
     __slots__ = ()
 
-    def __init__(self, properties=6, commands=0):
+    def __init__(self, properties=7, commands=0):
         super(MainTankSetupModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -55,11 +56,19 @@ class MainTankSetupModel(ViewModel):
     def getFrontlineSetupType():
         return FrontlineSetupModel
 
+    @property
+    def hwConsumablesSetup(self):
+        return self._getViewModel(5)
+
+    @staticmethod
+    def getHwConsumablesSetupType():
+        return HwConsumablesSetupModel
+
     def getSelectedSetup(self):
-        return self._getString(5)
+        return self._getString(6)
 
     def setSelectedSetup(self, value):
-        self._setString(5, value)
+        self._setString(6, value)
 
     def _initialize(self):
         super(MainTankSetupModel, self)._initialize()
@@ -68,4 +77,5 @@ class MainTankSetupModel(ViewModel):
         self._addViewModelProperty('battleBoostersSetup', BattleBoostersSetupModel())
         self._addViewModelProperty('optDevicesSetup', OptDevicesSetupModel())
         self._addViewModelProperty('frontlineSetup', FrontlineSetupModel())
+        self._addViewModelProperty('hwConsumablesSetup', HwConsumablesSetupModel())
         self._addStringProperty('selectedSetup', '')

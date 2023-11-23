@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/ProfileTechnique.py
 from stats_params import BATTLE_ROYALE_STATS_ENABLED
 from account_helpers import AccountSettings
@@ -33,6 +33,7 @@ from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from soft_exception import SoftException
 from gui.shared.events import ProfileTechniqueEvent
+from gui.Scaleform.daapi.view.lobby.comp7.comp7_profile_helper import isComp7Archive, isComp7Season, getArchiveName, getSeasonName, COMP7_ARCHIVE_NAMES, COMP7_SEASON_NUMBERS, getDropdownKeyByArchiveName, getDropdownKeyBySeason
 _MARK_ON_GUN_MIN_LVL = 5
 
 class ProfileTechnique(ProfileTechniqueMeta):
@@ -99,9 +100,14 @@ class ProfileTechnique(ProfileTechniqueMeta):
             dropDownProvider.extend((
              self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.FORTIFICATIONS_SORTIES),
              self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.FORTIFICATIONS_BATTLES)))
+        for archive in COMP7_ARCHIVE_NAMES:
+            dropDownProvider.append(self._dataProviderEntryAutoTranslate(getDropdownKeyByArchiveName(archive)))
+
         dropDownProvider += [
-         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.COMP7),
-         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.COMP7_SEASON2)]
+         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.VERSUS_AI)]
+        for season in COMP7_SEASON_NUMBERS:
+            dropDownProvider.append(self._dataProviderEntryAutoTranslate(getDropdownKeyBySeason(season)))
+
         storedData = self._getStorageData()
         return {'dropDownProvider': dropDownProvider, 
            'tableHeader': self.__getTableHeader(isFallout), 
@@ -144,7 +150,7 @@ class ProfileTechnique(ProfileTechniqueMeta):
          self._createTableBtnInfo('battlesCount', 74, 3, PROFILE.SECTION_TECHNIQUE_SORT_TOOLTIP_BATTLESCOUNT, 'descending', label=PROFILE.SECTION_SUMMARY_SCORES_TOTALBATTLES),
          self._createTableBtnInfo('winsEfficiency', 74, 4, PROFILE.SECTION_TECHNIQUE_SORT_TOOLTIP_WINS if isFallout else PROFILE.SECTION_TECHNIQUE_SORT_TOOLTIP_WINRATE, 'descending', label=PROFILE.SECTION_TECHNIQUE_BUTTONBAR_TOTALWINS),
          self._createTableBtnInfo('avgExperience', 90, 5, PROFILE.SECTION_TECHNIQUE_SORT_TOOLTIP_AVGEXP, 'descending', label=PROFILE.SECTION_TECHNIQUE_BUTTONBAR_AVGEXPERIENCE)]
-        if self._battlesType in (PROFILE_DROPDOWN_KEYS.COMP7, PROFILE_DROPDOWN_KEYS.COMP7_SEASON2):
+        if isComp7Archive(self._battlesType) or isComp7Season(self._battlesType):
             result.append(self._createTableBtnInfo('prestigePoints', 83, 6, PROFILE.SECTION_TECHNIQUE_SORT_TOOLTIP_PRESTIGEPOINTS, 'descending', label=PROFILE.SECTION_TECHNIQUE_BUTTONBAR_PRESTIGEPOINTS))
         else:
             markOfMasteryEnabled = self._battlesType in (PROFILE_DROPDOWN_KEYS.ALL, PROFILE_DROPDOWN_KEYS.EPIC_RANDOM)
@@ -181,8 +187,9 @@ class ProfileTechnique(ProfileTechniqueMeta):
            PROFILE_DROPDOWN_KEYS.EPIC_RANDOM: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_EPICRANDOM, 
            PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SOLO: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_BATTLEROYALESOLO, 
            PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SQUAD: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_BATTLEROYALESQUAD, 
-           PROFILE_DROPDOWN_KEYS.COMP7: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_COMP7, 
-           PROFILE_DROPDOWN_KEYS.COMP7_SEASON2: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_COMP7_SEASON2}
+           PROFILE_DROPDOWN_KEYS.VERSUS_AI: PROFILE.SECTION_TECHNIQUE_EMPTYSCREENLABEL_BATTLETYPE_VERSUSAI}
+        if isComp7Archive(self._battlesType) or isComp7Season(self._battlesType):
+            return backport.text(R.strings.profile.section.technique.emptyScreenLabel.battleType.comp7())
         return i18n.makeString(emptyScreenLabelsDictionary[self._battlesType])
 
     def _sendAccountData(self, targetData, accountDossier):
@@ -252,7 +259,7 @@ class ProfileTechnique(ProfileTechniqueMeta):
             __markOfMasteryBattles = (
              PROFILE_DROPDOWN_KEYS.ALL,)
         showMarkOfMastery = self._battlesType in __markOfMasteryBattles and targetData.getMarksOfMastery() != UNAVAILABLE_MARKS_OF_MASTERY
-        showPrestigePoints = self._battlesType in (PROFILE_DROPDOWN_KEYS.COMP7, PROFILE_DROPDOWN_KEYS.COMP7_SEASON2)
+        showPrestigePoints = isComp7Archive(self._battlesType) or isComp7Season(self._battlesType)
         for intCD, vehParams in targetData.getVehicles().iteritems():
             if showPrestigePoints:
                 battlesCount, wins, xp, prestigePoints = vehParams
@@ -358,10 +365,12 @@ class ProfileTechnique(ProfileTechniqueMeta):
                 stats = vehDossier.getBattleRoyaleSquadStats(vehicleIntCD)
                 if not stats:
                     return
-            elif self._battlesType == PROFILE_DROPDOWN_KEYS.COMP7:
-                stats = vehDossier.getComp7Stats()
-            elif self._battlesType == PROFILE_DROPDOWN_KEYS.COMP7_SEASON2:
-                stats = vehDossier.getComp7Stats(seasonID=2)
+            elif isComp7Archive(self._battlesType):
+                stats = vehDossier.getComp7Stats(archive=getArchiveName(self._battlesType))
+            elif isComp7Season(self._battlesType):
+                stats = vehDossier.getComp7Stats(season=getSeasonName(self._battlesType))
+            elif self._battlesType == PROFILE_DROPDOWN_KEYS.VERSUS_AI:
+                stats = vehDossier.getVersusAIStats()
             else:
                 raise SoftException('Profile Technique: Unknown battle type: ' + self._battlesType)
             if achievementsList is not None:
@@ -380,7 +389,7 @@ class ProfileTechnique(ProfileTechniqueMeta):
             return BATTLE_ROYALE_VEHICLE_STATISTICS_LAYOUT
         if self._battlesType == PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SQUAD:
             return BATTLE_ROYALE_VEHICLE_STATISTICS_LAYOUT
-        if self._battlesType in (PROFILE_DROPDOWN_KEYS.COMP7, PROFILE_DROPDOWN_KEYS.COMP7_SEASON2):
+        if isComp7Archive(self._battlesType) or isComp7Season(self._battlesType):
             return COMP7_VEHICLE_STATISTICS_LAYOUT
         return STATISTICS_LAYOUT
 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/classic/team_bases_panel.py
 from constants import ARENA_GUI_TYPE
 from gui.Scaleform.daapi.view.meta.TeamBasesPanelMeta import TeamBasesPanelMeta
@@ -11,14 +11,14 @@ from gui.shared.utils.functions import isControlPointExists
 from helpers import dependency
 from helpers import i18n, time_utils
 from skeletons.gui.battle_session import IBattleSessionProvider
-_MAX_INVADERS_COUNT = 3
+MAX_INVADERS_COUNT = 3
 
-class _TeamBaseSettingItem(object):
+class TeamBaseSettingItem(object):
     __slots__ = ('_weight', '_color', '_capturing', '_captured', 'captured', '_blocked',
                  '_arenaTypeID', '_team', '_baseID', '_subTypeBaseID')
 
     def __init__(self, weight, color, capturing, captured, blocked):
-        super(_TeamBaseSettingItem, self).__init__()
+        super(TeamBaseSettingItem, self).__init__()
         self._weight = weight
         self._color = color
         self._capturing = capturing
@@ -75,7 +75,7 @@ _SETTINGS_TO_CONTROL_POINT = {0: (
      i18n.makeString(I18N_INGAME_GUI.PLAYER_MESSAGES_BASE_CAPTURED_NOTIFICATION),
      i18n.makeString(I18N_INGAME_GUI.PLAYER_MESSAGES_BASE_CAPTURE_BLOCKED))}
 
-def _getSettingItem(clientID, ownTeam, arenaTypeID):
+def getSettingItem(clientID, ownTeam, arenaTypeID):
     baseTeam, baseID = team_bases_ctrl.parseClientTeamBaseID(clientID)
     itemSettings = (0, 'green', '%s %s', '%s %s', '%s %s')
     key = baseTeam ^ ownTeam
@@ -84,7 +84,7 @@ def _getSettingItem(clientID, ownTeam, arenaTypeID):
             itemSettings = _SETTINGS_TO_CONTROL_POINT[key]
     elif key in _SETTINGS_TO_TEAM:
         itemSettings = _SETTINGS_TO_TEAM[key]
-    item = _TeamBaseSettingItem(*itemSettings)
+    item = TeamBaseSettingItem(*itemSettings)
     item.setup(arenaTypeID, baseID, baseTeam)
     return item
 
@@ -100,7 +100,7 @@ class TeamBasesPanel(TeamBasesPanelMeta, team_bases_ctrl.ITeamBasesListener):
         self.as_setOffsetForEnemyPointsS()
 
     def addCapturingTeamBase(self, clientID, playerTeam, points, _, timeLeft, invadersCnt, capturingStopped):
-        item = _getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
+        item = getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
         title = item.getCapturingString(points)
         self.as_addS(clientID, item.getWeight(), item.getColor(), title, points, time_utils.getTimeLeftFormat(timeLeft), self.__getInvadersCountStr(invadersCnt))
         self.__basesDict[clientID] = item
@@ -111,7 +111,7 @@ class TeamBasesPanel(TeamBasesPanelMeta, team_bases_ctrl.ITeamBasesListener):
                 self.stopTeamBaseCapturing(clientID, points)
 
     def addCapturedTeamBase(self, clientID, playerTeam, timeLeft, invadersCnt):
-        item = _getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
+        item = getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
         title = item.getCapturedString()
         self.as_addS(clientID, item.getWeight(), item.getColor(), title, 100, time_utils.getTimeLeftFormat(timeLeft), self.__getInvadersCountStr(invadersCnt))
         self.__basesDict[clientID] = item
@@ -141,7 +141,7 @@ class TeamBasesPanel(TeamBasesPanelMeta, team_bases_ctrl.ITeamBasesListener):
         if clientID in self.__basesDict:
             item = self.__basesDict[clientID]
         else:
-            item = _getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
+            item = getSettingItem(clientID, playerTeam, self.sessionProvider.arenaVisitor.type.getID())
         self.as_setCapturedS(clientID, item.getCapturedString())
 
     def removeTeamBase(self, clientID):
@@ -155,6 +155,6 @@ class TeamBasesPanel(TeamBasesPanelMeta, team_bases_ctrl.ITeamBasesListener):
 
     @staticmethod
     def __getInvadersCountStr(count):
-        if count < _MAX_INVADERS_COUNT:
+        if count < MAX_INVADERS_COUNT:
             return str(count)
-        return str(_MAX_INVADERS_COUNT)
+        return str(MAX_INVADERS_COUNT)

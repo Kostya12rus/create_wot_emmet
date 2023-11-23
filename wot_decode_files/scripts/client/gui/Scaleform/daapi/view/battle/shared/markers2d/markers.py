@@ -1,11 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/markers2d/markers.py
 from enum import Enum
-import Event, GUI
+import Event, GUI, Math
 from gun_rotation_shared import getLocalAimPoint
 from vehicle_systems.tankStructure import TankNodeNames
+HIDDEN_VEHICLE_OFFSET = Math.Vector3(0, 5, 0)
 
 class ReplyStateForMarker(Enum):
     CREATE_STATE = 0
@@ -135,12 +136,15 @@ class VehicleMarker(Marker):
     def attach(self, vProxy):
         self.detach()
         self._vProxy = vProxy
-        self._vProxy.appearance.onModelChanged += self.__onModelChanged
+        if self._vProxy.appearance is not None:
+            self._vProxy.appearance.onModelChanged += self.__onModelChanged
+        return
 
     def detach(self):
-        if self._vProxy is not None and self._vProxy.appearance is not None:
-            self._vProxy.appearance.onModelChanged -= self.__onModelChanged
-            self._vProxy = None
+        if self._vProxy is not None and hasattr(self._vProxy, 'appearance'):
+            if self._vProxy.appearance is not None:
+                self._vProxy.appearance.onModelChanged -= self.__onModelChanged
+                self._vProxy = None
         return
 
     def destroy(self):
@@ -176,6 +180,10 @@ class VehicleMarker(Marker):
 
     @classmethod
     def fetchMatrixProvider(cls, vProxy):
+        if vProxy.isHidden:
+            matrix = Math.Matrix()
+            matrix.setTranslate(vProxy.position + HIDDEN_VEHICLE_OFFSET)
+            return matrix
         rootMP = vProxy.model.node(TankNodeNames.HULL_SWINGING)
         guiMP = vProxy.model.node(TankNodeNames.GUI)
         rootM = rootMP.localMatrix

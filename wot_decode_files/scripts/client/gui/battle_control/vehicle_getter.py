@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/vehicle_getter.py
-from items.vehicles import FLAMETHROWER
+from items.vehicles import VEHICLE_TAGS
 from collections import defaultdict
 from gui import TANKMEN_ROLES_ORDER_DICT
 from gui.battle_control import avatar_getter
@@ -50,7 +50,7 @@ def getVehicleIndicatorType(vDesc):
         iType = VEHICLE_INDICATOR_TYPE.DEFAULT
         if not hasTurretRotator(vDesc):
             tags = vDesc.type.tags
-            if FLAMETHROWER in tags:
+            if VEHICLE_TAGS.FLAMETHROWER in tags:
                 iType = VEHICLE_INDICATOR_TYPE.AT_SPG
             else:
                 if VEHICLE_CLASS_NAME.SPG in tags:

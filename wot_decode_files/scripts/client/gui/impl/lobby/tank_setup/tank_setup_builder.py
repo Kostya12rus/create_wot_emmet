@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/tank_setup_builder.py
 from collections import namedtuple
 from gui.impl.gen.view_models.views.lobby.tank_setup.main_tank_setup_model import MainTankSetupModel
@@ -14,6 +14,8 @@ from gui.impl.lobby.tank_setup.sub_views.battle_booster_setup import BattleBoost
 from gui.impl.lobby.tank_setup.sub_views.frontline_setup import EpicBattleSetupSubView
 from gui.impl.lobby.tank_setup.sub_views.opt_device_setup import OptDeviceSetupSubView
 from gui.impl.lobby.tank_setup.sub_views.shell_setup import ShellSetupSubView
+from gui.impl.lobby.tank_setup.interactors.halloween import HalloweenInteractor
+from gui.impl.lobby.tank_setup.sub_views.halloween_setup import HalloweenSetupSubView
 TankSetupComponent = namedtuple('_TankSetupComponent', 'subModel, subViewClazz, interactor')
 
 class TankSetupBuilder(object):
@@ -72,4 +74,13 @@ class EpicBattleTankSetupBuilder(HangarTankSetupBuilder):
     def configureComponents(self, viewModel):
         components = super(EpicBattleTankSetupBuilder, self).configureComponents(viewModel)
         self.addComponent(components, viewModel.frontlineSetup, EpicBattleSetupSubView, FrontlineInteractor(self._vehItem))
+        return components
+
+
+class HalloweenTankSetupBuilder(HangarTankSetupBuilder):
+    __slots__ = ()
+
+    def configureComponents(self, viewModel):
+        components = super(HalloweenTankSetupBuilder, self).configureComponents(viewModel)
+        self.addComponent(components, viewModel.hwConsumablesSetup, HalloweenSetupSubView, HalloweenInteractor(self._vehItem))
         return components

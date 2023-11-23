@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/missions/missions_helper.py
 import operator, time
 from collections import namedtuple
@@ -19,13 +19,13 @@ from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
 from gui.impl import backport
 from gui.impl.gen import R
-from gui.server_events.awards_formatters import AWARDS_SIZES, getEpicAwardFormatter, EPIC_AWARD_SIZE
+from gui.server_events.awards_formatters import AWARDS_SIZES, getEpicAwardFormatter, EPIC_AWARD_SIZE, getMissionsDefaultAwardFormatter, getHalloweenAwardFormatter
 from gui.server_events.bonuses import SimpleBonus
 from gui.server_events.cond_formatters.prebattle import MissionsPreBattleConditionsFormatter
 from gui.server_events.cond_formatters.requirements import AccountRequirementsFormatter, TQAccountRequirementsFormatter
 from gui.server_events.conditions import GROUP_TYPE
 from gui.server_events.events_constants import BATTLE_ROYALE_GROUPS_ID, EPIC_BATTLE_GROUPS_ID, FUN_RANDOM_GROUP_ID
-from gui.server_events.events_helpers import MISSIONS_STATES, QuestInfoModel, AWARDS_PER_SINGLE_PAGE, isMarathon, AwardSheetPresenter, isPremium, isDebutBoxesQuest
+from gui.server_events.events_helpers import MISSIONS_STATES, QuestInfoModel, AWARDS_PER_SINGLE_PAGE, isMarathon, AwardSheetPresenter, isPremium, isDebutBoxesQuest, isHalloweenQuest
 from gui.server_events.formatters import DECORATION_SIZES
 from gui.server_events.personal_progress import formatters
 from gui.shared.formatters import text_styles, icons, time_formatters
@@ -51,11 +51,13 @@ _cardCondFormatter = cards_formatters.CardBattleConditionsFormatters()
 _detailedCardCondFormatter = cards_formatters.DetailedCardBattleConditionsFormatters()
 _cardTokenConditionFormatter = cards_formatters.CardTokenConditionFormatter()
 _detailedCardTokenConditionFormatter = cards_formatters.DetailedCardTokenConditionFormatter()
-_cardAwardsFormatter = CurtailingAwardsComposer(CARD_AWARDS_COUNT)
-_detailedCardAwardsFormatter = DetailedCardAwardComposer(DETAILED_CARD_AWARDS_COUNT)
+_cardAwardsFormatter = CurtailingAwardsComposer(CARD_AWARDS_COUNT, getMissionsDefaultAwardFormatter())
+_detailedCardAwardsFormatter = DetailedCardAwardComposer(DETAILED_CARD_AWARDS_COUNT, getMissionsDefaultAwardFormatter())
 _awardsWindowBonusFormatter = AwardsWindowComposer(CARD_AWARDS_BIG_COUNT)
 _epicAwardsWindowBonusFormatter = CurtailingAwardsComposer(CARD_AWARDS_EPIC_COUNT, getEpicAwardFormatter())
 _personalMissionsAwardsFormatter = PersonalMissionsAwardComposer(DETAILED_CARD_AWARDS_COUNT)
+_hwCardAwardsFormatter = CurtailingAwardsComposer(CARD_AWARDS_COUNT, getHalloweenAwardFormatter())
+_hwDetailedCardAwardsFormatter = DetailedCardAwardComposer(DETAILED_CARD_AWARDS_COUNT, getHalloweenAwardFormatter())
 HIDE_DONE = 'hideDone'
 HIDE_UNAVAILABLE = 'hideUnavailable'
 PostponedOperationState = namedtuple('PostponedOperationState', [
@@ -254,7 +256,7 @@ class _MissionInfo(QuestInfoModel):
 
     def __init__(self, event):
         super(_MissionInfo, self).__init__(event)
-        self.__formattedBonuses = None
+        self._formattedBonuses = None
         self._mainFormattedConditions = None
         return
 
@@ -392,9 +394,9 @@ class _MissionInfo(QuestInfoModel):
         return BG_STATES.DEFAULT
 
     def _getAwards(self, mainQuest=None):
-        if self.__formattedBonuses is None:
-            self.__formattedBonuses = _cardAwardsFormatter.getFormattedBonuses(self._substituteBonuses(mainQuest))
-        return {'awards': self.__formattedBonuses}
+        if self._formattedBonuses is None:
+            self._formattedBonuses = _cardAwardsFormatter.getFormattedBonuses(self._substituteBonuses(mainQuest))
+        return {'awards': self._formattedBonuses}
 
     def _getConditions(self):
         return {'battleConditions': self._getMainConditions()}
@@ -460,6 +462,14 @@ class _MissionInfo(QuestInfoModel):
                 return resultBonus
             return bonuses
             return
+
+
+class _HWMissionInfo(_MissionInfo):
+
+    def _getAwards(self, mainQuest=None):
+        if self._formattedBonuses is None:
+            self._formattedBonuses = _hwCardAwardsFormatter.getFormattedBonuses(self._substituteBonuses(mainQuest))
+        return {'awards': self._formattedBonuses}
 
 
 class _EventDailyMissionInfo(_MissionInfo):
@@ -661,13 +671,14 @@ class _DetailedMissionInfo(_MissionInfo):
         else:
             criteria = REQ_CRITERIA.DISCLOSABLE
         isQuestForBattleRoyale = False
+        isQuestForEventBattle = False
         battleCond = self.event.preBattleCond.getConditions()
         if battleCond:
             bonusTypes = battleCond.find('bonusTypes')
             if bonusTypes:
                 arenaTypes = bonusTypes.getValue()
                 if arenaTypes:
-                    if constants.ARENA_BONUS_TYPE.EVENT_BATTLES not in arenaTypes or constants.ARENA_BONUS_TYPE.EVENT_BATTLES_2 not in arenaTypes:
+                    if constants.ARENA_BONUS_TYPE.HALLOWEEN_BATTLES not in arenaTypes or constants.ARENA_BONUS_TYPE.HALLOWEEN_BATTLES_WHEEL not in arenaTypes:
                         criteria = criteria | ~REQ_CRITERIA.VEHICLE.EVENT_BATTLE
                     if constants.ARENA_BONUS_TYPE.EPIC_BATTLE not in arenaTypes:
                         criteria = criteria | ~REQ_CRITERIA.VEHICLE.EPIC_BATTLE
@@ -675,11 +686,13 @@ class _DetailedMissionInfo(_MissionInfo):
                         criteria = criteria | ~REQ_CRITERIA.VEHICLE.FUN_RANDOM
                     if constants.ARENA_BONUS_TYPE.BATTLE_ROYALE_SQUAD in arenaTypes or constants.ARENA_BONUS_TYPE.BATTLE_ROYALE_SOLO in arenaTypes:
                         isQuestForBattleRoyale = True
+                    if constants.ARENA_BONUS_TYPE.HALLOWEEN_BATTLES in arenaTypes or constants.ARENA_BONUS_TYPE.HALLOWEEN_BATTLES_WHEEL in arenaTypes:
+                        isQuestForEventBattle = True
         xpMultCond = conds.find('hasReceivedMultipliedXP')
         if xpMultCond:
             extraConditions.append(xpMultCond)
         criteria = criteria | ~REQ_CRITERIA.VEHICLE.BATTLE_ROYALE | ~REQ_CRITERIA.VEHICLE.MAPS_TRAINING
-        return (criteria, extraConditions, isQuestForBattleRoyale)
+        return (criteria, extraConditions, isQuestForBattleRoyale, isQuestForEventBattle)
 
     def _getUIDecoration(self):
         decoration = self.eventsCache.prefetcher.getMissionDecoration(self.event.getIconID(), DECORATION_SIZES.DETAILS)
@@ -820,6 +833,12 @@ class _DetailedMissionInfo(_MissionInfo):
             return None
         else:
             return makeTooltip(QUESTS.MISSIONDETAILS_DESCRIPTION, description)
+
+
+class _HWDetailedMissionInfo(_DetailedMissionInfo):
+
+    def _getAwards(self, mainQuest=None):
+        return {'awards': _hwDetailedCardAwardsFormatter.getFormattedBonuses(self._substituteBonuses(mainQuest))}
 
 
 class _EventDailyDetailedMissionInfo(_DetailedMissionInfo, _EventDailyMissionInfo):
@@ -1360,6 +1379,8 @@ def getMissionInfoData(event):
             return _RankedMissionInfo(event)
         if isDebutBoxesQuest(event.getID()):
             return _DebutBoxesMissionInfo(event)
+        if isHalloweenQuest(event.getGroupID()):
+            return _HWMissionInfo(event)
         if event.getType() in constants.EVENT_TYPE.LIKE_BATTLE_QUESTS:
             return _MissionInfo(event)
         return
@@ -1385,6 +1406,8 @@ def getDetailedMissionData(event):
             return _DebutBoxesDetailedMissionInfo(event)
         if event.getGroupID() == FUN_RANDOM_GROUP_ID:
             return _FunRandomDetailedMissionInfo(event)
+        if isHalloweenQuest(event.getGroupID()):
+            return _HWDetailedMissionInfo(event)
         if event.getType() in constants.EVENT_TYPE.LIKE_BATTLE_QUESTS:
             return _DetailedMissionInfo(event)
         return

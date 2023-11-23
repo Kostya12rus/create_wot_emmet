@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/missions/daily_quests_widget_view.py
 import logging, typing, BigWorld
 from frameworks.wulf import Array, ViewFlags, WindowFlags
@@ -43,7 +43,7 @@ class DailyQuestsWidgetView(ViewImpl, ClientMainWindowStateWatcher):
     __gui = dependency.descriptor(IGuiLoader)
 
     def __init__(self):
-        settings = ViewSettings(R.views.lobby.missions.DailyQuestsWidget(), ViewFlags.COMPONENT, DailyQuestsWidgetViewModel())
+        settings = ViewSettings(R.views.lobby.missions.DailyQuestsWidget(), ViewFlags.VIEW, DailyQuestsWidgetViewModel())
         super(DailyQuestsWidgetView, self).__init__(settings)
         self.__parentId = None
         self.__tooltipEnabled = True

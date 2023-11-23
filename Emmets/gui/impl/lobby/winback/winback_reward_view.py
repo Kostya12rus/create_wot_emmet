@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/winback/winback_reward_view.py
 import logging, typing
 from PlayerEvents import g_playerEvents
@@ -19,7 +19,7 @@ from gui.impl.pub import ViewImpl
 from gui.impl.pub.lobby_window import LobbyNotificationWindow
 from gui.server_events.events_dispatcher import showDailyQuests
 from gui.shared.event_dispatcher import selectVehicleInHangar, showHangar, showWinbackSelectRewardView
-from gui.shared.missions.packers.bonus import packBonusModelAndTooltipData
+from gui.shared.missions.packers.bonus import packMissionsBonusModelAndTooltipData
 from helpers import dependency
 from shared_utils import findFirst, first
 from skeletons.gui.game_control import IWinbackController
@@ -81,7 +81,7 @@ class WinbackRewardView(ViewImpl):
         tooltipId = event.getArgument('tooltipId')
         window = None
         if tooltipId is not None:
-            tooltipData = self.__tooltipData.get(int(tooltipId))
+            tooltipData = self.__tooltipData.get(tooltipId)
             if tooltipData and isinstance(tooltipData, TooltipData):
                 window = BackportTooltipWindow(tooltipData, self.getParentWindow())
                 window.load()
@@ -92,7 +92,7 @@ class WinbackRewardView(ViewImpl):
     def createToolTipContent(self, event, contentID):
         if contentID == R.views.lobby.winback.tooltips.SelectableRewardTooltip():
             tooltipId = event.getArgument('tooltipId')
-            tooltipData = self.__tooltipData.get(int(tooltipId))
+            tooltipData = self.__tooltipData.get(tooltipId)
             if tooltipData:
                 return SelectableRewardTooltip(**tooltipData)
         return super(WinbackRewardView, self).createToolTipContent(event, contentID)
@@ -152,7 +152,7 @@ class WinbackRewardView(ViewImpl):
     def __packRewards(self, bonuses, model):
         rewardsModel = model.getRewards()
         rewardsModel.clear()
-        packBonusModelAndTooltipData(bonuses, getWinbackBonusPacker(), model.getRewards(), self.__tooltipData)
+        packMissionsBonusModelAndTooltipData(bonuses, getWinbackBonusPacker(), model.getRewards(), self.__tooltipData)
         rewardsModel.invalidate()
 
     def __getState(self):

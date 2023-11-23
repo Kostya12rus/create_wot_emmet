@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/gun_components.py
 from collections import namedtuple
 from items.components import legacy_stuff
@@ -9,7 +9,6 @@ from wrapped_reflection_framework import reflectedNamedTuple
 from wrapped_reflection_framework import ReflectionMetaclass
 RecoilEffect = reflectedNamedTuple('RecoilEffect', ('lodDist', 'amplitude', 'backoffTime',
                                                     'returnTime'))
-SpinEffect = namedtuple('SpinEffect', ('activationSound', 'deactivationSound'))
 
 class GunShot(legacy_stuff.LegacyStuff):
     __slots__ = ('shell', 'defaultPortion', 'piercingPower', 'speed', 'gravity', 'maxDistance',
@@ -31,23 +30,3 @@ class GunShot(legacy_stuff.LegacyStuff):
 
     def copy(self):
         raise SoftException('Operation "GunShot.copy" is not allowed')
-
-
-class TemperatureGunParams(object):
-    TemperatureGunState = namedtuple('TemperatureGunState', [
-     'temperature', 'modifiers', 'isOverheated'])
-    __slots__ = ('states', 'heatingPerSec', 'heatingPerShot', 'coolingDelay', 'coolingPerSec',
-                 'coolingOverheatPerSec', 'thermalStateHysteresis', 'temperatureSegmentSize')
-
-    def __init__(self, states, heatingPerSec, heatingPerShot, coolingDelay, coolingPerSec, coolingOverheatPerSec, thermalStateHysteresis, temperatureSegmentSize):
-        self.states = states
-        self.heatingPerSec = heatingPerSec
-        self.heatingPerShot = heatingPerShot
-        self.coolingDelay = coolingDelay
-        self.coolingPerSec = coolingPerSec
-        self.coolingOverheatPerSec = coolingOverheatPerSec
-        self.thermalStateHysteresis = thermalStateHysteresis
-        self.temperatureSegmentSize = temperatureSegmentSize
-
-    def __repr__(self):
-        return ('TemperatureGunParams(states = {}, heatingPerSec = {}, heatingPerShot = {}, coolingDelay = {}, coolingPerSec = {}, coolingOverheatPerSec = {}, thermalStateHysteresis = {}, temperatureSegmentSize = {}))').format(self.states, self.heatingPerSec, self.heatingPerShot, self.coolingDelay, self.coolingPerSec, self.coolingOverheatPerSec, self.thermalStateHysteresis, self.temperatureSegmentSize)

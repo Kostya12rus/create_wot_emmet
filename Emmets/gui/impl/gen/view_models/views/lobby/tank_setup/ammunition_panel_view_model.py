@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/tank_setup/ammunition_panel_view_model.py
 from frameworks.wulf import ViewModel
 from gui.impl.gen.view_models.views.lobby.tank_setup.common.ammunition_panel_model import AmmunitionPanelModel
@@ -8,9 +8,9 @@ from gui.impl.gen.view_models.views.lobby.tank_setup.common.role_skill_slot_mode
 from gui.impl.gen.view_models.views.lobby.tank_setup.tank_setup_action_model import TankSetupActionModel
 
 class AmmunitionPanelViewModel(ViewModel):
-    __slots__ = ('onViewSizeInitialized', 'onEscKeyDown')
+    __slots__ = ('onEscKeyDown', )
 
-    def __init__(self, properties=7, commands=2):
+    def __init__(self, properties=8, commands=1):
         super(AmmunitionPanelViewModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -61,6 +61,12 @@ class AmmunitionPanelViewModel(ViewModel):
     def setIsBootcamp(self, value):
         self._setBool(6, value)
 
+    def getIsHalloween(self):
+        return self._getBool(7)
+
+    def setIsHalloween(self, value):
+        self._setBool(7, value)
+
     def _initialize(self):
         super(AmmunitionPanelViewModel, self)._initialize()
         self._addViewModelProperty('ammunitionPanel', AmmunitionPanelModel())
@@ -70,5 +76,5 @@ class AmmunitionPanelViewModel(ViewModel):
         self._addBoolProperty('isDisabled', False)
         self._addBoolProperty('isReady', False)
         self._addBoolProperty('isBootcamp', False)
-        self.onViewSizeInitialized = self._addCommand('onViewSizeInitialized')
+        self._addBoolProperty('isHalloween', False)
         self.onEscKeyDown = self._addCommand('onEscKeyDown')

@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/battle/battle_page/ammunition_panel/prebattle_ammunition_panel_view.py
-import CommandMapping
+import BigWorld, CommandMapping, constants
 from Event import Event, EventManager
 from account_helpers.settings_core.settings_constants import CONTROLS
 from constants import ROLE_TYPE_TO_LABEL
@@ -30,7 +30,7 @@ class PrebattleAmmunitionPanelView(ViewImpl):
     __settingsCore = dependency.descriptor(ISettingsCore)
 
     def __init__(self, vehicle, *args):
-        settings = ViewSettings(layoutID=R.views.battle.battle_page.PrebattleAmmunitionPanelView(), flags=ViewFlags.COMPONENT, model=PrebattleAmmunitionPanelViewModel(), args=args)
+        settings = ViewSettings(layoutID=R.views.battle.battle_page.PrebattleAmmunitionPanelView(), flags=ViewFlags.VIEW, model=PrebattleAmmunitionPanelViewModel(), args=args)
         super(PrebattleAmmunitionPanelView, self).__init__(settings)
         self.__ammunitionPanel = None
         self.__vehicle = vehicle
@@ -95,6 +95,7 @@ class PrebattleAmmunitionPanelView(ViewImpl):
         self.viewModel.setState(state)
         self.setCurrentShellCD(currShellCD)
         self.setNextShellCD(nextShellCD)
+        self.viewModel.setIsHalloween(BigWorld.player().arena.guiType == constants.ARENA_GUI_TYPE.HALLOWEEN_BATTLES)
 
     def _onLoaded(self, *args, **kwargs):
         super(PrebattleAmmunitionPanelView, self)._onLoaded(*args, **kwargs)

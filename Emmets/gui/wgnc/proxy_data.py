@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/wgnc/proxy_data.py
 from account_helpers import getAccountDatabaseID
 from adisp import adisp_process
@@ -381,17 +381,17 @@ class ShowAuctionBelowCompetitiveRateMessage(_ProxyDataItem):
         pushBelowCompetitiveRateMessage(systemMessages=self.__systemMessages)
 
 
-class ShowAuctionLostRateMessage(_ProxyDataItem):
+class ShowAuctionResultMessage(_ProxyDataItem):
     __systemMessages = dependency.descriptor(ISystemMessages)
 
     def __init__(self, messageData):
         self.__messageData = messageData
 
     def getType(self):
-        return WGNC_DATA_PROXY_TYPE.INTEGRATED_AUCTION_RATE_LOST
+        return WGNC_DATA_PROXY_TYPE.INTEGRATED_AUCTION_RESULT
 
     def show(self, _):
-        self.__systemMessages.proto.serviceChannel.pushClientMessage({'data': self.__messageData, 'msgType': SCH_CLIENT_MSG_TYPE.INTEGRATED_AUCTION_LOST_RATE}, SCH_CLIENT_MSG_TYPE.INTEGRATED_AUCTION_LOST_RATE)
+        self.__systemMessages.proto.serviceChannel.pushClientMessage({'data': self.__messageData, 'msgType': SCH_CLIENT_MSG_TYPE.INTEGRATED_AUCTION_RESULT}, SCH_CLIENT_MSG_TYPE.INTEGRATED_AUCTION_RESULT)
 
 
 class ProxyDataHolder(object):

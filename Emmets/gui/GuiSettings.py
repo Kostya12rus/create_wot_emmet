@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/GuiSettings.py
 import logging
 from collections import namedtuple
@@ -52,16 +52,20 @@ def _readItemMacros(xmlCtx, section, keys=None):
     return resource_helper.readItemAttr(xmlCtx, section, 'macros', default='', keys=keys)
 
 
-def _convertVector4ToTuple(_, item):
-    return item.value.tuple()
+def _convertVector4ToTuple(_, item_value):
+    return item_value.tuple()
 
 
-def _convertToNamedTuple(settings, item):
-    return settings._replace(**item.value)
+def _convertToNamedTuple(settings, item_value):
+    return settings._replace(**item_value)
 
 
-def _convertEULASetting(_, item):
-    return EULAProps(**item.value)
+def _convertEULASetting(_, item_value):
+    return EULAProps(**item_value)
+
+
+def _dummyConverter(_, item_value):
+    return item_value
 
 
 _SETTING_CONVERTERS = {'loginRssFeed': _convertToNamedTuple, 
@@ -69,7 +73,8 @@ _SETTING_CONVERTERS = {'loginRssFeed': _convertToNamedTuple,
    'markerScaleSettings': _convertVector4ToTuple, 
    'browser': _convertToNamedTuple, 
    'postBattleExchange': _convertToNamedTuple, 
-   'easterEgg': _convertToNamedTuple}
+   'easterEgg': _convertToNamedTuple, 
+   'baseUrls': _dummyConverter}
 _DEFAULT_SETTINGS = {'registrationURL': '', 
    'registrationProxyURL': '', 
    'recoveryPswdURL': '', 
@@ -123,7 +128,7 @@ _DEFAULT_SETTINGS = {'registrationURL': '',
    'premiumInfo': {}, 'crew': {'welcomeScreens': {}}, 'checkPromoFrequencyInBattles': 5, 
    'vivoxLicense': '', 
    'spgHitDirectionDelta': 10.0, 
-   'vehicleDisclaimerURLs': {}}
+   'vehicleDisclaimerURLs': {}, 'baseUrls': {}}
 
 class GuiSettings(object):
 
@@ -134,7 +139,7 @@ class GuiSettings(object):
             if item.name in _SETTING_CONVERTERS:
                 setting = _DEFAULT_SETTINGS[item.name]
                 converter = _SETTING_CONVERTERS[item.name]
-                value = converter(setting, item)
+                value = converter(setting, self.__applyMacros(item.value))
             else:
                 value = item.value
             settings[item.name] = value

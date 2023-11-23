@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/ranked/rank_tooltip.py
 from gui.Scaleform.genConsts.BLOCKS_TOOLTIP_TYPES import BLOCKS_TOOLTIP_TYPES
 from gui.impl import backport
@@ -12,7 +12,6 @@ from gui.shared.tooltips import TOOLTIP_TYPE, formatters
 from gui.shared.tooltips.common import BlocksTooltipData
 from helpers import dependency
 from skeletons.gui.game_control import IRankedBattlesController
-from gui.Scaleform.genConsts.RANKEDBATTLES_ALIASES import RANKEDBATTLES_ALIASES
 _TOOLTIP_MIN_WIDTH = 364
 _AWARD_STEP = 63
 _AWARDS_RIGHT_PADDING = 25
@@ -93,8 +92,6 @@ class RankedTooltipData(BlocksTooltipData):
                     comment = text_styles.standard(backport.text(R.strings.tooltips.battleTypes.ranked.rank.isLastInDivision(), division=text_styles.stats(nextDivision.getUserName())))
             else:
                 comment = text_styles.standard(backport.text(R.strings.tooltips.battleTypes.ranked.rank.isLastInDivision.league()))
-        elif item.isFirstInDivision() and division.getUserID() != RANKEDBATTLES_ALIASES.DIVISIONS_CLASSIFICATION:
-            comment = text_styles.standard(backport.text(R.strings.tooltips.battleTypes.ranked.rank.isFirstInDivision()))
         return comment
 
     def __getShieldComment(self):

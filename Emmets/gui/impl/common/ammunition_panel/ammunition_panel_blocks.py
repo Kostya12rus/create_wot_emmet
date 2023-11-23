@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/common/ammunition_panel/ammunition_panel_blocks.py
-import typing
+import typing, BigWorld
 from account_helpers.settings_core.options import KeyboardSetting
 from constants import PLAYER_RANK
 from frameworks.wulf import Array
@@ -21,6 +21,7 @@ from helpers.epic_game import searchRankForSlot
 from items.components.supply_slot_categories import SlotCategories
 from skeletons.gui.game_control import IEpicBattleMetaGameController
 from skeletons.gui.battle_session import IBattleSessionProvider
+from skeletons.gui.game_control import IHalloweenController
 if typing.TYPE_CHECKING:
     from gui.shared.gui_items import Vehicle
 EMPTY_NAME = 'empty'
@@ -266,6 +267,49 @@ class ConsumablesBlock(BaseBlock):
 
     def _updateSlotWithItem(self, model, idx, slotItem):
         super(ConsumablesBlock, self)._updateSlotWithItem(model, idx, slotItem)
+        model.setImageSource(R.images.gui.maps.icons.artefact.dyn(slotItem.descriptor.iconName)())
+        self._updateOverlayAspects(model, slotItem)
+
+    def _updateOverlayAspects(self, slotModel, slotItem):
+        if slotItem.isBuiltIn:
+            slotModel.setOverlayType(ItemHighlightTypes.BUILT_IN_EQUIPMENT)
+        else:
+            slotModel.setOverlayType(ItemHighlightTypes.EMPTY)
+
+
+class HWConsumablesBlock(BaseBlock):
+    _hwController = dependency.descriptor(IHalloweenController)
+
+    def __init__(self, vehicle, currentSection, ctx=None):
+        hwEqCtrl = BigWorld.player().HWAccountEquipmentController
+        super(HWConsumablesBlock, self).__init__(hwEqCtrl.makeVehicleHWAdapter(vehicle), currentSection, ctx)
+
+    def _createSlots(self):
+        if self._vehicle.level in self._hwController.getModeSettings().levels:
+            return super(HWConsumablesBlock, self)._createSlots()
+        return Array()
+
+    def createBlock(self, viewModel):
+        super(HWConsumablesBlock, self).createBlock(viewModel)
+        viewModel.setType(self._getSectionName())
+
+    def _getSectionName(self):
+        return TankSetupConstants.HWCONSUMABLES
+
+    def _getKeySettings(self):
+        return ('CMD_AMMO_CHOICE_1', 'CMD_AMMO_CHOICE_2', 'CMD_AMMO_CHOICE_3')
+
+    def _getInstalled(self):
+        return self._vehicle.hwConsumables.installed
+
+    def _getSetupLayout(self):
+        return self._vehicle.consumables.setupLayouts
+
+    def _getLayout(self):
+        return self._vehicle.hwConsumables.layout
+
+    def _updateSlotWithItem(self, model, idx, slotItem):
+        super(HWConsumablesBlock, self)._updateSlotWithItem(model, idx, slotItem)
         model.setImageSource(R.images.gui.maps.icons.artefact.dyn(slotItem.descriptor.iconName)())
         self._updateOverlayAspects(model, slotItem)
 

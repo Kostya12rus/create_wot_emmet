@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/lobby_entry.py
 import BigWorld
 from frameworks.wulf import WindowLayer
@@ -47,7 +47,6 @@ LOBBY_OPTIMIZATION_CONFIG = {VIEW_ALIAS.LOBBY_HEADER: OptimizationSetting(),
    HANGAR_ALIASES.ROYALE_TANK_CAROUSEL: OptimizationSetting(), 
    HANGAR_ALIASES.MAPBOX_TANK_CAROUSEL: OptimizationSetting(), 
    HANGAR_ALIASES.FUN_RANDOM_TANK_CAROUSEL: OptimizationSetting(), 
-   HANGAR_ALIASES.FUN_RANDOM_QFG_TANK_CAROUSEL: OptimizationSetting(), 
    HANGAR_ALIASES.COMP7_TANK_CAROUSEL: OptimizationSetting(), 
    HANGAR_ALIASES.DEBUT_BOXES_TANK_CAROUSEL: OptimizationSetting(), 
    GRAPHICS_OPTIMIZATION_ALIASES.CUSTOMISATION_BOTTOM_PANEL: OptimizationSetting()}

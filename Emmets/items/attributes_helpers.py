@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/attributes_helpers.py
 from items import _xml
 from typing import Dict, Tuple, Iterable, List, TYPE_CHECKING
@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     import ResMgr
 STATIC_ATTR_PREFIX = 'miscAttrs/'
 DYNAMIC_ATTR_PREFIX = 'dynAttrs/'
-AUTOSHOOT_ATTR_PREFIX = 'autoShootAttrs/'
 ALLOWED_STATIC_ATTRS = {
  'additiveShotDispersionFactor', 
  'ammoBayHealthFactor', 
@@ -84,11 +83,9 @@ ALLOWED_DYNAMIC_ATTRS = {
  'gun/piercing', 
  'gun/reloadTime', 
  'gun/rotationSpeed', 
- 'gun/shotDispersionFactors/afterShot', 
  'gun/shotDispersionFactors/turretRotation', 
  'healthBurnPerSecLossFraction', 
  'healthFactor', 
- 'multShotDispersionFactor', 
  'radio/distance', 
  'ramming', 
  'repairSpeed', 
@@ -104,13 +101,8 @@ ALLOWED_DYNAMIC_ATTRS = {
  'vehicle/fwMaxSpeedBonus', 
  'moduleDamageFactor', 
  'engineAndFuelTanksDamageFactor'}
-AUTOSHOOT_DYNAMIC_ATTRS = {
- 'rate/multiplier',
- 'shotDispersionPerSecFactor',
- 'maxShotDispersionFactor'}
 ALLOWED_ATTRS = {STATIC_ATTR_PREFIX: ALLOWED_STATIC_ATTRS, 
-   DYNAMIC_ATTR_PREFIX: ALLOWED_DYNAMIC_ATTRS, 
-   AUTOSHOOT_ATTR_PREFIX: AUTOSHOOT_DYNAMIC_ATTRS}
+   DYNAMIC_ATTR_PREFIX: ALLOWED_DYNAMIC_ATTRS}
 ALLOWED_ATTR_PREFIXES = set(ALLOWED_ATTRS.keys())
 
 class MODIFIER_TYPE:

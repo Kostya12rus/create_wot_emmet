@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/VEHICLE_PREVIEW.py
 from debug_utils import LOG_WARNING
 
@@ -163,6 +163,14 @@ class VEHICLE_PREVIEW(object):
      BUYINGPANEL_OFFER_RENT_LABEL_CYCLE,
      BUYINGPANEL_OFFER_RENT_LABEL_CYCLES,
      BUYINGPANEL_OFFER_RENT_LABEL_SEASON)
+    BUYINGPANEL_OFFER_RENT_NAME_ENUM = (
+     BUYINGPANEL_OFFER_RENT_NAME_CYCLE,
+     BUYINGPANEL_OFFER_RENT_NAME_CYCLES,
+     BUYINGPANEL_OFFER_RENT_NAME_SEASON)
+    BUYINGPANEL_OFFER_RENT_LABEL_ENUM = (
+     BUYINGPANEL_OFFER_RENT_LABEL_CYCLE,
+     BUYINGPANEL_OFFER_RENT_LABEL_CYCLES,
+     BUYINGPANEL_OFFER_RENT_LABEL_SEASON)
 
     @classmethod
     def getBackBtnLabel(cls, key):
@@ -190,3 +198,13 @@ class VEHICLE_PREVIEW(object):
             return None
         else:
             return outcome
+
+    @classmethod
+    def hasOfferName(cls, key):
+        outcome = ('#vehicle_preview:buyingPanel/offer/rent/name/{}').format(key)
+        return outcome in cls.BUYINGPANEL_OFFER_RENT_NAME_ENUM
+
+    @classmethod
+    def hasOfferLabel(cls, key):
+        outcome = ('#vehicle_preview:buyingPanel/offer/rent/label/{}').format(key)
+        return outcome in cls.BUYINGPANEL_OFFER_RENT_LABEL_ENUM

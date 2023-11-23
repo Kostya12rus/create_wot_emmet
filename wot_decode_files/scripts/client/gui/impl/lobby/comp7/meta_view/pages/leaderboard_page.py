@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/comp7/meta_view/pages/leaderboard_page.py
 import logging, typing, BigWorld, adisp
 from gui.Scaleform.genConsts.CONTEXT_MENU_HANDLER_TYPE import CONTEXT_MENU_HANDLER_TYPE
@@ -12,8 +12,8 @@ from gui.impl.gen.view_models.views.lobby.comp7.meta_view.root_view_model import
 from gui.impl.gui_decorators import args2params
 from gui.impl.lobby.comp7.meta_view.pages import PageSubModelPresenter
 from gui.impl.lobby.comp7.tooltips.last_update_tooltip import LastUpdateTooltip
-from gui.impl.lobby.comp7.tooltips.seventh_rank_tooltip import SeventhRankTooltip
 from gui.impl.lobby.comp7.tooltips.sixth_rank_tooltip import SixthRankTooltip
+from gui.impl.lobby.comp7.tooltips.fifth_rank_tooltip import FifthRankTooltip
 from helpers import dependency
 from skeletons.connection_mgr import IConnectionManager
 from skeletons.gui.game_control import IComp7Controller
@@ -50,10 +50,10 @@ class LeaderboardPage(PageSubModelPresenter):
         return super(LeaderboardPage, self).getViewModel()
 
     def createToolTipContent(self, event, contentID):
+        if contentID == R.views.lobby.comp7.tooltips.FifthRankTooltip():
+            return FifthRankTooltip()
         if contentID == R.views.lobby.comp7.tooltips.SixthRankTooltip():
             return SixthRankTooltip()
-        if contentID == R.views.lobby.comp7.tooltips.SeventhRankTooltip():
-            return SeventhRankTooltip()
         if contentID == R.views.lobby.comp7.tooltips.LastUpdateTooltip():
             description = event.getArgument('description')
             return LastUpdateTooltip(description, updateTime=self.__lastUpdateTime)
@@ -184,7 +184,7 @@ class LeaderboardPage(PageSubModelPresenter):
     def __getRecordModel(self, record):
         position = record.getRank()
         model = TableRecordModel()
-        model.setRank(Rank.SEVENTH if position <= self.__elitePosition else Rank.SIXTH)
+        model.setRank(Rank.SIXTH if position <= self.__elitePosition else Rank.FIFTH)
         model.setScore(record.getP2())
         model.setBattlesCount(record.getP3())
         model.setPosition(position - 1)

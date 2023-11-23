@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/daily_quest_widget.py
 import typing
 from constants import QUEUE_TYPE, DAILY_QUESTS_CONFIG
@@ -55,7 +55,8 @@ class DailyQuestWidget(InjectComponentAdaptor, DailyQuestMeta, IGlobalListener):
 
     def _isQueueEnabled(self):
         enabledQueues = (
-         QUEUE_TYPE.RANDOMS, QUEUE_TYPE.MAPBOX, QUEUE_TYPE.COMP7, QUEUE_TYPE.WINBACK)
+         QUEUE_TYPE.RANDOMS, QUEUE_TYPE.MAPBOX, QUEUE_TYPE.COMP7, QUEUE_TYPE.WINBACK,
+         QUEUE_TYPE.VERSUS_AI)
         return any(self.__isQueueSelected(queueType) for queueType in enabledQueues)
 
     def isLimitedUiRuleCompleted(self):

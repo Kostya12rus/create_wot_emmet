@@ -1,12 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/game.py
 import cPickle, functools, locale, sys, zlib, Account, AreaDestructibles, BigWorld, CommandMapping, GUI, MusicControllerWWISE, Settings, SoundGroups, TriggersManager, VOIP, WebBrowser, constants, services_config
 from MemoryCriticalController import g_critMemHandler
 from bootcamp.Bootcamp import g_bootcamp
 from debug_utils import LOG_CURRENT_EXCEPTION, LOG_DEBUG, LOG_ERROR, LOG_NOTE
-from gui import CLIENT_ENCODING, onRepeatKeyEvent, g_keyEventHandlers, g_mouseEventHandlers, InputHandler
+from gui import onRepeatKeyEvent, g_keyEventHandlers, g_mouseEventHandlers, InputHandler
 from gui.shared import personality as gui_personality
 from gui.game_loading import loading as gameLoading
 from helpers import RSSDownloader, OfflineMode, LightingGenerationMode
@@ -89,6 +89,8 @@ def init(scriptConfig, engineConfig, userPreferences):
         motivation_quests.init()
         import customization_quests
         customization_quests.init()
+        import game_params_configs
+        game_params_configs.init()
         BigWorld.worldDrawEnabled(False)
         gameLoading.step()
         manager = dependency.configure(services_config.getClientServicesConfig)
@@ -116,7 +118,7 @@ def init(scriptConfig, engineConfig, userPreferences):
         BigWorld.pauseDRRAutoscaling(True)
         if constants.HAS_DEV_RESOURCES:
             import development
-            development.init()
+            development.init(isReplay=g_replayCtrl.isLoading)
         gameLoading.step()
     except Exception:
         LOG_CURRENT_EXCEPTION()
@@ -316,21 +318,20 @@ def onCameraChange(oldCamera):
     pass
 
 
-def handleCharEvent(char, key, mods):
-    char = unicode(char.encode('iso8859'), CLIENT_ENCODING)
-    if GUI.handleCharEvent(char, key, mods):
-        return True
-    return False
-
-
 def handleAxisEvent(event):
     return False
 
 
 def handleKeyEvent(event):
+    guiHandled = False
+    if event.isMouseButton():
+        guiHandled = True
+        if GUI.handleKeyEvent(event):
+            return True
     if constants.HAS_DEV_RESOURCES:
         from development.dev_input_handler import g_devInputHandlerInstance
-        g_devInputHandlerInstance.handleKeyEvent(event)
+        if g_devInputHandlerInstance.handleKeyEvent(event):
+            return True
     if OfflineMode.handleKeyEvent(event):
         return True
     else:
@@ -353,7 +354,7 @@ def handleKeyEvent(event):
                 return True
         if not isRepeat:
             InputHandler.g_instance.handleKeyEvent(event)
-            if GUI.handleKeyEvent(event):
+            if not guiHandled and GUI.handleKeyEvent(event):
                 return True
         if constants.IS_CAT_LOADED:
             import Cat
@@ -377,9 +378,11 @@ def handleKeyEvent(event):
 
 
 def handleMouseEvent(event):
-    if OfflineMode.handleMouseEvent(event):
+    if GUI.handleMouseEvent(event):
         return True
     else:
+        if OfflineMode.handleMouseEvent(event):
+            return True
         if LightingGenerationMode.handleMouseEvent(event):
             return True
         dx, dy, dz, _ = convertMouseEvent(event)
@@ -390,8 +393,6 @@ def handleMouseEvent(event):
         if g_replayCtrl.isPlaying:
             if g_replayCtrl.handleMouseEvent(dx, dy, dz):
                 return True
-        if GUI.handleMouseEvent(event):
-            return True
         inputHandler = getattr(BigWorld.player(), 'inputHandler', None)
         if inputHandler is not None:
             if inputHandler.handleMouseEvent(dx, dy, dz):

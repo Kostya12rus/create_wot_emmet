@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/BATTLE_ROYALE.py
 
 
@@ -106,6 +106,7 @@ class BATTLE_ROYALE(object):
     BATTLEROYALECAROUSEL_LOCKEDTOOLTIP_BODY = '#battle_royale:battleRoyaleCarousel/lockedToolTip/body'
     BATTLEROYALECAROUSEL_HINT = '#battle_royale:battleRoyaleCarousel/hint'
     PROXYPANEL_LABEL = '#battle_royale:proxyPanel/label'
+    PROXYPANEL_BUTTON = '#battle_royale:proxyPanel/button'
     BATTLERESULT_TITLE_VICTORY = '#battle_royale:battleResult/title/victory'
     BATTLERESULT_TITLE_VEHICLEDESTROYED = '#battle_royale:battleResult/title/vehicleDestroyed'
     BATTLERESULT_TITLE_SQUADDESTROYED = '#battle_royale:battleResult/title/squadDestroyed'
@@ -312,6 +313,7 @@ class BATTLE_ROYALE(object):
     BANNER_TITLE = '#battle_royale:banner/title'
     BANNER_INFO_SEASONACTIVE = '#battle_royale:banner/info/seasonActive'
     BANNER_INFO_DISABLED = '#battle_royale:banner/info/disabled'
+    BANNER_INFO_ANNOUNCE = '#battle_royale:banner/info/announce'
     BANNER_SEASONDATE_SEASONLASTS = '#battle_royale:banner/seasonDate/seasonLasts'
     BANNER_TIMELEFT_HOURS = '#battle_royale:banner/timeLeft/hours'
     BANNER_TIMELEFT_MIN = '#battle_royale:banner/timeLeft/min'

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/battle_pass_common.py
 import bisect, struct, time
 from collections import namedtuple
@@ -50,6 +50,7 @@ BATTLE_PASS_Q_CHAIN_BONUS_NAME = 'battlePassQuestChainToken'
 BATTLE_PASS_RANDOM_QUEST_BONUS_NAME = 'randomQuestToken'
 NON_VEH_CD = 0
 MAX_NON_CHAPTER_POINTS = 1000000
+BATTLE_PASS_TOKEN_LIFETIME = 4320
 BATTLE_PASS_COST_CURRENCIES = {
  'gold'}
 BATTLE_PASS_EXTRA_COST_CURRENCIES = {'gold', 'freeXP'}

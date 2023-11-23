@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/close_confiramtor_helper.py
 import adisp
 from wg_async import wg_async, wg_await
@@ -50,13 +50,15 @@ class CloseConfirmatorsHelper(object):
 
     def start(self, closeConfirmator):
         self.__closeConfirmator = closeConfirmator
-        self._lobbyContext.addHeaderNavigationConfirmator(self.__confirmHeaderNavigation)
+        if self._isAddHeaderNavigationConfirmator:
+            self._lobbyContext.addHeaderNavigationConfirmator(self.__confirmHeaderNavigation)
         for event in self.getRestrictedEvents():
             g_eventBus.addRestriction(event, self.__confirmEvent, scope=EVENT_BUS_SCOPE.LOBBY)
 
     def stop(self):
         self.__closeConfirmator = None
-        self._lobbyContext.deleteHeaderNavigationConfirmator(self.__confirmHeaderNavigation)
+        if self._isAddHeaderNavigationConfirmator:
+            self._lobbyContext.deleteHeaderNavigationConfirmator(self.__confirmHeaderNavigation)
         for event in self.getRestrictedEvents():
             g_eventBus.removeRestriction(event, self.__confirmEvent, scope=EVENT_BUS_SCOPE.LOBBY)
 
@@ -67,6 +69,10 @@ class CloseConfirmatorsHelper(object):
 
     def _deletePlatoonCreationConfirmator(self):
         self._lobbyContext.deletePlatoonCreationConfirmator(self.__confirmPlatoonCreation)
+
+    @property
+    def _isAddHeaderNavigationConfirmator(self):
+        return True
 
     @adisp.adisp_async
     @wg_async

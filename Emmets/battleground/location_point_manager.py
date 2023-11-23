@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/battleground/location_point_manager.py
 import logging
 from collections import namedtuple
@@ -35,7 +35,8 @@ COMMAND_NAME_TO_LOCATION_MARKER_SUBTYPE = {BATTLE_CHAT_COMMAND_NAMES.GOING_THERE
    BATTLE_CHAT_COMMAND_NAMES.SPG_AIM_AREA: LocationMarkerSubType.SPG_AIM_AREA_SUBTYPE, 
    BATTLE_CHAT_COMMAND_NAMES.VEHICLE_SPOTPOINT: LocationMarkerSubType.VEHICLE_SPOTPOINT_SUBTYPE, 
    BATTLE_CHAT_COMMAND_NAMES.SHOOTING_POINT: LocationMarkerSubType.SHOOTING_POINT_SUBTYPE, 
-   BATTLE_CHAT_COMMAND_NAMES.NAVIGATION_POINT: LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE}
+   BATTLE_CHAT_COMMAND_NAMES.NAVIGATION_POINT: LocationMarkerSubType.NAVIGATION_POINT_SUBTYPE, 
+   BATTLE_CHAT_COMMAND_NAMES.FLAG_POINT: LocationMarkerSubType.FLAG_POINT_SUBTYPE}
 
 class LocationPointData(object):
 

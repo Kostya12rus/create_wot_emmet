@@ -1,16 +1,17 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/ModuleInfoWindow.py
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.Scaleform.daapi.view.meta.ModuleInfoMeta import ModuleInfoMeta
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.locale.MENU import MENU
-from gui.shared.gui_items import GUI_ITEM_TYPE
+from gui.shared.gui_items import GUI_ITEM_TYPE, checkForTags
 from gui.shared.tooltips import contexts
 from gui.shared.tooltips.crew_book import CrewBookTooltipDataBlock
 from gui.shared.tooltips.module import ModuleBlockTooltipData
+from gui.shared.tooltips.shell import ShellBlockToolTipData
 from helpers import dependency
 from helpers.i18n import makeString as _ms
 from skeletons.account_helpers.settings_core import ISettingsCore
@@ -47,7 +48,6 @@ class ModuleInfoWindow(ModuleInfoMeta):
             dataProvider = CrewBookTooltipDataBlock(context=contexts.CrewBookContext())
             tooltipArgs = [self.moduleCompactDescr]
         elif itemTypeID == GUI_ITEM_TYPE.SHELL:
-            from gui.shared.tooltips.shell import ShellBlockToolTipData
             dataProvider = ShellBlockToolTipData(context=contexts.ModuleInfoContext())
         else:
             dataProvider = ModuleBlockTooltipData(context=contexts.ModuleInfoContext())
@@ -59,6 +59,9 @@ class ModuleInfoWindow(ModuleInfoMeta):
             else:
                 titleArr = [
                  module.userType, module.longUserName, _ms(MENU.MODULEINFO_TITLE)]
+        elif itemTypeID in GUI_ITEM_TYPE.ARTEFACTS and checkForTags(module.tags, 'halloween_equipment'):
+            titleArr = [
+             backport.text(R.strings.item_types.hwequipment.name()) + ' ' + module.userName]
         else:
             titleArr = [
              module.longUserName, _ms(MENU.MODULEINFO_TITLE)]

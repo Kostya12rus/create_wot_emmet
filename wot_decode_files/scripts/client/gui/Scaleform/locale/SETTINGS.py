@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/SETTINGS.py
 from debug_utils import LOG_WARNING
 
@@ -200,7 +200,6 @@ class SETTINGS(object):
     GAME_HANGARCAMPERIOD_NEVER = '#settings:game/hangarCamPeriod/never'
     GAME_HANGARCAMCHECKBOX = '#settings:game/hangarCamCheckbox'
     GAME_DYNAMICCAMERA = '#settings:game/dynamicCamera'
-    GAME_C11NHISTORICALLYACCURATE = '#settings:game/c11nHistoricallyAccurate'
     GAME_DISPLAYPLATOONMEMBERS = '#settings:game/displayPlatoonMembers'
     GAME_LOGINSERVERSELECTION = '#settings:game/loginServerSelection'
     GAME_CUSTOMIZATIONDISPLAYTYPE = '#settings:game/customizationDisplayType'
@@ -391,6 +390,7 @@ class SETTINGS(object):
     GAMEPLAY_DOMINATION = '#settings:gameplay/domination'
     GAMEPLAY_ASSAULT = '#settings:gameplay/assault'
     GAMEPLAY_EPIC_STANDARD = '#settings:gameplay/epic_standard'
+    GAMEPLAY_DEVMAPS = '#settings:gameplay/devMaps'
     GAMEPLAY_ONLY10MODE = '#settings:gameplay/only10Mode'
     GAMEPLAY_EPIC_ENCOUNTER = '#settings:gameplay/epic_encounter'
     GAMEPLAY_NATIONS = '#settings:gameplay/nations'
@@ -756,7 +756,6 @@ class SETTINGS(object):
     COLORSETTINGS_TAB_CUSTOMSETTINGS_SATURATION = '#settings:colorSettings/tab/customSettings/saturation'
     COLORSETTINGS_VIEW_BEFORE = '#settings:colorSettings/view/before'
     COLORSETTINGS_VIEW_AFTER = '#settings:colorSettings/view/after'
-    UNEQUIP_BUTTON = '#settings:unequip_button'
     GAME_SHOWVEHICLEHPINPLAYERSPANEL = '#settings:game/showVehicleHPinPlayersPanel'
     GAME_SHOWVEHICLEHPINPLAYERSPANEL_NEVER = '#settings:game/showVehicleHPinPlayersPanel/never'
     GAME_SHOWVEHICLEHPINPLAYERSPANEL_ALT = '#settings:game/showVehicleHPinPlayersPanel/alt'

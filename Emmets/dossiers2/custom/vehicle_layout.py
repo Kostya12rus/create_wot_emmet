@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/dossiers2/custom/vehicle_layout.py
 from dossiers2.common.DossierBlockBuilders import *
 from battle_statistics_layouts import *
@@ -34,6 +34,9 @@ _a30x30BlockBuilder = StaticSizeBlockBuilder('a30x30', A30X30_BLOCK_LAYOUT, A30X
 _epicBattleBlockBuilder = StaticSizeBlockBuilder('epicBattle', EPIC_BATTLE_VEHICLE_BLOCK_LAYOUT, {}, [])
 _comp7Season1BlockBuilder = StaticSizeBlockBuilder('comp7Season1', COMP7_BLOCK_LAYOUT, {}, [])
 _comp7Season2BlockBuilder = StaticSizeBlockBuilder('comp7Season2', COMP7_BLOCK_LAYOUT, {}, [])
+_comp7Season3BlockBuilder = StaticSizeBlockBuilder('comp7Season3', COMP7_BLOCK_LAYOUT, {}, [])
+_comp7ArchiveGriffinBlockBuilder = StaticSizeBlockBuilder('comp7ArchiveGriffin', COMP7_BLOCK_LAYOUT, {}, [])
+_versusAIBlockBuilder = StaticSizeBlockBuilder('mt_versusAI', VERSUS_AI_BLOCK_LAYOUT, {}, [])
 _maxPopUps = [
  'maxXP', 'maxFrags', 'maxDamage']
 _maxFalloutPopUps = _maxPopUps + ['maxWinPoints', 'maxCoins']
@@ -51,6 +54,9 @@ _maxEpicBattleBlockBuilder = StaticSizeBlockBuilder('maxEpicBattle', MAX_BLOCK_L
 _maxRankedBlockBuilder_10x10 = StaticSizeBlockBuilder('maxRanked_10x10', MAX_BLOCK_LAYOUT, {}, _maxPopUps)
 _maxComp7Season1BlockBuilder = StaticSizeBlockBuilder('maxComp7Season1', MAX_COMP7_BLOCK_LAYOUT, {}, [])
 _maxComp7Season2BlockBuilder = StaticSizeBlockBuilder('maxComp7Season2', MAX_COMP7_BLOCK_LAYOUT, {}, [])
+_maxComp7Season3BlockBuilder = StaticSizeBlockBuilder('maxComp7Season3', MAX_COMP7_BLOCK_LAYOUT, {}, [])
+_maxComp7ArchiveGriffinBlockBuilder = StaticSizeBlockBuilder('maxComp7ArchiveGriffin', MAX_COMP7_BLOCK_LAYOUT, {}, [])
+_maxVersusAIBlockBuilder = StaticSizeBlockBuilder('mt_maxVersusAI', MAX_BLOCK_LAYOUT, {}, _maxPopUps)
 _vehTypeFragsBlockBuilder = DictBlockBuilder('vehTypeFrags', 'I', 'H', VEH_TYPE_FRAGS_DEPENDENCIES)
 _rankedSeasonsBlockBuilder = DictBlockBuilder('rankedSeasons', 'II', 'BB', {})
 _maxRankedSeason1BlockBuilder = StaticSizeBlockBuilder('maxRankedSeason1', MAX_BLOCK_LAYOUT, {}, _maxPopUps)
@@ -256,5 +262,8 @@ vehicleDossierLayout = (
  _maxRankedSeason1BlockBuilder, _maxRankedSeason2BlockBuilder, _maxRankedSeason3BlockBuilder,
  _rankedBlockBuilder_10x10, _maxRankedBlockBuilder_10x10,
  _comp7Season1BlockBuilder, _maxComp7Season1BlockBuilder,
- _comp7Season2BlockBuilder, _maxComp7Season2BlockBuilder)
+ _comp7Season2BlockBuilder, _maxComp7Season2BlockBuilder,
+ _comp7Season3BlockBuilder, _maxComp7Season3BlockBuilder,
+ _comp7ArchiveGriffinBlockBuilder, _maxComp7ArchiveGriffinBlockBuilder,
+ _versusAIBlockBuilder, _maxVersusAIBlockBuilder)
 VEHICLE_DOSSIER_BLOCKS = {b.name: b for b in vehicleDossierLayout}

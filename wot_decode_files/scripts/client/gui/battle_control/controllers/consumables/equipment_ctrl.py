@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/consumables/equipment_ctrl.py
 import itertools, logging
 from collections import namedtuple
@@ -24,7 +24,7 @@ from gui.sounds.epic_sound_constants import EPIC_SOUND
 from helpers import i18n, dependency
 from items import vehicles, EQUIPMENT_TYPES, ITEM_TYPES
 from points_of_interest_shared import POI_EQUIPMENT_TAG
-from shared_utils import findFirst, forEach
+from shared_utils import findFirst, forEach, CONST_CONTAINER
 from skeletons.gui.battle_session import IBattleSessionProvider
 from soft_exception import SoftException
 if TYPE_CHECKING:
@@ -1220,6 +1220,12 @@ _EQUIPMENT_TAG_TO_ITEM = {('fuel',): _AutoItem,
    (ROLE_EQUIPMENT_TAG,): _comp7ItemFactory, 
    (POI_EQUIPMENT_TAG,): _poiItemFactory}
 
+class _DAMAGE_PANEL_EQUIPMENT(CONST_CONTAINER):
+    EXTINGUISHER = 'extinguisher'
+    MEDKIT = 'medkit'
+    REPAIRKIT = 'repairkit'
+
+
 def _getInitialTagsAndClass(descriptor, tagsToItems):
     descrTags = descriptor.tags
     tagsCandidate, clazzCandidate = tuple(), None
@@ -1426,7 +1432,7 @@ class EquipmentsController(MethodsRules, IBattleController):
         else:
             result, error = True, None
             for _, item in self._equipments.iteritems():
-                if tag in item.getTags() and item.isAvailableToUse:
+                if tag in item.getTags() and _DAMAGE_PANEL_EQUIPMENT.hasValue(tag):
                     result, error = self.__doChangeSetting(item, entityName, avatar)
                     break
 
@@ -1872,7 +1878,9 @@ _REPLAY_EQUIPMENT_TAG_TO_ITEM = {('fuel',): _ReplayItem,
    ('regenerationKit',): _replayTriggerItemFactory, 
    ('medkit', 'repairkit'): _replayTriggerItemFactory, 
    (ROLE_EQUIPMENT_TAG,): _replayComp7ItemFactory, 
-   (POI_EQUIPMENT_TAG,): _replayPoiItemFactory}
+   (POI_EQUIPMENT_TAG,): _replayPoiItemFactory, 
+   ('hpRepairAndCrewHeal',): _ReplayItem, 
+   ('eventBuff',): _ReplayItem}
 
 class EquipmentsReplayPlayer(EquipmentsController):
     __slots__ = ('__callbackID', '__callbackTimeID', '__percentGetters', '__percents',

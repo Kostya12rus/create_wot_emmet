@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/shell_components.py
 from constants import SHELL_TYPES, DamageAbsorptionTypeToLabel, SHELL_MECHANICS_TYPE, StunTypes, HAS_EXPLOSION_EFFECT
 from items.components import component_constants
@@ -19,7 +19,7 @@ class ShellType(object):
 
 class ArmorPiercingType(ShellType):
     __slots__ = ('normalizationAngle', 'ricochetAngleCos', 'protectFromDirectHits',
-                 'mechanics', 'guaranteedDamages', 'protectFromDestroy')
+                 'protectFromDestroy')
 
     def __init__(self, name):
         super(ArmorPiercingType, self).__init__(name)
@@ -27,8 +27,6 @@ class ArmorPiercingType(ShellType):
         self.ricochetAngleCos = component_constants.ZERO_FLOAT
         self.protectFromDirectHits = set()
         self.protectFromDestroy = set()
-        self.mechanics = SHELL_MECHANICS_TYPE.LEGACY
-        self.guaranteedDamages = component_constants.EMPTY_TUPLE
 
     def __repr__(self):
         return ('ArmorPiercingType(normalizationAngle={}, ricochetAngleCos={}, protectFromDirectHits = {}, protectFromDestroy = {})').format(self.normalizationAngle, self.ricochetAngleCos, self.protectFromDirectHits, self.protectFromDestroy)
@@ -36,7 +34,7 @@ class ArmorPiercingType(ShellType):
 
 class HollowChargeType(ShellType):
     __slots__ = ('piercingPowerLossFactorByDistance', 'ricochetAngleCos', 'protectFromDirectHits',
-                 'mechanics', 'guaranteedDamages', 'protectFromDestroy')
+                 'protectFromDestroy')
 
     def __init__(self, name):
         super(HollowChargeType, self).__init__(name)
@@ -44,8 +42,6 @@ class HollowChargeType(ShellType):
         self.ricochetAngleCos = component_constants.ZERO_FLOAT
         self.protectFromDirectHits = set()
         self.protectFromDestroy = set()
-        self.mechanics = SHELL_MECHANICS_TYPE.LEGACY
-        self.guaranteedDamages = component_constants.EMPTY_TUPLE
 
     def __repr__(self):
         return ('HollowChargeType(piercingPowerLossFactorByDistance={}, ricochetAngleCos={}, protectFromDirectHits={}, protectFromDestroy={})').format(self.piercingPowerLossFactorByDistance, self.ricochetAngleCos, self.protectFromDirectHits, self.protectFromDestroy)

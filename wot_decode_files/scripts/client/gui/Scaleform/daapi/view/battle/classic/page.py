@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/classic/page.py
 from aih_constants import CTRL_MODE_NAME
 from constants import ARENA_PERIOD
@@ -112,7 +112,7 @@ class ClassicPage(SharedPage):
 
     def _toggleFullStats(self, isShown, permanent=None, tabAlias=None):
         manager = self.app.containerManager
-        if manager.isModalViewsIsExists():
+        if manager.isModalViewsIsExists() and isShown:
             return
         else:
             if not self._fullStatsAlias:
@@ -244,12 +244,15 @@ class ClassicPage(SharedPage):
         else:
             self._reloadPostmortem()
 
+    def _hasCalloutPanel(self):
+        return True
+
     def _switchToPostmortem(self):
         super(ClassicPage, self)._switchToPostmortem()
         ctrl = self.sessionProvider.shared.calloutCtrl
         if ctrl is not None and ctrl.isRadialMenuOpened():
             self._toggleRadialMenu(False)
-        if self.as_isComponentVisibleS(BATTLE_VIEW_ALIASES.CALLOUT_PANEL):
+        if self._hasCalloutPanel() and self.as_isComponentVisibleS(BATTLE_VIEW_ALIASES.CALLOUT_PANEL):
             self._processCallout(needShow=False)
         if self._fullStatsAlias and self.as_isComponentVisibleS(self._fullStatsAlias):
             self._setComponentsVisibility(hidden={BATTLE_VIEW_ALIASES.POSTMORTEM_PANEL})

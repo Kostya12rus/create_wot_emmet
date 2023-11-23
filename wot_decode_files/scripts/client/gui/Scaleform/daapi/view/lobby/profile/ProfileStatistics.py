@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/profile/ProfileStatistics.py
 from collections import namedtuple
 from debug_utils import LOG_ERROR
@@ -20,6 +20,7 @@ from skeletons.gui.lobby_context import ILobbyContext
 from gui.shared.event_bus import EVENT_BUS_SCOPE
 from gui.shared.events import ProfileStatisticEvent
 from gui.shared import g_eventBus
+from gui.Scaleform.daapi.view.lobby.comp7.comp7_profile_helper import COMP7_ARCHIVE_NAMES, COMP7_SEASON_NUMBERS, isComp7Archive, isComp7Season, getDropdownKeyByArchiveName, getDropdownKeyBySeason
 _RankedSeasonsKeys = namedtuple('_RankedSeasonsKeys', ['all', 'current', 'previous'])
 _RANKED_SEASONS_ARCHIVE = 'archive'
 RANKED_SEASONS_ARCHIVE_10x10 = '_10x10'
@@ -36,8 +37,8 @@ _FRAME_LABELS = {PROFILE_DROPDOWN_KEYS.ALL: 'random',
    PROFILE_DROPDOWN_KEYS.RANKED_10X10: BATTLE_TYPES.RANKED_10X10, 
    PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SOLO: 'battle_royale', 
    PROFILE_DROPDOWN_KEYS.BATTLE_ROYALE_SQUAD: 'battle_royale', 
-   PROFILE_DROPDOWN_KEYS.COMP7: 'comp7', 
-   PROFILE_DROPDOWN_KEYS.COMP7_SEASON2: 'comp7'}
+   PROFILE_DROPDOWN_KEYS.VERSUS_AI: 'versusAI'}
+_COMP7_FRAME_LABEL = 'comp7'
 
 def _packProviderType(mainType, addValue=None):
     if addValue is not None:
@@ -112,9 +113,14 @@ class ProfileStatistics(ProfileStatisticsMeta):
         dropDownProvider.append(self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.CLAN))
         if self.lobbyContext.getServerSettings().isStrongholdsEnabled():
             dropDownProvider.append(self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.FORTIFICATIONS))
+        for archive in COMP7_ARCHIVE_NAMES:
+            dropDownProvider.append(self._dataProviderEntryAutoTranslate(getDropdownKeyByArchiveName(archive)))
+
         dropDownProvider += [
-         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.COMP7),
-         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.COMP7_SEASON2)]
+         self._dataProviderEntryAutoTranslate(PROFILE_DROPDOWN_KEYS.VERSUS_AI)]
+        for season in COMP7_SEASON_NUMBERS:
+            dropDownProvider.append(self._dataProviderEntryAutoTranslate(getDropdownKeyBySeason(season)))
+
         self.as_setInitDataS({'dropDownProvider': dropDownProvider})
         return
 
@@ -133,7 +139,11 @@ class ProfileStatistics(ProfileStatisticsMeta):
             vo['seasonDropdownAttachToTitle'] = True
             vo['playersStatsLbl'] = backport.text(R.strings.ranked_battles.statistic.playersRaiting())
         self.__getSeasonsManager().addSeasonsDropdown(vo)
-        self.as_responseDossierS(self._battlesType, vo, _FRAME_LABELS[self._battlesType], '')
+        if isComp7Season(self._battlesType) or isComp7Archive(self._battlesType):
+            frameLabel = _COMP7_FRAME_LABEL
+        else:
+            frameLabel = _FRAME_LABELS[self._battlesType]
+        self.as_responseDossierS(self._battlesType, vo, frameLabel, '')
         return
 
     def _receiveFortDossier(self, accountDossier):

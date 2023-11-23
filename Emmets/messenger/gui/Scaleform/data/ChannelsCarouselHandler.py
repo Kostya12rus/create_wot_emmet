@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/data/ChannelsCarouselHandler.py
 from debug_utils import LOG_ERROR
 from frameworks.wulf import WindowLayer
@@ -49,6 +49,7 @@ class ChannelsCarouselHandler(object):
         add(ChannelManagementEvent.REQUEST_TO_REMOVE, self.__handleRequestToRemove, scope=EVENT_BUS_SCOPE.LOBBY)
         add(ChannelManagementEvent.REQUEST_TO_CHANGE, self.__handleRequestToChange, scope=EVENT_BUS_SCOPE.LOBBY)
         add(ChannelManagementEvent.REQUEST_TO_SHOW, self.__handleRequestToShow, scope=EVENT_BUS_SCOPE.LOBBY)
+        add(ChannelManagementEvent.REQUEST_TO_MULTI_CHANGE, self.__handleRequestMultipleChanges, scope=EVENT_BUS_SCOPE.LOBBY)
 
     def clear(self):
         self.__guiEntry = None
@@ -70,6 +71,7 @@ class ChannelsCarouselHandler(object):
         remove(ChannelManagementEvent.REQUEST_TO_CHANGE, self.__handleRequestToChange, scope=EVENT_BUS_SCOPE.LOBBY)
         remove(ChannelManagementEvent.REQUEST_TO_SHOW, self.__handleRequestToShow, scope=EVENT_BUS_SCOPE.LOBBY)
         remove(ChannelCarouselEvent.CAROUSEL_DESTROYED, self.__handleCarouselDestroyed, scope=EVENT_BUS_SCOPE.LOBBY)
+        remove(ChannelManagementEvent.REQUEST_TO_MULTI_CHANGE, self.__handleRequestMultipleChanges, scope=EVENT_BUS_SCOPE.LOBBY)
         return
 
     def start(self):
@@ -96,6 +98,7 @@ class ChannelsCarouselHandler(object):
     def addChannel(self, channel, lazy=False, isNotified=False):
         clientID = channel.getClientID()
         isSystem = channel.isSystem()
+        isPrivate = channel.isPrivate()
         if lazy:
             order = channel_num_gen.getOrder4LazyChannel(channel.getName())
             openHandler = lambda : events_dispatcher.showLazyChannelWindow(clientID)
@@ -108,7 +111,10 @@ class ChannelsCarouselHandler(object):
            'isNotified': isNotified, 
            'icon': None, 
            'order': order, 
-           'isInProgress': False})
+           'isInProgress': False, 
+           'isPrivate': isPrivate, 
+           'dbID': 0, 
+           'userName': None})
         return
 
     def removeChannel(self, channel):
@@ -243,6 +249,11 @@ class ChannelsCarouselHandler(object):
                 self.__setItemField(clientID, key, value)
                 self.__showByReqs.pop(clientID, None)
             return
+
+    def __handleRequestMultipleChanges(self, event):
+        ctx = event.ctx
+        clientID = event.clientID
+        self.__channelsDP.setItemFields(clientID, ctx)
 
     def __handleRequestToShow(self, event):
         ctx = event.ctx

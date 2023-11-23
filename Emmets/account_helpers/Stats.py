@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/Stats.py
 import cPickle
 from functools import partial, wraps
@@ -26,15 +26,16 @@ _EQUIPMENT = items.ITEM_TYPE_INDICES['equipment']
 _SIMPLE_VALUE_STATS = ('fortResource', 'slots', 'berths', 'freeXP', 'dossier', 'clanInfo',
                        'accOnline', 'accOffline', 'freeTMenLeft', 'freeVehiclesLeft',
                        'vehicleSellsLeft', 'captchaTriesLeft', 'hasFinPassword',
-                       'finPswdAttemptsLeft', 'tkillIsSuspected', 'denunciationsLeft',
-                       'tutorialsCompleted', 'battlesTillCaptcha', 'dailyPlayHours',
-                       'playLimits', 'applyAdditionalXPCount') + Currency.ALL
+                       'finPswdAttemptsLeft', 'tkillIsSuspected', 'tutorialsCompleted',
+                       'battlesTillCaptcha', 'dailyPlayHours', 'playLimits', 'applyAdditionalXPCount') + Currency.ALL
 _DICT_STATS = ('vehTypeXP', 'vehTypeLocks', 'restrictions', 'globalVehicleLocks', 'dummySessionStats',
-               'maxResearchedLevelByNation', 'weeklyVehicleCrystals', 'refSystem20')
+               'maxResearchedLevelByNation', 'weeklyVehicleCrystals', 'refSystem20',
+               'denunciations')
 _GROWING_SET_STATS = ('unlocks', 'eliteVehicles', 'multipliedXPVehs', 'multipliedRankedBattlesVehs')
 _ACCOUNT_STATS = ('clanDBID', 'attrs', 'premiumExpiryTime', 'autoBanTime', 'globalRating')
 _CACHE_STATS = ('isFinPswdVerified', 'mayConsumeWalletResources', 'oldVehInvIDs', 'isSsrPlayEnabled',
-                'comp7')
+                'isEmergencyModeEnabled')
+_CACHE_DICT_STATS = ('SPA', 'entitlements', 'dynamicCurrencies', 'comp7')
 _PREFERRED_MAPS_KEY = 'preferredMaps'
 _ADDITIONAL_XP_CACHE_KEY = '_additionalXPCache'
 _LIMITED_UI = 'limitedUi'
@@ -139,15 +140,11 @@ class Stats(object):
                     LOG_DEBUG_DEV('CACHE stat change', stat, cacheDiff[stat])
                     cache[stat] = cacheDiff[stat]
 
-            spaDiff = cacheDiff.get('SPA', None)
-            if spaDiff:
-                synchronizeDicts(spaDiff, cache.setdefault('SPA', dict()))
-            entitlementsDiff = cacheDiff.get('entitlements', None)
-            if entitlementsDiff is not None:
-                synchronizeDicts(entitlementsDiff, cache.setdefault('entitlements', {}))
-            dynamicCurrenciesDiff = cacheDiff.get('dynamicCurrencies', None)
-            if dynamicCurrenciesDiff:
-                synchronizeDicts(dynamicCurrenciesDiff, cache.setdefault('dynamicCurrencies', dict()))
+            for stat in _CACHE_DICT_STATS:
+                statDiff = cacheDiff.get(stat, None)
+                if statDiff:
+                    synchronizeDicts(statDiff, cache.setdefault(stat, dict()))
+
         piggyBankDiff = diff.get(PIGGY_BANK_PDATA_KEY, None)
         if piggyBankDiff is not None:
             synchronizeDicts(piggyBankDiff, cache.setdefault(PIGGY_BANK_PDATA_KEY, dict()))
@@ -220,12 +217,12 @@ class Stats(object):
         self.__account.shop.waitForSync(partial(self.__slot_onShopSynced, callback))
         return
 
-    def buyBerths(self, callback=None):
+    def buyBerths(self, countPacksBerths, callback=None):
         if self.__ignore:
             if callback is not None:
                 callback(AccountCommands.RES_NON_PLAYER, 0)
             return
-        self.__account.shop.waitForSync(partial(self.__berths_onShopSynced, callback))
+        self.__account.shop.waitForSync(partial(self.__berths_onShopSynced, countPacksBerths, callback))
         return
 
     def setMapsBlackList(self, selectedMaps, callback=None):
@@ -370,6 +367,18 @@ class Stats(object):
         else:
             proxy = None
         self.__account._doCmdIntArr(AccountCommands.CMD_COMPLETE_PERSONAL_MISSION, [questID, int(withAdditional)], proxy)
+        return
+
+    def completeQuests(self, questIDs, callback=None):
+        if self.__ignore:
+            if callback is not None:
+                callback(AccountCommands.RES_NON_PLAYER)
+            return
+        if callback is not None:
+            proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
+        else:
+            proxy = None
+        self.__account._doCmdStrArr(AccountCommands.CMD_COMPLETE_QUESTS_DEV, questIDs, proxy)
         return
 
     def rerollDailyQuest(self, token, callback=None):
@@ -537,7 +546,7 @@ class Stats(object):
         self.__account._doCmdInt3(AccountCommands.CMD_BUY_SLOT, shopRev, 0, 0, proxy)
         return
 
-    def __berths_onShopSynced(self, callback, resultID, shopRev):
+    def __berths_onShopSynced(self, countPacksBerths, callback, resultID, shopRev):
         if resultID < 0:
             if callback is not None:
                 callback(resultID)
@@ -546,5 +555,5 @@ class Stats(object):
             proxy = lambda requestID, resultID, errorStr, ext={}: callback(resultID)
         else:
             proxy = None
-        self.__account._doCmdInt3(AccountCommands.CMD_BUY_BERTHS, shopRev, 0, 0, proxy)
+        self.__account._doCmdInt3(AccountCommands.CMD_BUY_BERTHS, shopRev, countPacksBerths, 0, proxy)
         return

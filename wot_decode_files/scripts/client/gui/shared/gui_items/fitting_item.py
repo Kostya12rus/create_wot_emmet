@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/fitting_item.py
 from collections import namedtuple
 import BigWorld
@@ -19,13 +19,12 @@ from skeletons.gui.game_control import ISeasonsController
 from helpers import i18n, time_utils, dependency
 from items import vehicles, getTypeInfoByName
 from rent_common import SeasonRentDuration
-from renewable_subscription_common.settings_constants import RENT_KEY as WOTPLUS_RENT_KEY
 from telecom_rentals_common import TELECOM_RENTALS_RENT_KEY
 ICONS_MASK = '../maps/icons/%(type)s/%(subtype)s%(unicName)s.png'
 _RentalInfoProvider = namedtuple('RentalInfoProvider', ('rentExpiryTime', 'compensations',
                                                         'battlesLeft', 'winsLeft',
                                                         'seasonRent', 'isRented',
-                                                        'isWotPlus', 'isTelecomRent'))
+                                                        'isTelecomRent'))
 SeasonRentInfo = namedtuple('SeasonRentInfo', ('seasonType', 'seasonID', 'duration',
                                                'expiryTime'))
 _BIG_HIGHLIGHT_TYPES_MAP = {SLOT_HIGHLIGHT_TYPES.BATTLE_BOOSTER_CREW_REPLACE: SLOT_HIGHLIGHT_TYPES.BATTLE_BOOSTER_CREW_REPLACE_BIG, 
@@ -62,9 +61,8 @@ class RentalInfoProvider(_RentalInfoProvider):
             compensations = Money.makeFromMoneyTuple(additionalData['compensation'])
         else:
             compensations = MONEY_UNDEFINED
-        isWotPlus = WOTPLUS_RENT_KEY in additionalData
         isTelecomRent = TELECOM_RENTALS_RENT_KEY in additionalData
-        result = _RentalInfoProvider.__new__(cls, time, compensations, battles, wins, seasonRent, isRented, isWotPlus, isTelecomRent)
+        result = _RentalInfoProvider.__new__(cls, time, compensations, battles, wins, seasonRent, isRented, isTelecomRent)
         return result
 
     def canRentRenewForSeason(self, seasonType):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/readers/crewSkins_readers.py
 import ResMgr, nations, os
 from constants import REGIONAL_REALMS
@@ -79,7 +79,6 @@ def _readSkinItem(pricesCache, cache, xmlCtx, section, storage):
     description = _xml.readNonEmptyString(xmlCtx, section, 'description')
     iconID = _xml.readNonEmptyString(xmlCtx, section, 'icon')
     rarity = _xml.readInt(xmlCtx, section, 'rarity', 1)
-    maxCount = _xml.readInt(xmlCtx, section, 'maxCount')
     soundSetID = section.readString('soundSet', crew_skins_constants.NO_CREW_SKIN_SOUND_SET)
     historical = _xml.readInt(xmlCtx, section, 'historical') == 0
     realmsStr = section.readString('realms', '')
@@ -87,14 +86,9 @@ def _readSkinItem(pricesCache, cache, xmlCtx, section, storage):
     unexpectedRealms = set(realms) - REGIONAL_REALMS
     if unexpectedRealms:
         _xml.raiseWrongXml(xmlCtx, 'realms', "unknown realms '%s'" % unexpectedRealms)
-    crewSkinItem = cc.CrewSkin(skinID, priceGroup, firstNameID, lastNameID, iconID, description, rarity, maxCount, tags, historical, soundSetID, realms)
+    crewSkinItem = cc.CrewSkin(skinID, priceGroup, firstNameID, lastNameID, iconID, description, rarity, tags, historical, soundSetID, realms)
     if section.has_key('filters'):
         filterSection = _xml.getSubsection(xmlCtx, section, 'filters')
-        if filterSection.has_key('role'):
-            roleName = filterSection.readString('role')
-            if roleName not in skills_constants.ROLES:
-                _xml.raiseWrongXml(xmlCtx, 'role', "unknown tankmanRole '%s'" % roleName)
-            crewSkinItem.roleID = roleName if roleName else None
         if filterSection.has_key('nation'):
             nation = filterSection.readString('nation', '')
             if nation and nation not in nations.NAMES:

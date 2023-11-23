@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/INGAME_HELP.py
 
 
@@ -97,11 +97,17 @@ class INGAME_HELP(object):
     DETAILSHELP_ROCKETACCELERATION_PAGE1 = '#ingame_help:detailsHelp/rocketAcceleration/page1'
     DETAILSHELP_ROCKETACCELERATION_PAGE2_TITLE = '#ingame_help:detailsHelp/rocketAcceleration/page2/title'
     DETAILSHELP_ROCKETACCELERATION_PAGE2 = '#ingame_help:detailsHelp/rocketAcceleration/page2'
+    DETAILSHELP_DUALACCURACY_MECHANICS_TITLE = '#ingame_help:detailsHelp/dualAccuracy/mechanics/title'
+    DETAILSHELP_DUALACCURACY_MECHANICS = '#ingame_help:detailsHelp/dualAccuracy/mechanics'
     DETAILSHELP_NOKEYSWARNING = '#ingame_help:detailsHelp/noKeysWarning'
     DETAILSHELP_FLAMETANK_TITLE = '#ingame_help:detailsHelp/flameTank/title'
     DETAILSHELP_FLAMETANK = '#ingame_help:detailsHelp/flameTank'
     DETAILSHELP_FLAMETANK_PROSCONS_TITLE = '#ingame_help:detailsHelp/flameTank/prosCons/title'
     DETAILSHELP_FLAMETANK_PROSCONS = '#ingame_help:detailsHelp/flameTank/prosCons'
+    DETAILSHELP_ASSAULTTANK_TITLE = '#ingame_help:detailsHelp/assaultTank/title'
+    DETAILSHELP_ASSAULTTANK = '#ingame_help:detailsHelp/assaultTank'
+    DETAILSHELP_ASSAULTTANK_PROSCONS_TITLE = '#ingame_help:detailsHelp/assaultTank/prosCons/title'
+    DETAILSHELP_ASSAULTTANK_PROSCONS = '#ingame_help:detailsHelp/assaultTank/prosCons'
     DETAILSHELP_BATTLEROYALE_RADAR_TITLE = '#ingame_help:detailsHelp/battleRoyale/radar/title'
     DETAILSHELP_BATTLEROYALE_RADAR_DESCRIPTION = '#ingame_help:detailsHelp/battleRoyale/radar/description'
     DETAILSHELP_BATTLEROYALE_SECTORVISION_TITLE = '#ingame_help:detailsHelp/battleRoyale/sectorVision/title'
@@ -125,6 +131,10 @@ class INGAME_HELP(object):
     DETAILSHELP_MAPBOX_ENVIRONMENT_DESCRIPTION = '#ingame_help:detailsHelp/mapbox/environment/description'
     DETAILSHELP_MAPBOX_ARTEFACTS_TITLE = '#ingame_help:detailsHelp/mapbox/artefacts/title'
     DETAILSHELP_MAPBOX_ARTEFACTS_DESCRIPTION = '#ingame_help:detailsHelp/mapbox/artefacts/description'
+    DETAILSHELP_DEVMAPS_HEADERTITLE = '#ingame_help:detailsHelp/devMaps/headerTitle'
+    DETAILSHELP_DEVMAPS_TITLE = '#ingame_help:detailsHelp/devMaps/title'
+    DETAILSHELP_DEVMAPS_MARKERS_DESCRIPTION = '#ingame_help:detailsHelp/devMaps/markers/description'
+    DETAILSHELP_DEVMAPS_ZONE_DESCRIPTION = '#ingame_help:detailsHelp/devMaps/zone/description'
     RADIALMENU_ATTENTION_TO_POSITION = '#ingame_help:radialMenu/attention_to_position'
     RADIALMENU_GOING_THERE = '#ingame_help:radialMenu/going_there'
     RADIALMENU_HELPME = '#ingame_help:radialMenu/helpMe'

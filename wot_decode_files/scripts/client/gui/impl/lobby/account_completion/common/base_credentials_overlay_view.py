@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/common/base_credentials_overlay_view.py
 from constants import EMAIL_CONFIRMATION_QUEST_ID
 from gui.impl.backport.backport_tooltip import createBackportTooltipContent
@@ -39,7 +39,7 @@ class BaseCredentialsOverlayView(BaseWGNPOverlayView):
                 rewardTooltipID = event.getArgument('rewardTooltipID')
                 if rewardTooltipID:
                     itemIndex = rewardTooltipID.split(':').pop()
-                    tooltipData = self._tooltipItems.get(int(itemIndex))
+                    tooltipData = self._tooltipItems.get(itemIndex)
                     if tooltipData is not None:
                         return createBackportTooltipContent(tooltipData=tooltipData)
             return super(BaseCredentialsOverlayView, self).createToolTipContent(event, contentID)
@@ -98,6 +98,7 @@ class BaseCredentialsOverlayView(BaseWGNPOverlayView):
         self.viewModel.setIsConfirmEnabled(not haveTimedWarning and not anyFieldIsEmpty and not anyFieldIsInvalid)
 
     def _fillRewards(self, model):
+        self._tooltipItems.clear()
         fillRewards(model, getBonuses(), self._tooltipItems)
 
     def _onSyncCompleted(self, *args):

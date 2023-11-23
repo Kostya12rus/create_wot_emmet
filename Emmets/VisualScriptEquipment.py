@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/VisualScriptEquipment.py
 import BigWorld
 from constants import EQUIPMENT_STAGES as STAGES
@@ -10,14 +10,18 @@ from items import vehicles
 from skeletons.gui.battle_session import IBattleSessionProvider
 from visual_script.misc import ASPECT
 from visual_script_client.contexts.ability_context import AbilityContextClient
+from script_component.DynamicScriptComponent import DynamicScriptComponent
 
-class VisualScriptEquipment(BigWorld.DynamicScriptComponent):
+class VisualScriptEquipment(DynamicScriptComponent):
     __sessionProvider = dependency.descriptor(IBattleSessionProvider)
 
     def __init__(self):
         super(VisualScriptEquipment, self).__init__()
         self._vsPlan = None
         self._context = None
+        return
+
+    def _onAvatarReady(self):
         player = BigWorld.player()
         descriptor = vehicles.getItemByCompactDescr(self.compactDescr)
         arenaInfo = player.arena.arenaInfo
@@ -27,7 +31,6 @@ class VisualScriptEquipment(BigWorld.DynamicScriptComponent):
         self._vsPlan.start()
         self.set_errorState()
         self.set_equipmentState()
-        return
 
     def canActivate(self):
         self._context.canActive()

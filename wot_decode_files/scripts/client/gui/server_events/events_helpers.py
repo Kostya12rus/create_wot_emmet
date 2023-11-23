@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/events_helpers.py
 import typing, operator, time, BigWorld
 from constants import EVENT_TYPE, EMAIL_CONFIRMATION_QUEST_ID
@@ -22,7 +22,7 @@ from skeletons.gui.game_control import IMarathonEventsController, IArmoryYardCon
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
-from gui.server_events.events_constants import BATTLE_MATTERS_QUEST_ID, MARATHON_GROUP_PREFIX, PREMIUM_GROUP_PREFIX, DAILY_QUEST_ID_PREFIX, RANKED_DAILY_GROUP_ID, RANKED_PLATFORM_GROUP_ID, BATTLE_ROYALE_GROUPS_ID, EPIC_BATTLE_GROUPS_ID, MAPS_TRAINING_GROUPS_ID, MAPS_TRAINING_QUEST_PREFIX, FUN_RANDOM_GROUP_ID
+from gui.server_events.events_constants import BATTLE_MATTERS_QUEST_ID, MARATHON_GROUP_PREFIX, PREMIUM_GROUP_PREFIX, DAILY_QUEST_ID_PREFIX, RANKED_DAILY_GROUP_ID, RANKED_PLATFORM_GROUP_ID, BATTLE_ROYALE_GROUPS_ID, EPIC_BATTLE_GROUPS_ID, MAPS_TRAINING_GROUPS_ID, MAPS_TRAINING_QUEST_PREFIX, FUN_RANDOM_GROUP_ID, HALLOWEEN_GROUP_ID
 from helpers.i18n import makeString as _ms
 if typing.TYPE_CHECKING:
     from gui.server_events.event_items import Quest
@@ -328,6 +328,12 @@ def isDebutBoxesGroup(groupID, debutBoxesController=None):
 def isDebutBoxesQuest(questID, debutBoxesController=None):
     if questID:
         return questID in debutBoxesController.getQuestsIDs()
+    return False
+
+
+def isHalloweenQuest(eventID):
+    if eventID:
+        return eventID.startswith(HALLOWEEN_GROUP_ID)
     return False
 
 

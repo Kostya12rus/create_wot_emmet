@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/customization_bottom_panel.py
 from collections import namedtuple
 import typing, BigWorld
@@ -572,15 +572,15 @@ class CustomizationBottomPanel(CustomizationBottomPanelMeta):
         self.__scrollToNewItem()
 
     def __updatePopoverBtnIcon(self):
+        imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_DEFAULT_LIST30X16
         tooltip = VEHICLE_CUSTOMIZATION.CUSTOMIZATION_ITEMSPOPOVER_BTN_STYLE_DISABLED
-        if self.__ctx.modeId == CustomizationModes.STYLED and not self._selectedItem:
-            imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_DEFAULT_LIST30X16
-        else:
-            imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_DESERT_LIST30X16
+        if self.__ctx.modeId != CustomizationModes.STYLED:
             if self.__ctx.season == SeasonType.WINTER:
                 imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_WINTER_LIST30X16
             elif self.__ctx.season == SeasonType.SUMMER:
                 imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_SUMMER_LIST30X16
+            elif self.__ctx.season == SeasonType.DESERT:
+                imgSrc = RES_ICONS.MAPS_ICONS_CUSTOMIZATION_ITEMS_POPOVER_DESERT_LIST30X16
             seasonName = SEASON_TYPE_TO_NAME.get(self.__ctx.season)
             mapName = VEHICLE_CUSTOMIZATION.getMapName(seasonName)
             tooltip = _ms(VEHICLE_CUSTOMIZATION.CUSTOMIZATION_ITEMSPOPOVER_BTN_DISABLED, mapType=_ms(mapName))

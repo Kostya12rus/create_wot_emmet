@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/component_marker/markers_components.py
 import math, weakref, AnimationSequence, BigWorld, Math
 from ids_generators import SequenceIDGenerator
@@ -9,8 +9,8 @@ from helpers import dependency
 from shared_utils import BitmaskHelper
 from vehicle_systems.stricted_loading import makeCallbackWeak
 from gui.Scaleform.daapi.view.battle.shared import indicators
-from gui.Scaleform.daapi.view.battle.shared.markers2d import settings
 from gui.Scaleform.daapi.view.battle.shared.indicators import _DIRECT_INDICATOR_SWF, _DIRECT_INDICATOR_MC_NAME
+from gui.Scaleform.daapi.view.battle.shared.markers2d.settings import MARKER_SYMBOL_NAME
 from debug_utils import LOG_CURRENT_EXCEPTION
 import CombatSelectedArea
 from gui.battle_control import minimap_utils
@@ -106,15 +106,19 @@ class World2DMarkerComponent(_IMarkerComponentBase):
 
     def __init__(self, idx, data):
         super(World2DMarkerComponent, self).__init__(data)
-        self.__marker2DData = data.get(self.maskType)[idx]
+        self._marker2DData = data.get(self.maskType)[idx]
         self._gui = lambda : None
         self._isMarkerExists = False
-        self.__displayDistance = self.__marker2DData.get('displayDistance', True)
-        self.__distance = self.__marker2DData.get('distance', 0)
+        self._displayDistance = self._marker2DData.get('displayDistance', True)
+        self._distance = self._marker2DData.get('distance', 0)
 
     @property
     def maskType(self):
         return ComponentBitMask.MARKER_2D
+
+    @property
+    def _symbol(self):
+        return MARKER_SYMBOL_NAME.STATIC_OBJECT_MARKER
 
     def attachGUI(self, guiProvider):
         self._gui = weakref.ref(guiProvider.getMarkers2DPlugin())
@@ -145,7 +149,7 @@ class World2DMarkerComponent(_IMarkerComponentBase):
     def update(self, distance, *args, **kwargs):
         self.__distance = distance
         gui = self._gui()
-        if not self.__displayDistance:
+        if not self._displayDistance:
             distance = -1
         if self._isVisible and self._isMarkerExists and gui:
             gui.markerSetDistance(self._componentID, distance)
@@ -169,21 +173,23 @@ class World2DMarkerComponent(_IMarkerComponentBase):
         self._isVisible = False
 
     def __createMarkerAndSetup(self, gui, objectID):
-        symbol = self.__marker2DData.get('symbol', settings.MARKER_SYMBOL_NAME.STATIC_OBJECT_MARKER)
-        if not gui.createMarker(objectID, self._matrixProduct, active=self._isVisible, symbol=symbol):
+        if not gui.createMarker(objectID, self._matrixProduct, active=self._isVisible, symbol=self._symbol):
             return False
-        gui.setupMarker(objectID, self.__marker2DData.get('shape', 'arrow'), self.__marker2DData.get('min-distance', 0), self.__marker2DData.get('max-distance', 0), self.__distance, self.__marker2DData.get('metersString', backport.text(R.strings.ingame_gui.marker.meters())), self.__marker2DData.get('distanceFieldColor', 'yellow'))
+        self._setupMarker(gui)
         return True
+
+    def _setupMarker(self, gui):
+        gui.setupMarker(self._componentID, self._marker2DData.get('shape', 'arrow'), self._marker2DData.get('min-distance', 0), self._marker2DData.get('max-distance', 0), self._distance, self._marker2DData.get('metersString', backport.text(R.strings.ingame_gui.marker.meters())), self._marker2DData.get('distanceFieldColor', 'yellow'))
 
 
 class MinimapMarkerComponent(_IMarkerComponentBase):
 
     def __init__(self, idx, data):
         super(MinimapMarkerComponent, self).__init__(data)
-        self.__minimapData = data.get(self.maskType)[idx]
+        self._minimapData = data.get(self.maskType)[idx]
         self._gui = lambda : None
         self._isMarkerExists = False
-        self._onlyTranslation = self.__minimapData.get('onlyTranslation', False)
+        self._onlyTranslation = self._minimapData.get('onlyTranslation', False)
         self._translationOnlyMP = Math.WGTranslationOnlyMP()
         self._translationOnlyMP.source = self._matrixProduct.a
 
@@ -221,7 +227,9 @@ class MinimapMarkerComponent(_IMarkerComponentBase):
         gui = self._gui()
         if gui and not self._isMarkerExists:
             matrix = self._translationOnlyMP if self._onlyTranslation else self._matrixProduct.a
-            self._isMarkerExists = gui.createMarker(self._componentID, self.__minimapData.get('symbol', ''), self.__minimapData.get('container', ''), matrix=matrix, active=self._isVisible)
+            self._isMarkerExists = gui.createMarker(self._componentID, self._minimapData.get('symbol', ''), self._minimapData.get('container', ''), matrix=matrix, active=self._isVisible)
+            if self._isMarkerExists:
+                self._setupMarker(gui)
 
     def _deleteMarker(self):
         gui = self._gui()
@@ -242,6 +250,9 @@ class MinimapMarkerComponent(_IMarkerComponentBase):
         if gui and self._isMarkerExists:
             mtx = self._translationOnlyMP if self._onlyTranslation else self._matrixProduct.a
             gui.setMatrix(self._componentID, mtx)
+
+    def _setupMarker(self, gui):
+        pass
 
 
 class DirectionIndicatorMarkerComponent(_IMarkerComponentBase):
@@ -455,7 +466,9 @@ class PolygonalZoneMinimapMarkerComponent(MinimapMarkerComponent):
 
     @property
     def isVisible(self):
-        return self._entity.entityPolygonalTrigger.isActive and self._entity.clientVisualComp.isVisible
+        if hasattr(self._entity, 'entityPolygonalTrigger') and hasattr(self._entity, 'clientVisualComp'):
+            return self._entity.entityPolygonalTrigger.isActive and self._entity.clientVisualComp.isVisible
+        return True
 
     def getPolygon(self):
         udo = BigWorld.userDataObjects.get(self._entity.clientVisualComp.udoGuid, None)
@@ -517,7 +530,9 @@ class StaticDeathZoneMinimapMarkerComponent(PolygonalZoneMinimapMarkerComponent)
 
     @property
     def isVisible(self):
-        return self._entity.isActive
+        if hasattr(self._entity, 'isActive'):
+            return self._entity.isActive
+        return True
 
     def getPolygon(self):
         p = self._entity.position

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarInputHandler/AimingSystems/steady_vehicle_matrix.py
 import math_utils, BigWorld, Math
 from cgf_obsolete_script.py_component import Component
@@ -20,7 +20,7 @@ class SteadyVehicleMatrixCalculator(Component):
 
     def relinkSources(self):
         vehicle = BigWorld.player().getVehicleAttached()
-        if vehicle is None:
+        if vehicle is None or vehicle.isHidden:
             self.__relinkToIdentity()
             return
         else:

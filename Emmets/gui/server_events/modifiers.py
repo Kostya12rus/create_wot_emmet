@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/modifiers.py
 import operator
 from abc import ABCMeta, abstractmethod
@@ -526,6 +526,23 @@ class _EquipmentPrice(_ItemsPrice):
         return
 
 
+class _BattleBoosterPrice(_ItemsPrice):
+
+    def __init__(self, name, params):
+        super(_BattleBoosterPrice, self).__init__(name, params, itemType=GUI_ITEM_TYPE.BATTLE_BOOSTER)
+
+    def _makeResultItem(self, eqName):
+        try:
+            vehCache = vehicles.g_cache
+            idx = vehCache.equipmentIDs().get(eqName)
+            if idx is not None:
+                return self.itemsCache.items.getItemByCD(vehCache.equipments()[idx].compactDescr)
+        except Exception:
+            LOG_CURRENT_EXCEPTION()
+
+        return
+
+
 class _OptDevicePrice(_ItemsPrice):
 
     def __init__(self, name, params):
@@ -834,6 +851,25 @@ class EquipmentPriceAll(_SplitByCurrency, _ItemsPriceAll):
 
     def __init__(self, name, params):
         super(EquipmentPriceAll, self).__init__(name, params, itemType=GUI_ITEM_TYPE.EQUIPMENT)
+
+    def _getRequestCriteria(self):
+        return _COMMON_CRITERIA
+
+
+class BattleBoosterPriceSet(_BattleBoosterPrice, _BuyPriceSet):
+    pass
+
+
+class BattleBoosterPriceMul(_BattleBoosterPrice, _BuyPriceMul):
+
+    def _getMultName(self, idx):
+        return 'priceMultiplier%d' % idx
+
+
+class BattleBoosterPriceAll(_SplitByCurrency, _ItemsPriceAll):
+
+    def __init__(self, name, params):
+        super(BattleBoosterPriceAll, self).__init__(name, params, itemType=GUI_ITEM_TYPE.BATTLE_BOOSTER)
 
     def _getRequestCriteria(self):
         return _COMMON_CRITERIA
@@ -1336,6 +1372,12 @@ _MODIFIERS = (
   'mul_EquipmentPrice', EquipmentPriceMul),
  (
   'set_EquipmentPrice', EquipmentPriceSet),
+ (
+  'mul_PrebattleInstructionsPriceAll', BattleBoosterPriceAll),
+ (
+  'mul_PrebattleInstructionsPrice', BattleBoosterPriceMul),
+ (
+  'set_PrebattleInstructionsPrice', BattleBoosterPriceSet),
  (
   'mul_OptionalDevicePriceAll', OptDevicePriceAll),
  (

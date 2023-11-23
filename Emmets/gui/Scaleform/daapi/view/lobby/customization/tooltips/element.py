@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/tooltips/element.py
 import logging
 from CurrentVehicle import g_currentVehicle
@@ -476,13 +476,17 @@ class ElementTooltip(BlocksTooltipData):
         if self._item.itemTypeID == GUI_ITEM_TYPE.STYLE:
             modifiedStrRoot = rCharacteristics.collapsible
             if self._item.isEditable:
-                vehicleIntCD = self.__vehicle.intCD
-                if not self._item.canBeEditedForVehicle(vehicleIntCD) and self._progressionLevel <= 0:
-                    modifiedStr = modifiedStrRoot.mutableWithDecal()
-                    modifiedIcon = self.EDITABLE_DISABLE_ICON
-                elif self._item.isEditedForVehicle(vehicleIntCD):
-                    modifiedStr = modifiedStrRoot.modified()
-                    modifiedIcon = self.EDITED_ICON
+                if self.__vehicle is not None:
+                    vehicleIntCD = self.__vehicle.intCD
+                    if not self._item.canBeEditedForVehicle(vehicleIntCD) and self._progressionLevel <= 0:
+                        modifiedStr = modifiedStrRoot.mutableWithDecal()
+                        modifiedIcon = self.EDITABLE_DISABLE_ICON
+                    elif self._item.isEditedForVehicle(vehicleIntCD):
+                        modifiedStr = modifiedStrRoot.modified()
+                        modifiedIcon = self.EDITED_ICON
+                    else:
+                        modifiedStr = modifiedStrRoot.mutable()
+                        modifiedIcon = self.EDITABLE_ICON
                 else:
                     modifiedStr = modifiedStrRoot.mutable()
                     modifiedIcon = self.EDITABLE_ICON

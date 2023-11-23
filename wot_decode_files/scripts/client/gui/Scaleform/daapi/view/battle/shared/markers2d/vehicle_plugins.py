@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/markers2d/vehicle_plugins.py
 from collections import defaultdict, namedtuple
 from functools import partial
@@ -19,18 +19,16 @@ from gui.battle_control import avatar_getter
 from gui.battle_control.arena_info.arena_vos import VehicleActions
 from gui.battle_control.arena_info.interfaces import IArenaVehiclesController
 from gui.battle_control.battle_constants import FEEDBACK_EVENT_ID as _EVENT_ID, ENTITY_IN_FOCUS_TYPE
-from gui.battle_control.battle_constants import MARKER_HIT_STATE, PLAYER_GUI_PROPS, MARKER_CRITICAL_HIT_STATES
+from gui.battle_control.battle_constants import MARKER_HIT_STATE, PLAYER_GUI_PROPS
 from gui.battle_control.battle_constants import VEHICLE_VIEW_STATE
 from gui.battle_control.controllers.feedback_adaptor import EntityInFocusData
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.shared.utils.TimeInterval import TimeInterval
-from helpers import dependency
 from items.battle_royale import isSpawnedBot
 from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
 from messenger.proto.events import g_messengerEvents
-from skeletons.gui.game_control import IBootcampController
 _STATUS_EFFECTS_PRIORITY = (
  BATTLE_MARKER_STATES.REPAIRING_STATE,
  BATTLE_MARKER_STATES.ENGINEER_STATE,
@@ -49,10 +47,9 @@ _HELP_ME_STATE = 'help_me'
 MarkerState = namedtuple('MarkerState', ['statusID', 'isSourceVehicle'])
 
 class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehiclesController):
-    bootcamp = dependency.descriptor(IBootcampController)
     __slots__ = ('_markers', '_markersStates', '_clazz', '_isSquadIndicatorEnabled',
                  '_markerTimers', '__callbackIDs', '__playerVehicleID', '__showDamageIcon',
-                 '__hiddenEvents', '__targetedTankMarkerID', '__targetedMarkerFromCppID',
+                 '_hiddenEvents', '__targetedTankMarkerID', '__targetedMarkerFromCppID',
                  '__interval', '__followingIgnoredTank')
 
     def __init__(self, parentObj, clazz=markers.VehicleMarker):
@@ -64,8 +61,8 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
         self._isSquadIndicatorEnabled = False
         self._playerVehicleID = 0
         self.__interval = None
+        self._hiddenEvents = set()
         self.__showDamageIcon = False
-        self.__hiddenEvents = set()
         self.__callbackIDs = {}
         self.__targetedTankMarkerID = -1
         self.__targetedMarkerFromCppID = -1
@@ -83,8 +80,6 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
         self.__showDamageIcon = self.settingsCore.getSetting(GAME.SHOW_DAMAGE_ICON)
         self.__interval = TimeInterval(_VEHICLE_MARKER_UPDATE_INTERVAL, self, '_update')
         self.__interval.start()
-        if self.bootcamp.isInBootcamp() and not self.bootcamp.isEnableCriticalDamageIcon():
-            self.__hiddenEvents = MARKER_CRITICAL_HIT_STATES
         handler = avatar_getter.getInputHandler()
         if handler is not None:
             if isinstance(handler, AvatarInputHandler):
@@ -263,7 +258,7 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
             return
         marker = self._markers[vehicleID]
         handle = marker.getMarkerID()
-        if eventID in MARKER_HIT_STATE and self.__showDamageIcon and eventID not in self.__hiddenEvents:
+        if eventID in MARKER_HIT_STATE and self.__showDamageIcon and eventID not in self._hiddenEvents:
             newState, stateText, iconAnimation = self.__getHitStateVO(eventID, MARKER_HIT_STATE)
             self.__updateMarkerState(handle, newState, value, stateText, iconAnimation)
         elif eventID == _EVENT_ID.VEHICLE_DEAD:
@@ -401,6 +396,9 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
         else:
             self._invokeMarker(handle, 'updateHealth', newHealth, self.__getVehicleDamageType(aInfo), constants.ATTACK_REASONS[attackReasonID])
 
+    def _removeState(self, vehicleID, state):
+        self._markersStates[vehicleID].remove(state)
+
     @staticmethod
     def __isStatusActive(statusID, activeStatuses):
         for activeStatusID, _ in activeStatuses:
@@ -533,7 +531,7 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
         if vehicleID in self._markersStates:
             currentStates = self._markersStates[vehicleID]
             for state in currentStates:
-                self._markersStates[vehicleID].remove(state)
+                self._removeState(vehicleID, state)
                 self._invokeMarker(handle, 'hideStatusMarker', state, -1, False, False)
 
     def __setupDynamic(self, marker, accountDBID=0):
@@ -554,6 +552,9 @@ class VehicleMarkerPlugin(MarkerPlugin, ChatCommunicationComponent, IArenaVehicl
             return
         handle = self._markers[vehicleID].getMarkerID()
         self._invokeMarker(handle, 'setEntityName', arenaDP.getPlayerGuiProps(vehicleID, vInfo.team).name())
+
+    def _createMarker(self, vProxy, vInfo, guiProps):
+        self.__onVehicleMarkerAdded(vProxy, vInfo, guiProps)
 
     def __onVehicleMarkerAdded(self, vProxy, vInfo, guiProps):
         if not self.__needsMarker(vInfo):
@@ -798,4 +799,5 @@ class RespawnableVehicleMarkerPlugin(VehicleMarkerPlugin):
         self._isSquadIndicatorEnabled = False
 
     def _hideVehicleMarker(self, vehicleID):
+        super(RespawnableVehicleMarkerPlugin, self)._hideVehicleMarker(vehicleID)
         self._destroyVehicleMarker(vehicleID)

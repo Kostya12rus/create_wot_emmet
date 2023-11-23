@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/unit_roster_config.py
 from constants import IS_CHINA, VEHICLE_CLASSES
 from UnitRoster import BaseUnitRoster, BaseUnitRosterSlot, BaseUnitRosterLimits
@@ -33,7 +33,7 @@ class RosterSlot10(BaseUnitRosterSlot):
 
 
 class EpicSlot(BaseUnitRosterSlot):
-    DEFAULT_LEVELS = (8, 9)
+    DEFAULT_LEVELS = (7, 7)
 
 
 class Comp7Slot(BaseUnitRosterSlot):
@@ -106,3 +106,23 @@ class Comp7Roster(BaseUnitRoster):
     DEFAULT_SLOT_PACK = Comp7Slot().pack()
     LIMITS_TYPE = BaseUnitRosterLimits
     MAX_VEHICLES = 10000
+
+
+class VersusAIRoster(BaseUnitRoster):
+    MAX_SLOTS = 3
+    MAX_EMPTY_SLOTS = 2
+    SLOT_TYPE = RosterSlot10
+    DEFAULT_SLOT_PACK = RosterSlot10().pack()
+    LIMITS_TYPE = BaseUnitRosterLimits
+
+
+class HWSlot(BaseUnitRosterSlot):
+    DEFAULT_LEVELS = (8, 8)
+
+
+class HalloweenRoster(BaseUnitRoster):
+    MAX_SLOTS = 3
+    MAX_EMPTY_SLOTS = 2
+    SLOT_TYPE = HWSlot
+    DEFAULT_SLOT_PACK = HWSlot().pack()
+    LIMITS_TYPE = BaseUnitRosterLimits

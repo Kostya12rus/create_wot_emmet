@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client_common/vehicle_outfit/packers.py
 from itertools import product
 from debug_utils import LOG_WARNING
@@ -9,6 +9,7 @@ from items.components.c11n_constants import CustomizationType
 from items.customizations import PaintComponent, CamouflageComponent, DecalComponent, ProjectionDecalComponent, InsigniaComponent, PersonalNumberComponent, SequenceComponent, AttachmentComponent
 from items.vehicles import makeIntCompactDescrByID, getItemByCompactDescr
 from soft_exception import SoftException
+from constants import IS_EDITOR
 
 def pickPacker(itemTypeID):
     if itemTypeID == GUI_ITEM_TYPE.CAMOUFLAGE:
@@ -177,7 +178,10 @@ class ModificationPacker(CustomizationPacker):
         if not slot.isEmpty():
             intCD = slot.getItemCD()
             item = getItemByCompactDescr(intCD)
-            component.modifications.append(item.id)
+            modifications = component.modifications
+            modifications.append(item.id)
+            if IS_EDITOR:
+                component.modifications = modifications
 
     @classmethod
     def unpack(cls, slot, component):

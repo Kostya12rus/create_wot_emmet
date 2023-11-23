@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/battle_queue.py
 import weakref, BigWorld
 from adisp import adisp_process, adisp_async
@@ -33,7 +33,7 @@ from gui.prb_control.entities.listener import IGlobalListener
 from gui.prb_control.events_dispatcher import g_eventDispatcher
 from gui.shared import events, EVENT_BUS_SCOPE
 from gui.shared.formatters import text_styles
-from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME, getTypeBigIconPath
+from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME, getTypeBigIconPath, getIconShopPath
 from gui.shared.image_helper import getTextureLinkByID, ImagesFetchCoordinator
 from gui.shared.system_factory import registerBattleQueueProvider, collectBattleQueueProvider
 from gui.shared.view_helpers import ClanEmblemsHelper
@@ -43,20 +43,8 @@ from helpers.i18n import makeString
 from skeletons.gui.game_control import IWinbackController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
-TYPES_ORDERED = (
- (
-  'heavyTank', ITEM_TYPES.VEHICLE_TAGS_HEAVY_TANK_NAME),
- (
-  'mediumTank', ITEM_TYPES.VEHICLE_TAGS_MEDIUM_TANK_NAME),
- (
-  'lightTank', ITEM_TYPES.VEHICLE_TAGS_LIGHT_TANK_NAME),
- (
-  'AT-SPG', ITEM_TYPES.VEHICLE_TAGS_AT_SPG_NAME),
- (
-  'SPG', ITEM_TYPES.VEHICLE_TAGS_SPG_NAME))
 _LONG_WAITING_LEVELS = (9, 10)
 _HTMLTEMP_PLAYERSLABEL = 'html_templates:lobby/queue/playersLabel'
-_RANKS = 'ranks'
 
 @dependency.replace_none_kwargs(lobbyContext=ILobbyContext)
 def needShowLongWaitingWarning(lobbyContext=None):
@@ -147,6 +135,17 @@ class QueueProvider(object):
 
 
 class RandomQueueProvider(QueueProvider):
+    TYPES_ORDERED = (
+     (
+      'heavyTank', ITEM_TYPES.VEHICLE_TAGS_HEAVY_TANK_NAME),
+     (
+      'mediumTank', ITEM_TYPES.VEHICLE_TAGS_MEDIUM_TANK_NAME),
+     (
+      'lightTank', ITEM_TYPES.VEHICLE_TAGS_LIGHT_TANK_NAME),
+     (
+      'AT-SPG', ITEM_TYPES.VEHICLE_TAGS_AT_SPG_NAME),
+     (
+      'SPG', ITEM_TYPES.VEHICLE_TAGS_SPG_NAME))
 
     def __init__(self, proxy, qType=constants.QUEUE_TYPE.UNKNOWN):
         super(RandomQueueProvider, self).__init__(proxy, qType)
@@ -164,7 +163,7 @@ class RandomQueueProvider(QueueProvider):
         self._createCommonPlayerString(sum(vClasses))
         if vClassesLen:
             vClassesData = []
-            for vClass, message in TYPES_ORDERED:
+            for vClass, message in self.TYPES_ORDERED:
                 idx = constants.VEHICLE_CLASS_INDICES[vClass]
                 vClassesData.append({'type': message, 
                    'icon': getTypeBigIconPath(vClass), 
@@ -180,6 +179,14 @@ class RandomQueueProvider(QueueProvider):
 
     def additionalInfo(self):
         return text_styles.main(makeString(MENU.PREBATTLE_WAITINGTIMEWARNING))
+
+    @property
+    def timerLabelStr(self):
+        return '*'
+
+    @property
+    def tankNameLabelStr(self):
+        return ''
 
     @staticmethod
     def _isStartButtonDisplayed(vClasses):
@@ -234,23 +241,22 @@ class _Comp7QueueProvider(RandomQueueProvider):
 
     def processQueueInfo(self, qInfo):
         info = dict(qInfo)
-        ranks = info.get(_RANKS, {})
-        self._createCommonPlayerString(info.get('players', sum(ranks)))
+        ranks = info.get('ranks', {})
+        qualPlayers = info.get('qualPlayers', 0)
+        allPlayersCount = info.get('players', sum(ranks.values()) + qualPlayers)
+        self._createCommonPlayerString(allPlayersCount)
         if ranks:
             ranksData = []
-            division = comp7_shared.getPlayerDivision()
-            for rankIdx, playersCount in enumerate(ranks):
-                rankName = rankIdx + 1
-                rankImg = R.images.gui.maps.icons.comp7.ranks.c_40.num(rankName)
-                if rankImg:
-                    ranksData.append({'type': comp7_i18n_helpers.getRankLocale(rankName), 
-                       'icon': backport.image(rankImg()), 
-                       'count': playersCount, 
-                       'highlight': division.rank == rankIdx})
+            isInQualification = comp7_shared.isQualification()
+            playerRankIdx = (isInQualification or comp7_shared.getPlayerDivision()).rank if 1 else None
+            for rankIdx, playersCount in ranks.items():
+                rankName = comp7_i18n_helpers.RANK_MAP[rankIdx]
+                ranksData.append(self.__getRankData(rankName, playersCount, rankIdx == playerRankIdx))
 
-            ranksData.reverse()
+            ranksData.append(self.__getRankData('qualification', qualPlayers, isInQualification))
             self._proxy.as_setDPS(ranksData)
-        self._proxy.as_showStartS(self._isStartButtonDisplayed(ranks))
+        self._proxy.as_showStartS(constants.IS_DEVELOPMENT and allPlayersCount > 1)
+        return
 
     def getLayoutStr(self):
         return 'comp7'
@@ -269,6 +275,14 @@ class _Comp7QueueProvider(RandomQueueProvider):
 
     def additionalInfo(self):
         return ''
+
+    def __getRankData(self, rankName, playersCount, isHighlight):
+        rankImg = R.images.gui.maps.icons.comp7.ranks.c_40.dyn(rankName)
+        rankStr = R.strings.comp7.rank.dyn(rankName)
+        return {'type': backport.text(rankStr()), 
+           'icon': backport.image(rankImg()), 
+           'count': playersCount, 
+           'highlight': isHighlight}
 
 
 class _WinbackQueueProvider(RandomQueueProvider):
@@ -377,6 +391,7 @@ class BattleQueue(BattleQueueMeta, LobbySubView):
             layoutStr = self.__provider.getLayoutStr()
             typeInfo = {'iconLabel': iconlabel, 
                'iconPath': self.__provider.getIconPath(iconlabel), 
+               'wheelTankIcon': getIconShopPath(vehicle.name), 
                'title': title, 
                'description': description, 
                'additional': additional, 
@@ -412,7 +427,7 @@ class BattleQueue(BattleQueueMeta, LobbySubView):
         textLabel = text_styles.main(makeString(MENU.PREBATTLE_TIMERLABEL))
         timeLabel = '%d:%02d' % divmod(self.__createTime, 60)
         if self.__provider is not None and self.__provider.needAdditionalInfo():
-            timeLabel = text_styles.concatStylesToSingleLine(timeLabel, '*')
+            timeLabel = text_styles.concatStylesToSingleLine(timeLabel, self.__provider.timerLabelStr)
         self.as_setTimerS(textLabel, timeLabel)
         self.__createTime += 1
         return
@@ -454,8 +469,11 @@ class BattleStrongholdsQueue(BattleStrongholdsQueueMeta, LobbySubView, ClanEmble
         clanEmblem = getTextureLinkByID(self.getMemoryTexturePath(emblem)) if emblem else None
         self.__battleQueueVO['myClanIcon'] = clanEmblem or ''
         self.as_setTypeInfoS(self.__battleQueueVO)
-        self.prbEntity.getMatchmakingInfo(callback=self.__onMatchmakingInfo)
-        return
+        if self.prbEntity is None:
+            return
+        else:
+            self.prbEntity.getMatchmakingInfo(callback=self.__onMatchmakingInfo)
+            return
 
     def onEscape(self):
         dialogsContainer = self.app.containerManager.getContainer(WindowLayer.TOP_WINDOW)

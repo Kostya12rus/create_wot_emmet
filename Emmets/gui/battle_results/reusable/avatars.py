@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_results/reusable/avatars.py
 import typing
 from gui.battle_results.reusable import shared, ReusableInfoFactory
@@ -10,9 +10,9 @@ from gui.shared.badges import buildBadge
 class AvatarInfo(shared.ItemInfo):
     __slots__ = ('__totalDamaged', '__avatarKills', '__avatarDamaged', '__avatarDamageDealt',
                  '__badge', '__suffixBadge', '__fairplayViolations', '__accRank',
-                 '__prevAccRank', '__extInfo', '__badgesInfo', '__weakref__')
+                 '__prevAccRank', '__extInfo', '__badgesInfo', '__weakref__', '__isPrematureLeave')
 
-    def __init__(self, bonusType, totalDamaged=0, avatarKills=0, avatarDamaged=0, avatarDamageDealt=0, fairplayViolations=None, wasInBattle=True, accRank=None, prevAccRank=None, badges=(), **kwargs):
+    def __init__(self, bonusType, totalDamaged=0, avatarKills=0, avatarDamaged=0, avatarDamageDealt=0, fairplayViolations=None, isPrematureLeave=False, wasInBattle=True, accRank=None, prevAccRank=None, badges=(), **kwargs):
         super(AvatarInfo, self).__init__(wasInBattle=wasInBattle)
         self.__totalDamaged = totalDamaged
         self.__avatarKills = avatarKills
@@ -20,6 +20,7 @@ class AvatarInfo(shared.ItemInfo):
         self.__avatarDamageDealt = avatarDamageDealt
         fairplayViolationsCls = ReusableInfoFactory.fairplayViolationForBonusType(bonusType)
         self.__fairplayViolations = fairplayViolationsCls(*(fairplayViolations or ()))
+        self.__isPrematureLeave = isPrematureLeave
         self.__accRank = accRank
         self.__prevAccRank = prevAccRank
         if badges:
@@ -48,6 +49,10 @@ class AvatarInfo(shared.ItemInfo):
 
     def hasPenalties(self):
         return self.__fairplayViolations.hasPenalties()
+
+    @property
+    def isPrematureLeave(self):
+        return self.__isPrematureLeave
 
     @property
     def accRank(self):

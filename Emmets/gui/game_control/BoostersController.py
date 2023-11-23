@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/BoostersController.py
 import logging
 from typing import TYPE_CHECKING
@@ -36,6 +36,10 @@ if TYPE_CHECKING:
     LegacyEntityType = TypeVar('LegacyEntityType', bound=LegacyEntity)
 _logger = logging.getLogger(__name__)
 
+def toggleHangarHint(enabled):
+    getTutorialGlobalStorage().setValue(GLOBAL_FLAG.PERSONAL_RESERVES_AVAILABLE, enabled)
+
+
 class BoostersController(IBoostersController, IGlobalListener):
     itemsCache = dependency.descriptor(IItemsCache)
     goodiesCache = dependency.descriptor(IGoodiesCache)
@@ -55,8 +59,11 @@ class BoostersController(IBoostersController, IGlobalListener):
         self.__supportedQueueTypes = {}
         return
 
-    def isGameModeSupported(self, category):
-        return category in self.__enabledCategories
+    def isGameModeSupported(self, category=None):
+        if category is None:
+            return bool(self.__enabledCategories)
+        else:
+            return category in self.__enabledCategories
 
     def fini(self):
         self._stop()
@@ -68,7 +75,6 @@ class BoostersController(IBoostersController, IGlobalListener):
     def updateGameModeStatus(self):
         if self.prbDispatcher is not None:
             enabledCategories = set()
-            active = set()
             queueType = self.__getQueueType(self.prbDispatcher.getEntity())
             isDevTrainingBattle = isDevTraining()
             for category in BoosterCategory:
@@ -77,14 +83,10 @@ class BoostersController(IBoostersController, IGlobalListener):
 
             isChanged = enabledCategories != self.__enabledCategories
             self.__enabledCategories = enabledCategories
-            enabledHint = enabledCategories and not active or active.issubset(enabledCategories)
-            self.toggleHangarHint(enabledHint)
+            toggleHangarHint(bool(enabledCategories))
             if isChanged:
                 self.onGameModeStatusChange()
         return
-
-    def toggleHangarHint(self, enabled):
-        getTutorialGlobalStorage().setValue(GLOBAL_FLAG.PERSONAL_RESERVES_AVAILABLE, enabled)
 
     @adisp_process
     def selectRandomBattle(self):
@@ -93,7 +95,8 @@ class BoostersController(IBoostersController, IGlobalListener):
             result = yield dispatcher.doSelectAction(PrbAction(PREBATTLE_ACTION_NAME.RANDOM))
             if not result:
                 _logger.error('Could not switch to random battle.')
-        _logger.error('Prebattle dispatcher is not defined.')
+        else:
+            _logger.error('Prebattle dispatcher is not defined.')
         return
 
     def onLobbyInited(self, event):

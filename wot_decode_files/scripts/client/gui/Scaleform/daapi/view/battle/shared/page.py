@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/page.py
 import logging, typing, BattleReplay, aih_constants
 from AvatarInputHandler import aih_global_binding
@@ -113,8 +113,7 @@ class SharedPage(BattlePageMeta):
             components = _SHARED_COMPONENTS_CONFIG
         else:
             components += _SHARED_COMPONENTS_CONFIG
-        if BATTLE_CTRL_ID.HIT_DIRECTION not in dict(components.getConfig()):
-            components += _HIT_DIRECTION_COMPONENTS_CONFIG
+        components = self._addDefaultHitDirectionController(components)
         self.__componentsConfig = components
         return
 
@@ -184,6 +183,11 @@ class SharedPage(BattlePageMeta):
         self.removeListener(events.GameEvent.TOGGLE_DEBUG_PIERCING_PANEL, self.__toggleDebugPiercingPanel, scope=EVENT_BUS_SCOPE.BATTLE)
         self._stopBattleSession()
         super(SharedPage, self)._dispose()
+
+    def _addDefaultHitDirectionController(self, components):
+        if BATTLE_CTRL_ID.HIT_DIRECTION not in dict(components.getConfig()):
+            components += _HIT_DIRECTION_COMPONENTS_CONFIG
+        return components
 
     def _toggleGuiVisible(self):
         self._isVisible = not self._isVisible
@@ -271,12 +275,15 @@ class SharedPage(BattlePageMeta):
     def _handleHelpEvent(self, event):
         raise NotImplementedError
 
+    def _hasBattleMessenger(self):
+        return True
+
     def _onBattleLoadingStart(self):
         self._isBattleLoading = True
         if not self._blToggling:
             self._blToggling = set(self.as_getComponentsVisibilityS())
         self._blToggling.difference_update([_ALIASES.BATTLE_LOADING])
-        if not avatar_getter.isObserverSeesAll():
+        if self._hasBattleMessenger() and not avatar_getter.isObserverSeesAll():
             self._blToggling.add(_ALIASES.BATTLE_MESSENGER)
         hintPanel = self.getComponent(_ALIASES.HINT_PANEL)
         if hintPanel and hintPanel.getActiveHint():
@@ -298,7 +305,9 @@ class SharedPage(BattlePageMeta):
         for component in self._external:
             component.active(True)
 
-        self.sessionProvider.shared.hitDirection.setVisible(True)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(True)
+        return
 
     def _onDestroyTimerStart(self):
         hintPanel = self.getComponent(_ALIASES.HINT_PANEL)
@@ -413,13 +422,17 @@ class SharedPage(BattlePageMeta):
         for component in self._external:
             component.active(True)
 
-        self.sessionProvider.shared.hitDirection.setVisible(True)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(True)
+        return
 
     def __handleHideExternals(self, _):
         for component in self._external:
             component.active(False)
 
-        self.sessionProvider.shared.hitDirection.setVisible(False)
+        if self.sessionProvider.shared.hitDirection is not None:
+            self.sessionProvider.shared.hitDirection.setVisible(False)
+        return
 
     def __handleShowBtnHint(self, _):
         self._processHint(True)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/messages/fading_messages.py
 import operator
 from soft_exception import SoftException
@@ -31,7 +31,7 @@ class FadingMessages(BattleMessageListMeta):
         self.__name = name
         self.__settingsFilePath = _MESSAGES_SETTINGS_PATH.format(mFile)
         self.__isColorBlind = self.settingsCore.getSetting(GRAPHICS.COLOR_BLIND)
-        self.__messages = {}
+        self._messages = {}
         self.__styles = None
         return
 
@@ -51,10 +51,10 @@ class FadingMessages(BattleMessageListMeta):
     def showMessage(self, key, args=None, extra=None, postfix=''):
         if postfix:
             extKey = ('{0}_{1}').format(key, postfix)
-            if extKey in self.__messages:
+            if extKey in self._messages:
                 self.__doShowMessage(extKey, args, extra)
                 return
-        if key in self.__messages:
+        if key in self._messages:
             self.__doShowMessage(key, args, extra)
 
     def getStyles(self):
@@ -62,12 +62,12 @@ class FadingMessages(BattleMessageListMeta):
 
     def _populate(self):
         super(FadingMessages, self)._populate()
-        settings, self.__styles, self.__messages = messages_panel_reader.readXML(self.__settingsFilePath)
+        settings, self.__styles, self._messages = messages_panel_reader.readXML(self.__settingsFilePath)
         self.as_setupListS(settings)
         self._addGameListeners()
 
     def _dispose(self):
-        self.__messages = None
+        self._messages = None
         self.__styles = None
         self.clear()
         self._removeGameListeners()
@@ -100,7 +100,7 @@ class FadingMessages(BattleMessageListMeta):
         return
 
     def __doShowMessage(self, key, args=None, extra=None):
-        msgText, colors = self.__messages[key]
+        msgText, colors = self._messages[key]
         if args is not None:
             self.__formatEntitiesEx(args, extra=extra)
             try:

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/ClientHangarSpace.py
 import copy
 from logging import getLogger
@@ -87,7 +87,7 @@ def secondaryHangarCFG():
 def _readHangarSettings():
     hangarsXml = ResMgr.openSection('gui/hangars.xml')
     paths = [ path for path, _ in ResMgr.openSection(_DEFAULT_SPACES_PATH).items() ]
-    defaultSpace = 'hangar_v3'
+    defaultSpace = 'h01_victory_day_2023'
     if hangarsXml.has_key('hangar_scene_spaces'):
         switchItems = hangarsXml['hangar_scene_spaces']
         for item in switchItems.values():

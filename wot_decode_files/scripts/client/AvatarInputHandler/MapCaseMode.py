@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarInputHandler/MapCaseMode.py
 import weakref, logging
 from ArtilleryEquipment import ArtilleryEquipment
@@ -194,7 +194,7 @@ class _ArtilleryStrikeSelector(_DefaultStrikeSelector, _VehiclesSelector):
 
     def processReplayHover(self):
         replayCtrl = BattleReplay.g_replayCtrl
-        _, self.hitPosition, _ = replayCtrl.getGunMarkerParams(self.hitPosition, Math.Vector3(0.0, 0.0, 0.0))
+        _, _, self.hitPosition, _ = replayCtrl.getGunMarkerParams(self.hitPosition, Math.Vector3(0.0, 0.0, 0.0))
         self.__marker.update(GUN_MARKER_TYPE.CLIENT, self.hitPosition, Vector3(0.0, 0.0, 1.0), (10.0,
                                                                                                 10.0), SERVER_TICK_LENGTH, None)
         return
@@ -275,7 +275,7 @@ class _AreaStrikeSelector(_DefaultStrikeSelector):
 
     def processReplayHover(self):
         replayCtrl = BattleReplay.g_replayCtrl
-        _, hitPosition, direction = replayCtrl.getGunMarkerParams(self.area.position, self.direction)
+        _, _, hitPosition, direction = replayCtrl.getGunMarkerParams(self.area.position, self.direction)
         self.area.setNextPosition(hitPosition, direction)
 
     def _getAreaSize(self):
@@ -739,7 +739,7 @@ class MapCaseControlModeBase(IControlMode, CallbackDelayer):
             if replayCtrl.isPlaying:
                 self.__aih.onControlModeChanged('arcade')
                 arcadeMode = BigWorld.player().inputHandler.ctrls.get('arcade', None)
-                arcadeMode.showGunMarker(False)
+                arcadeMode.showClientGunMarkers(False)
                 return True
             self.turnOff()
             return True
@@ -828,7 +828,7 @@ class MapCaseControlModeBase(IControlMode, CallbackDelayer):
         defaultPoint = self._getCameraDesiredShotPoint()
         replayCtrl = BattleReplay.g_replayCtrl
         if replayCtrl.isPlaying:
-            _, hitPosition, _ = replayCtrl.getGunMarkerParams(defaultPoint, Math.Vector3(0.0, 0.0, 1.0))
+            _, _, hitPosition, _ = replayCtrl.getGunMarkerParams(defaultPoint, Math.Vector3(0.0, 0.0, 1.0))
             return hitPosition
         return defaultPoint
 

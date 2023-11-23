@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/crew/tooltips/crew_perks_tooltip_model.py
 from enum import Enum
 from frameworks.wulf import Array
@@ -17,7 +17,7 @@ class PerkType(Enum):
 class CrewPerksTooltipModel(ViewModel):
     __slots__ = ()
 
-    def __init__(self, properties=8, commands=0):
+    def __init__(self, properties=10, commands=0):
         super(CrewPerksTooltipModel, self).__init__(properties=properties, commands=commands)
 
     def getTitle(self):
@@ -56,17 +56,29 @@ class CrewPerksTooltipModel(ViewModel):
     def setIsAdvancedTooltipEnable(self, value):
         self._setBool(5, value)
 
+    def getIsZeroPerk(self):
+        return self._getBool(6)
+
+    def setIsZeroPerk(self, value):
+        self._setBool(6, value)
+
+    def getIsIrrelevant(self):
+        return self._getBool(7)
+
+    def setIsIrrelevant(self, value):
+        self._setBool(7, value)
+
     def getDescription(self):
-        return self._getString(6)
+        return self._getString(8)
 
     def setDescription(self, value):
-        self._setString(6, value)
+        self._setString(8, value)
 
     def getBoosters(self):
-        return self._getArray(7)
+        return self._getArray(9)
 
     def setBoosters(self, value):
-        self._setArray(7, value)
+        self._setArray(9, value)
 
     @staticmethod
     def getBoostersType():
@@ -80,5 +92,7 @@ class CrewPerksTooltipModel(ViewModel):
         self._addRealProperty('level', 0.0)
         self._addBoolProperty('isCommonExtraAvailable', False)
         self._addBoolProperty('isAdvancedTooltipEnable', False)
+        self._addBoolProperty('isZeroPerk', False)
+        self._addBoolProperty('isIrrelevant', False)
         self._addStringProperty('description', '')
         self._addArrayProperty('boosters', Array())

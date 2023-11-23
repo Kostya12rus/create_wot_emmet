@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/common/ammunition_panel/ammunition_blocks_controller.py
 import typing
 from gui.impl.gen.view_models.views.lobby.tank_setup.common.ammunition_items_section import AmmunitionItemsSection
 from gui.impl.gen.view_models.views.lobby.tank_setup.common.ammunition_shells_section import AmmunitionShellsSection
 from gui.impl.gen.view_models.views.lobby.tank_setup.tank_setup_constants import TankSetupConstants
 from gui.impl.common.tabs_controller import TabsController, tabUpdateFunc
-from gui.impl.common.ammunition_panel.ammunition_panel_blocks import OptDeviceBlock, ShellsBlock, ConsumablesBlock, BattleBoostersBlock, BattleAbilitiesBlock
+from gui.impl.common.ammunition_panel.ammunition_panel_blocks import OptDeviceBlock, ShellsBlock, ConsumablesBlock, BattleBoostersBlock, BattleAbilitiesBlock, HWConsumablesBlock
 if typing.TYPE_CHECKING:
     from gui.impl.common.ammunition_panel.ammunition_groups_controller import GroupData
 
@@ -56,6 +56,10 @@ class AmmunitionBlocksController(BaseAmmunitionBlocksController):
     @tabUpdateFunc(TankSetupConstants.CONSUMABLES)
     def _updateConsumables(self, viewModel, isFirst=False):
         ConsumablesBlock(self._vehicle, self._currentSection).adapt(viewModel, isFirst)
+
+    @tabUpdateFunc(TankSetupConstants.HWCONSUMABLES)
+    def _updateHWConsumables(self, viewModel, isFirst=False):
+        HWConsumablesBlock(self._vehicle, self._currentSection).adapt(viewModel, isFirst)
 
     @tabUpdateFunc(TankSetupConstants.BATTLE_BOOSTERS)
     def _updateBattleBoosters(self, viewModel, isFirst=False):

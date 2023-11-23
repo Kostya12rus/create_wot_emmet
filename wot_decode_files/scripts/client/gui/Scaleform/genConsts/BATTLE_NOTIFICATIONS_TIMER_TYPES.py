@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/BATTLE_NOTIFICATIONS_TIMER_TYPES.py
 
 
@@ -8,6 +8,8 @@ class BATTLE_NOTIFICATIONS_TIMER_TYPES(object):
     DROWN = 'drown'
     DEATH_ZONE = 'deathZone'
     DANGER_ZONE = 'dangerZone'
+    WARNING_ZONE = 'warningZone'
+    MAP_DEATH_ZONE = 'mapDeathZone'
     OVERTURNED = 'overturned'
     FIRE = 'fire'
     GAS_ATTACK = 'gasAtack'
@@ -65,3 +67,7 @@ class BATTLE_NOTIFICATIONS_TIMER_TYPES(object):
     COMP7_POINT_RECON = 'pointRecon'
     WARNING_VIEW = 'warningView'
     CRITICAL_VIEW = 'criticalView'
+    HW_VEHICLE_FROZEN_ARROW = 'hwVehicleFrozenArrow'
+    HW_VEHICLE_HEALING_ARROW = 'hwVehicleHealingArrow'
+    HW_VEHICLE_LAUGH_ARROW = 'hwVehicleLaughArrow'
+    HW_VEHICLE_FROZEN_MANTLE = 'hwVehicleFrozenMantle'

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/sounds.py
 import WWISE
 from constants import DEFAULT_LANGUAGE
@@ -33,9 +33,9 @@ class BattlePassSounds(CONST_CONTAINER):
     VIDEO_STYLE_A67_T57_58_2 = 'bp_s11_video_t57_level_2_start'
     VIDEO_STYLE_A67_T57_58_3 = 'bp_s11_video_t57_level_3_start'
     VIDEO_STYLE_A67_T57_58_4 = 'bp_s11_video_t57_level_4_start'
-    VIDEO_PAUSE = 'bp_video_pause'
-    VIDEO_RESUME = 'bp_video_resume'
-    VIDEO_STOP = 'bp_video_stop'
+    VIDEO_PAUSE = 'lesta_bp_video_pause'
+    VIDEO_RESUME = 'lesta_bp_video_resume'
+    VIDEO_STOP = 'lesta_bp_video_stop'
 
     @classmethod
     def getOverlay(cls, count):

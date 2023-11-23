@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/stronghold/unit/entity.py
 import datetime, time
 from functools import partial
@@ -41,7 +41,6 @@ from gui.shared.utils.requesters.abstract import Response
 from gui.wgcg.strongholds.contexts import StrongholdJoinBattleCtx, StrongholdUpdateCtx, StrongholdMatchmakingInfoCtx, StrongholdLeaveModeCtx, SlotVehicleFiltersUpdateCtx, StrongholdEventGetFrozenVehiclesCtx
 from helpers import time_utils, dependency
 from UnitBase import UNIT_ERROR, UNIT_ROLE
-from gui.prb_control.entities.base import vehicleAmmoCheck
 from skeletons.gui.game_control import IGameSessionController
 _CREATION_TIMEOUT = 30
 ERROR_MAX_RETRY_COUNT = 3
@@ -428,7 +427,6 @@ class StrongholdEntity(UnitEntity):
             ctx.startProcessing(callback)
             self._requestsProcessor.doRequest(ctx, 'leave', callback=callbackWrapper)
 
-    @vehicleAmmoCheck
     def doBattleQueue(self, ctx, callback=None):
         if ctx.isRequestToStart():
             self.setCoolDown(settings.REQUEST_TYPE.SET_PLAYER_STATE, ctx.getCooldown())

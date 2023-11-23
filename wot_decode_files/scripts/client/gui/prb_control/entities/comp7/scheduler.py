@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/comp7/scheduler.py
 from adisp import adisp_process
 from gui import SystemMessages
@@ -20,6 +20,7 @@ class Comp7Scheduler(BaseScheduler):
     def __init__(self, entity):
         super(Comp7Scheduler, self).__init__(entity)
         self.__isPrimeTime = False
+        self.__hasPrimeTimePeripheries = False
 
     @prbDispatcherProperty
     def prbDispatcher(self):
@@ -28,6 +29,7 @@ class Comp7Scheduler(BaseScheduler):
     def init(self):
         status, _, _ = self.comp7Controller.getPrimeTimeStatus()
         self.__isPrimeTime = status == PrimeTimeStatus.AVAILABLE
+        self.__hasPrimeTimePeripheries = self.comp7Controller.hasAvailablePrimeTimeServers()
         self.comp7Controller.onStatusUpdated += self.__update
 
     def fini(self):
@@ -43,12 +45,14 @@ class Comp7Scheduler(BaseScheduler):
             return
         else:
             isPrimeTime = status == PrimeTimeStatus.AVAILABLE
+            hasPrimeTimePeripheries = self.comp7Controller.hasAvailablePrimeTimeServers()
             if isPrimeTime != self.__isPrimeTime:
                 self.__isPrimeTime = isPrimeTime
                 if self.comp7Controller.getCurrentCycleID() is not None:
-                    if self.__isPrimeTime:
+                    if self.__isPrimeTime and not self.__hasPrimeTimePeripheries:
                         SystemMessages.pushMessage(text=backport.text(R.strings.comp7.system_messages.primeTime.start.body()), type=SystemMessages.SM_TYPE.PrimeTime, messageData={'title': backport.text(R.strings.comp7.system_messages.primeTime.start.title())})
-                    else:
+                    elif not hasPrimeTimePeripheries:
                         SystemMessages.pushMessage(text=backport.text(R.strings.comp7.system_messages.primeTime.end.body()), type=SystemMessages.SM_TYPE.PrimeTime, messageData={'title': backport.text(R.strings.comp7.system_messages.primeTime.end.title())})
                 g_eventDispatcher.updateUI()
+            self.__hasPrimeTimePeripheries = hasPrimeTimePeripheries
             return

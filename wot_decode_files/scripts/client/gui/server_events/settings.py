@@ -1,13 +1,14 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/settings.py
-import time
+import time, logging
 from contextlib import contextmanager
 from account_helpers.AccountSettings import DOG_TAGS, WOT_PLUS, TELECOM_RENTALS
 from gui.shared import utils
 from helpers import dependency
 from skeletons.gui.server_events import IEventsCache
+_logger = logging.getLogger(__name__)
 
 class _PMSettings(utils.SettingRecord):
 
@@ -51,8 +52,10 @@ class _DogTagsRootSettings(utils.SettingRootRecord):
 
 class _WotPlusSettings(utils.SettingRootRecord):
 
-    def __init__(self, isFirstTime=True, isWotPlusEnabled=False, isEntryPointsEnabled=False, isGoldReserveEnabled=False, isPassiveXpEnabled=False, isTankRentalEnabled=False, isFreeDirectivesEnabled=False, isFreeDemountingEnabled=False, isExcludedMapEnabled=False, rentPendingVehCD=None, isExclusiveVehicleEnabled=False):
-        super(_WotPlusSettings, self).__init__(isFirstTime=isFirstTime, isWotPlusEnabled=isWotPlusEnabled, isEntryPointsEnabled=isEntryPointsEnabled, isGoldReserveEnabled=isGoldReserveEnabled, isPassiveXpEnabled=isPassiveXpEnabled, isTankRentalEnabled=isTankRentalEnabled, isFreeDirectivesEnabled=isFreeDirectivesEnabled, isFreeDemountingEnabled=isFreeDemountingEnabled, isExcludedMapEnabled=isExcludedMapEnabled, rentPendingVehCD=rentPendingVehCD)
+    def __init__(self, isFirstTime=True, isWotPlusEnabled=False, isGoldReserveEnabled=False, isPassiveXpEnabled=False, isFreeDemountingEnabled=False, isExcludedMapEnabled=False, isDailyAttendancesEnabled=False, amountOfDailyAttendance=0, isExclusiveVehicleEnabled=False, rentPendingVehCD=None, **kwargs):
+        if kwargs:
+            _logger.warning('Not expected argument in WotPlus settings. Check preference.xml. kwargs=%r', kwargs)
+        super(_WotPlusSettings, self).__init__(isFirstTime=isFirstTime, isWotPlusEnabled=isWotPlusEnabled, isGoldReserveEnabled=isGoldReserveEnabled, isPassiveXpEnabled=isPassiveXpEnabled, isFreeDemountingEnabled=isFreeDemountingEnabled, isExcludedMapEnabled=isExcludedMapEnabled, isDailyAttendancesEnabled=isDailyAttendancesEnabled, amountOfDailyAttendance=amountOfDailyAttendance)
 
     def setIsFirstTime(self, isFirstTime):
         self.update(isFirstTime=isFirstTime)
@@ -60,20 +63,11 @@ class _WotPlusSettings(utils.SettingRootRecord):
     def setWotPlusEnabledState(self, isEnabled):
         self.update(isWotPlusEnabled=isEnabled)
 
-    def setEntryPointsEnabledState(self, isEnabled):
-        self.update(isEntryPointsEnabled=isEnabled)
-
     def setGoldReserveEnabledState(self, isEnabled):
         self.update(isGoldReserveEnabled=isEnabled)
 
     def setPassiveXpState(self, isEnabled):
         self.update(isPassiveXpEnabled=isEnabled)
-
-    def setTankRentalState(self, isEnabled):
-        self.update(isTankRentalEnabled=isEnabled)
-
-    def setFreeDirectivesState(self, isEnabled):
-        self.update(isFreeDirectivesEnabled=isEnabled)
 
     def setFreeDemountingState(self, isEnabled):
         self.update(isFreeDemountingEnabled=isEnabled)
@@ -81,8 +75,14 @@ class _WotPlusSettings(utils.SettingRootRecord):
     def setExcludedMapState(self, isEnabled):
         self.update(isExcludedMapEnabled=isEnabled)
 
-    def setRentPending(self, vehCD):
-        self.update(rentPendingVehCD=vehCD)
+    def setDailyAttendancesState(self, isEnabled):
+        self.update(isDailyAttendancesEnabled=isEnabled)
+
+    def setAmountOfDailyAttendance(self, amount):
+        self.update(amountOfDailyAttendance=amount)
+
+    def increaseDailyAttendance(self):
+        self.setAmountOfDailyAttendance(self.get('amountOfDailyAttendance', 0) + 1)
 
     @classmethod
     def _getSettingName(cls):

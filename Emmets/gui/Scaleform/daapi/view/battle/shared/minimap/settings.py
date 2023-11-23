@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/minimap/settings.py
 from enum import Enum
 from account_helpers.settings_core.options import MinimapVehModelsSetting, MinimapHPSettings
@@ -50,12 +50,14 @@ class ENTRY_SYMBOL_NAME(object):
     MARK_OBJECTIVE_REPLY_DEF = 'PositionDefendReplyEntry'
     MARK_OBJECTIVE_REPLY_ATK = 'PositionAttackReplyEntry'
     MARK_POSITION = 'PositionFlashEntry'
+    MARK_POSITION_HW = 'HWPositionFlashEntry'
     ARTY_MARKER = 'ArtyMarkerMinimapEntry'
     ARTY_HIT_DOT_MARKER = 'ArtyHitDotMarkerUI'
     LOCATION_MARKER = 'MarkGoingToPositionEntryUI'
     ATTENTION_MARKER = 'MarkAttentionEntryUI'
     SHOOTING_POINT_MARKER = 'ShootingPointEntryUI'
     NAVIGATION_POINT_MARKER = 'NavigationPointEntryUI'
+    FLAG_POINT_MARKER = 'FlagPointEntryUI'
     EPIC_SECTOR_ENEMY_BASE = 'SectorBaseEnemyEntry'
     EPIC_SECTOR_ALLY_BASE = 'SectorBaseAllyEntry'
     EPIC_HQ_ENEMY = 'HeadquarterEnemyEntry'

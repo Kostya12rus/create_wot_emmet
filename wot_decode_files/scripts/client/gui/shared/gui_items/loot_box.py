@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/loot_box.py
 import typing, logging
 from enum import Enum
@@ -99,7 +99,7 @@ class LootBox(GUIItem):
     __slots__ = ('__id', '__invCount', '__type', '__category', '__historyName', '__guaranteedFrequency',
                  '__slotBonuses', '__guaranteedFrequencyName', '__tier', '__isEnabled',
                  '__userNameKey', '__iconName', '__description', '__videoKey', '__weight',
-                 '__bonusGroups')
+                 '__bonusGroups', '__autoOpenTime')
 
     def __init__(self, lootBoxID, lootBoxConfig, invCount):
         super(LootBox, self).__init__()
@@ -111,7 +111,12 @@ class LootBox(GUIItem):
         return ('LootBox(lootBoxID={}, lootBoxConfig={}, invCount={})').format(self.getID(), self.__getConfig(), self.getInventoryCount())
 
     def __cmp__(self, other):
-        return cmp(-self.getWeight(), -other.getWeight())
+        if other is None:
+            return 1
+        else:
+            if isinstance(other, LootBox):
+                return cmp((not self.isEnabled(), -self.getWeight()), (not other.isEnabled(), -other.getWeight()))
+            return super(LootBox, self).__cmp__(other)
 
     def updateCount(self, invCount):
         self.__invCount = invCount
@@ -151,6 +156,11 @@ class LootBox(GUIItem):
 
     def getType(self):
         return self.__type
+
+    def getAutoOpenTime(self):
+        if self.__autoOpenTime:
+            return self.__autoOpenTime
+        return 0
 
     def getCategory(self):
         return self.__category
@@ -196,6 +206,7 @@ class LootBox(GUIItem):
                                                                                       0)}
 
     def __updateByConfig(self, lootBoxConfig):
+        self.__autoOpenTime = lootBoxConfig.get('autoOpenTime', None)
         self.__type = lootBoxConfig.get('type', '')
         self.__category = lootBoxConfig.get('category', '')
         self.__tier = LootBoxTiers(lootBoxConfig.get('tier', 1))
@@ -214,7 +225,7 @@ class LootBox(GUIItem):
         return
 
     def __getConfig(self):
-        return {'type': self.__type, 
+        config = {'type': self.__type, 
            'category': self.__category, 
            'tier': self.__tier, 
            'enabled': self.__isEnabled, 
@@ -223,6 +234,9 @@ class LootBox(GUIItem):
                       'iconName': self.__iconName, 
                       'description': self.__description, 
                       'video': self.__videoKey}}
+        if self.__autoOpenTime:
+            config['autoOpenTime'] = self.__autoOpenTime
+        return config
 
     @staticmethod
     def __readLimits(limitsCfg):

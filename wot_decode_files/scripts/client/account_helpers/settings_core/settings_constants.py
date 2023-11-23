@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/settings_constants.py
 from shared_utils import CONST_CONTAINER
 VERSION = 'VERSION'
@@ -122,6 +122,7 @@ class GAME(CONST_CONTAINER):
     GAMEPLAY_EPIC_STANDARD = 'gameplay_epicStandard'
     GAMEPLAY_ONLY_10_MODE = 'gameplay_only10Mode'
     GAMEPLAY_EPIC_DOMINATION = 'gameplay_epicDomination'
+    GAMEPLAY_DEV_MAPS = 'gameplay_devMaps'
     SHOW_VECTOR_ON_MAP = 'showVectorOnMap'
     SHOW_SECTOR_ON_MAP = 'showSectorOnMap'
     SHOW_VEH_MODELS_ON_MAP = 'showVehModelsOnMap'
@@ -321,6 +322,7 @@ class GuiSettingsBehavior(CONST_CONTAINER):
     BIRTHDAY_CALENDAR_INTRO_SHOWED = 'birthdayCalendarIntroShowed'
     RESOURCE_WELL_INTRO_SHOWN = 'resourceWellIntroShown'
     COMP7_INTRO_SHOWN = 'isComp7IntroShown'
+    COMP7_WHATS_NEW_SHOWN = 'isComp7WhatsNewShown'
     CREW_22_WELCOME_SHOWN = 'crew22WelcomeShown'
 
 

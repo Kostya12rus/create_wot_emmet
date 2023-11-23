@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/readers/c11n_readers.py
 import os, Math
 from string import lower, upper
@@ -273,6 +273,13 @@ class CamouflageXmlReader(BaseCustomizationItemXmlReader):
            'gloss': section.readVector4('gloss', Math.Vector4(DEFAULT_GLOSS)), 
            'metallic': section.readVector4('metallic', Math.Vector4(DEFAULT_METALLIC))}
         if IS_EDITOR:
+            if target.camoTypeIndex == -1 and callable(getattr(target, 'setCamoType', None)):
+                try:
+                    itemIndex = target.getCamoTypesTranslationKeys().index(target.i18n.userKey)
+                    target.setCamoType(target.getCamoTypesNames()[itemIndex])
+                except ValueError as e:
+                    print e
+
             target.editorData.glossMetallicSettingsType = 0
             if target.glossMetallicSettings['glossMetallicMap'] != '':
                 target.editorData.glossMetallicSettingsType = 1

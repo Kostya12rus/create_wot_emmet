@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/denunciator.py
 import BigWorld, constants
 from debug_utils import LOG_ERROR
@@ -41,16 +41,16 @@ class Denunciator(object):
         topicID = DENUNCIATIONS_MAP.get(topic)
         player = BigWorld.player()
         violatorKind = self._getViolatorKind(player, violatorID)
+        denunciationsLeft = self.getDenunciationsLeft()
         try:
-            player.makeDenunciation(violatorID, topicID, violatorKind)
-            self.playerCtx.addDenunciationFor(violatorID, topicID, arenaUniqueID)
+            player.makeDenunciation(violatorID, topicID, violatorKind, arenaUniqueID)
+            if self._shouldSaveInLocalStorage():
+                self.playerCtx.addDenunciationFor(violatorID, topicID, arenaUniqueID)
         except (AttributeError, TypeError):
             LOG_ERROR('Cannot make a denunciation')
             return
 
-        topicStr = i18n.makeString(MENU.denunciation(topicID))
-        message = i18n.makeString(SYSTEM_MESSAGES.DENUNCIATION_SUCCESS)
-        message = message % {'name': userName, 'topic': topicStr}
+        message = self._formSystemMessage(userName, topicID, denunciationsLeft)
         self._makeNotification(message)
 
     def isAppealsEnabled(self):
@@ -62,8 +62,20 @@ class Denunciator(object):
     def getDenunciationsLeft(self):
         raise NotImplementedError()
 
+    def getDenunciationsPerDay(self):
+        return constants.BATTLE_DENUNCIATIONS_PER_DAY
+
+    def _shouldSaveInLocalStorage(self):
+        return True
+
     def _getViolatorKind(self, player, violatorID):
         raise NotImplementedError()
+
+    def _formSystemMessage(self, userName, topicID, _):
+        topicStr = i18n.makeString(MENU.denunciation(topicID))
+        message = i18n.makeString(SYSTEM_MESSAGES.DENUNCIATION_SUCCESS)
+        message = message % {'name': userName, 'topic': topicStr}
+        return message
 
     def _makeNotification(self, message):
         raise NotImplementedError()
@@ -73,7 +85,7 @@ class LobbyDenunciator(Denunciator):
     itemsCache = dependency.descriptor(IItemsCache)
 
     def getDenunciationsLeft(self):
-        return self.itemsCache.items.stats.denunciationsLeft
+        return self.itemsCache.items.stats.battleDenunciationsLeft
 
     def _getViolatorKind(self, player, violatorID):
         return constants.VIOLATOR_KIND.UNKNOWN
@@ -94,7 +106,7 @@ class BattleDenunciator(Denunciator):
 
     def _getViolatorKind(self, player, violatorID):
         arenaDP = self.sessionProvider.getArenaDP()
-        vehicleID = arenaDP.getVehIDBySessionID(violatorID)
+        vehicleID = arenaDP.getVehIDBySessionID(str(violatorID))
         violator = arenaDP.getVehicleInfo(vehicleID)
         if player.team == violator.team:
             return constants.VIOLATOR_KIND.ALLY
@@ -102,3 +114,36 @@ class BattleDenunciator(Denunciator):
 
     def _makeNotification(self, message):
         MessengerEntry.g_instance.gui.addClientMessage(g_settings.htmlTemplates.format('battleErrorMessage', ctx={'error': message}))
+
+
+class LobbyChatDenunciator(LobbyDenunciator):
+    itemsCache = dependency.descriptor(IItemsCache)
+
+    def getDenunciationsLeft(self):
+        return self.itemsCache.items.stats.hangarDenunciationsLeft
+
+    def getDenunciationsPerDay(self):
+        return constants.HANGAR_DENUNCIATIONS_PER_DAY
+
+    def isAppealsForTopicEnabled(self, violatorID, topicID, arenaUniqueID):
+        if not self.isAppealsEnabled():
+            return False
+        hangarDenunciations = self.itemsCache.items.stats.hangarDenunciations
+        violatorTopicIDs = hangarDenunciations.get(violatorID, set())
+        return topicID not in violatorTopicIDs
+
+    def _getViolatorKind(self, player, violatorID):
+        return constants.VIOLATOR_KIND.HANGAR_CHAT_MEMBER
+
+    def _shouldSaveInLocalStorage(self):
+        return False
+
+    def _formSystemMessage(self, userName, _, denunciationsLeft):
+        message = i18n.makeString(SYSTEM_MESSAGES.DENUNCIATION_HANGARCHATSUCCESS_BODY)
+        message = message % {'name': userName, 'countLeft': denunciationsLeft - 1, 
+           'countPerDay': self.getDenunciationsPerDay()}
+        return message
+
+    def _makeNotification(self, message):
+        header = i18n.makeString(SYSTEM_MESSAGES.DENUNCIATION_HANGARCHATSUCCESS_TITLE)
+        SystemMessages.pushMessage(text=message, messageData={'header': header}, type=SystemMessages.SM_TYPE.InformationHeader)

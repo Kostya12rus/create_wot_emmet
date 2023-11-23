@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/deconstruction_device_view.py
 import logging
 from collections import namedtuple
@@ -109,9 +109,10 @@ class DeconstructionDeviceView(ViewImpl):
             vehicle = g_currentVehicle.item
             if not vehicle:
                 return
-            tx.currentVehicleInfo.setVehicleName(vehicle.shortUserName)
+            tx.currentVehicleInfo.setVehicleName(vehicle.descriptor.type.shortUserString)
             tx.currentVehicleInfo.setVehicleType(vehicle.type)
             tx.currentVehicleInfo.setVehicleLvl(vehicle.level)
+            tx.currentVehicleInfo.setIsPremiumIGR(vehicle.isPremiumIGR)
 
     def _updateSlots(self, ctx=None, fullUpdate=True, updateData=True):
         if self._storageProvider is None or self._onVehicleProvider is None:

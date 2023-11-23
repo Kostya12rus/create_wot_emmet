@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/battle/battle_notifier/battle_notifier_view.py
 import logging
 from collections import deque
@@ -18,7 +18,7 @@ class BattleNotifierView(ViewImpl):
     __slots__ = ('__resultsQueue', '__uiReadyForData', '__arenaLoaded')
 
     def __init__(self):
-        settings = ViewSettings(R.views.battle.battle_notifier.BattleNotifierView(), ViewFlags.COMPONENT, BattleNotifierViewModel())
+        settings = ViewSettings(R.views.battle.battle_notifier.BattleNotifierView(), ViewFlags.VIEW, BattleNotifierViewModel())
         super(BattleNotifierView, self).__init__(settings)
         self.__resultsQueue = deque()
         self.__uiReadyForData = True
@@ -109,7 +109,8 @@ def _randomBattleResults(message):
 
 
 _formatters = {ARENA_BONUS_TYPE.REGULAR: _randomBattleResults, 
-   ARENA_BONUS_TYPE.EPIC_RANDOM: _randomBattleResults}
+   ARENA_BONUS_TYPE.EPIC_RANDOM: _randomBattleResults, 
+   ARENA_BONUS_TYPE.VERSUS_AI: _randomBattleResults}
 
 def _collectResults(message):
     arenaBonusType = message.data.get('bonusType', None)

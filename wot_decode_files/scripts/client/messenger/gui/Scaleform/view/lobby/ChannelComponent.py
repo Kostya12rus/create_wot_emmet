@@ -1,16 +1,20 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/view/lobby/ChannelComponent.py
 import weakref, constants
 from debug_utils import LOG_DEBUG
+from gui.Scaleform.genConsts.CONTEXT_MENU_HANDLER_TYPE import CONTEXT_MENU_HANDLER_TYPE
 from gui.impl.gen import R
+from helpers import dependency
 from messenger.gui import events_dispatcher
 from messenger.gui.Scaleform.meta.ChannelComponentMeta import ChannelComponentMeta
 from messenger.proto.bw_chat2.wrappers import UnitDataFactory
+from skeletons.gui.app_loader import IAppLoader
 _R_SQUAD = R.strings.messenger.dialogs.squadChannel
 
 class ChannelComponent(ChannelComponentMeta):
+    __appLoader = dependency.descriptor(IAppLoader)
 
     def __init__(self):
         super(ChannelComponent, self).__init__()
@@ -51,7 +55,13 @@ class ChannelComponent(ChannelComponentMeta):
         return round(constants.CHAT_MESSAGE_MAX_LENGTH / 2, 0)
 
     def onLinkClick(self, data):
-        raise NotImplementedError('Shared battle results is not longer supported')
+        contextMenuMgr = self.__appLoader.getApp().contextMenuManager
+        if contextMenuMgr is not None:
+            databaseID, userName = data.split(':')
+            ctx = {'dbID': databaseID, 
+               'userName': userName}
+            contextMenuMgr.show(CONTEXT_MENU_HANDLER_TYPE.BASE_USER_APPEAL, ctx)
+        return
 
     def isJoined(self):
         isJoined = False

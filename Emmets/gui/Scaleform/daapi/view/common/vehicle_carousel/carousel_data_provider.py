@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/common/vehicle_carousel/carousel_data_provider.py
 import typing
 from CurrentVehicle import g_currentVehicle
@@ -22,6 +22,7 @@ from gui.shared.utils.requesters import REQ_CRITERIA
 from helpers.i18n import makeString as ms
 from helpers import dependency
 from skeletons.gui.game_control import IBattleRoyaleController, IBootcampController, IDebutBoxesController
+from skeletons.gui.game_control import IHalloweenController
 if typing.TYPE_CHECKING:
     from skeletons.gui.shared import IItemsCache
 
@@ -68,18 +69,22 @@ def getStatusStrings(vState, vStateLvl=Vehicle.VEHICLE_STATE_LEVEL.INFO, substit
 
 
 @dependency.replace_none_kwargs(bootcampCtrl=IBootcampController, debutBoxCtrl=IDebutBoxesController)
-def getVehicleDataVO(vehicle, bootcampCtrl=None, debutBoxCtrl=None):
-    return _getVehicleDataVO(vehicle, bootcampCtrl, debutBoxCtrl)
+def getVehicleDataVO(vehicle, canShowDailyXPFactor=True, vehicleStateRemap=None, bootcampCtrl=None, debutBoxCtrl=None):
+    return _getVehicleDataVO(vehicle, canShowDailyXPFactor, vehicleStateRemap, bootcampCtrl, debutBoxCtrl)
 
 
-def _getVehicleDataVO(vehicle, bootcampCtrl, debutBoxCtrl):
+def _getVehicleDataVO(vehicle, canShowDailyXPFactor=True, vehicleStateRemap=None, bootcampCtrl=None, debutBoxCtrl=None):
     rentInfoText = ''
-    if not vehicle.isWotPlusRent and not vehicle.isTelecomRent:
+    if not vehicle.isTelecomRent:
         rentInfoText = RentLeftFormatter(vehicle.rentInfo, vehicle.isPremiumIGR).getRentLeftStr()
     vState, vStateLvl = vehicle.getState()
     if vState == Vehicle.VEHICLE_STATE.AMMO_NOT_FULL and bootcampCtrl.isInBootcamp():
         vState = Vehicle.VEHICLE_STATE.UNDAMAGED
         vStateLvl = Vehicle.VEHICLE_STATE_LEVEL.INFO
+    elif vehicleStateRemap and vState in vehicleStateRemap:
+        vState, vStateLvl = vehicleStateRemap[vState]
+    if vehicle.isEvent:
+        rentInfoText = backport.text(R.strings.hw_lobby.common.rent())
     if vehicle.isRotationApplied():
         if vState in (Vehicle.VEHICLE_STATE.AMMO_NOT_FULL,
          Vehicle.VEHICLE_STATE.LOCKED):
@@ -95,7 +100,7 @@ def _getVehicleDataVO(vehicle, bootcampCtrl, debutBoxCtrl):
     smallHoverStatus, largeHoverStatus = smallStatus, largeStatus
     if vState == Vehicle.VEHICLE_STATE.RENTABLE:
         smallHoverStatus, largeHoverStatus = getStatusStrings(vState + '/hover', vStateLvl, substitute=rentInfoText, ctx={'icon': icons.premiumIgrSmall(), 'battlesLeft': getBattlesLeft(vehicle)})
-    if vehicle.dailyXPFactor > 1:
+    if vehicle.dailyXPFactor > 1 and canShowDailyXPFactor:
         bonusImage = getButtonsAssetPath(('bonus_x{}').format(vehicle.dailyXPFactor))
     else:
         bonusImage = ''
@@ -112,7 +117,6 @@ def _getVehicleDataVO(vehicle, bootcampCtrl, debutBoxCtrl):
     tankType = ('{}_elite').format(vehicle.type) if vehicle.isElite else vehicle.type
     current, maximum = vehicle.getCrystalsEarnedInfo()
     isCrystalsLimitReached = current == maximum
-    isWotPlusSlot = (vehicle.isWotPlus or vehicle.isTelecomRent) and not vehicle.rentExpiryState
     showIcon = vehicle.isTelecomRent and not vehicle.rentExpiryState
     extraImage = RES_ICONS.MAPS_ICONS_LIBRARY_RENT_ICO_BIG if showIcon else ''
     return {'id': vehicle.invID, 
@@ -148,12 +152,13 @@ def _getVehicleDataVO(vehicle, bootcampCtrl, debutBoxCtrl):
        'isCrystalsLimitReached': isCrystalsLimitReached, 
        'isUseRightBtn': True, 
        'tooltip': TOOLTIPS_CONSTANTS.CAROUSEL_VEHICLE, 
-       'isWotPlusSlot': isWotPlusSlot, 
+       'isWotPlusSlot': vehicle.isWotPlus, 
        'extraImage': extraImage}
 
 
 class CarouselDataProvider(SortableDAAPIDataProvider):
     _battleRoyaleController = dependency.descriptor(IBattleRoyaleController)
+    _hwController = dependency.descriptor(IHalloweenController)
 
     def __init__(self, carouselFilter, itemsCache):
         super(CarouselDataProvider, self).__init__()
@@ -344,7 +349,8 @@ class CarouselDataProvider(SortableDAAPIDataProvider):
         self._addVehicleItemsByCriteria(self._baseCriteria | REQ_CRITERIA.VEHICLE.ACTIVE_IN_NATION_GROUP | ~REQ_CRITERIA.VEHICLE.TELECOM_RENT)
 
     def _buildVehicle(self, vehicle):
-        vo = getVehicleDataVO(vehicle)
+        vehicleStateRemap = {Vehicle.VEHICLE_STATE.AMMO_NOT_FULL: (Vehicle.VEHICLE_STATE.UNDAMAGED, Vehicle.VEHICLE_STATE_LEVEL.INFO)} if self._hwController.isEventPrbActive() else {}
+        vo = getVehicleDataVO(vehicle, canShowDailyXPFactor=not self._hwController.isEventPrbActive(), vehicleStateRemap=vehicleStateRemap)
         return vo
 
     def _getVehicleStats(self, vehicle):

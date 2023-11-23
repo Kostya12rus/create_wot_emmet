@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/pub/window_impl.py
 import logging, typing
 from frameworks.wulf import PositionAnchor, WindowLayer
@@ -21,7 +21,6 @@ class WindowImpl(Window):
         settings.flags = wndFlags
         settings.layer = kwargs.pop('layer', WindowLayer.UNDEFINED)
         settings.areaID = kwargs.pop('areaID', R.areas.default())
-        settings.entryID = kwargs.pop('entryID', R.invalid())
         settings.decorator = kwargs.pop('decorator', None)
         settings.content = kwargs.pop('content', None)
         settings.parent = kwargs.pop('parent', None)

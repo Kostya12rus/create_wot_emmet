@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/battle/battle_page/ammunition_panel/blocks_controller.py
 from typing import TYPE_CHECKING
+import BigWorld, constants
 from gui.impl.common.ammunition_panel.ammunition_blocks_controller import AmmunitionBlocksController
 from gui.impl.gen.view_models.views.battle.battle_page.prebattle_shell_ammunition_slot import PrebattleShellAmmunitionSlot, ShellBattleState
 from gui.impl.gen.view_models.views.lobby.tank_setup.tank_setup_constants import TankSetupConstants
@@ -27,6 +28,14 @@ class PrebattleShellsBlock(ShellsBlock):
     def _updateSlotWithItem(self, model, idx, slotItem):
         super(PrebattleShellsBlock, self)._updateSlotWithItem(model, idx, slotItem)
         model.setShellState(self.__getShellState(slotItem))
+
+    def _getKeySettings(self):
+        player = BigWorld.player()
+        arena = getattr(player, 'arena', None) if player is not None else None
+        if arena is not None and arena.guiType == constants.ARENA_GUI_TYPE.HALLOWEEN_BATTLES:
+            return ('CMD_AMMO_CHOICE_7', 'CMD_AMMO_CHOICE_8', 'CMD_AMMO_CHOICE_9')
+        else:
+            return super(PrebattleShellsBlock, self)._getKeySettings()
 
     def __getShellState(self, slotItem):
         if slotItem.count > 0:

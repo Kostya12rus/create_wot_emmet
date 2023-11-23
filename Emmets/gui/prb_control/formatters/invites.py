@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/formatters/invites.py
 import logging
 from constants import PREBATTLE_TYPE_NAMES, PREBATTLE_TYPE, QUEUE_TYPE
@@ -98,7 +98,7 @@ def getAcceptNotAllowedText(prbType, peripheryID, isInviteActive=True, isAlready
 
 
 @dependency.replace_none_kwargs(lobbyContext=ILobbyContext, winbackController=IWinbackController)
-def getLeaveOrChangeText(funcState, invitePrbType, peripheryID, lobbyContext=None, winbackController=None, funRandom=None):
+def getLeaveOrChangeText(funcState, invitePrbType, peripheryID, lobbyContext=None, winbackController=None):
     isAnotherPeriphery = lobbyContext is not None and lobbyContext.isAnotherPeriphery(peripheryID)
     text = ''
     if funcState.doLeaveToAcceptInvite(invitePrbType):

@@ -1,18 +1,19 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/CONTEXT_MENU_HANDLER_TYPE.py
 
 
 class CONTEXT_MENU_HANDLER_TYPE(object):
-    CREW = 'crew'
     CHANNEL_LIST = 'channelList'
+    APPEAL_CHANNEL_LIST = 'appealChannelList'
     VEHICLE = 'vehicle'
     RESEARCH_ITEM = 'researchItem'
     RESEARCH_VEHICLE = 'researchVehicle'
     BLUEPRINT_VEHICLE = 'blueprintVehicle'
     BATTLE_ROYALE_VEHICLE = 'brVehicle'
     BASE_USER = 'baseUser'
+    BASE_USER_APPEAL = 'baseUserAppeal'
     BASE_CLAN = 'baseClan'
     BATTLE_RESULTS_USER = 'battleResultsUser'
     PREBATTLE_USER = 'prebattleUser'
@@ -47,18 +48,23 @@ class CONTEXT_MENU_HANDLER_TYPE(object):
     TANK_SETUP_OPTIONAL_DEVICE_ITEM = 'tankSetupOptionalDeviceItem'
     TANK_SETUP_MODULE_ITEM = 'tankSetupModuleItem'
     TANK_SETUP_CONSUMABLE_ITEM = 'tankSetupConsumableItem'
+    TANK_SETUP_HW_CONSUMABLE_ITEM = 'tankSetupHWConsumableItem'
     TANK_SETUP_BATTLE_BOOSTER_ITEM = 'tankSetupBattleBoosterItem'
     TANK_SETUP_BATTLE_ABILITY_ITEM = 'tankSetupBattleAbilityItem'
     TANK_SETUP_SHELL_ITEM = 'tankSetupShellItem'
     TANK_SETUP_OPTIONAL_DEVICE_SLOT = 'tankSetupOptionalDeviceSlotWW'
     TANK_SETUP_CONSUMABLE_SLOT = 'tankSetupConsumableSlot'
+    TANK_SETUP_HW_CONSUMABLE_SLOT = 'tankSetupHWConsumableSlot'
     TANK_SETUP_BATTLE_BOOSTER_SLOT = 'tankSetupBattleBoosterSlot'
     TANK_SETUP_BATTLE_ABILITY_SLOT = 'tankSetupBattleAbilitySlot'
     TANK_SETUP_SHELL_SLOT = 'tankSetupShellSlot'
     TANK_SETUP_HANGAR_OPTIONAL_DEVICE_SLOT = 'tankSetupHangarOptionalDeviceSlot'
     TANK_SETUP_HANGAR_CONSUMABLE_SLOT = 'tankSetupHangarConsumableSlot'
+    TANK_SETUP_HANGAR_HW_CONSUMABLE_SLOT = 'tankSetupHangarHWConsumableSlot'
     TANK_SETUP_HANGAR_BATTLE_BOOSTER_SLOT = 'tankSetupHangarBattleBoosterSlot'
     TANK_SETUP_HANGAR_BATTLE_ABILITY_SLOT = 'tankSetupHangarBattleAbilitySlot'
     TANK_SETUP_HANGAR_SHELL_SLOT = 'tankSetupHangarShellSlot'
     POST_PROGRESSION_VEHICLE = 'postProgressionVehicle'
     BR_BATTLE_RESULT_CONTEXT_MENU = 'brBattleResultContextMenu'
+    CREW_MEMBER = 'crewMember'
+    CREW_TANKMAN = 'crewTankman'

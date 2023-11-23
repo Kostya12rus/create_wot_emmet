@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/backport/backport_tooltip.py
 from collections import namedtuple
 from frameworks.wulf import ViewModel, Window, WindowFlags, WindowSettings, ViewSettings
@@ -31,25 +31,28 @@ def createBackportTooltipContent(specialAlias=None, specialArgs=None, isSpecial=
 
 class _BackportTooltipContent(ViewImpl):
     appLoader = dependency.descriptor(IAppLoader)
-    __slots__ = ()
+    __slots__ = ('__tooltipData', )
 
     def __init__(self, tooltipData):
+        self.__tooltipData = tooltipData
         settings = ViewSettings(R.views.common.tooltip_window.backport_tooltip_content.BackportTooltipContent())
         settings.model = ViewModel()
         settings.args = (tooltipData,)
         super(_BackportTooltipContent, self).__init__(settings)
 
-    def _initialize(self, tooltipData):
-        super(_BackportTooltipContent, self)._initialize()
+    def _onShown(self):
+        super(_BackportTooltipContent, self)._onShown()
+        data = self.__tooltipData
         toolTipMgr = self.appLoader.getApp().getToolTipMgr()
         if toolTipMgr is not None:
-            if tooltipData.isSpecial:
-                toolTipMgr.onCreateTypedTooltip(tooltipData.specialAlias, tooltipData.specialArgs, _STATE_TYPE_INFO)
+            if data.isSpecial:
+                toolTipMgr.onCreateTypedTooltip(data.specialAlias, data.specialArgs, _STATE_TYPE_INFO)
             else:
-                toolTipMgr.onCreateComplexTooltip(tooltipData.tooltip, _STATE_TYPE_INFO)
+                toolTipMgr.onCreateComplexTooltip(data.tooltip, _STATE_TYPE_INFO)
         return
 
-    def _finalize(self):
+    def _onHidden(self):
+        super(_BackportTooltipContent, self)._onHidden()
         toolTipMgr = self.appLoader.getApp().getToolTipMgr()
         if toolTipMgr is not None:
             toolTipMgr.hide()

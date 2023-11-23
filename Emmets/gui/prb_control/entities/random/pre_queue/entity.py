@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/random/pre_queue/entity.py
 import BigWorld, ArenaType
 from CurrentVehicle import g_currentVehicle
@@ -38,7 +38,7 @@ class RandomEntity(PreQueueEntity):
         if self.__watcher is not None:
             self.__watcher.stop()
             self.__watcher = None
-        if not woEvents:
+        if not woEvents and g_eventDispatcher.needToLoadHangar(ctx, self.getModeFlags(), []):
             g_eventDispatcher.loadHangar()
         return super(RandomEntity, self).fini(ctx, woEvents)
 
@@ -62,7 +62,7 @@ class RandomEntity(PreQueueEntity):
             LOG_DEBUG('Demonstrator map selected: ', ArenaType.g_cache[arenaTypeID].geometryName)
             LOG_DEBUG('Demonstrator level selected: ', levelType)
             LOG_DEBUG('Demonstrator spawn selected: ', team)
-        BigWorld.player().enqueueRandom(ctx.getVehicleInventoryID(), gameplaysMask=ctx.getGamePlayMask(), isOnly10ModeEnabled=ctx.isOnly10ModeEnabled(), arenaTypeID=mmData)
+        BigWorld.player().enqueueRandom(ctx.getVehicleInventoryID(), gameplaysMask=ctx.getGamePlayMask(), randomFlags=ctx.getRandomFlags(), arenaTypeID=mmData)
         LOG_DEBUG('Sends request on queuing to the random battle', ctx)
 
     def _doDequeue(self, ctx):
@@ -77,7 +77,7 @@ class RandomEntity(PreQueueEntity):
             arenaTypeID = action.mmData
         else:
             arenaTypeID = 0
-        return RandomQueueCtx(invID, arenaTypeID=arenaTypeID, gamePlayMask=gameplay_ctx.getMask(), isOnly10ModeEnabled=gameplay_ctx.isOnly10ModeEnabled(), waitingID='prebattle/join')
+        return RandomQueueCtx(invID, arenaTypeID=arenaTypeID, gamePlayMask=gameplay_ctx.getMask(), randomFlags=gameplay_ctx.getRandomFlags(), waitingID='prebattle/join')
 
     def _goToQueueUI(self):
         g_eventDispatcher.loadBattleQueue()

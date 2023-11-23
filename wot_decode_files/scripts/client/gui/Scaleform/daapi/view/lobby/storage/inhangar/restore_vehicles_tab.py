@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/storage/inhangar/restore_vehicles_tab.py
 from gui import DialogsInterface
 from gui.Scaleform.daapi.view.dialogs.ExchangeDialogMeta import RestoreExchangeCreditsMeta
@@ -38,7 +38,7 @@ class _RestoreVehiclesDataProvider(StorageCarouselDataProvider):
         self._baseCriteria = REQ_CRITERIA.VEHICLE.IS_RESTORE_POSSIBLE | ~REQ_CRITERIA.INVENTORY ^ REQ_CRITERIA.VEHICLE.TELECOM_RENT
 
     def _addCriteria(self):
-        self._addVehicleItemsByCriteria(self._baseCriteria | REQ_CRITERIA.VEHICLE.ACTIVE_IN_NATION_GROUP | ~REQ_CRITERIA.VEHICLE.WOT_PLUS_VEHICLE)
+        self._addVehicleItemsByCriteria(self._baseCriteria | ~REQ_CRITERIA.VEHICLE.WOT_PLUS_VEHICLE | REQ_CRITERIA.VEHICLE.ACTIVE_IN_NATION_GROUP | ~REQ_CRITERIA.VEHICLE.IS_STORAGE_HIDDEN)
 
     def applyFilter(self, forceApply=False):
         pass

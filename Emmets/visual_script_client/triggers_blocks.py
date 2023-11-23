@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/visual_script_client/triggers_blocks.py
 import BigWorld
 from visual_script.block import Block, Meta
@@ -60,7 +60,7 @@ class TriggerExternal(Block, TriggerMeta):
         if self.isActive() == value:
             return
         self._active = value
-        if not IS_VS_EDITOR:
+        if not IS_VS_EDITOR and hasattr(BigWorld.player(), 'onTrigger'):
             if self._active:
                 BigWorld.player().onTrigger += self._onTrigger
             else:

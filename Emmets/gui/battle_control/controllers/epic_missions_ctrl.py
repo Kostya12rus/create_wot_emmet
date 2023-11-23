@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/epic_missions_ctrl.py
 from collections import defaultdict
 from collections import namedtuple
@@ -487,6 +487,7 @@ class EpicMissionsController(IViewComponentsController):
                 additionalDescription = makeHtmlString(path='html_templates:battle/epicBattle/additionalHqMissionInfo', key='attacker' if self.__isAttacker() else 'defender', ctx={'destroyed': destroyed, 
                    'toDestroy': toDestroy})
             mission.missionText = EPIC_BATTLE.MISSIONS_PRIMARY_ATK_HQ if self.__isAttacker() else EPIC_BATTLE.MISSIONS_PRIMARY_DEF_HQ
+            self.__updatePositions()
         else:
             if endTime > 0:
                 mission.subText = EPIC_BATTLE.MISSION_ZONE_CLOSING_ATK if self.__isAttacker() else EPIC_BATTLE.MISSION_ZONE_CLOSING_DEF
@@ -566,7 +567,7 @@ class EpicMissionsController(IViewComponentsController):
             self.__sendIngameMessage(self.__makeMessageData(GAME_MESSAGES_CONSTS.BASE_CAPTURED_POSITIVE if self.__isAttacker() else GAME_MESSAGES_CONSTS.BASE_CAPTURED, {'baseID': baseId, 
                'title': EPIC_BATTLE.ZONE_CAPTURED_TEXT if self.__isAttacker() else EPIC_BATTLE.ZONE_LOST_TEXT, 
                'timerText': backport.text(R.strings.epic_battle.zone.time_added(), minutes=(':').join((('{:02d}').format(int(minutes)), ('{:02d}').format(int(seconds))))), 
-               'descriptionText': backport.text(R.strings.epic_battle.missions.unlockTankLevel()) if vehiclesUnlocked else ''}))
+               'descriptionText': self.__getUnlockedVehDescription() if vehiclesUnlocked else ''}))
             if onPlayerLane:
                 if self.__isAttacker():
                     self.__nextObjectiveMessage(self.__isAttacker())
@@ -578,6 +579,12 @@ class EpicMissionsController(IViewComponentsController):
             self.__contestedEndTime[baseLane - 1] = 0
             self.__isLaneContested[baseLane - 1] = False
             return
+
+    def __getUnlockedVehDescription(self):
+        level = self.__epicController.getUnlockableInBattleVehLevelStr()
+        if level:
+            return backport.text(R.strings.epic_battle.missions.unlockTankLevel(), level=self.__epicController.getUnlockableInBattleVehLevelStr())
+        return ''
 
     def __nextObjectiveMessage(self, isAttacker):
         componentSystem = self.__sessionProvider.arenaVisitor.getComponentSystem()

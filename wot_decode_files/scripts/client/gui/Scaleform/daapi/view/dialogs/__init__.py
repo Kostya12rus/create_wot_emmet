@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/dialogs/__init__.py
 import BigWorld
 from constants import ACCOUNT_KICK_REASONS, IS_CHINA
@@ -259,59 +259,6 @@ class BCConfirmDialogMeta(IDialogMeta):
 
     def getMessage(self):
         return self.__meta.get('message', '')
-
-
-class TankmanOperationDialogMeta(I18nConfirmDialogMeta):
-
-    def __init__(self, key, tankman=None, focusedID=None, showPeriodEndWarning=False):
-        super(TankmanOperationDialogMeta, self).__init__(key, None, None, None, focusedID)
-        self.__tankman = tankman
-        self.__showPeriodEndWarning = showPeriodEndWarning
-        return
-
-    def getEventType(self):
-        if self.__tankman.isDismissed:
-            return events.ShowDialogEvent.SHOW_RESTORE_TANKMAN_DIALOG
-        return events.ShowDialogEvent.SHOW_DISMISS_TANKMAN_DIALOG
-
-    def getTankman(self):
-        return self.__tankman
-
-    @property
-    def showPeriodEndWarning(self):
-        return self.__showPeriodEndWarning
-
-
-class CrewSkinsRemovalDialogMeta(I18nConfirmDialogMeta):
-
-    def getEventType(self):
-        return events.ShowDialogEvent.SHOW_CREW_SKINS_COMPENSATION_DIALOG
-
-    def getItems(self):
-        return self._messageCtx.get('items')
-
-    def getMessagePrice(self):
-        return self._messageCtx.get('price', None)
-
-
-class CrewSkinsRemovalCompensationDialogMeta(CrewSkinsRemovalDialogMeta):
-    ROLE_MISMATCH_SUFFIX = 1
-    OUT_OF_STORAGE_SUFFIX = 2
-
-    def __init__(self, key, reasonSuffix, titleCtx=None, messageCtx=None, meta=None, focusedID=None, scope=ScopeTemplates.VIEW_SCOPE):
-        super(CrewSkinsRemovalCompensationDialogMeta, self).__init__(key, titleCtx, messageCtx, meta, focusedID, scope)
-        self._reasonSuffix = reasonSuffix
-
-    def getMessage(self):
-        result = None
-        if self._meta is not None:
-            result = self._meta.getMessage()
-        if not result:
-            result = self._makeString(('{0:>s}/message{1:d}').format(self._key, self._reasonSuffix), self._messageCtx)
-        return result
-
-    def getCompensationMessage(self):
-        return self._makeString(I18N_PRICE_KEY.format(self._key), self._messageCtx)
 
 
 class IconDialogMeta(I18nConfirmDialogMeta):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/notifications.py
 from constants import NC_MESSAGE_PRIORITY
 
@@ -31,9 +31,9 @@ class NotificationGroup(object):
 
 class NotificationGuiSettings(object):
     __slots__ = ('isNotify', 'priorityLevel', 'isAlert', 'auxData', 'showAt', '__customEvent',
-                 'groupID', 'messageType', 'messageSubtype', 'decorator')
+                 'groupID', 'messageType', 'messageSubtype', 'decorator', 'lifeTime')
 
-    def __init__(self, isNotify=False, priorityLevel=NotificationPriorityLevel.MEDIUM, isAlert=False, auxData=None, showAt=0, groupID=NotificationGroup.INFO, messageType=None, messageSubtype=None, decorator=None):
+    def __init__(self, isNotify=False, priorityLevel=NotificationPriorityLevel.MEDIUM, isAlert=False, auxData=None, showAt=0, groupID=NotificationGroup.INFO, messageType=None, messageSubtype=None, decorator=None, lifeTime=0):
         super(NotificationGuiSettings, self).__init__()
         self.isNotify = isNotify
         self.priorityLevel = priorityLevel
@@ -44,6 +44,7 @@ class NotificationGuiSettings(object):
         self.messageType = messageType
         self.messageSubtype = messageSubtype
         self.decorator = decorator
+        self.lifeTime = lifeTime
         self.__customEvent = None
         return
 

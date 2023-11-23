@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/vehicle_modules.py
 import logging
 from constants import SHELL_TYPES, SHELL_MECHANICS_TYPE
@@ -10,12 +10,12 @@ from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.shared.items_parameters.params_cache import g_paramsCache
-import nations
 from gui.shared.utils.functions import replaceHyphenToUnderscore
-from items import vehicles as veh_core
 from gui.shared.gui_items.fitting_item import FittingItem, ICONS_MASK
 from gui.shared.utils import GUN_CLIP, GUN_CAN_BE_CLIP, GUN_AUTO_RELOAD, GUN_CAN_BE_AUTO_RELOAD, GUN_DUAL_GUN, GUN_CAN_BE_DUAL_GUN
 from gui.shared.money import Currency
+import nations
+from items import vehicles as veh_core
 _MODULE_TYPES_ORDER = ('vehicleGun', 'vehicleTurret', 'vehicleEngine', 'vehicleChassis',
                        'vehicleRadio', 'vehicleFuelTank')
 _MODULE_TYPES_ORDER_INDICES = dict((n, i) for i, n in enumerate(_MODULE_TYPES_ORDER))
@@ -213,6 +213,9 @@ class VehicleGun(VehicleModule):
         typeToCheck = GUN_DUAL_GUN if vehicleDescr is not None else GUN_CAN_BE_DUAL_GUN
         return self.getReloadingType(vehicleDescr) == typeToCheck
 
+    def hasDualAccuracy(self, vehicleDescr=None):
+        return vehicleDescr is not None and g_paramsCache.hasDualAccuracy(self.intCD, vehicleDescr.type.compactDescr)
+
     def isFlameGun(self):
         return self._defaultAmmo[0].type == SHELL_TYPES.FLAME
 
@@ -265,6 +268,8 @@ class VehicleGun(VehicleModule):
                 return backport.image(R.images.gui.maps.icons.modules.autoLoaderGun())
             if self.isDualGun(vehDescr):
                 return backport.image(R.images.gui.maps.icons.modules.dualGun())
+            if self.hasDualAccuracy(vehDescr):
+                return backport.image(R.images.gui.maps.icons.modules.dualAccuracy())
             return
 
     def getGUIEmblemID(self):
@@ -395,10 +400,6 @@ class Shell(FittingItem):
     @property
     def isModernMechanics(self):
         return self.type in (SHELL_TYPES.HIGH_EXPLOSIVE,) and self.descriptor.type.mechanics == SHELL_MECHANICS_TYPE.MODERN
-
-    @property
-    def isGuaranteedDamage(self):
-        return self.descriptor.type.mechanics == SHELL_MECHANICS_TYPE.GUARANTEED_DAMAGE
 
     def _getAltPrice(self, buyPrice, proxy):
         if Currency.GOLD in buyPrice:

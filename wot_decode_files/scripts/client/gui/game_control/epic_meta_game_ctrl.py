@@ -1,17 +1,18 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/epic_meta_game_ctrl.py
 from bisect import insort_right
 from operator import itemgetter
 import adisp, typing, logging, BigWorld, WWISE, Event
-from constants import ARENA_BONUS_TYPE, PREBATTLE_TYPE, QUEUE_TYPE, Configs
+from constants import ARENA_BONUS_TYPE, PREBATTLE_TYPE, QUEUE_TYPE, Configs, DESTRUCTIBLE_MATKIND
+import destructible_entities
 from gui.ClientUpdateManager import g_clientUpdateManager
 from gui.prb_control.entities.base.ctx import PrbAction
 from gui.shared import event_dispatcher
 from gui.shared.event_dispatcher import showFrontlineContainerWindow
 from gui.shared.utils import SelectorBattleTypesUtils
-from helpers import dependency, i18n, time_utils
+from helpers import dependency, i18n, time_utils, int2roman
 from items import vehicles
 from skeletons.gui.game_control import IEpicBattleMetaGameController
 from skeletons.gui.game_control import IBootcampController
@@ -273,8 +274,17 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
     def getUnlockableInBattleVehLevels(self):
         return self.getModeSettings().unlockableInBattleVehLevels
 
+    def getUnlockableInBattleVehLevelStr(self):
+        vehLevels = self.getUnlockableInBattleVehLevels()
+        if vehLevels:
+            return int2roman(vehLevels[0])
+        return ''
+
     def getSuitableForQueueVehicleLevels(self):
         return set(self.getValidVehicleLevels()) - set(self.getUnlockableInBattleVehLevels())
+
+    def getSuitableForQueueVehicleLevelStr(self):
+        return int2roman(min(self.getSuitableForQueueVehicleLevels()))
 
     def getPointsProgressForLevel(self, level):
         return self.__levelProgress[level]
@@ -480,6 +490,12 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
 
         return result
 
+    def getDestructiblesArmor(self):
+        typeId = self.__metaSettings.destructibleTypeId
+        entityType = destructible_entities.g_destructibleEntitiesCache.getDestructibleEntityType(typeId)
+        return [ entityType.materials[i].armor for i in xrange(DESTRUCTIBLE_MATKIND.NORMAL_MIN, DESTRUCTIBLE_MATKIND.NORMAL_MAX) if i in entityType.materials
+               ]
+
     def isNeedToTakeReward(self):
         currentLevel, _ = self.getPlayerLevelInfo()
         rewardsData = self.getAllLevelRewards()
@@ -677,9 +693,13 @@ class EpicBattleMetaGameController(Notifiable, SeasonProvider, IEpicBattleMetaGa
                 event_dispatcher.showEpicBattlesAfterBattleWindow(levelUpInfo, resultsWindow)
 
     def __isInValidPrebattle(self):
-        if g_prbLoader and g_prbLoader.getDispatcher() and g_prbLoader.getDispatcher().getEntity():
-            currentPrbEntity = g_prbLoader.getDispatcher().getEntity().getEntityType()
-            return currentPrbEntity in (QUEUE_TYPE.EPIC, PREBATTLE_TYPE.EPIC, PREBATTLE_TYPE.EPIC_TRAINING)
+        if g_prbLoader and g_prbLoader.getDispatcher() is not None:
+            entity = g_prbLoader.getDispatcher().getEntity()
+            if entity is None:
+                return
+            currentPrbEntity = entity.getEntityType()
+            return currentPrbEntity in (
+             PREBATTLE_TYPE.EPIC, PREBATTLE_TYPE.EPIC_TRAINING) or entity.getQueueType() == QUEUE_TYPE.EPIC
         else:
             return
 

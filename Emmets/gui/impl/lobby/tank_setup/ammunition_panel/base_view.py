@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/ammunition_panel/base_view.py
 import logging
 from CurrentVehicle import g_currentVehicle
@@ -22,20 +22,24 @@ from gui.shared.events import AmmunitionPanelViewEvent
 from helpers import dependency
 from skeletons.gui.shared import IItemsCache
 from skeletons.gui.shared.utils import IHangarSpace
+from gui.prb_control.entities.listener import IGlobalListener
+from skeletons.gui.game_control import IHalloweenController
 _logger = logging.getLogger(__name__)
 
-class BaseAmmunitionPanelView(ViewImpl):
+class BaseAmmunitionPanelView(ViewImpl, IGlobalListener):
     _itemsCache = dependency.descriptor(IItemsCache)
     _hangarSpace = dependency.descriptor(IHangarSpace)
-    __slots__ = ('_ammunitionPanel', '_wasVehicleOnLoading', 'onSizeChanged', 'onPanelSectionResized',
+    _hwController = dependency.descriptor(IHalloweenController)
+    __slots__ = ('_ammunitionPanel', '_wasVehicleOnLoading', 'onPanelSectionResized',
                  'onVehicleChanged')
 
-    def __init__(self, layoutID=R.views.lobby.tanksetup.AmmunitionPanel(), flags=ViewFlags.VIEW, model=None):
-        settings = ViewSettings(layoutID=layoutID, flags=flags, model=model or AmmunitionPanelViewModel())
+    def __init__(self, flags=ViewFlags.VIEW):
+        settings = ViewSettings(R.views.lobby.tanksetup.AmmunitionPanel())
+        settings.flags = flags
+        settings.model = AmmunitionPanelViewModel()
         super(BaseAmmunitionPanelView, self).__init__(settings)
         self._ammunitionPanel = None
         self._wasVehicleOnLoading = False
-        self.onSizeChanged = Event()
         self.onPanelSectionResized = Event()
         self.onVehicleChanged = Event()
         return
@@ -95,11 +99,14 @@ class BaseAmmunitionPanelView(ViewImpl):
         else:
             self.viewModel.setIsDisabled(self._getIsDisabled())
         self._ammunitionPanel.update(self.vehItem, fullUpdate=fullUpdate)
+        self.__updateIsHalloween()
 
     def destroy(self):
-        self.onSizeChanged.clear()
         self.onPanelSectionResized.clear()
         super(BaseAmmunitionPanelView, self).destroy()
+
+    def onPrbEntitySwitched(self):
+        self.__updateIsHalloween()
 
     def _onLoading(self, *args, **kwargs):
         super(BaseAmmunitionPanelView, self)._onLoading(*args, **kwargs)
@@ -127,7 +134,7 @@ class BaseAmmunitionPanelView(ViewImpl):
         return HangarAmmunitionPanel(self.viewModel.ammunitionPanel, self.vehItem)
 
     def _addListeners(self):
-        self.viewModel.onViewSizeInitialized += self.__onViewSizeInitialized
+        self.startGlobalListening()
         self.viewModel.ammunitionPanel.onSectionSelect += self._onPanelSectionSelected
         self.viewModel.ammunitionPanel.onSectionResized += self._onPanelSectionResized
         g_currentVehicle.onChangeStarted += self.__onVehicleChangeStarted
@@ -135,7 +142,7 @@ class BaseAmmunitionPanelView(ViewImpl):
         self._itemsCache.onSyncCompleted += self.__itemCacheChanged
 
     def _removeListeners(self):
-        self.viewModel.onViewSizeInitialized -= self.__onViewSizeInitialized
+        self.stopGlobalListening()
         self.viewModel.ammunitionPanel.onSectionSelect -= self._onPanelSectionSelected
         self.viewModel.ammunitionPanel.onSectionResized -= self._onPanelSectionResized
         g_currentVehicle.onChangeStarted -= self.__onVehicleChangeStarted
@@ -163,15 +170,15 @@ class BaseAmmunitionPanelView(ViewImpl):
     def __itemCacheChanged(self, *_):
         self.update(fullUpdate=False)
 
+    def __updateIsHalloween(self):
+        self.viewModel.setIsHalloween(self._hwController.isEventHangar())
+
     @staticmethod
     def _getIsDisabled():
         return not g_currentVehicle.isInHangar() or g_currentVehicle.isLocked() or g_currentVehicle.isBroken()
 
     def _getIsReady(self):
         return self.viewStatus == ViewStatus.LOADED
-
-    def __onViewSizeInitialized(self, args=None):
-        self.onSizeChanged(args.get('width', 0), args.get('height', 0), args.get('offsetY', 0))
 
     def __canChangeVehicle(self):
         if self.prbDispatcher is not None:

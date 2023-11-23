@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/event_boards/event_boards_controller.py
 import logging
 from account_helpers import AccountSettings
@@ -36,8 +36,6 @@ class EventBoardsController(IEventBoardController, IEventBoardsListener):
         self.__isLoggedIn = False
         self.__eventBoardsSettings = EventBoardsSettings()
         self.__hangarFlagData = HangarFlagData()
-        self.__requestCallbacks = []
-        self.__boardSettingsRequested = False
 
     def fini(self):
         self.__eventBoardsSettings.fini()
@@ -122,7 +120,7 @@ class EventBoardsController(IEventBoardController, IEventBoardsListener):
         eventsSettings = self.__eventBoardsSettings.getEventsSettings()
         playerData = self.__eventBoardsSettings.getPlayerEventsData()
         if not self.__isLoggedIn or self.__isLoggedIn and not onLogin:
-            edResponse = yield self.__requestEventsData(onlySettings)
+            edResponse = yield self.sendRequest(EventBoardsGetEventDataCtx(needShowErrorNotification=not onlySettings))
             if edResponse is not None:
                 statusCode = eventsSettings.setData(edResponse.getData(), prefetchKeyArtBig)
                 if statusCode == SET_DATA_STATUS_CODE.OK:
@@ -195,20 +193,6 @@ class EventBoardsController(IEventBoardController, IEventBoardsListener):
                     return
             callback(None)
             return
-
-    @adisp_async
-    @adisp_process
-    def __requestEventsData(self, onlySettings, callback):
-        self.__requestCallbacks.append(callback)
-        if self.__boardSettingsRequested:
-            return
-        self.__boardSettingsRequested = True
-        edResponse = yield self.sendRequest(EventBoardsGetEventDataCtx(needShowErrorNotification=not onlySettings))
-        self.__boardSettingsRequested = False
-        for clb in self.__requestCallbacks:
-            clb(edResponse)
-
-        self.__requestCallbacks = []
 
     def __checkStartedFinishedEvents(self, isTabVisited):
         eventsSettings = self.__eventBoardsSettings

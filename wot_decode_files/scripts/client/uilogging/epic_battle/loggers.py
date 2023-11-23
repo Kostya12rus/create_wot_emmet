@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/uilogging/epic_battle/loggers.py
 from typing import TYPE_CHECKING
+from epic_constants import EPIC_SELECT_BONUS_NAME
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
 from helpers import dependency
 from skeletons.gui.app_loader import IAppLoader
@@ -82,7 +83,15 @@ class EpicBattleTooltipLogger(EpicBattleLogger):
         else:
             self._isAdvancedTooltip = isAdvancedKeyPressed or self._isAdvancedTooltip
             self._openedTooltip = tooltip
-            isSkipped = self._skipAdditionalInfoTooltips is not None and tooltip in self._skipAdditionalInfoTooltips
-            self._additionalInfo = str(args[1 if tooltip == TOOLTIPS_CONSTANTS.NOT_ENOUGH_MONEY else 0]) if args and not isSkipped else None
+            self._additionalInfo = None
+            if self._skipAdditionalInfoTooltips is None or tooltip not in self._skipAdditionalInfoTooltips:
+                if tooltip == TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP:
+                    self._additionalInfo = EPIC_SELECT_BONUS_NAME
+                elif args:
+                    if tooltip == TOOLTIPS_CONSTANTS.NOT_ENOUGH_MONEY:
+                        self._additionalInfo = args[1]
+                    elif tooltip not in (TOOLTIPS_CONSTANTS.EPIC_BATTLE_SELECTOR_INFO,
+                     TOOLTIPS_CONSTANTS.EPIC_BATTLE_WIDGET_INFO):
+                        self._additionalInfo = args[0]
             self.startAction(EpicBattleLogActions.TOOLTIP_WATCHED.value)
             return

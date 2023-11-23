@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/bonus_readers.py
 import time
 from typing import Union, TYPE_CHECKING
@@ -17,7 +17,7 @@ from invoices_helpers import checkAccountDossierOperation
 from items import vehicles, tankmen, utils
 from items.components.c11n_constants import SeasonType
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
-from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS, ENTITLEMENT_OPS, DailyQuestsLevels
+from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS, ENTITLEMENT_OPS, DailyQuestsLevels, MAX_LOG_EXT_INFO_LEN
 from soft_exception import SoftException
 from customization_quests_common import validateCustomizationQuestToken
 if TYPE_CHECKING:
@@ -70,6 +70,12 @@ def __readBonus_bool(bonus, name, section, eventType, checkLimit):
 def __readBonus_string_set(bonus, name, section, eventType, checkLimit):
     data = section.asString
     bonus[name] = data.strip().split()
+
+
+def checkLogExtInfoLen(info, infoName):
+    if len(info) > MAX_LOG_EXT_INFO_LEN:
+        raise SoftException('Length of %s id "%s" is %d more than max length %d' % (
+         infoName, id, len(info), MAX_LOG_EXT_INFO_LEN))
 
 
 class IntHolder(int):
@@ -475,6 +481,8 @@ def __readBonus_vehicle(bonus, _name, section, eventType, checkLimit):
         extra['unlock'] = True
     if section.has_key('unlockModules'):
         extra['unlockModules'] = True
+    if section.has_key('withSlot'):
+        extra['withSlot'] = True
     vehicleBonuses = bonus.setdefault('vehicles', {})
     vehKey = vehCompDescr if vehCompDescr else vehTypeCompDescr
     if vehKey in vehicleBonuses:
@@ -656,6 +664,7 @@ def __readBonus_crewSkin(bonus, _name, section, eventType, checkLimit):
 
 def __readBonus_tokens(bonus, _name, section, eventType, checkLimit):
     id = section['id'].asString
+    checkLogExtInfoLen(id, 'token')
     if id.startswith(tankmen.RECRUIT_TMAN_TOKEN_PREFIX) and tankmen.getRecruitInfoFromToken(id) is None:
         raise SoftException(('Invalid tankman token format: {}').format(id))
     token = bonus.setdefault('tokens', {})[id] = {}
@@ -724,6 +733,7 @@ def __readBonus_entitlementList(bonus, _name, section, eventType, checkLimit):
 def _readEntitlementSection(section, checkLimit, readOp=False):
     entitlement = {}
     entID = section['id'].asString
+    checkLogExtInfoLen(entID, 'entitlement')
     if section.has_key('count'):
         entitlement['count'] = section['count'].asInt
     else:
@@ -1165,7 +1175,7 @@ def __readBonusConfig(section):
 
     limitIDsLen = sum([ len(limitID) for limitID in config.get('limits', {}) ])
     if limitIDsLen > 200:
-        raise SoftException(('Limit IDs (len = {}) might not fit to token len ({}) for logging purposes').format(limitIDsLen, 256))
+        raise SoftException(('Limit IDs (len = {}) might not fit to token len ({}) for logging purposes').format(limitIDsLen, MAX_LOG_EXT_INFO_LEN))
     return config
 
 

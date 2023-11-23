@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/carousels/basic/tank_carousel.py
-import BigWorld
+import adisp
 from PlayerEvents import g_playerEvents
 from account_helpers.settings_core import settings_constants
 from gui.ClientUpdateManager import g_clientUpdateManager
@@ -15,17 +15,22 @@ from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.Scaleform.genConsts.STORAGE_CONSTANTS import STORAGE_CONSTANTS
 from gui.Scaleform.locale.TANK_CAROUSEL_FILTER import TANK_CAROUSEL_FILTER
 from gui.shared import events, EVENT_BUS_SCOPE
-from gui.shared.event_dispatcher import showStorage, showVehicleRentalPage, showTelecomRentalPage
+from gui.shared.event_dispatcher import showStorage, showTelecomRentalPage
 from gui.shared.gui_items.items_actions import factory as ActionsFactory
 from helpers import dependency
 from skeletons.gui.game_control import IRestoreController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
+from gui.prb_control.dispatcher import g_prbLoader
+from gui.prb_control.entities.base.ctx import PrbAction
+from gui.prb_control.settings import PREBATTLE_ACTION_NAME
+from skeletons.gui.game_control import IHalloweenController
 
 class TankCarousel(TankCarouselMeta):
     itemsCache = dependency.descriptor(IItemsCache)
     lobbyContext = dependency.descriptor(ILobbyContext)
     restoreCtrl = dependency.descriptor(IRestoreController)
+    _hwController = dependency.descriptor(IHalloweenController)
 
     def __init__(self):
         super(TankCarousel, self).__init__()
@@ -34,8 +39,18 @@ class TankCarousel(TankCarouselMeta):
     def setRowCount(self, value):
         self.as_rowCountS(value)
 
+    @adisp.adisp_process
     def buyTank(self):
+        isEventPrbActive = self._hwController.isEventPrbActive()
+        if isEventPrbActive:
+            dispatcher = g_prbLoader.getDispatcher()
+            if dispatcher is None:
+                return
+            result = yield dispatcher.doSelectAction(PrbAction(PREBATTLE_ACTION_NAME.RANDOM))
+            if not result:
+                return
         self.fireEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_TECHTREE)), EVENT_BUS_SCOPE.LOBBY)
+        return
 
     def restoreTank(self):
         showStorage(STORAGE_CONSTANTS.IN_HANGAR, STORAGE_CONSTANTS.VEHICLES_TAB_RESTORE)
@@ -46,15 +61,8 @@ class TankCarousel(TankCarouselMeta):
     def buyRentPromotion(self, intCD):
         ActionsFactory.doAction(ActionsFactory.BUY_VEHICLE, intCD)
 
-    def selectWotPlusVehicle(self, intCD):
-        telecomRentals = BigWorld.player().telecomRentals
-        hasTelecomRentalsActive = telecomRentals.isActive()
-        hasAvailableRent = telecomRentals.getAvailableRentCount() > 0
-        isRentalEnabled = self.lobbyContext.getServerSettings().isTelecomRentalsEnabled()
-        if isRentalEnabled and hasTelecomRentalsActive and hasAvailableRent:
-            showTelecomRentalPage()
-        else:
-            showVehicleRentalPage()
+    def selectTelecomRentalVehicle(self, intCD):
+        showTelecomRentalPage()
 
     def getCarouselAlias(self):
         return self.getAlias()

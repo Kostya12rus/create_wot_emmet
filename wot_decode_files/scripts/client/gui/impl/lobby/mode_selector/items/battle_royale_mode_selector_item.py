@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/mode_selector/items/battle_royale_mode_selector_item.py
 from gui import GUI_SETTINGS
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -33,7 +33,7 @@ class BattleRoyaleModeSelectorItem(ModeSelectorLegacyItem):
     def hasExtendedCalendarTooltip(self):
         return True
 
-    def getExtendedCalendarTooltip(self, parentWindow):
+    def getExtendedCalendarTooltip(self, parentWindow, event=None):
         return createAndLoadBackportTooltipWindow(parentWindow, tooltipId=TOOLTIPS_CONSTANTS.BATTLE_ROYALE_SELECTOR_CALENDAR_INFO, isSpecial=True, specialArgs=(None, ))
 
     def _urlProcessing(self, url):
@@ -75,8 +75,9 @@ class BattleRoyaleModeSelectorItem(ModeSelectorLegacyItem):
             self.__resetViewModel(vm)
             if season.hasActiveCycle(currTime):
                 if self.__battleRoyaleController.isEnabled():
-                    timeLeftStr = time_utils.getTillTimeString(season.getCycleEndDate() - currTime, EPIC_BATTLE.STATUS_TIMELEFT, removeLeadingZeros=True)
-                    vm.setTimeLeft(timeLeftStr)
+                    if self.__battleRoyaleController.isShowTimeLeft():
+                        timeLeftStr = time_utils.getTillTimeString(season.getCycleEndDate() - currTime, EPIC_BATTLE.STATUS_TIMELEFT, removeLeadingZeros=True)
+                        vm.setTimeLeft(timeLeftStr)
                     self._addReward(ModeSelectorRewardID.CREDITS)
                     self._addReward(ModeSelectorRewardID.OTHER)
             else:

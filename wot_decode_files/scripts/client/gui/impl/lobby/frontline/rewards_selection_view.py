@@ -1,24 +1,23 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/frontline/rewards_selection_view.py
 from AccountCommands import RES_SUCCESS
 from frameworks.wulf import WindowFlags
-from helpers import dependency
 from gui import SystemMessages
 from gui.battle_pass.rewards_sort import getRewardTypesComparator, getRewardsComparator
-from skeletons.gui.game_control import IEpicBattleMetaGameController
-from gui.shared.event_dispatcher import showHangar
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.frontline.rewards_selection_view_model import RewardsSelectionViewModel
 from gui.impl.lobby.common.selectable_reward_base import SelectableRewardBase
 from gui.impl.pub.lobby_window import LobbyWindow
 from gui.selectable_reward.common import EpicSelectableRewardManager
+from gui.shared.event_dispatcher import showHangar
 from gui.sounds.filters import switchHangarOverlaySoundFilter
+from helpers import dependency
+from skeletons.gui.game_control import IEpicBattleMetaGameController
 from uilogging.epic_battle.constants import EpicBattleLogKeys, EpicBattleLogActions, EpicBattleLogButtons
 from uilogging.epic_battle.loggers import EpicBattleTooltipLogger
-from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
 
 class RewardsSelectionView(SelectableRewardBase):
     __slots__ = ('__onRewardsReceivedCallback', '__onCloseCallback', '__onLoadedCallback',
@@ -46,8 +45,7 @@ class RewardsSelectionView(SelectableRewardBase):
         super(RewardsSelectionView, self)._initialize(*args, **kwargs)
         self._epicController.onUpdated += self._onEpicUpdate
         switchHangarOverlaySoundFilter(on=True)
-        self.__uiEpicBattleLogger.initialize(EpicBattleLogKeys.REWARDS_SELECTION_VIEW.value, skipAdditionalInfoTooltips=(
-         TOOLTIPS_CONSTANTS.EPIC_BATTLE_INSTRUCTION_TOOLTIP,))
+        self.__uiEpicBattleLogger.initialize(EpicBattleLogKeys.REWARDS_SELECTION_VIEW.value)
 
     def _onLoading(self, *args, **kwargs):
         super(RewardsSelectionView, self)._onLoading(*args, **kwargs)

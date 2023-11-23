@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/gen/view_models/views/lobby/battle_pass/battle_pass_progressions_view_model.py
 from enum import Enum
 from gui.impl.wrappers.user_compound_price_model import UserCompoundPriceModel
@@ -32,7 +32,7 @@ class BattlePassProgressionsViewModel(CommonViewModel):
                  'onTakeRewardsClick', 'onFinishedAnimation', 'onLevelsAnimationFinished',
                  'onChapterChoice', 'onViewLoaded')
 
-    def __init__(self, properties=44, commands=15):
+    def __init__(self, properties=45, commands=15):
         super(BattlePassProgressionsViewModel, self).__init__(properties=properties, commands=commands)
 
     @property
@@ -263,29 +263,35 @@ class BattlePassProgressionsViewModel(CommonViewModel):
     def setIsStyleTaken(self, value):
         self._setBool(39, value)
 
-    def getIsSeasonEndingSoon(self):
+    def getIsStyleProgressive(self):
         return self._getBool(40)
 
-    def setIsSeasonEndingSoon(self, value):
+    def setIsStyleProgressive(self, value):
         self._setBool(40, value)
 
-    def getIsExtra(self):
+    def getIsSeasonEndingSoon(self):
         return self._getBool(41)
 
-    def setIsExtra(self, value):
+    def setIsSeasonEndingSoon(self, value):
         self._setBool(41, value)
 
-    def getHasExtra(self):
+    def getIsExtra(self):
         return self._getBool(42)
 
-    def setHasExtra(self, value):
+    def setIsExtra(self, value):
         self._setBool(42, value)
 
+    def getHasExtra(self):
+        return self._getBool(43)
+
+    def setHasExtra(self, value):
+        self._setBool(43, value)
+
     def getExpireTime(self):
-        return self._getNumber(43)
+        return self._getNumber(44)
 
     def setExpireTime(self, value):
-        self._setNumber(43, value)
+        self._setNumber(44, value)
 
     def _initialize(self):
         super(BattlePassProgressionsViewModel, self)._initialize()
@@ -325,6 +331,7 @@ class BattlePassProgressionsViewModel(CommonViewModel):
         self._addBoolProperty('showReplaceRewardsAnimations', False)
         self._addStringProperty('buttonState')
         self._addBoolProperty('isStyleTaken', False)
+        self._addBoolProperty('isStyleProgressive', False)
         self._addBoolProperty('isSeasonEndingSoon', False)
         self._addBoolProperty('isExtra', False)
         self._addBoolProperty('hasExtra', False)

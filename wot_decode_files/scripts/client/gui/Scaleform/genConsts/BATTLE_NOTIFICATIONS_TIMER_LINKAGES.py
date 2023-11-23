@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/BATTLE_NOTIFICATIONS_TIMER_LINKAGES.py
 
 
@@ -20,6 +20,7 @@ class BATTLE_NOTIFICATIONS_TIMER_LINKAGES(object):
     BERSERKER_ICON = 'destroyTimerBerserkerUI'
     RECOVERY_ZONE_ICON = 'secondaryRecoveryZoneIconUI'
     OVERTURNED_ICON = 'destroyTimerOverTurnedUI'
+    WARNING_ICON = 'warningTimerUI'
     OVERTURNED_GREEN_ICON = 'destroyTimerOverTurnedGreenUI'
     HALF_OVERTURNED_ICON = 'HalfOverTurnedIconUI'
     DEATHZONE_ICON = 'destroyTimerDeathZoneUI'
@@ -75,3 +76,7 @@ class BATTLE_NOTIFICATIONS_TIMER_LINKAGES(object):
     COMP7_AOE_INSPIRE_ICON = 'Comp7AoeInspireIconUI'
     COMP7_MARCH_ICON = 'Comp7MarchIconUI'
     COMP7_AGGRESSIVE_DETECTION_ICON = 'Comp7AggressiveDetectionIconUI'
+    HW_VEHICLE_FROZEN_ARROW_ICON = 'HWVehicleFrozenArrowIconUI'
+    HW_VEHICLE_HEALING_ARROW_ICON = 'HWVehicleHealingArrowIconUI'
+    HW_VEHICLE_LAUGH_ARROW_ICON = 'HWVehicleLaughArrowIconUI'
+    HW_VEHICLE_FROZEN_MANTLE_ICON = 'HWVehicleFrozenMantleIconUI'

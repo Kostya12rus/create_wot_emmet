@@ -1,21 +1,28 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/map_zones/minimap.py
+import logging
+from constants import MinimapLayerType
 from gui.Scaleform.daapi.view.battle.shared.map_zones.mixins import MapZonesListener
-from gui.Scaleform.daapi.view.battle.shared.minimap import common
-from gui.Scaleform.daapi.view.battle.shared.minimap import settings
+from gui.Scaleform.daapi.view.battle.shared.minimap import common, settings
+from gui.Scaleform.genConsts.BATTLE_MINIMAP_CONSTS import BATTLE_MINIMAP_CONSTS
 from helpers import unicodeToStr
+_logger = logging.getLogger(__name__)
+_layerTypesMapping = {MinimapLayerType.BASE: BATTLE_MINIMAP_CONSTS.SCENARIO_EVENT_EFFECT, 
+   MinimapLayerType.ALERT: BATTLE_MINIMAP_CONSTS.SCENARIO_EVENT_ALERT}
 
 class MapZonesEntriesPlugin(common.EntriesPlugin, MapZonesListener):
     MINIMAP_ENTRY_SYMBOL = 'ScenarioMinimapEntry'
 
+    def __init__(self, parent, clazz=None):
+        super(MapZonesEntriesPlugin, self).__init__(parent, clazz)
+        self.__mmLayers = self.sessionProvider.arenaVisitor.type.getMinimapLayers() or {}
+
     def start(self):
         super(MapZonesEntriesPlugin, self).start()
-        mmLayers = self.sessionProvider.arenaVisitor.type.getMinimapLayers()
-        if mmLayers:
-            for layer in mmLayers:
-                self.parentObj.as_setScenarioEventS(layer, self.parentObj.getImagePath(layer))
+        for layerId, (path, layerType) in self.__mmLayers.iteritems():
+            self.parentObj.as_setScenarioEventS(layerId, self.parentObj.getImagePath(path), _layerTypesMapping[layerType])
 
         mapZones = self.sessionProvider.shared.mapZones
         if mapZones:
@@ -28,6 +35,9 @@ class MapZonesEntriesPlugin(common.EntriesPlugin, MapZonesListener):
         self.startListen()
 
     def stop(self):
+        for layerId in self.__mmLayers.iterkeys():
+            self.parentObj.as_clearScenarioEventS(layerId)
+
         self.stopListen()
         super(MapZonesEntriesPlugin, self).stop()
 
@@ -44,10 +54,18 @@ class MapZonesEntriesPlugin(common.EntriesPlugin, MapZonesListener):
         self.__addTransromedZone(zone)
 
     def _onTransformedZoneRemoved(self, zone):
-        self.parentObj.as_clearScenarioEventS(unicodeToStr(zone.minimapLayer))
+        layerId = zone.layerId
+        if layerId in self.__mmLayers:
+            self.parentObj.as_setScenarioEventVisibleS(unicodeToStr(layerId), False)
+        else:
+            _logger.error('layerId not found, id: %s', layerId)
 
     def __addTransromedZone(self, zone):
-        self.parentObj.as_setScenarioEventVisibleS(unicodeToStr(zone.minimapLayer), True)
+        layerId = zone.layerId
+        if layerId in self.__mmLayers:
+            self.parentObj.as_setScenarioEventVisibleS(unicodeToStr(layerId), True)
+        else:
+            _logger.error('layerId not found, id: %s', layerId)
 
     def __addMarkerToZone(self, zoneMarker, matrix):
         model = self._addEntryEx(uniqueID=zoneMarker.id, symbol=self.MINIMAP_ENTRY_SYMBOL, container=settings.CONTAINER_NAME.TEAM_POINTS, matrix=matrix, active=True)

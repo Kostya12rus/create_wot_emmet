@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/ARTEFACTS.py
 from debug_utils import LOG_WARNING
 
@@ -137,8 +137,10 @@ class ARTEFACTS(object):
     DELUXENHANCEDAIMDRIVES_LONG_SPECIAL = '#artefacts:deluxEnhancedAimDrives/long_special'
     DELUXETURBOCHARGER_NAME = '#artefacts:deluxeTurbocharger/name'
     DELUXETURBOCHARGER_LONG_SPECIAL = '#artefacts:deluxeTurbocharger/long_special'
+    DELUXETURBOCHARGER_SHORT_SPECIAL = '#artefacts:deluxeTurbocharger/short_special'
     DELUXEEXTRAHEALTHRESERVE_NAME = '#artefacts:deluxeExtraHealthReserve/name'
     DELUXEEXTRAHEALTHRESERVE_LONG_SPECIAL = '#artefacts:deluxeExtraHealthReserve/long_special'
+    DELUXEEXTRAHEALTHRESERVE_SHORT_SPECIAL = '#artefacts:deluxeExtraHealthReserve/short_special'
     DELUXEEXTRAHEALTHRESERVE_EFFECT_CHASSISRESTORATION = '#artefacts:deluxeExtraHealthReserve/effect/chassisRestoration'
     DELUXEEXTRAHEALTHRESERVE_ADDITIONAL_DESCR = '#artefacts:deluxeExtraHealthReserve/additional_descr'
     DELUXEIMPROVEDROTATIONMECHANISM_NAME = '#artefacts:deluxeImprovedRotationMechanism/name'
@@ -742,6 +744,14 @@ class ARTEFACTS(object):
     ROLE_SPG_PAIR_5_1_SPLITNAME = '#artefacts:role_SPG_pair_5_1/splitName'
     ROLE_SPG_PAIR_5_2_NAME = '#artefacts:role_SPG_pair_5_2/name'
     ROLE_SPG_PAIR_5_2_SPLITNAME = '#artefacts:role_SPG_pair_5_2/splitName'
+    ROLE_SPG_ASSAULT_PAIR_4_1_NAME = '#artefacts:role_SPG_assault_pair_4_1/name'
+    ROLE_SPG_ASSAULT_PAIR_4_1_SPLITNAME = '#artefacts:role_SPG_assault_pair_4_1/splitName'
+    ROLE_SPG_ASSAULT_PAIR_4_2_NAME = '#artefacts:role_SPG_assault_pair_4_2/name'
+    ROLE_SPG_ASSAULT_PAIR_4_2_SPLITNAME = '#artefacts:role_SPG_assault_pair_4_2/splitName'
+    ROLE_SPG_ASSAULT_PAIR_5_1_NAME = '#artefacts:role_SPG_assault_pair_5_1/name'
+    ROLE_SPG_ASSAULT_PAIR_5_1_SPLITNAME = '#artefacts:role_SPG_assault_pair_5_1/splitName'
+    ROLE_SPG_ASSAULT_PAIR_5_2_NAME = '#artefacts:role_SPG_assault_pair_5_2/name'
+    ROLE_SPG_ASSAULT_PAIR_5_2_SPLITNAME = '#artefacts:role_SPG_assault_pair_5_2/splitName'
     FIRECIRCLE_NAME = '#artefacts:fireCircle/name'
     FIRECIRCLE_DESCR = '#artefacts:fireCircle/descr'
     FIRECIRCLE_SHORTDESCR = '#artefacts:fireCircle/shortDescr'

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/managers/context_menu.py
 import inspect, weakref
 from abc import ABCMeta, abstractmethod
@@ -121,7 +121,7 @@ class AbstractContextMenuHandler(object):
         self.onContextMenuHide = Event(self._eManager)
         super(AbstractContextMenuHandler, self).__init__()
         self.__cmProxy = weakref.proxy(cmProxy)
-        self.__handlers = handlers or {}
+        self.__handlers = handlers or self._getHandlers()
         self._initFlashValues(ctx)
 
     @property
@@ -181,3 +181,6 @@ class AbstractContextMenuHandler(object):
             if 'visible' not in optInitData or optInitData['visible'] is None:
                 optInitData['visible'] = True
             return optInitData
+
+    def _getHandlers(self):
+        return {}

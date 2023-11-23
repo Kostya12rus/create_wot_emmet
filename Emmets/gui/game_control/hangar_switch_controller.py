@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/game_control/hangar_switch_controller.py
 import json, logging, BigWorld, Event, ResMgr
 from constants import DEFAULT_HANGAR_SCENE
@@ -169,8 +169,10 @@ class HangarSpaceSwitchController(IHangarSpaceSwitchController, IGlobalListener)
         success = None
         err = ErrorFlags.NONE
         if self.hangarSpaceUpdated:
-            currentSceneConifg = self._sceneSpaceParams[self.currentSceneName]
-            success, err = self.hangarSpaceReloader.changeHangarSpace(currentSceneConifg.getHangarSpaceId(), currentSceneConifg.getVisibilityMask(), currentSceneConifg.waitingMessage, currentSceneConifg.waitingBackground)
+            currentSceneConfig = self._sceneSpaceParams[self.currentSceneName]
+            hangarSpacePath = self.hangarSpaceReloader.buildHangarSpacePath(currentSceneConfig.getHangarSpaceId())
+            if hangarSpacePath != self.hangarSpaceReloader.hangarSpacePath:
+                success, err = self.hangarSpaceReloader.changeHangarSpace(currentSceneConfig.getHangarSpaceId(), currentSceneConfig.getVisibilityMask(), currentSceneConfig.waitingMessage, currentSceneConfig.waitingBackground)
         else:
             self.currentSceneName = DEFAULT_HANGAR_SCENE
             hangarSpacePath = self._defaultHangarSpaceConfig.getHangarSpaceId(self.hangarSpace.isPremium)

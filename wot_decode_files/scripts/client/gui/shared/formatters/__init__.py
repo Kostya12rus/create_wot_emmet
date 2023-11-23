@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/formatters/__init__.py
 import logging
 from itertools import combinations
@@ -63,7 +63,7 @@ def formatActionPrices(oldPrice, newPrice, isBuying, checkGold=False):
      _getFormattedPrice(newPrice, isBuying, checkGold))
 
 
-def formatPrice(price, reverse=False, currency=Currency.CREDITS, useIcon=False, useStyle=False, ignoreZeros=False):
+def formatPrice(price, reverse=False, currency=Currency.CREDITS, useIcon=False, useStyle=False, ignoreZeros=False, justValue=False):
     outPrice = []
     currencies = [ c for c in Currency.ALL if price.get(c) is not None ]
     if not currencies:
@@ -73,14 +73,13 @@ def formatPrice(price, reverse=False, currency=Currency.CREDITS, useIcon=False, 
         value = price.get(c, 0)
         if value == 0 and ignoreZeros and not (c == Currency.CREDITS and not price.getSetCurrencies()):
             continue
-        formatter = getBWFormatter(c)
-        cFormatted = formatter(value)
-        if useStyle:
-            styler = getStyle(c)
-            cFormatted = styler(cFormatted) if styler else cFormatted
+        cFormatted = formatPriceValue(value, c, useStyle=useStyle)
         if useIcon:
             cIdentifier = makeHtmlString('html_templates:lobby/iconText', c)
             cSpace = ' ' if reverse else ''
+        elif justValue:
+            cIdentifier = ''
+            cSpace = ''
         else:
             cIdentifier = makeString(('#menu:price/{}').format(c))
             cSpace = ' ' if reverse else ': '
@@ -90,12 +89,21 @@ def formatPrice(price, reverse=False, currency=Currency.CREDITS, useIcon=False, 
     return (', ').join(outPrice)
 
 
+def formatPriceValue(value, currency, useStyle=False):
+    formatter = getBWFormatter(currency)
+    cFormatted = formatter(value)
+    if useStyle:
+        styler = getStyle(currency)
+        cFormatted = styler(cFormatted) if styler else cFormatted
+    return cFormatted
+
+
 def formatPriceForCurrency(money, currencyName):
     return formatPrice(Money(money.get(currencyName)))
 
 
 def formatGoldPrice(gold, reverse=False):
-    return formatPrice(Money(gold=gold), reverse, currency=Currency.GOLD)
+    return formatPrice(Money(gold=gold), reverse=reverse, currency=Currency.GOLD)
 
 
 def getGlobalRatingFmt(globalRating):

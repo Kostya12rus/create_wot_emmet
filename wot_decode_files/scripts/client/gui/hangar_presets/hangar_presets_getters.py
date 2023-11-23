@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/hangar_presets/hangar_presets_getters.py
 import typing
 from constants import QUEUE_TYPE
@@ -32,7 +32,7 @@ class BasePresetsGetter(IPresetsGetter):
     def getAmmoInjectViewAlias(self, preset=None):
         return preset.visibleComponents[HANGAR_CONSTS.AMMUNITION_INJECT].type
 
-    @ifComponentInPreset(HANGAR_CONSTS.CAROUSEL)
+    @ifComponentInPreset(HANGAR_CONSTS.CAROUSEL, defReturn=(None, None))
     def getCarouselSettings(self, preset=None):
         component = preset.visibleComponents[HANGAR_CONSTS.CAROUSEL]
         return (component.type, component.layout)

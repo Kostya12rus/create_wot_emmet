@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/status_notifications/panel.py
 import logging, BigWorld
 from helpers import dependency
@@ -9,6 +9,7 @@ from ReplayEvents import g_replayEvents
 from gui.Scaleform.daapi.view.battle.shared.status_notifications import components
 from gui.Scaleform.daapi.view.battle.shared.status_notifications import replay_components
 from gui.Scaleform.daapi.view.meta.StatusNotificationsPanelMeta import StatusNotificationsPanelMeta
+from gui.Scaleform.genConsts.BATTLE_NOTIFICATIONS_TIMER_COLORS import BATTLE_NOTIFICATIONS_TIMER_COLORS as _COLORS
 from gui.battle_control import event_dispatcher as gui_event_dispatcher
 from gui.battle_control.battle_constants import CROSSHAIR_VIEW_ID
 from gui.shared.items_parameters import isAutoReloadGun
@@ -89,7 +90,7 @@ class StatusNotificationTimerPanel(StatusNotificationsPanelMeta, MethodsRules):
             verticalOffset = self._VERTICAL_SHIFT_WITH_AUTOLOADER_IN_SNIPER_MODE
         return verticalOffset
 
-    def _addNotificationTimerSetting(self, data, typeId, iconName, linkage, color='', noiseVisible=False, text='', countdownVisible=True, iconOffsetY=0, iconSmallName='', isReversedTimerDirection=False, canBlink=False, descriptionFontSize=14, descriptionOffsetY=0):
+    def _addNotificationTimerSetting(self, data, typeId, iconName, linkage, color=_COLORS.ORANGE, noiseVisible=False, text='', countdownVisible=True, iconOffsetY=0, iconSmallName='', isReversedTimerDirection=False, canBlink=False, descriptionFontSize=14, descriptionOffsetY=0):
         data.append({'typeId': typeId, 
            'iconName': iconName, 
            'iconSmallName': iconSmallName, 
@@ -138,10 +139,7 @@ class StatusNotificationTimerPanel(StatusNotificationsPanelMeta, MethodsRules):
 
     @classmethod
     def __logDataCollection(cls, vOs):
-        lgr = _logger.debug
-        lgr('Status Notifications data:')
-        if not vOs:
-            lgr('\n   []')
-        else:
+        if vOs:
+            _logger.debug('Status Notifications data:')
             for i, vO in enumerate(vOs):
-                lgr('\n   %s: %r', i, vO)
+                _logger.debug('\n   %s: %r', i, vO)

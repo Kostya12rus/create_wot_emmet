@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/tips.py
 import logging, random, re
 from collections import namedtuple
@@ -9,7 +9,7 @@ from account_helpers import AccountSettings
 from account_helpers.AccountSettings import WATCHED_PRE_BATTLE_TIPS_SECTION
 from constants import ARENA_GUI_TYPE
 from gui.battle_pass.battle_pass_helpers import isBattlePassActiveSeason
-from gui.doc_loaders.prebattle_tips_loader import getPreBattleTipsConfig
+from gui.doc_loaders.prebattle_tips_loader import readPreBattleTips
 from gui.impl.gen import R
 from gui.shared.utils.functions import replaceHyphenToUnderscore
 from gui.shared.system_factory import registerBattleTipCriteria, registerBattleTipsCriteria, collectBattleTipsCriteria
@@ -17,6 +17,7 @@ from helpers import dependency
 from realm import CURRENT_REALM
 from skeletons.gui.game_control import IRankedBattlesController, IVehiclePostProgressionController
 _logger = logging.getLogger(__name__)
+_PREBATTLE_TIPS_XML_PATH = 'gui/prebattle_tips.xml'
 _RANDOM_TIPS_PATTERN = '^(tip\\d+)'
 _EPIC_BATTLE_TIPS_PATTERN = '^(epicTip\\d+)'
 _EPIC_RANDOM_TIPS_PATTERN = '^(epicRandom\\d+)'
@@ -25,6 +26,7 @@ _BATTLE_ROYALE_TIPS_PATTERN = '^(battleRoyale\\d+$)'
 _COMP7_TIPS_PATTERN = '^(comp7\\d+$)'
 _WINBACK_TIPS_PATTERN = '^(winback\\d+$)'
 _MAPBOX_TIPS_PATTERN = '^(mapbox\\d+)'
+_DEV_MAPS_PATTERN = '^(devMaps\\d+)'
 
 class _BattleLoadingTipPriority(object):
     GENERIC = 1
@@ -114,6 +116,12 @@ class _EventTipsCriteria(TipsCriteria):
         return TipData(R.strings.tips.eventTitle(), R.strings.tips.eventMessage(), R.images.gui.maps.icons.battleLoading.tips.event())
 
 
+class _DevMapsTipsCriteria(TipsCriteria):
+
+    def _getTargetList(self):
+        return _devMapsTips
+
+
 class _RankedTipsCriteria(TipsCriteria):
 
     def _getTargetList(self):
@@ -190,28 +198,31 @@ registerBattleTipsCriteria((ARENA_GUI_TYPE.EPIC_RANDOM, ARENA_GUI_TYPE.EPIC_RAND
 def getTipsCriteria(arenaVisitor):
     criteriaCls = collectBattleTipsCriteria(arenaVisitor.gui.guiType)
     if criteriaCls is None:
-        return _RandomTipsCriteria()
+        return _getRandomTipsCriteria(arenaVisitor)
     else:
         return criteriaCls(arenaVisitor)
 
 
-def readTips(pattern):
+def _readTips(tips, tipsConfig, logger):
     result = []
-    tipsPattern = re.compile(pattern)
-    for tipID, descriptionResId in R.strings.tips.items():
-        if tipID:
-            reMatch = tipsPattern.match(tipID)
-            if reMatch is not None:
-                if tipID not in _tipsConfig:
-                    _logger.warning('Tips by tipID(%s) not in prebattle_tips.xml', tipID)
-                else:
-                    result.append(_buildBattleLoadingTip(tipID, descriptionResId()))
+    for tipID, descriptionResId in tips:
+        if tipID not in tipsConfig:
+            logger.warning('Tips by tipID(%s) not in prebattle_tips.xml', tipID)
+        else:
+            result.append(_buildBattleLoadingTip(tipID, descriptionResId(), tipsConfig))
 
     return result
 
 
-def _buildBattleLoadingTip(tipID, descriptionResID):
-    tipConfig = _tipsConfig.get(tipID)
+def readTips(pattern, tipsConfig):
+    tipsPattern = re.compile(pattern)
+    tips = [ (tipID, descriptionResId) for tipID, descriptionResId in R.strings.tips.items() if tipID and tipsPattern.match(tipID) is not None
+           ]
+    return _readTips(tips, tipsConfig, _logger)
+
+
+def _buildBattleLoadingTip(tipID, descriptionResID, tipsConfig):
+    tipConfig = tipsConfig.get(tipID)
     tipFilter = tipConfig.get('filter')
     if tipFilter is not None and tipFilter['preceding'] is not None:
         tip = _PrecedingBattleLoadingTip()
@@ -220,6 +231,12 @@ def _buildBattleLoadingTip(tipID, descriptionResID):
         tip = _BattleLoadingTip()
     tip.build(tipID, descriptionResID, tipConfig)
     return tip
+
+
+def _getRandomTipsCriteria(arenaVisitor):
+    if arenaVisitor.extra.isMapsInDevelopmentEnabled():
+        return _DevMapsTipsCriteria()
+    return _RandomTipsCriteria()
 
 
 def _getTipIconRes(tipID, group):
@@ -251,7 +268,8 @@ class _TipsValidator(object):
          _BattlePassValidator(),
          _RankedBattlesValidator(),
          _PostProgressionValidator(),
-         _ChassisTypeValidator())
+         _ChassisTypeValidator(),
+         _VehPropertyValidator())
 
     def validateRegularTip(self, tipFilter, ctx=None):
         if not tipFilter:
@@ -332,6 +350,14 @@ class _ChassisTypeValidator(object):
         return chassisType < 0 or ctx['vehicleType'].chassisType == chassisType
 
 
+class _VehPropertyValidator(object):
+
+    @staticmethod
+    def validate(tipFilter, ctx):
+        requiredProperty = tipFilter['vehProperty']
+        return not requiredProperty or getattr(ctx['vehicleType'], requiredProperty, False)
+
+
 class _BattlesValidator(object):
 
     @staticmethod
@@ -347,7 +373,7 @@ class _ArenaGuiTypeValidator(object):
     def validate(tipFilter, ctx):
         expected = tipFilter['arenaTypes']
         actual = ctx['arenaType']
-        return not expected or actual in expected
+        return not expected or str(actual) in expected
 
 
 class _TagsValidator(object):
@@ -469,12 +495,13 @@ def _getWatchedCache():
 
 
 _watchedTipsCache = None
-_tipsConfig = getPreBattleTipsConfig()
-_randomTips = readTips(_RANDOM_TIPS_PATTERN)
-_rankedTips = readTips(_RANKED_BATTLES_TIPS_PATTERN)
-_epicBattleTips = readTips(_EPIC_BATTLE_TIPS_PATTERN)
-_epicRandomTips = readTips(_EPIC_RANDOM_TIPS_PATTERN)
-_battleRoyaleTips = readTips(_BATTLE_ROYALE_TIPS_PATTERN)
-_comp7Tips = readTips(_COMP7_TIPS_PATTERN)
-_winbackTips = readTips(_WINBACK_TIPS_PATTERN)
-_mapboxTips = readTips(_MAPBOX_TIPS_PATTERN)
+_tipsConfig = readPreBattleTips(_PREBATTLE_TIPS_XML_PATH)
+_randomTips = readTips(_RANDOM_TIPS_PATTERN, _tipsConfig)
+_rankedTips = readTips(_RANKED_BATTLES_TIPS_PATTERN, _tipsConfig)
+_epicBattleTips = readTips(_EPIC_BATTLE_TIPS_PATTERN, _tipsConfig)
+_epicRandomTips = readTips(_EPIC_RANDOM_TIPS_PATTERN, _tipsConfig)
+_battleRoyaleTips = readTips(_BATTLE_ROYALE_TIPS_PATTERN, _tipsConfig)
+_comp7Tips = readTips(_COMP7_TIPS_PATTERN, _tipsConfig)
+_winbackTips = readTips(_WINBACK_TIPS_PATTERN, _tipsConfig)
+_mapboxTips = readTips(_MAPBOX_TIPS_PATTERN, _tipsConfig)
+_devMapsTips = readTips(_DEV_MAPS_PATTERN, _tipsConfig)

@@ -1,10 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/status_notifications/replay_components.py
 import logging, BattleReplay
 from ReplayEvents import g_replayEvents
-from gui.Scaleform.daapi.view.battle.shared.status_notifications.components import StatusNotificationContainer
+from gui.Scaleform.daapi.view.battle.shared.status_notifications.components import StatusNotificationContainer, StatusNotificationsGroup
 from gui.Scaleform.daapi.view.battle.shared.status_notifications.sn_items import TimerSN, TimeSnapshotHandler
 from gui.Scaleform.daapi.view.battle.shared.timers_common import PrecisePythonTimer
 _logger = logging.getLogger(__name__)
@@ -108,6 +108,9 @@ class ReplayStatusNotificationContainer(StatusNotificationContainer):
 
     def __init__(self, items, updateCallback):
         super(ReplayStatusNotificationContainer, self).__init__(items, updateCallback)
+        itemUpdater = lambda item: item.setTimeHandler(_ReplaySnapshotHandler) if isinstance(item, TimerSN) else None
         for itm in self._items:
             if isinstance(itm, TimerSN):
-                itm.setTimeHandler(_ReplaySnapshotHandler)
+                itemUpdater(itm)
+            if isinstance(itm, StatusNotificationsGroup):
+                itm.updateItems(itemUpdater)

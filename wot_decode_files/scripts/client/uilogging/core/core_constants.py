@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/uilogging/core/core_constants.py
 from enum import Enum
 
@@ -21,6 +21,6 @@ LOGS_MAX_QUEUE_SIZE = 5000
 LOGS_MAX_COUNT_PER_SEND = 50
 LOG_RECORD_MAX_PROPERTIES_COUNT = 1000
 REQUEST_SESSION_TIMEOUT = 45
-ENSURE_SESSION_TICK = 1.0
+ENSURE_SESSION_TICK = 5.0
 MAX_SESSION_GET_RETRIES = 3
 MIN_SESSION_LIFE_TIME = LOGS_SEND_PERIOD * 2

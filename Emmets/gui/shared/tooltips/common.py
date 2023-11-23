@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/common.py
 import cPickle, logging, math
 from collections import namedtuple, defaultdict
@@ -814,25 +814,6 @@ class FrontlineDiscountTooltipData(BaseDiscountTooltipData):
            'body': bodyText}
 
 
-class ActionXPTooltipData(BaseDiscountTooltipData):
-
-    def getDisplayableData(self, newPrice, oldPrice):
-        oldPrice = Money.makeFromMoneyTuple(oldPrice)
-        if not oldPrice.isDefined():
-            oldPrice = Money(credits=0)
-        currency = Currency.CREDITS
-        for currency in Currency.ALL:
-            currencyValue = oldPrice.get(currency)
-            if currencyValue is not None:
-                break
-
-        newPrice = Money.makeFromMoneyTuple(newPrice)
-        if not newPrice.isDefined():
-            newPrice = Money.makeFrom(currency, 0)
-        isGoldPrice = newPrice.isCurrencyDefined(Currency.GOLD)
-        return self._packDisplayableData(newPrice.gold if isGoldPrice else newPrice.credits, oldPrice.gold if isGoldPrice else oldPrice.credits, DISCOUNT_TYPE.FREE_XP if isGoldPrice else DISCOUNT_TYPE.XP)
-
-
 class ToolTipFortWrongTime(ToolTipBaseData):
 
     def __init__(self, context):
@@ -1049,7 +1030,7 @@ class CURRENCY_SETTINGS(object):
         return cls.__DECONSTRUCT_SETTINGS.get(currency, cls.DECONSTRUCT_EQUIPCOINS_PRICE)
 
 
-_OPERATIONS_SETTINGS = {CURRENCY_SETTINGS.BUY_CREDITS_PRICE: _CurrencySetting(TOOLTIPS.VEHICLE_BUY_PRICE, icons.credits(), text_styles.credits, ICON_TEXT_FRAMES.CREDITS, iconYOffset=0), 
+_OPERATIONS_SETTINGS = {CURRENCY_SETTINGS.BUY_CREDITS_PRICE: _CurrencySetting(TOOLTIPS.VEHICLE_BUY_PRICE, icons.credits(), text_styles.credits, ICON_TEXT_FRAMES.CREDITS, iconYOffset=2), 
    CURRENCY_SETTINGS.RESTORE_PRICE: _CurrencySetting('#tooltips:vehicle/restore_price', icons.credits(), text_styles.credits, ICON_TEXT_FRAMES.CREDITS, iconYOffset=0), 
    CURRENCY_SETTINGS.BUY_GOLD_PRICE: _CurrencySetting(TOOLTIPS.VEHICLE_BUY_PRICE, icons.gold(), text_styles.gold, ICON_TEXT_FRAMES.GOLD, iconYOffset=0), 
    CURRENCY_SETTINGS.BUY_CRYSTAL_PRICE: _CurrencySetting(TOOLTIPS.VEHICLE_BUY_PRICE, icons.crystal(), text_styles.crystal, ICON_TEXT_FRAMES.CRYSTAL, iconYOffset=0), 

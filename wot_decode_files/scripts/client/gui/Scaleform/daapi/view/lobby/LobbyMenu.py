@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/LobbyMenu.py
 import BigWorld, constants
 from PlayerEvents import g_playerEvents as events
@@ -25,11 +25,15 @@ from gui.sounds.ambients import LobbySubViewEnv
 from helpers import i18n, getShortClientVersion, dependency
 from skeletons.gameplay import IGameplayLogic
 from skeletons.gui.game_control import IBootcampController, IDemoAccCompletionController
+from skeletons.gui.game_control import IHalloweenController
 from skeletons.gui.game_control import IManualController
 from skeletons.gui.game_control import IPromoController
 from skeletons.gui.impl import IGuiLoader
 from skeletons.gui.lobby_context import ILobbyContext
 from tutorial.control.context import GLOBAL_FLAG
+from gui.prb_control.dispatcher import g_prbLoader
+from gui.prb_control.entities.base.ctx import PrbAction
+from gui.prb_control.settings import PREBATTLE_ACTION_NAME
 
 def _getVersionMessage():
     return (
@@ -45,6 +49,7 @@ class LobbyMenu(LobbyMenuMeta):
     manualController = dependency.descriptor(IManualController)
     gui = dependency.descriptor(IGuiLoader)
     demoAccController = dependency.descriptor(IDemoAccCompletionController)
+    halloweenController = dependency.descriptor(IHalloweenController)
 
     def __init__(self, *args, **kwargs):
         super(LobbyMenu, self).__init__(*args, **kwargs)
@@ -56,9 +61,19 @@ class LobbyMenu(LobbyMenuMeta):
     def prbEntity(self):
         pass
 
+    @adisp_process
     def postClick(self):
         self.destroy()
+        isHalloweenPrbActive = self.halloweenController.isEventPrbActive()
+        if isHalloweenPrbActive:
+            dispatcher = g_prbLoader.getDispatcher()
+            if dispatcher is None:
+                return
+            result = yield dispatcher.doSelectAction(PrbAction(PREBATTLE_ACTION_NAME.RANDOM))
+            if not result:
+                return
         self.promo.showFieldPost()
+        return
 
     def settingsClick(self):
         event_dispatcher.showSettingsWindow(redefinedKeyMode=False)
@@ -104,10 +119,9 @@ class LobbyMenu(LobbyMenuMeta):
     def manualClick(self):
         if self.manualController.isActivated():
             view = self.manualController.getView()
-            if view is not None:
-                self.destroy()
-            else:
+            if view is None:
                 self.manualController.show()
+            self.destroy()
         return
 
     def _populate(self):

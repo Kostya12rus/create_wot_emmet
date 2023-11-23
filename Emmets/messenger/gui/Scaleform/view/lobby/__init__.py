@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/view/lobby/__init__.py
 from frameworks.wulf import WindowLayer
 from gui.Scaleform.framework import GroupedViewSettings, ComponentSettings
@@ -89,8 +89,10 @@ class _MessengerPackageBusinessHandler(PackageBusinessHandler):
 
     def __showLazyChannelWindow(self, event):
         alias = MESSENGER_VIEW_ALIAS.LAZY_CHANNEL_WINDOW
-        self.loadViewWithDefName(alias, getViewName(MESSENGER_VIEW_ALIAS.LAZY_CHANNEL_WINDOW, event.ctx.get('clientID')), event.ctx)
+        self.loadViewWithDefName(alias, getViewName(MESSENGER_VIEW_ALIAS.LAZY_CHANNEL_WINDOW, event.ctx.get('clientID')), None, event.ctx)
+        return
 
     def __showLobbyChannelWindow(self, event):
         alias = MESSENGER_VIEW_ALIAS.LOBBY_CHANNEL_WINDOW
-        self.loadViewWithDefName(alias, getViewName(MESSENGER_VIEW_ALIAS.LOBBY_CHANNEL_WINDOW, event.ctx['clientID']), event.ctx)
+        self.loadViewWithDefName(alias, getViewName(MESSENGER_VIEW_ALIAS.LOBBY_CHANNEL_WINDOW, event.ctx['clientID']), None, event.ctx)
+        return

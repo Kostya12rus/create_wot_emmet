@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/tooltips/common_builders.py
 from gui.Scaleform.genConsts.CURRENCIES_CONSTANTS import CURRENCIES_CONSTANTS
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -23,7 +23,6 @@ def getTooltipBuilders():
      DefaultFormatBuilder(TOOLTIPS_CONSTANTS.ACTION_SLOT_PRICE, TOOLTIPS_CONSTANTS.COMPLEX_UI, common.ActionSlotTooltipData(contexts.HangarContext())),
      DefaultFormatBuilder(TOOLTIPS_CONSTANTS.PRICE_DISCOUNT, TOOLTIPS_CONSTANTS.COMPLEX_UI, common.PriceDiscountTooltipData(contexts.HangarContext())),
      DefaultFormatBuilder(TOOLTIPS_CONSTANTS.FRONTLINE_PRICE_DISCOUNT, TOOLTIPS_CONSTANTS.COMPLEX_UI, common.FrontlineDiscountTooltipData(contexts.HangarContext())),
-     DefaultFormatBuilder(TOOLTIPS_CONSTANTS.ACTION_XP, TOOLTIPS_CONSTANTS.COMPLEX_UI, common.ActionXPTooltipData(contexts.HangarContext())),
      DataBuilder(TOOLTIPS_CONSTANTS.QUESTS_VEHICLE_BONUSES, TOOLTIPS_CONSTANTS.COLUMN_FIELDS_UI, common.QuestVehiclesBonusTooltipData(contexts.QuestContext())),
      DataBuilder(TOOLTIPS_CONSTANTS.ENVIRONMENT, TOOLTIPS_CONSTANTS.ENVIRONMENT_UI, common.EnvironmentTooltipData(contexts.HangarContext())),
      DataBuilder(TOOLTIPS_CONSTANTS.MISSIONS_TOKEN, TOOLTIPS_CONSTANTS.MISSIONS_TOKEN_UI, common.MissionsToken(contexts.QuestContext())),
@@ -56,7 +55,6 @@ def getTooltipBuilders():
      DataBuilder(TOOLTIPS_CONSTANTS.TECHTREE_NATION_DISCOUNT, TOOLTIPS_CONSTANTS.BLOCKS_DEFAULT_UI, common.TechTreeNationDiscountTooltip(contexts.TechTreeContext())),
      DataBuilder(TOOLTIPS_CONSTANTS.DOG_TAGS_INFO, TOOLTIPS_CONSTANTS.DOG_TAGS_INFO_UI, DogTagInfoTooltip(contexts.DogTagInfoContext())),
      TooltipWindowBuilder(TOOLTIPS_CONSTANTS.VEH_POST_PROGRESSION_ENTRY_POINT, None, common.VehPostProgressionEntryPointTooltipContentWindowData(contexts.ToolTipContext(None))),
-     TooltipWindowBuilder(TOOLTIPS_CONSTANTS.WOT_PLUS, None, common.WotPlusTooltipContentWindowData(contexts.ToolTipContext(None))),
      TooltipWindowBuilder(TOOLTIPS_CONSTANTS.ADDITIONAL_REWARDS, None, common.AdditionalRewardsTooltipContentWindowData(contexts.ToolTipContext(None))))
 
 

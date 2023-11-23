@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/web/web_client_api/ui/util.py
 import typing
 from account_helpers import AccountSettings
@@ -32,7 +32,7 @@ from web.web_client_api import w2c, W2CSchema, Field, WebCommandException
 from web.web_client_api.common import ItemPackType, ItemPackEntry, SPA_ID_TYPES
 from gui.wgcg.utils.contexts import SPAAccountAttributeCtx, PlatformFetchProductListCtx
 from web.web_client_api.ui.vehicle import _VehicleCustomizationPreviewSchema
-from items import makeIntCompactDescrByID
+from items import makeIntCompactDescrByID, parseIntCompactDescr
 from items.components.crew_books_constants import CrewBookCacheType
 if typing.TYPE_CHECKING:
     from gui.Scaleform.framework.entities.abstract.ToolTipMgrMeta import ToolTipMgrMeta
@@ -188,6 +188,8 @@ class UtilWebApiMixin(object):
         itemType = cmd.type
         if itemType == ItemPackType.CREW_BOOK:
             itemId = makeIntCompactDescrByID('crewBook', CrewBookCacheType.CREW_BOOK, cmd.id)
+        elif itemType == ItemPackType.ITEM_CREW_SKIN:
+            _, _, itemId = parseIntCompactDescr(cmd.id)
         else:
             itemId = getCDFromId(itemType=cmd.type, itemId=cmd.id)
         rawItem = ItemPackEntry(type=itemType, id=itemId, count=cmd.count or 1, extra=cmd.extra or {})

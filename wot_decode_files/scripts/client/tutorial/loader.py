@@ -1,9 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/tutorial/loader.py
 import logging, weakref, typing, BigWorld, account_helpers
 from constants import BootcampVersion
+from CurrentVehicle import g_currentVehicle
 from skeletons.tutorial import ITutorialLoader
 from tutorial.gui.Scaleform.gui_impl import ScaleformGuiImpl
 from tutorial.gui.controller import GuiController
@@ -130,6 +131,8 @@ class TutorialLoader(ITutorialLoader):
         else:
             if state is None:
                 state = {}
+            else:
+                self.__updateConditionalState(state)
             reloadIfRun = state.pop('reloadIfRun', False)
             restoreIfRun = state.pop('restoreIfRun', False)
             isStopForced = state.pop('isStopForced', False)
@@ -298,3 +301,21 @@ class TutorialLoader(ITutorialLoader):
 
     def __onTutorialStopped(self):
         self.__doRestore()
+
+    def __updateConditionalState(self, state):
+        chaptersList = ('goldTankmanCost', 'goldTankmanCostMultiplier', 'creditsTankmanCost',
+                        'creditsTankmanCostMultiplier')
+        if state['initialChapter'] in chaptersList:
+            vehicle = g_currentVehicle.item
+            everyone100 = True
+            if vehicle:
+                for _i, tankman in vehicle.crew:
+                    if tankman is None or not tankman.isInNativeTank:
+                        everyone100 = False
+                        break
+
+            if everyone100:
+                state['initialChapter'] = 'retrainingCost'
+            else:
+                state['initialChapter'] = 'crewRetrainingCost'
+        return

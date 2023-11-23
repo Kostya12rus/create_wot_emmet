@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/exchange/__init__.py
 from frameworks.wulf import WindowLayer
 from gui.Scaleform.framework.package_layout import PackageBusinessHandler
@@ -18,14 +18,13 @@ def getViewSettings():
     from gui.Scaleform.daapi.view.lobby.exchange.ConfirmExchangeDialog import ConfirmExchangeDialog
     from gui.Scaleform.daapi.view.lobby.exchange.ExchangeWindow import ExchangeWindow
     from gui.Scaleform.daapi.view.lobby.exchange.ExchangeXPWindow import ExchangeXPWindow
-    from gui.Scaleform.daapi.view.lobby.exchange.ExchangeFreeToTankmanXpWindow import ExchangeFreeToTankmanXpWindow
     from gui.Scaleform.daapi.view.lobby.exchange.detailed_exchange_xp_dialog import ExchangeXPWindowDialog
     return (
      GroupedViewSettings(VIEW_ALIAS.CONFIRM_EXCHANGE_DIALOG, ConfirmExchangeDialog, 'confirmExchangeDialog.swf', WindowLayer.WINDOW, 'confirmExchangeDialog', None, ScopeTemplates.LOBBY_SUB_SCOPE),
      GroupedViewSettings(VIEW_ALIAS.CONFIRM_EXCHANGE_DIALOG_MODAL, ConfirmExchangeDialog, 'confirmExchangeDialog.swf', WindowLayer.TOP_WINDOW, 'confirmExchangeDialog', None, ScopeTemplates.LOBBY_SUB_SCOPE, isModal=True),
      GroupedViewSettings(VIEW_ALIAS.EXCHANGE_WINDOW, ExchangeWindow, 'exchangeWindow.swf', WindowLayer.WINDOW, 'exchangeWindow', None, ScopeTemplates.DEFAULT_SCOPE),
+     GroupedViewSettings(VIEW_ALIAS.EXCHANGE_WINDOW_MODAL, ExchangeWindow, 'exchangeWindow.swf', WindowLayer.TOP_WINDOW, 'exchangeWindow', None, ScopeTemplates.DEFAULT_SCOPE, isModal=True, canDrag=False),
      GroupedViewSettings(VIEW_ALIAS.EXCHANGE_XP_WINDOW, ExchangeXPWindow, 'exchangeXPWindow.swf', WindowLayer.WINDOW, 'exchangeXPWindow', None, ScopeTemplates.DEFAULT_SCOPE),
-     GroupedViewSettings(VIEW_ALIAS.EXCHANGE_FREE_TO_TANKMAN_XP_WINDOW, ExchangeFreeToTankmanXpWindow, 'exchangeFreeToTankmanXpWindow.swf', WindowLayer.WINDOW, 'exchangeFreeToTankmanXpWindow', None, ScopeTemplates.DEFAULT_SCOPE, isModal=True, canDrag=False),
      GroupedViewSettings(VIEW_ALIAS.EXCHANGE_XP_WINDOW_DIALOG_MODAL, ExchangeXPWindowDialog, 'exchangeXPWindow.swf', WindowLayer.TOP_WINDOW, 'exchangeXPWindow', None, ScopeTemplates.LOBBY_SUB_SCOPE, isModal=True))
 
 
@@ -58,7 +57,7 @@ class _ExchangeDialogBusinessHandler(PackageBusinessHandler):
             window.updateDialog(meta, handler)
             self.bringViewToFront(name)
         else:
-            self.loadViewWithDefName(alias, name, meta, handler)
+            self.loadViewWithDefName(alias, name, None, meta, handler)
         return
 
 
@@ -75,9 +74,9 @@ class _ExchangeViewsBusinessHandler(PackageBusinessHandler):
          (
           VIEW_ALIAS.EXCHANGE_WINDOW, self.loadViewByCtxEvent),
          (
-          VIEW_ALIAS.EXCHANGE_XP_WINDOW, self.loadViewByCtxEvent),
+          VIEW_ALIAS.EXCHANGE_WINDOW_MODAL, self.loadViewByCtxEvent),
          (
-          VIEW_ALIAS.EXCHANGE_FREE_TO_TANKMAN_XP_WINDOW, self.loadViewByCtxEvent))
+          VIEW_ALIAS.EXCHANGE_XP_WINDOW, self.loadViewByCtxEvent))
         super(_ExchangeViewsBusinessHandler, self).__init__(listeners, app_settings.APP_NAME_SPACE.SF_LOBBY, EVENT_BUS_SCOPE.LOBBY)
 
 

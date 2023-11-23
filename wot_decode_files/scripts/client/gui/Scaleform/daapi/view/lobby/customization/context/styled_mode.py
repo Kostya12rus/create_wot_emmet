@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/customization/context/styled_mode.py
 import logging, typing
 from CurrentVehicle import g_currentVehicle
@@ -166,7 +166,7 @@ class StyledMode(CustomizationMode):
                     self._removeHiddenFromOutfit(diffOutfit, g_currentVehicle.item.intCD)
                     diff = diffOutfit.pack().makeCompDescr()
                 outfit = style.getOutfit(season, vehicleCD=vehicleCD, diff=diff)
-                if self.__modifiedStyle and self.__modifiedStyle.isProgressionRewindEnabled:
+                if self.__modifiedStyle and styleOutfitData and self.__modifiedStyle.isProgression:
                     outfit = getStyleProgressionOutfit(outfit, styleProgressionLevel, season)
             self._originalOutfits[season] = outfit.copy()
             self._modifiedOutfits[season] = outfit.copy()
@@ -226,6 +226,8 @@ class StyledMode(CustomizationMode):
         for s in SeasonType.COMMON_SEASONS:
             diff = self._ctx.stylesDiffsCache.getDiff(item, s)
             outfit = item.getOutfit(s, vehicleCD=vehicleCD, diff=diff)
+            if self.__modifiedStyle and self.__modifiedStyle.isProgression:
+                outfit = getStyleProgressionOutfit(outfit, outfit.progressionLevel, s)
             self._modifiedOutfits[s] = outfit.copy()
 
         self._fitOutfits(modifiedOnly=True)

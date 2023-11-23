@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_pass/battle_pass_helpers.py
 import logging
 from collections import namedtuple
@@ -65,7 +65,7 @@ def getFormattedTimeLeft(seconds):
 def getBattlePassUrl(urlPathName):
     return ('').join((
      GUI_SETTINGS.baseUrls['webBridgeRootURL'],
-     GUI_SETTINGS.battlePass.get(urlPathName)))
+     GUI_SETTINGS.battlePassUrls.get(urlPathName)))
 
 
 def getInfoPageURL():
@@ -85,15 +85,15 @@ def getExtraIntroVideoURL():
 
 
 def getIntroSlidesNames():
-    return GUI_SETTINGS.battlePass.get('introSlides')
+    return GUI_SETTINGS.battlePassIntroSlides
 
 
 def isIntroVideoExist():
-    return bool(GUI_SETTINGS.battlePass.get('introVideo'))
+    return bool(GUI_SETTINGS.battlePassUrls.get('introVideo'))
 
 
 def isExtraIntroVideoExist():
-    return bool(GUI_SETTINGS.battlePass.get('extraIntroVideo'))
+    return bool(GUI_SETTINGS.battlePassUrls.get('extraIntroVideo'))
 
 
 @dependency.replace_none_kwargs(battlePass=IBattlePassController)
@@ -103,7 +103,7 @@ def getChaptersOrder(battlePass=None):
     extraChapterID = battlePass.getExtraChapterID()
     if extraChapterID:
         chapterIDs.append(extraChapterID)
-    return dict(zip(chapterIDs, GUI_SETTINGS.battlePass.get('chaptersOrder')))
+    return dict(zip(chapterIDs, GUI_SETTINGS.battlePassChaptersOrder))
 
 
 def getSupportedArenaBonusTypeFor(queueType, isInUnit):
@@ -145,6 +145,18 @@ def showVideo(videoSource, onVideoClosed=None, isAutoClose=False):
     from gui.impl.lobby.video.video_view import VideoViewWindow
     window = VideoViewWindow(videoSource(), onVideoClosed=onVideoClosed, isAutoClose=isAutoClose, soundControl=AwardVideoSoundControl(videoSource()))
     window.load()
+
+
+@dependency.replace_none_kwargs(battlePass=IBattlePassController)
+def showBPGamefaceVideo(chapter, level, battlePass=None, onVideoClosed=None):
+    from gui.impl.lobby.battle_pass.style_video_view import StyleVideoViewWindow
+    chapterIDs = battlePass.getChapterIDs()
+    if chapter not in chapterIDs or level is None:
+        _logger.error('Both chapter and level must be specified and correct!')
+    else:
+        window = StyleVideoViewWindow(chapter, level, onVideoClosed=onVideoClosed)
+        window.load()
+    return
 
 
 @replace_none_kwargs(battlePass=IBattlePassController, c11nService=ICustomizationService)

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/requesters/StatsRequester.py
 from collections import namedtuple
 import json, typing, BigWorld
@@ -227,7 +227,19 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
 
     @property
     def denunciationsLeft(self):
-        return self.getCacheValue('denunciationsLeft', 0)
+        return self.getCacheValue('denunciations', {}).get('left', (0, 0))
+
+    @property
+    def battleDenunciationsLeft(self):
+        return self.denunciationsLeft[1]
+
+    @property
+    def hangarDenunciationsLeft(self):
+        return self.denunciationsLeft[0]
+
+    @property
+    def hangarDenunciations(self):
+        return self.getCacheValue('denunciations', {}).get('hangarDenunciations', {})
 
     @property
     def freeVehiclesLeft(self):
@@ -314,6 +326,10 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
     @property
     def dynamicCurrencies(self):
         return self.getCacheValue('dynamicCurrencies', {})
+
+    @property
+    def isEmergencyModeEnabled(self):
+        return self.getCacheValue('isEmergencyModeEnabled', False)
 
     def getMapsBlackList(self):
         blackList = self.getCacheValue('preferredMaps', {}).get('blackList', ())

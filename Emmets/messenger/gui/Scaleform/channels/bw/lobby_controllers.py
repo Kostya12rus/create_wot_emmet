@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/channels/bw/lobby_controllers.py
 import types, BigWorld, constants
 from chat_shared import CHAT_MEMBER_GROUP
@@ -58,7 +58,7 @@ class _ChannelController(LobbyLayout):
                 return
         self.proto.channels.sendMessage(self._channel.getID(), message)
 
-    def _format(self, message, doFormatting=True):
+    def _format(self, message, doFormatting=True, shouldAddTextLink=False):
         isString = isinstance(message, types.StringType)
         if not doFormatting or isString:
             if isString:
@@ -70,7 +70,7 @@ class _ChannelController(LobbyLayout):
             self._mBuilder.setGuiType(dbID)
         else:
             self._mBuilder.setGroup(CHAT_MEMBER_GROUP[group].name())
-        return self._mBuilder.setName(dbID, message.originatorNickName).setTime(message.time).setText(message.data).build()
+        return self._mBuilder.setName(dbID, message.originatorNickName).setTime(message.time).setText(message.data).setTextLink(dbID, message.originatorNickName, shouldAddTextLink).build()
 
     def _addListeners(self):
         self._channel.onConnectStateChanged += self._onConnectStateChanged
@@ -86,6 +86,7 @@ class _ChannelController(LobbyLayout):
 
     def _onMembersListChanged(self):
         self._refreshMembersDP()
+        self._updatePrivateCarouselMembers()
 
 
 class LazyChannelController(_ChannelController):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/data/contacts_vo_converter.py
 from constants import WG_GAMES
 from gui import makeHtmlString
@@ -61,6 +61,8 @@ def makeContactStatusDescription(isOnline, tags, clientInfo=None):
             description = i18n.makeString(TOOLTIPS.CONTACT_STATUS_ONLINE)
         if name:
             description = ('{0}, {1}').format(description, name)
+    else:
+        description = i18n.makeString(TOOLTIPS.CONTACT_STATUS_OFFLINE)
     return description
 
 

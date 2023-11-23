@@ -1,11 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/items_parameters/params_cache.py
 from collections import namedtuple
 import itertools, math, typing, sys
 from constants import BonusTypes
-from gui.shared.items_parameters import calcGunParams, calcShellParams, getEquipmentParameters, isAutoReloadGun, isDualGun
+from gui.shared.items_parameters import calcGunParams, calcShellParams, getEquipmentParameters, isAutoReloadGun, isDualGun, isDualAccuracy
 from gui.shared.items_parameters import xml_reader
 from gui.shared.utils.decorators import debugTime
 import nations
@@ -53,7 +53,9 @@ def isTrackWithinTrackChassis(vChassis):
     return vChassis.isTrackWithinTrack
 
 
-class PrecachedGun(namedtuple('PrecachedGun', 'clipVehicles autoReloadVehicles dualGunVehicles  params turretsByVehicles')):
+class PrecachedGun(namedtuple('PrecachedGun', (
+ 'clipVehicles', 'autoReloadVehicles', 'dualGunVehicles', 'dualAccuracyVehicles',
+ 'params', 'turretsByVehicles'))):
 
     @property
     def clipVehiclesNames(self):
@@ -82,6 +84,9 @@ class PrecachedGun(namedtuple('PrecachedGun', 'clipVehicles autoReloadVehicles d
 
     def getTurretsForVehicle(self, vehicleCD):
         return self.turretsByVehicles.get(vehicleCD, ())
+
+    def hasDualAccuracy(self, vehicleCD):
+        return self.dualAccuracyVehicles is not None and vehicleCD in self.dualAccuracyVehicles
 
 
 def _getVehicleSuitablesByType(vehicleType, itemTypeId, turretPID=0):
@@ -207,6 +212,9 @@ class _ParamsCache(object):
     def getWheeledChassisAxleLockAngles(self, itemCD):
         return self.__wheeledChassisParams.get(itemCD)
 
+    def hasDualAccuracy(self, itemCD, vehicleCD=None):
+        return self.getPrecachedParameters(itemCD).hasDualAccuracy(vehicleCD)
+
     def hasTurboshaftEngine(self, itemCD):
         return self.getPrecachedParameters(itemCD).hasTurboshaftEngine
 
@@ -307,6 +315,7 @@ class _ParamsCache(object):
                 clipVehiclesList = set()
                 autoReloadVehsList = set()
                 dualGunVehsList = set()
+                dualAccuracyVehsList = set()
                 for vDescr in vehiclesCache.generator(nationIdx):
                     del curVehicleTurretsCDs[:]
                     vehCD = vDescr.type.compactDescr
@@ -323,11 +332,13 @@ class _ParamsCache(object):
                                         autoReloadVehsList.add(vehCD)
                                     if isDualGun(gun):
                                         dualGunVehsList.add(vehCD)
+                                    if isDualAccuracy(gun):
+                                        dualAccuracyVehsList.add(vehCD)
 
                     if curVehicleTurretsCDs:
                         turretsIntCDs[vDescr.type.compactDescr] = tuple(curVehicleTurretsCDs)
 
-                self.__cache[nationIdx][ITEM_TYPES.vehicleGun][g.compactDescr] = PrecachedGun(clipVehicles=clipVehiclesList if clipVehiclesList else None, autoReloadVehicles=frozenset(autoReloadVehsList) if autoReloadVehsList else None, dualGunVehicles=frozenset(dualGunVehsList) if dualGunVehsList else None, params=calcGunParams(g, descriptors), turretsByVehicles=turretsIntCDs)
+                self.__cache[nationIdx][ITEM_TYPES.vehicleGun][g.compactDescr] = PrecachedGun(clipVehicles=clipVehiclesList if clipVehiclesList else None, autoReloadVehicles=frozenset(autoReloadVehsList) if autoReloadVehsList else None, dualGunVehicles=frozenset(dualGunVehsList) if dualGunVehsList else None, dualAccuracyVehicles=frozenset(dualAccuracyVehsList) if dualAccuracyVehsList else None, params=calcGunParams(g, descriptors), turretsByVehicles=turretsIntCDs)
 
         return
 

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/account_completion/utils/common.py
 import typing
 from enum import Enum
@@ -9,7 +9,7 @@ from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.impl.gen import R
 from gui.shared import g_eventBus, events, EVENT_BUS_SCOPE
-from gui.shared.missions.packers.bonus import packBonusModelAndTooltipData, getDefaultBonusPacker
+from gui.shared.missions.packers.bonus import packMissionsBonusModelAndTooltipData, getDefaultBonusPacker
 from gui.shared.money import Currency
 from helpers import dependency
 from skeletons.gui.server_events import IEventsCache
@@ -17,6 +17,7 @@ if typing.TYPE_CHECKING:
     from gui.impl.gen.view_models.views.lobby.account_completion.add_credentials_model import AddCredentialsModel
     from gui.impl.gen.view_models.views.lobby.account_completion.common.base_wgnp_overlay_view_model import BaseWgnpOverlayViewModel
     from gui.impl.backport import TooltipData
+    from typing import Dict
 _BONUSES_ORDER = (
  'vehicles', 'premium', Currency.CRYSTAL, Currency.GOLD, 'freeXP', 'freeXPFactor',
  Currency.CREDITS, 'creditsFactor', 'tankmen', 'items', 'slots', 'berths', 'dossier',
@@ -51,7 +52,7 @@ def fillRewards(model, bonuses=None, tooltipItems=None):
     bonuses.sort(key=_keyBonusesOrder)
     bonusesListModel = model.getBonuses()
     bonusesListModel.clear()
-    packBonusModelAndTooltipData(bonuses=bonuses, packer=getDefaultBonusPacker(), model=bonusesListModel, tooltipData=tooltipItems)
+    packMissionsBonusModelAndTooltipData(bonuses=bonuses, packer=getDefaultBonusPacker(), model=bonusesListModel, tooltipData=tooltipItems)
     bonusesListModel.invalidate()
 
 

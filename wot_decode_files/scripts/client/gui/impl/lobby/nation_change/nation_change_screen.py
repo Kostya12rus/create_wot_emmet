@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/nation_change/nation_change_screen.py
 import SoundGroups, WWISE
 from CurrentVehicle import g_currentVehicle
@@ -33,12 +33,14 @@ from items.components.crew_skins_constants import NO_CREW_SKIN_ID
 from items.tankmen import getSkillsConfig
 from nation_change.nation_change_helpers import iterVehTypeCDsInNationGroup
 from post_progression_common import SERVER_SETTINGS_KEY, SWITCH_LAYOUT_CAPACITY
+from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
 
 class NationChangeScreen(ViewImpl):
     __itemsCache = descriptor(IItemsCache)
     __lobbyContext = descriptor(ILobbyContext)
+    __appLoader = descriptor(IAppLoader)
     _DOG_SOUND = 'rudy'
     _HANGAR_SOUND_FILTERED_STATE_NAME = 'STATE_hangar_filtered'
     _HANGAR_SOUND_FILTERED_STATE_ON = 'STATE_hangar_filtered_on'
@@ -66,9 +68,15 @@ class NationChangeScreen(ViewImpl):
 
     def createToolTip(self, event):
         if event.contentID == R.views.common.tooltip_window.backport_tooltip_content.BackportTooltipContent():
-            tooltipData = self.__getBackportTooltipData(event)
-            if tooltipData is None:
+            tooltipId = event.getArgument('tooltipId')
+            if not tooltipId:
                 return
+            if tooltipId == TOOLTIPS_CONSTANTS.TANKMAN:
+                toolTipMgr = self.__appLoader.getApp().getToolTipMgr()
+                args = (self.getParentWindow(), int(event.getArgument('intCD')))
+                toolTipMgr.onCreateWulfTooltip(TOOLTIPS_CONSTANTS.TANKMAN, args, event.mouse.positionX, event.mouse.positionY)
+                return TOOLTIPS_CONSTANTS.TANKMAN
+            tooltipData = self.__getBackportTooltipData(event)
             window = BackportTooltipWindow(tooltipData, self.getParentWindow())
             if window is None:
                 return
@@ -107,23 +115,17 @@ class NationChangeScreen(ViewImpl):
 
     def __getBackportTooltipData(self, event):
         tooltipId = event.getArgument('tooltipId')
-        if not tooltipId:
-            return None
+        vehicleIntCD = int(event.getArgument('vehicleIntCD'))
+        if tooltipId == TOOLTIPS_CONSTANTS.CAROUSEL_VEHICLE:
+            args = [
+             vehicleIntCD]
+        elif tooltipId == TOOLTIPS_CONSTANTS.NATION_CHANGE_BATTLE_BOOSTER:
+            args = [
+             vehicleIntCD, int(event.getArgument('intCD')), int(event.getArgument('layoutIDx'))]
         else:
-            vehicleIntCD = int(event.getArgument('vehicleIntCD'))
-            if tooltipId == TOOLTIPS_CONSTANTS.CAROUSEL_VEHICLE:
-                args = [
-                 vehicleIntCD]
-            elif tooltipId == TOOLTIPS_CONSTANTS.TANKMAN:
-                args = [
-                 int(event.getArgument('intCD'))]
-            elif tooltipId == TOOLTIPS_CONSTANTS.NATION_CHANGE_BATTLE_BOOSTER:
-                args = [
-                 vehicleIntCD, int(event.getArgument('intCD')), int(event.getArgument('layoutIDx'))]
-            else:
-                args = [
-                 vehicleIntCD, int(event.getArgument('intCD'))]
-            return TooltipData(tooltip=tooltipId, isSpecial=True, specialAlias=tooltipId, specialArgs=args)
+            args = [
+             vehicleIntCD, int(event.getArgument('intCD'))]
+        return TooltipData(tooltip=tooltipId, isSpecial=True, specialAlias=tooltipId, specialArgs=args)
 
     def __updateTankSlot(self, tankSlotVM, vehicle):
         tankSlotVM.setTankImage(R.images.gui.maps.shop.vehicles.c_600x450.dyn(getIconResourceName(getNationLessName(vehicle.name)))())
@@ -172,7 +174,7 @@ class NationChangeScreen(ViewImpl):
         for slotIdx, tankman in crew:
             tankmanVM = NationChangeTankmanModel()
             if tankman is not None:
-                if tankman.skinID != NO_CREW_SKIN_ID and self.__lobbyContext.getServerSettings().isCrewSkinsEnabled():
+                if tankman.skinID != NO_CREW_SKIN_ID:
                     skinItem = self.__itemsCache.items.getCrewSkin(tankman.skinID)
                     tankmanVM.setImage(iconsSmall.crewSkins.dyn(skinItem.getIconName())())
                 else:

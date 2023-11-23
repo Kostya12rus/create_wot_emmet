@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/events_dispatcher.py
 import constants
 from battle_pass_common import BattlePassConsts
@@ -72,6 +72,8 @@ _EVENTS_REWARD_WINDOW = {recruit_helper.RecruitSourceID.TWITCH_0: TwitchRewardWi
    recruit_helper.RecruitSourceID.TWITCH_41: TwitchRewardWindow, 
    recruit_helper.RecruitSourceID.TWITCH_42: TwitchRewardWindow, 
    recruit_helper.RecruitSourceID.TWITCH_43: TwitchRewardWindow, 
+   recruit_helper.RecruitSourceID.TWITCH_44: TwitchRewardWindow, 
+   recruit_helper.RecruitSourceID.TWITCH_45: TwitchRewardWindow, 
    recruit_helper.RecruitSourceID.COMMANDER_MARINA: TwitchRewardWindow, 
    recruit_helper.RecruitSourceID.COMMANDER_PATRICK: TwitchRewardWindow, 
    anniversary_helper.ANNIVERSARY_EVENT_PREFIX: GiveAwayRewardWindow}
@@ -296,24 +298,29 @@ def showMotiveAward(quest):
     shared_events.showAwardWindow(awards.MotiveQuestAward(quest, showMission))
 
 
-def showTankwomanAward(questID, tankmanData):
+def showTankwomanAward(questID, tankmanData, vehicleSlotToUnpack=-1, vehicle=None, parentViewKey=None):
     ctx = {'isFemale': tankmanData.isFemale, 
-       'questID': questID}
-    shared_events.showTankwomanRecruitAwardDialog(ctx)
+       'questID': questID, 
+       'slot': vehicleSlotToUnpack, 
+       'vehicle': vehicle}
+    shared_events.showTankwomanRecruitAwardDialog(ctx, parentViewKey=parentViewKey)
 
 
 @dependency.replace_none_kwargs(eventsCache=IEventsCache)
-def showRecruitWindow(recruitID, eventsCache=None):
+def showRecruitWindow(recruitID, vehicleSlotToUnpack=-1, vehicle=None, eventsCache=None, parentViewKey=None):
     recruitData = recruit_helper.getRecruitInfo(recruitID)
-    if recruitData.getSourceID() == recruit_helper.RecruitSourceID.TANKWOMAN:
-        quest = eventsCache.getPersonalMissions().getAllQuests()[int(recruitID)]
-        bonus = quest.getTankmanBonus()
-        needToGetTankman = quest.needToGetAddReward() and not bonus.isMain or quest.needToGetMainReward() and bonus.isMain
-        if needToGetTankman and bonus.tankman is not None:
-            showTankwomanAward(quest.getID(), first(bonus.tankman.getTankmenData()))
+    if vehicleSlotToUnpack != -1 and recruitData.getRoles() and vehicle.descriptor.type.crewRoles[vehicleSlotToUnpack][0] not in recruitData.getRoles():
+        return
     else:
-        shared_events.showTokenRecruitDialog({'tokenName': recruitID, 'tokenData': recruitData})
-    return
+        if recruitData.getSourceID() == recruit_helper.RecruitSourceID.TANKWOMAN:
+            quest = eventsCache.getPersonalMissions().getAllQuests()[int(recruitID)]
+            bonus = quest.getTankmanBonus()
+            needToGetTankman = quest.needToGetAddReward() and not bonus.isMain or quest.needToGetMainReward() and bonus.isMain
+            if needToGetTankman and bonus.tankman is not None:
+                showTankwomanAward(quest.getID(), first(bonus.tankman.getTankmenData()), vehicleSlotToUnpack, vehicle, parentViewKey=parentViewKey)
+        else:
+            shared_events.showTokenRecruitDialog({'tokenName': recruitID, 'tokenData': recruitData, 'slot': vehicleSlotToUnpack, 'vehicle': vehicle}, parentViewKey=parentViewKey)
+        return
 
 
 def showMissionAward(quest, ctx):

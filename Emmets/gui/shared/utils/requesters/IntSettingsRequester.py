@@ -1,11 +1,11 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/utils/requesters/IntSettingsRequester.py
 import logging
 from functools import wraps
 from copy import copy
-from account_helpers.AccountSettings import MAPBOX_CAROUSEL_FILTER_1, MAPBOX_CAROUSEL_FILTER_2, FUN_RANDOM_CAROUSEL_FILTER_1, FUN_RANDOM_CAROUSEL_FILTER_2, COMP7_CAROUSEL_FILTER_1, COMP7_CAROUSEL_FILTER_2
+from account_helpers.AccountSettings import MAPBOX_CAROUSEL_FILTER_1, MAPBOX_CAROUSEL_FILTER_2, FUN_RANDOM_CAROUSEL_FILTER_1, FUN_RANDOM_CAROUSEL_FILTER_2, COMP7_CAROUSEL_FILTER_1, COMP7_CAROUSEL_FILTER_2, VERSUS_AI_CAROUSEL_FILTER_1, VERSUS_AI_CAROUSEL_FILTER_2
 import BigWorld, constants
 from adisp import adisp_async, adisp_process
 from debug_utils import LOG_ERROR
@@ -91,7 +91,11 @@ class IntSettingsRequester(object):
        'MARKERS_DEAD_2': 113, 
        'MARKERS_ALLY_2': 114, 
        'ONCE_ONLY_HINTS_3': 115, 
-       'ARMORY_YARD': 31001}
+       'ARMORY_YARD': 31001, 
+       VERSUS_AI_CAROUSEL_FILTER_1: 31002, 
+       VERSUS_AI_CAROUSEL_FILTER_2: 31003, 
+       'HW22_CAROUSEL_FILTER_1': 115, 
+       'HW22_CAROUSEL_FILTER_2': 116}
 
     def __init__(self):
         self.__isSynced = False

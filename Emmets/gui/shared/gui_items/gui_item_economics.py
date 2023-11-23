@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/gui_item_economics.py
 import typing
 from collections import namedtuple
@@ -41,6 +41,9 @@ def cmpByCurrencyWeight(p1, p2):
 def isItemBuyPriceAvailable(item, itemPrice, shop):
     currency = itemPrice.getCurrency(byWeight=True)
     originalCurrency = item.buyPrices.itemPrice.getCurrency()
+    isEquipment = item.itemTypeID == GUI_ITEM_TYPE.EQUIPMENT
+    if isEquipment and 'halloween_equipment' in item.tags and itemPrice.price.getSignValue(currency) <= 0:
+        return False
     if currency == originalCurrency:
         return True
     if item.itemTypeID == GUI_ITEM_TYPE.SHELL:

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/VehicleDescrCrew.py
 from typing import TYPE_CHECKING, Dict, List, Tuple
 import tankmen
@@ -50,6 +50,7 @@ class VehicleDescrCrew(object):
         self._perksLevelIncrease = None
         self._crewLevelIncrease = None
         self.lastUsedLevels = {}
+        self._extendedSkills = {}
         return
 
     def boostSkillBy(self, equipment):
@@ -80,6 +81,20 @@ class VehicleDescrCrew(object):
             LOG_CURRENT_EXCEPTION()
 
         return
+
+    def extendSkillProcessor(self, skillName, skillData, skillProcessor):
+        if not skillData or skillName in self._skills:
+            return
+        self._skillProcessors[skillName] = skillProcessor
+        self._extendedSkills[skillName] = skillData
+        self._factorsDirty = True
+
+    def contractSkillProcessor(self, skillName):
+        if skillName in self._skillProcessors:
+            self._skillProcessors.pop(skillName)
+        if skillName in self._extendedSkills:
+            self._extendedSkills.pop(skillName)
+        self._factorsDirty = True
 
     @property
     def skills(self):
@@ -157,6 +172,17 @@ class VehicleDescrCrew(object):
         skillName = tankmen.getSkillsConfig().vsePerkToSkill.get(perkID)
         self.lastUsedLevels[skillName] = level
 
+    def collectDefaultCrewData(self):
+        vehicleDescr = self._vehicleDescr
+        crewData = []
+        for idx, compactDescr in enumerate(self._crewCompactDescrs):
+            descr = tankmen.TankmanDescr(compactDescr, True)
+            factor = descr.efficiencyOnVehicle(vehicleDescr)
+            roleLevelOnVehicle = descr.roleLevel * factor
+            crewData.append((idx, roleLevelOnVehicle))
+
+        return crewData
+
     def _calcLeverIncreaseForNonCommander(self, commonLevelIncrease):
         if not self._activityFlags[self._commanderIdx]:
             levelIncreaseByCommander = 0.0
@@ -222,8 +248,16 @@ class VehicleDescrCrew(object):
 
         crewCompactDescrsLen = llen(self._crewCompactDescrs)
         crewCompactDescrsLenMaxSkillLev = crewCompactDescrsLen * MAX_SKILL_LEVEL
-        for skillName in ('repair', 'camouflage', 'fireFighting'):
-            skillData = skills.get(skillName)
+        otherSkills = {}
+        for skillName in ('repair', 'fireFighting', 'camouflage'):
+            otherSkills[skillName] = skills.get(skillName)
+
+        for skillName, skillData in self._extendedSkills.iteritems():
+            if skillName in otherSkills:
+                continue
+            otherSkills[skillName] = skillData
+
+        for skillName, skillData in otherSkills.iteritems():
             if skillData is None or isFire and skillName != 'fireFighting':
                 efficiency = 0.0
                 baseAvgLevel = 0.0

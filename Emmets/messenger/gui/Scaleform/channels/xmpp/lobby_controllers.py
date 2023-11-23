@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/gui/Scaleform/channels/xmpp/lobby_controllers.py
 import BigWorld
 from gui.shared import g_eventBus, EVENT_BUS_SCOPE
@@ -30,6 +30,7 @@ class _ChannelController(LobbyLayout):
         self._hasUnreadMessages = False
         self.fireInitEvent()
         self.__isChat2Enabled = g_settings.server.BW_CHAT2.isEnabled()
+        self._updatePrivateCarouselMembers()
 
     @proto_getter(PROTO_TYPE.XMPP)
     def proto(self):
@@ -53,11 +54,11 @@ class _ChannelController(LobbyLayout):
     def hasUnreadMessages(self):
         return self._hasUnreadMessages and self._channel.getHistory()
 
-    def _format(self, message, doFormatting=True):
+    def _format(self, message, doFormatting=True, shouldAddTextLink=False):
         if not doFormatting:
             return message.text
         dbID = message.accountDBID
-        return self._mBuilder.setGuiType(dbID).setRole(message.accountRole).setAffiliation(message.accountAffiliation).setName(dbID, message.accountName).setTime(message.sentAt).setText(message.body).build()
+        return self._mBuilder.setGuiType(dbID).setRole(message.accountRole).setAffiliation(message.accountAffiliation).setName(dbID, message.accountName).setTime(message.sentAt).setText(message.body).setTextLink(dbID, message.accountName, shouldAddTextLink).build()
 
     def _onConnectStateChanged(self, _):
         for view in self._views:
@@ -65,6 +66,7 @@ class _ChannelController(LobbyLayout):
 
     def _onMembersListChanged(self):
         self._refreshMembersDP()
+        self._updatePrivateCarouselMembers()
 
     def _onMemberStatusChanged(self, _):
         self._refreshMembersDP()

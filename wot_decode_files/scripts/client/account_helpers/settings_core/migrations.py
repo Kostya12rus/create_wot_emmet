@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/settings_core/migrations.py
 import BigWorld, constants
 from account_helpers.AccountSettings import NEW_SETTINGS_COUNTER
@@ -986,6 +986,51 @@ def _migrateTo106(_, data, __):
     data[SETTINGS_SECTIONS.UI_STORAGE_2][UI_STORAGE_KEYS.GUI_LOOTBOXES_ENTRY_POINT] = False
 
 
+def _migrateTo107(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import SETTINGS_SECTIONS
+    from account_helpers.settings_core.ServerSettingsManager import BATTLE_MATTERS_KEYS
+    resetQuests = (5, 6, 7, 8, 9, 11, 12, 16, 18, 21, 23)
+    lastShowedQuest = core.serverSettings.getBattleMattersQuestWasShowed() + 1
+    if lastShowedQuest in resetQuests:
+        data[SETTINGS_SECTIONS.BATTLE_MATTERS_QUESTS][BATTLE_MATTERS_KEYS.QUEST_PROGRESS] = 0
+
+
+def _migrateTo108(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import UI_STORAGE_KEYS, SETTINGS_SECTIONS
+    data[SETTINGS_SECTIONS.UI_STORAGE_2][UI_STORAGE_KEYS.DUAL_ACCURACY_HIGHLIGHTS_COUNTER] = 0
+
+
+def _migrateTo109(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import GUI_START_BEHAVIOR
+    data[GUI_START_BEHAVIOR][GuiSettingsBehavior.COMP7_WHATS_NEW_SHOWN] = False
+
+
+def _migrateTo110(core, data, initialized):
+    data['gameExtData2'][GAME.GAMEPLAY_DEV_MAPS] = True
+
+
+def _migrateTo111(core, data, initialized):
+    from account_helpers import AccountSettings
+    from account_helpers.AccountSettings import CREW_SKINS_VIEWED
+    from skeletons.gui.shared import IItemsCache
+    itemsCache = dependency.instance(IItemsCache)
+    viewedSkinsMap = {}
+    viewedSkinsSet = AccountSettings.getSettings(CREW_SKINS_VIEWED)
+    for skinID in viewedSkinsSet:
+        item = itemsCache.items.getCrewSkin(skinID)
+        viewedSkinsMap[skinID] = item.getTotalCount()
+
+    AccountSettings.setSettings(CREW_SKINS_VIEWED, viewedSkinsMap)
+
+
+def _migrateTo112(core, data, initialized):
+    from account_helpers import AccountSettings
+    from account_helpers.AccountSettings import CREW_SKINS_VIEWED
+    crewSkinsViewed = AccountSettings.getSettings(CREW_SKINS_VIEWED)
+    if not isinstance(crewSkinsViewed, dict):
+        AccountSettings.setSettings(CREW_SKINS_VIEWED, {})
+
+
 _versions = (
  (
   1, _initializeDefaultSettings, True, False),
@@ -1196,7 +1241,19 @@ _versions = (
  (
   105, _migrateTo105, False, False),
  (
-  106, _migrateTo106, False, False))
+  106, _migrateTo106, False, False),
+ (
+  107, _migrateTo107, False, False),
+ (
+  108, _migrateTo108, False, False),
+ (
+  109, _migrateTo109, False, False),
+ (
+  110, _migrateTo110, False, False),
+ (
+  111, _migrateTo111, False, False),
+ (
+  112, _migrateTo112, False, False))
 
 @adisp_async
 @adisp_process

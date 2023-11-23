@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/module.py
 import logging, typing
 from gui.Scaleform import MENU
@@ -20,26 +20,69 @@ from gui.shared.items_parameters.params_helper import SimplifiedBarVO
 from gui.shared.money import MONEY_UNDEFINED, Currency
 from gui.shared.tooltips import getComplexStatusWULF, getUnlockPrice, TOOLTIP_TYPE, formatters
 from gui.shared.tooltips.common import BlocksTooltipData, makePriceBlock, CURRENCY_SETTINGS, makeRemovalPriceBlock
-from gui.shared.utils import GUN_CLIP, SHELLS_COUNT_PROP_NAME, SHELL_RELOADING_TIME_PROP_NAME, RELOAD_MAGAZINE_TIME_PROP_NAME, AIMING_TIME_PROP_NAME, RELOAD_TIME_PROP_NAME, GUN_AUTO_RELOAD, AUTO_RELOAD_PROP_NAME, RELOAD_TIME_SECS_PROP_NAME, DUAL_GUN_RATE_TIME, DUAL_GUN_CHARGE_TIME, GUN_DUAL_GUN, GUN_CAN_BE_CLIP, GUN_CAN_BE_AUTO_RELOAD, GUN_CAN_BE_DUAL_GUN, TURBOSHAFT_ENGINE_POWER, ROCKET_ACCELERATION_ENGINE_POWER
+from gui.shared.utils import GUN_CLIP, SHELLS_COUNT_PROP_NAME, SHELL_RELOADING_TIME_PROP_NAME, RELOAD_MAGAZINE_TIME_PROP_NAME, AIMING_TIME_PROP_NAME, RELOAD_TIME_PROP_NAME, GUN_AUTO_RELOAD, AUTO_RELOAD_PROP_NAME, DISPERSION_RADIUS, RELOAD_TIME_SECS_PROP_NAME, DUAL_GUN_RATE_TIME, DUAL_GUN_CHARGE_TIME, BURST_FIRE_RATE, BURST_TIME_INTERVAL, BURST_COUNT, BURST_SIZE, GUN_DUAL_GUN, GUN_CAN_BE_CLIP, GUN_CAN_BE_AUTO_RELOAD, GUN_CAN_BE_DUAL_GUN, TURBOSHAFT_ENGINE_POWER, ROCKET_ACCELERATION_ENGINE_POWER, DUAL_ACCURACY_COOLING_DELAY
 from gui.shared.utils.requesters import REQ_CRITERIA
 from helpers import dependency
 from helpers.i18n import makeString as _ms
 from items.components.supply_slot_categories import SlotCategories
-from shared_utils import first
+from shared_utils import first, CONST_CONTAINER
 from skeletons.account_helpers.settings_core import ISettingsCore
 from skeletons.gui.game_control import IBootcampController, IWotPlusController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
 from skeletons.gui.shared.gui_items import IGuiItemsFactory
+from gui.shared.tooltips.contexts import ModuleInfoContext
 if typing.TYPE_CHECKING:
     from gui.shared.gui_items.Vehicle import Vehicle
+_logger = logging.getLogger(__name__)
 _TOOLTIP_WIDTH = 468
 _DEFAULT_PADDING = 20
 _EMPTY_TOOLTIP_WIDTH = 350
 _AUTOCANNON_SHOT_DISTANCE = 400
 _OPT_DEVICE_SPEC_ALPHA = 0.5
 _OPT_DEVICE_SELECTED_SPEC_ALPHA = 1
-_logger = logging.getLogger(__name__)
+_STR_EXTRA_PATH = R.strings.menu.moduleInfo
+_IMG_EXTRA_PATH = R.images.gui.maps.icons.modules
+
+class _ModuleExtraStatuses(CONST_CONTAINER):
+    AUTOLOADER_GUN = 'autoreloadGun'
+    AUTOLOADER_WITH_BOOST_GUN = 'autoReloadWithBoostGun'
+    CLIP_GUN = 'clipGun'
+    FLAME_GUN = 'flameGun'
+    DUAL_GUN = 'dualGun'
+    DUAL_ACCURACY_GUN = 'dualAccuracyGun'
+    TURBOSHAFT_ENGINE = 'turboshaftEngine'
+    ROCKET_ACCELERATION_ENGINE = 'rocketAccelerationEngine'
+    HYDRO_CHASSIS = 'hydroChassis'
+    HYDRO_AUTO_SIEGE_CHASSIS = 'hydroAutoSiegeChassis'
+    HYDRO_WHEELED_CHASSIS = 'hydroWheeledChassis'
+    TRACK_WITHIN_TRACK_CHASSIS = 'trackWithinTrackChassis'
+
+
+_MODULE_EXTRA_STATUS_RESOURCES = {_ModuleExtraStatuses.AUTOLOADER_GUN: (
+                                       _STR_EXTRA_PATH.autoReloadGunLabel, _IMG_EXTRA_PATH.autoLoaderGun), 
+   _ModuleExtraStatuses.AUTOLOADER_WITH_BOOST_GUN: (
+                                                  _STR_EXTRA_PATH.autoReloadGunLabel.boost, _IMG_EXTRA_PATH.autoLoaderGunBoost), 
+   _ModuleExtraStatuses.CLIP_GUN: (
+                                 _STR_EXTRA_PATH.clipGunLabel, _IMG_EXTRA_PATH.magazineGunIcon), 
+   _ModuleExtraStatuses.FLAME_GUN: (
+                                  _STR_EXTRA_PATH.flameGunLabel, _IMG_EXTRA_PATH.flameGunIcon), 
+   _ModuleExtraStatuses.DUAL_GUN: (
+                                 _STR_EXTRA_PATH.dualGunLabel, _IMG_EXTRA_PATH.dualGun), 
+   _ModuleExtraStatuses.DUAL_ACCURACY_GUN: (
+                                          _STR_EXTRA_PATH.dualAccuracyGunLabel, _IMG_EXTRA_PATH.dualAccuracy), 
+   _ModuleExtraStatuses.TURBOSHAFT_ENGINE: (
+                                          _STR_EXTRA_PATH.turboshaftEngine, _IMG_EXTRA_PATH.turbineEngineIcon), 
+   _ModuleExtraStatuses.ROCKET_ACCELERATION_ENGINE: (
+                                                   _STR_EXTRA_PATH.rocketAccelerationEngine, _IMG_EXTRA_PATH.rocketAccelerationIcon), 
+   _ModuleExtraStatuses.HYDRO_CHASSIS: (
+                                      _STR_EXTRA_PATH.hydraulicChassisLabel, _IMG_EXTRA_PATH.hydraulicChassisIcon), 
+   _ModuleExtraStatuses.HYDRO_AUTO_SIEGE_CHASSIS: (
+                                                 _STR_EXTRA_PATH.hydraulicAutoSiegeChassisLabel, _IMG_EXTRA_PATH.hydraulicChassisIcon), 
+   _ModuleExtraStatuses.HYDRO_WHEELED_CHASSIS: (
+                                              _STR_EXTRA_PATH.hydraulicWheeledChassisLabel, _IMG_EXTRA_PATH.hydraulicWheeledChassisIcon), 
+   _ModuleExtraStatuses.TRACK_WITHIN_TRACK_CHASSIS: (
+                                                   _STR_EXTRA_PATH.trackWithinTrackChassisLabel, _IMG_EXTRA_PATH.trackWithinTrack)}
 
 class ModuleBlockTooltipData(BlocksTooltipData):
     itemsCache = dependency.descriptor(IItemsCache)
@@ -128,6 +171,14 @@ class ModuleBlockTooltipData(BlocksTooltipData):
             items.append(formatters.packBuildUpBlockData(statusBlock, padding=formatters.packPadding(left=leftPadding, right=rightPadding, top=statusTopPadding, bottom=-15)))
         if bonus_helper.isSituationalBonus(module.name):
             items.append(formatters.packImageTextBlockData(title='', desc=text_styles.standard(backport.text(R.strings.tooltips.vehicleParams.bonus.situational())), img=backport.image(R.images.gui.maps.icons.tooltip.asterisk_optional()), imgPadding=formatters.packPadding(left=4, top=3), txtGap=-4, txtOffset=20, padding=formatters.packPadding(left=59, right=_DEFAULT_PADDING)))
+        isArtefacts = itemTypeID in GUI_ITEM_TYPE.ARTEFACTS
+        if isArtefacts and not isinstance(self.context, ModuleInfoContext) and 'halloween_equipment' in module.tags and 'halloween_reward_equipment' not in module.tags:
+            for itemPrice in module.buyPrices.iteritems(directOrder=False):
+                currency = itemPrice.getCurrency()
+                if itemPrice.price.getSignValue(currency) <= 0:
+                    items.append(formatters.packAlignedTextBlockData(text_styles.tutorial(backport.text(R.strings.tooltips.equipment.forFree())), align=BLOCKS_TOOLTIP_TYPES.ALIGN_CENTER, padding=formatters.packPadding(top=-5, bottom=-4)))
+                    break
+
         if statsConfig.isStaticInfoOnly:
             lastItem = items[-1]
             lastPadding = lastItem.get('padding', None)
@@ -149,32 +200,46 @@ class ModuleTooltipBlockConstructor(object):
     ACTIVE_SECONDS = 'activeSeconds'
     RELOAD_COOLDOWN_SECONDS = 'reloadCooldownSeconds'
     CALIBER = 'caliber'
+    DUAL_ACCURACY_MODULE_PARAM = 'dualAccuracy'
+    DEFAULT_PARAM = 'default'
     MODULE_PARAMS = {GUI_ITEM_TYPE.CHASSIS: ('maxLoad', 'rotationSpeed', 'maxSteeringLockAngle', 'vehicleChassisRepairSpeed', 'chassisRepairTime'), 
        GUI_ITEM_TYPE.TURRET: ('armor', 'rotationSpeed', 'circularVisionRadius'), 
        GUI_ITEM_TYPE.GUN: (
                          'avgDamageList', 'avgPiercingPower', RELOAD_TIME_SECS_PROP_NAME, RELOAD_TIME_PROP_NAME,
-                         'avgDamagePerMinute', 'stunMaxDurationList', 'dispertionRadius',
-                         'maxShotDistance', AIMING_TIME_PROP_NAME), 
+                         'avgDamagePerMinute', 'stunMaxDurationList', DISPERSION_RADIUS,
+                         DUAL_ACCURACY_COOLING_DELAY, 'maxShotDistance', AIMING_TIME_PROP_NAME, BURST_FIRE_RATE), 
        GUI_ITEM_TYPE.ENGINE: ('enginePower', 'fireStartingChance'), 
        GUI_ITEM_TYPE.RADIO: ('radioDistance', ), 
        CLIP_GUN_MODULE_PARAM: (
                              'avgDamageList', 'avgPiercingPower', SHELLS_COUNT_PROP_NAME, 'shellsBurstCount', 'shellsFlameBurstCount',
                              SHELL_RELOADING_TIME_PROP_NAME, RELOAD_MAGAZINE_TIME_PROP_NAME,
-                             'avgDamagePerMinute', 'stunMaxDurationList', 'flameMaxDistance',
-                             'dispertionRadius', 'maxShotDistance', AIMING_TIME_PROP_NAME), 
+                             BURST_TIME_INTERVAL, BURST_COUNT, BURST_SIZE,
+                             'avgDamagePerMinute', 'stunMaxDurationList',
+                             DISPERSION_RADIUS, DUAL_ACCURACY_COOLING_DELAY, 'maxShotDistance', AIMING_TIME_PROP_NAME), 
        AUTO_RELOAD_GUN_MODULE_PARAM: (
                                     'avgDamageList', 'avgPiercingPower', SHELLS_COUNT_PROP_NAME,
                                     SHELL_RELOADING_TIME_PROP_NAME, AUTO_RELOAD_PROP_NAME,
-                                    'stunMaxDurationList', 'dispertionRadius',
-                                    'maxShotDistance', AIMING_TIME_PROP_NAME), 
+                                    BURST_TIME_INTERVAL, BURST_COUNT, BURST_SIZE,
+                                    'stunMaxDurationList', DISPERSION_RADIUS,
+                                    DUAL_ACCURACY_COOLING_DELAY, 'maxShotDistance', AIMING_TIME_PROP_NAME), 
        DUAL_GUN_MODULE_PARAM: (
                              'avgDamageList', 'avgPiercingPower', RELOAD_TIME_SECS_PROP_NAME,
                              DUAL_GUN_RATE_TIME, DUAL_GUN_CHARGE_TIME,
-                             'dispertionRadius', AIMING_TIME_PROP_NAME), 
+                             DISPERSION_RADIUS, AIMING_TIME_PROP_NAME), 
        TURBOSHAFT_ENGINE_MODULE_PARAM: (
                                       'enginePower', TURBOSHAFT_ENGINE_POWER, 'fireStartingChance'), 
        ROCKET_ACCELERATION_ENGINE_MODULE_PARAM: (
-                                               'enginePower', ROCKET_ACCELERATION_ENGINE_POWER, 'fireStartingChance')}
+                                               'enginePower', ROCKET_ACCELERATION_ENGINE_POWER, 'fireStartingChance'), 
+       DUAL_ACCURACY_MODULE_PARAM: (
+                                  'avgDamageList', 'avgPiercingPower', RELOAD_TIME_SECS_PROP_NAME, RELOAD_TIME_PROP_NAME,
+                                  BURST_TIME_INTERVAL, BURST_COUNT, BURST_SIZE,
+                                  'avgDamagePerMinute', 'stunMinDurationList', 'stunMaxDurationList', DISPERSION_RADIUS,
+                                  DUAL_ACCURACY_COOLING_DELAY, 'maxShotDistance', AIMING_TIME_PROP_NAME)}
+    HIGHLIGHT_MODULE_PARAMS = {DEFAULT_PARAM: (
+                     AUTO_RELOAD_PROP_NAME, RELOAD_TIME_SECS_PROP_NAME, DUAL_GUN_CHARGE_TIME, DUAL_GUN_RATE_TIME,
+                     TURBOSHAFT_ENGINE_POWER, ROCKET_ACCELERATION_ENGINE_POWER), 
+       DUAL_ACCURACY_MODULE_PARAM: (
+                                  DUAL_ACCURACY_COOLING_DELAY, DISPERSION_RADIUS)}
     itemsCache = dependency.descriptor(IItemsCache)
 
     def __init__(self, module, configuration, leftPadding=_DEFAULT_PADDING, rightPadding=_DEFAULT_PADDING):
@@ -214,7 +279,10 @@ class HeaderBlockConstructor(ModuleTooltipBlockConstructor):
                     descParts.append(params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue))
                 cooldownSeconds = module.descriptor.cooldownSeconds
                 if cooldownSeconds:
-                    paramName = ModuleTooltipBlockConstructor.COOLDOWN_SECONDS
+                    if 'halloween_equipment' in module.tags:
+                        paramName = ModuleTooltipBlockConstructor.RELOAD_COOLDOWN_SECONDS
+                    else:
+                        paramName = ModuleTooltipBlockConstructor.COOLDOWN_SECONDS
                     paramValue = params_formatters.formatParameter(paramName, cooldownSeconds)
                     descParts.append(params_formatters.formatParamNameColonValueUnits(paramName=paramName, paramValue=paramValue))
                 if module.isBuiltIn:
@@ -394,7 +462,7 @@ class PriceBlockConstructor(ModuleTooltipBlockConstructor):
                     nextLevel = module.level + 1
                     levelText = backport.text(R.strings.tooltips.level.num(nextLevel)())
                     forcedText = backport.text(R.strings.tooltips.moduleFits.upgradable.modernized.price(), level=levelText)
-                block.append(makePriceBlock(value, CURRENCY_SETTINGS.getUpgradableSetting(currency), needValue, defValue if defValue > 0 else None, valueWidth=self._valueWidth, leftPadding=self._priceLeftPadding, iconRightOffset=14, forcedText=forcedText))
+                block.append(makePriceBlock(value, CURRENCY_SETTINGS.getUpgradableSetting(currency), needValue, defValue if defValue > 0 else None, percent=(self.bootcamp.isInBootcamp() or itemPrice.getActionPrc)() if 1 else 0, valueWidth=self._valueWidth, leftPadding=self._priceLeftPadding, iconRightOffset=14, forcedText=forcedText))
             isComplexDevice = module.itemTypeID == GUI_ITEM_TYPE.OPTIONALDEVICE and not module.isRemovable
             if isComplexDevice and not self.configuration.isAwardWindow:
                 removalPrice = module.getRemovalPrice(self.itemsCache.items)
@@ -527,9 +595,13 @@ class CommonStatsBlockConstructor(ModuleTooltipBlockConstructor):
                     if reloadingType == GUN_CAN_BE_AUTO_RELOAD or reloadingType == GUN_AUTO_RELOAD:
                         highlightPossible = serverSettings.checkAutoReloadHighlights(increase=True)
                         paramsKeyName = self.AUTO_RELOAD_GUN_MODULE_PARAM
-                    elif reloadingType == GUN_CAN_BE_DUAL_GUN or reloadingType == GUN_DUAL_GUN:
-                        highlightPossible = serverSettings.checkDualGunHighlights(increase=True)
-                        paramsKeyName = self.DUAL_GUN_MODULE_PARAM
+                    else:
+                        if reloadingType == GUN_CAN_BE_DUAL_GUN or reloadingType == GUN_DUAL_GUN:
+                            highlightPossible = serverSettings.checkDualGunHighlights(increase=True)
+                            paramsKeyName = self.DUAL_GUN_MODULE_PARAM
+                        elif vehicle is not None and vehicle.descriptor.hasDualAccuracy:
+                            highlightPossible = serverSettings.checkDualAccuracyHighlights(increase=True)
+                            paramsKeyName = self.DUAL_ACCURACY_MODULE_PARAM
             elif paramsKeyName == GUI_ITEM_TYPE.ENGINE:
                 if vehicle is not None and vehicle.descriptor.hasTurboshaftEngine:
                     highlightPossible = serverSettings.checkTurboshaftHighlights(increase=True)
@@ -538,6 +610,7 @@ class CommonStatsBlockConstructor(ModuleTooltipBlockConstructor):
                     highlightPossible = serverSettings.checkRocketAccelerationHighlights(increase=True)
                     paramsKeyName = self.ROCKET_ACCELERATION_ENGINE_MODULE_PARAM
             paramsList = self.MODULE_PARAMS.get(paramsKeyName, [])
+            highlightParamsList = self.HIGHLIGHT_MODULE_PARAMS.get(paramsKeyName, []) if paramsKeyName in self.HIGHLIGHT_MODULE_PARAMS else self.HIGHLIGHT_MODULE_PARAMS[self.DEFAULT_PARAM]
             if vehicle is not None:
                 if module.itemTypeID == GUI_ITEM_TYPE.OPTIONALDEVICE:
                     currModule = module
@@ -550,10 +623,7 @@ class CommonStatsBlockConstructor(ModuleTooltipBlockConstructor):
                         paramInfo = comparator.getExtendedData(paramName)
                         fmtValue = params_formatters.colorizedFormatParameter(paramInfo, self.__colorScheme)
                         if fmtValue is not None:
-                            block.append(formatters.packTextParameterBlockData(name=params_formatters.formatModuleParamName(paramName, vDescr), value=fmtValue, valueWidth=self._valueWidth, gap=19, highlight=highlightPossible and paramName in (
-                             AUTO_RELOAD_PROP_NAME, RELOAD_TIME_SECS_PROP_NAME,
-                             DUAL_GUN_CHARGE_TIME, DUAL_GUN_RATE_TIME, TURBOSHAFT_ENGINE_POWER,
-                             ROCKET_ACCELERATION_ENGINE_POWER)))
+                            block.append(formatters.packTextParameterBlockData(name=params_formatters.formatModuleParamName(paramName, vDescr), value=fmtValue, valueWidth=self._valueWidth, gap=19, highlight=highlightPossible and paramName in highlightParamsList))
 
             else:
                 formattedModuleParameters = params_formatters.getFormattedParamsList(module.descriptor, moduleParams)
@@ -564,45 +634,77 @@ class CommonStatsBlockConstructor(ModuleTooltipBlockConstructor):
         if block:
             block.insert(0, formatters.packTextBlockData(text_styles.middleTitle(backport.text(R.strings.tooltips.tankCarusel.MainProperty())), padding=formatters.packPadding(bottom=7)))
             if module.itemTypeID in GUI_ITEM_TYPE.VEHICLE_MODULES:
-                extraInfo = module.getExtraIconInfo(vDescr)
-                title = None
-                if module.itemTypeID == GUI_ITEM_TYPE.GUN:
-                    if extraInfo:
-                        if module.isFlameGun():
-                            title = R.strings.menu.moduleInfo.flameGunLabel()
-                        else:
-                            if module.isClipGun(vDescr):
-                                title = R.strings.menu.moduleInfo.clipGunLabel()
-                            else:
-                                if module.isAutoReloadable(vDescr):
-                                    hasBoost = False
-                                    for gun in vDescr.type.getGuns():
-                                        if gun.compactDescr == module.intCD:
-                                            hasBoost = gun.autoreloadHasBoost
-
-                                    resource = R.strings.menu.moduleInfo.autoReloadGunLabel
-                                    title = resource.dyn('boost')() if hasBoost and resource.dyn('boost') else resource()
-                                elif module.isDualGun(vDescr):
-                                    title = R.strings.menu.moduleInfo.dualGunLabel()
-                elif module.itemTypeID == GUI_ITEM_TYPE.CHASSIS:
-                    if module.isHydraulicChassis():
-                        if module.isWheeledChassis():
-                            title = R.strings.menu.moduleInfo.hydraulicWheeledChassisLabel()
-                        else:
-                            if module.hasAutoSiege():
-                                title = R.strings.menu.moduleInfo.hydraulicAutoSiegeChassisLabel()
-                            else:
-                                title = R.strings.menu.moduleInfo.hydraulicChassisLabel()
-                    elif module.isTrackWithinTrack():
-                        title = R.strings.menu.moduleInfo.trackWithinTrackChassisLabel()
-                elif module.itemTypeID == GUI_ITEM_TYPE.ENGINE:
-                    if module.hasTurboshaftEngine():
-                        title = R.strings.menu.moduleInfo.turboshaftEngine()
-                    elif module.hasRocketAcceleration():
-                        title = R.strings.menu.moduleInfo.rocketAccelerationEngine()
-                if title:
-                    block.insert(0, formatters.packImageTextBlockData(title=text_styles.neutral(backport.text(title)), desc='', img=extraInfo, imgPadding=formatters.packPadding(top=3, right=20), padding=formatters.packPadding(left=90, bottom=11), ignoreImageSize=True))
+                extraStatus = self.__getExtraStatusBlock(module, vDescr)
+                if extraStatus is not None:
+                    block.insert(0, extraStatus)
         return block
+
+    @classmethod
+    def __getExtraStatusBlock(cls, module, vDescr):
+        statuses = None
+        if module.itemTypeID == GUI_ITEM_TYPE.GUN:
+            statuses = cls.__getGunExtraStatusTitle(module, vDescr)
+        elif module.itemTypeID == GUI_ITEM_TYPE.CHASSIS:
+            statuses = cls.__getChassisExtraStatusTitle(module)
+        elif module.itemTypeID == GUI_ITEM_TYPE.ENGINE:
+            statuses = cls.__getEngineExtraStatus(module)
+        if statuses is None:
+            return
+        else:
+            blocks = []
+            for status in statuses:
+                statusResources = _MODULE_EXTRA_STATUS_RESOURCES.get(status)
+                if statusResources is None:
+                    continue
+                blocks.append(formatters.packImageTextBlockData(title=text_styles.neutral(backport.text(statusResources[0]())), desc='', img=backport.image(statusResources[1]()), imgPadding=formatters.packPadding(top=3, right=20), padding=formatters.packPadding(left=90, bottom=5), ignoreImageSize=True))
+
+            if blocks:
+                return formatters.packBuildUpBlockData(blocks, padding=formatters.packPadding(top=3, bottom=11))
+            return
+
+    @classmethod
+    def __getGunExtraStatusTitle(cls, module, vDescr):
+        result = []
+        if module.isClipGun(vDescr):
+            result.append(_ModuleExtraStatuses.CLIP_GUN)
+        elif module.isFlameGun():
+            result.append(_ModuleExtraStatuses.FLAME_GUN)
+        elif module.isAutoReloadable(vDescr):
+            hasBoost = False
+            for gun in vDescr.type.getGuns():
+                if gun.compactDescr == module.intCD:
+                    hasBoost = gun.autoreloadHasBoost
+
+            result.append(_ModuleExtraStatuses.AUTOLOADER_WITH_BOOST_GUN if hasBoost else _ModuleExtraStatuses.AUTOLOADER_GUN)
+        elif module.isDualGun(vDescr):
+            result.append(_ModuleExtraStatuses.DUAL_GUN)
+        if module.hasDualAccuracy(vDescr):
+            result.append(_ModuleExtraStatuses.DUAL_ACCURACY_GUN)
+        return result
+
+    @classmethod
+    def __getEngineExtraStatus(cls, module):
+        result = []
+        if module.hasTurboshaftEngine():
+            result.append(_ModuleExtraStatuses.TURBOSHAFT_ENGINE)
+        elif module.hasRocketAcceleration():
+            result.append(_ModuleExtraStatuses.ROCKET_ACCELERATION_ENGINE)
+        return result
+
+    @classmethod
+    def __getChassisExtraStatusTitle(cls, module):
+        result = []
+        if module.isHydraulicChassis():
+            if module.isWheeledChassis():
+                result.append(_ModuleExtraStatuses.HYDRO_WHEELED_CHASSIS)
+            else:
+                if module.hasAutoSiege():
+                    result.append(_ModuleExtraStatuses.HYDRO_AUTO_SIEGE_CHASSIS)
+                else:
+                    result.append(_ModuleExtraStatuses.HYDRO_CHASSIS)
+        elif module.isTrackWithinTrack():
+            result.append(_ModuleExtraStatuses.TRACK_WITHIN_TRACK_CHASSIS)
+        return result
 
 
 class ModuleReplaceBlockConstructor(ModuleTooltipBlockConstructor):
@@ -671,6 +773,8 @@ class EffectsBlockConstructor(ModuleTooltipBlockConstructor):
             block.append(formatters.packTitleDescBlock(title=text_styles.middleTitle(backport.text(R.strings.tooltips.equipment.onUse())), desc=text_styles.main(onUseStr), padding=formatters.packPadding(top=5)))
         if hasString(restrictionStr):
             block.append(formatters.packTitleDescBlock(title=text_styles.middleTitle(backport.text(R.strings.tooltips.equipment.restriction())), desc=text_styles.main(restrictionStr), padding=formatters.packPadding(top=5)))
+        if 'halloween_reward_equipment' in module.tags:
+            block.append(formatters.packTitleDescBlock(title=text_styles.middleTitle(backport.text(R.strings.tooltips.equipment.howToUse())), desc=text_styles.main(backport.text(R.strings.tooltips.equipment.reward())), padding=formatters.packPadding(top=5)))
         if block:
             block[0]['padding']['top'] = -1
             block[-1]['padding']['bottom'] = -5
@@ -742,9 +846,9 @@ class OptDeviceEffectsBlockConstructor(ModuleTooltipBlockConstructor):
                 for index, value in enumerate(kpiFormatter.getValues()):
                     textStyle = text_styles.bonusAppliedText if index == currentModuleIndex else text_styles.standard
                     if index == lastIndex:
-                        kpiList.append(formatters.packTextParameterBlockData(text_styles.main(descKpi), textStyle(value), blockWidth=320, valueWidth=40, gap=15))
+                        kpiList.append(formatters.packTextParameterBlockData(text_styles.main(descKpi), textStyle(value), blockWidth=320, valueWidth=48, gap=15))
                     else:
-                        kpiList.append(formatters.packAlignedTextBlockData(textStyle(value), align=BLOCKS_TOOLTIP_TYPES.ALIGN_RIGHT, blockWidth=40))
+                        kpiList.append(formatters.packAlignedTextBlockData(textStyle(value), align=BLOCKS_TOOLTIP_TYPES.ALIGN_RIGHT, blockWidth=50))
 
                 block.append(formatters.packBuildUpBlockData(kpiList, layout=BLOCKS_TOOLTIP_TYPES.LAYOUT_HORIZONTAL, padding=formatters.packPadding(left=paddingLeft, bottom=-6)))
 
@@ -810,7 +914,9 @@ class StatusBlockConstructor(ModuleTooltipBlockConstructor):
         if not isFit:
             reason = reason.replace(' ', '_')
             tooltipHeader, tooltipText = getComplexStatusWULF(R.strings.tooltips.moduleFits.dyn(reason))
-            if reason == 'not_with_installed_equipment':
+            if reason == 'not_with_installed_equipment' or reason == 'hw_not_with_installed_equipment':
+                if 'halloween_reward_equipment' in module.tags:
+                    tooltipHeader, tooltipText = getComplexStatusWULF(R.strings.tooltips.moduleFits.status.dyn(reason))
                 if vehicle is not None:
                     titleFormatter = text_styles.critical
                     conflictEqs = module.getConflictedEquipments(vehicle)
@@ -1124,12 +1230,10 @@ class RegularKPIFormatter(KpiFormatter):
     def getValues(self):
         value = self.kpi.value
         specValue = self.kpi.specValue if self.kpi.specValue is not None else self.kpi.value
-        return (getKpiValueString(self.kpi, value, False), getKpiValueString(self.kpi, specValue, False))
+        return (getKpiValueString(self.kpi, value, True), getKpiValueString(self.kpi, specValue, True))
 
     def getDescription(self):
-        ending = R.strings.tank_setup.kpi.bonus.valueTypes.dyn(self.kpi.name, R.strings.tank_setup.kpi.bonus.valueTypes.default)()
-        endingText = backport.text(R.strings.tank_setup.kpi.bonus.valueTypes.brackets(), value=backport.text(ending))
-        return (' ').join((backport.text(self.kpi.getLongDescriptionR()), text_styles.standard(endingText)))
+        return backport.text(self.kpi.getLongDescriptionR())
 
     def getColumnsCount(self):
         return 2
@@ -1142,12 +1246,10 @@ class DeluxKPIFormatter(KpiFormatter):
 
     def getValues(self):
         return (
-         getKpiValueString(self.kpi, self.kpi.value, False),)
+         getKpiValueString(self.kpi, self.kpi.value, True),)
 
     def getDescription(self):
-        ending = R.strings.tank_setup.kpi.bonus.valueTypes.dyn(self.kpi.name, R.strings.tank_setup.kpi.bonus.valueTypes.default)()
-        endingText = backport.text(R.strings.tank_setup.kpi.bonus.valueTypes.brackets(), value=backport.text(ending))
-        return (' ').join((backport.text(self.kpi.getLongDescriptionR()), text_styles.standard(endingText)))
+        return backport.text(self.kpi.getLongDescriptionR())
 
 
 class ComplexFormatter(KpiFormatter):
@@ -1157,14 +1259,12 @@ class ComplexFormatter(KpiFormatter):
         self.kpis = kpis
 
     def getValues(self):
-        return (getKpiValueString(kpi, kpi.value, False) for kpi in self.kpis)
+        return (getKpiValueString(kpi, kpi.value, True) for kpi in self.kpis)
 
     def getDescription(self):
         firstKpi = first(self.kpis)
         if firstKpi is not None:
-            ending = R.strings.tank_setup.kpi.bonus.valueTypes.dyn(firstKpi.name, R.strings.tank_setup.kpi.bonus.valueTypes.default)()
-            endingText = backport.text(R.strings.tank_setup.kpi.bonus.valueTypes.brackets(), value=backport.text(ending))
-            return (' ').join((backport.text(firstKpi.getLongDescriptionR()), text_styles.standard(endingText)))
+            return backport.text(firstKpi.getLongDescriptionR())
         else:
             return
 

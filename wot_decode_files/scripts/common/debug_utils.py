@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/debug_utils.py
 import sys, re, subprocess, BigWorld, excepthook, time, traceback
 from GarbageCollectionDebug import gcDump, getGarbageGraph
@@ -220,6 +220,12 @@ def LOG_DEBUG_DEV(msg, *kargs, **kwargs):
     _doLog('DEBUG', msg, kargs, kwargs)
 
 
+@_LogWrapper(LOG_LEVEL.DEV)
+def LOG_DEBUG_DEV_NICE(msg, *kargs, **kwargs):
+    kwargs['nice'] = True
+    _doLog('DEBUG', msg, kargs, kwargs)
+
+
 @_LogWrapper(LOG_LEVEL.RELEASE)
 def LOG_UNEXPECTED(msg, *kargs):
     _doLog('LOG_UNEXPECTED', msg, kargs)
@@ -239,7 +245,12 @@ def _doLog(category, msg, args=None, kwargs={}, frameDepth=2):
     if not logFunc:
         logFunc = BigWorld.logDebug
     if args:
-        output = (' ').join(map(unicode, [header, msg, args]))
+        if kwargs.get('nice'):
+            parts = [header, ' ', msg]
+            parts.extend(args)
+            output = ('').join(map(unicode, parts))
+        else:
+            output = (' ').join(map(unicode, [header, msg, args]))
     else:
         output = (' ').join(map(unicode, [header, msg]))
     tags = kwargs.pop('tags', None)
@@ -456,6 +467,27 @@ def traceCalls(func):
         return ret
 
     return wrapper
+
+
+def wg_extract_stack(f=None, limit=None):
+    if f is None:
+        f = sys._getframe().f_back
+    if limit is None:
+        if hasattr(sys, 'tracebacklimit'):
+            limit = sys.tracebacklimit
+    list = []
+    n = 0
+    while f is not None and (limit is None or n < limit):
+        lineno = f.f_lineno
+        co = f.f_code
+        filename = co.co_filename
+        name = co.co_name
+        list.append((filename, lineno, name))
+        f = f.f_back
+        n = n + 1
+
+    list.reverse()
+    return list
 
 
 def traceMethodCalls(obj, *names):

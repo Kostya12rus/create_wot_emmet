@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/techtree/techtree_page.py
 from logging import getLogger
 import Keys, nations
@@ -86,6 +86,9 @@ class TechTree(TechTreeMeta):
         self._data.load(nationIdx)
         self.__playBlueprintPlusSound()
         return self._data.dump()
+
+    def clearSelectedNation(self):
+        SelectedNation.clear()
 
     def getPremiumPanelLabels(self):
         vehicleLabel = backport.text(R.strings.menu.techtree.premiumPanel.btnLabel(), count=text_styles.gold(backport.text(R.strings.menu.techtree.premiumPanel.btnLabel.count())))

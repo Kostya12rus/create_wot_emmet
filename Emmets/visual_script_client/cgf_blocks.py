@@ -1,35 +1,31 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/visual_script_client/cgf_blocks.py
-import weakref, BigWorld, logging
+import weakref, BigWorld, logging, GenericComponents
 from debug_utils import LOG_WARNING
-from visual_script.block import Block, Meta
+from visual_script.block import Block
 from visual_script.slot_types import SLOT_TYPE
 from visual_script.misc import ASPECT, errorVScript
 from visual_script.dependency import dependencyImporter
-from contexts.cgf_context import GameObjectWrapper
+from visual_script.contexts.cgf_context import GameObjectWrapper
 from constants import ROCKET_ACCELERATION_STATE
+from visual_script.cgf_blocks import CGFMeta
 Vehicle, CGF, tankStructure, RAC = dependencyImporter('Vehicle', 'CGF', 'vehicle_systems.tankStructure', 'cgf_components.rocket_acceleration_component')
 _logger = logging.getLogger(__name__)
 
-class CGFMeta(Meta):
+class GetEntityGameObject(Block, CGFMeta):
 
-    @classmethod
-    def blockColor(cls):
-        return 16540163
+    def __init__(self, *args, **kwargs):
+        super(GetEntityGameObject, self).__init__(*args, **kwargs)
+        self._entity = self._makeDataInputSlot('entity', SLOT_TYPE.ENTITY)
+        self._gameObject = self._makeDataOutputSlot('gameObject', SLOT_TYPE.GAME_OBJECT, self._exec)
 
-    @classmethod
-    def blockCategory(cls):
-        return 'CGF'
-
-    @classmethod
-    def blockIcon(cls):
-        return ':vse/blocks/cgf'
-
-    @classmethod
-    def blockAspects(cls):
-        return [ASPECT.CLIENT, ASPECT.HANGAR]
+    def _exec(self):
+        entity = self._entity.getValue()
+        gameObject = entity.entityGameObject
+        goWrapper = GameObjectWrapper(gameObject)
+        self._gameObject.setValue(weakref.proxy(goWrapper))
 
 
 class GetVehicleAppearanceGameObject(Block, CGFMeta):
@@ -81,6 +77,34 @@ class GetVehicleGameObject(Block, CGFMeta):
         return
 
 
+class GetHangarVehicleGameObject(Block, CGFMeta):
+
+    def __init__(self, *args, **kwargs):
+        super(GetHangarVehicleGameObject, self).__init__(*args, **kwargs)
+        self._object = self._makeDataInputSlot('gameObject', SLOT_TYPE.GAME_OBJECT)
+        self._vehicleObject = self._makeDataOutputSlot('hangarVehicleObject', SLOT_TYPE.GAME_OBJECT, self._exec)
+
+    def validate(self):
+        if not self._object.hasValue():
+            return 'GameObject is required'
+        return super(GetHangarVehicleGameObject, self).validate()
+
+    def _exec(self):
+        currentGO = self._object.getValue()
+        hierarchy = CGF.HierarchyManager(currentGO.spaceID)
+        topGO = hierarchy.getTopMostParent(currentGO)
+        if topGO.findComponentByType(GenericComponents.EntityGOSync) is not None:
+            goWrapper = GameObjectWrapper(topGO)
+            self._vehicleObject.setValue(weakref.proxy(goWrapper))
+        else:
+            self._vehicleObject.setValue(None)
+        return
+
+    @classmethod
+    def blockAspects(cls):
+        return [ASPECT.HANGAR]
+
+
 class RocketAcceleratorEvents(Block, CGFMeta):
 
     def __init__(self, *args, **kwargs):
@@ -129,7 +153,7 @@ class RocketAcceleratorEvents(Block, CGFMeta):
                 controller.unsubscribe(self.__onStateChange, self.__onTryActivate)
             self.__controllerLink = None
         else:
-            LOG_WARNING('')
+            LOG_WARNING('  ')
         self._deactivateOut.call()
         return
 

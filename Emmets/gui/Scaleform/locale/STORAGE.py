@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/STORAGE.py
 
 
@@ -11,12 +11,15 @@ class STORAGE(object):
     VEHICLESELECTPOPOVER_TOOLTIPS_TITLE = '#storage:vehicleSelectPopover/tooltips/title'
     BUTTONLABEL_ACTIVATE = '#storage:buttonLabel/activate'
     BUTTONLABEL_SELL = '#storage:buttonLabel/sell'
+    BUTTONSELL_TOOLTIP_HEADER = '#storage:buttonSell/tooltip/header'
+    BUTTONSELL_TOOLTIP_BODY = '#storage:buttonSell/tooltip/body'
     BUTTONLABEL_RESTORE = '#storage:buttonLabel/restore'
     BUTTONLABEL_REMOVE = '#storage:buttonLabel/remove'
     BUTTONLABEL_PREVIEW = '#storage:buttonLabel/preview'
     BUTTONUPGRADE_TOOLTIP_BODY = '#storage:buttonUpgrade/tooltip/body'
     BUTTONLABEL_SELECT = '#storage:buttonLabel/select'
-    BUTTONLABEL_DECONSTRUCT = '#storage:buttonLabel/deconstruct'
+    BUTTONDECONSTRUCT_TOOLTIP_HEADER = '#storage:buttonDeconstruct/tooltip/header'
+    BUTTONDECONSTRUCT_TOOLTIP_BODY = '#storage:buttonDeconstruct/tooltip/body'
     CARD_CANNOTSELLTITLE = '#storage:card/cannotSellTitle'
     CARD_VEHICLE_HOVER_MAXADDITIONALPRICELABEL = '#storage:card/vehicle/hover/maxAdditionalPriceLabel'
     CARD_VEHICLE_HOVER_RESTOREAVAILABLELABEL = '#storage:card/vehicle/hover/restoreAvailableLabel'

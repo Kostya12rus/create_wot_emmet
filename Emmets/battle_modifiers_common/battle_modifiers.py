@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/battle_modifiers_common/battle_modifiers.py
 from ResMgr import DataSection
 from constants import AOI
@@ -78,6 +78,7 @@ class BattleParams(object):
     INVISIBILITY_FACTOR_AT_SHOT = 63
     VEHICLE_AOI_RADIUS = 64
     SOUND_NOTIFICATIONS = 65
+    DIVING_DESTRUCTION_DELAY = 66
     ALL = None
     MAX = None
 

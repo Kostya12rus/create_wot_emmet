@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/tutorial/control/context.py
 from abc import ABCMeta, abstractmethod
 from helpers import dependency
@@ -124,7 +124,6 @@ class GLOBAL_FLAG(object):
     LOBBY_MENU_ITEM_BOOTCAMP = '_LobbyMenuItemBootcamp'
     HAVE_NEW_SUFFIX_BADGE = '_HaveNewSuffixBadge'
     BADGE_PAGE_HAS_NEW_SUFFIX_BADGE = '_BadgePageHasNewSuffixBadge'
-    CREW_BOOKS_ENABLED = '_CrewBooksEnabled'
     COLLECTIBLE_VEHICLE_PREVIEW_ENABLED = '_CollectibleVehiclePreviewEnabled'
     DOGTAGS_ENABLED = '_DogTagsEnabled'
     VEH_POST_PROGRESSION_ENABLED = '_VehPostProgressionEnabled'
@@ -134,7 +133,7 @@ class GLOBAL_FLAG(object):
     IS_NEED_TO_SHOW_SPECIALIZATION_SLOT = 'isNeedToShowSpecializationSlot'
     ALL = (
      MAY_PAWN_PERSONAL_MISSION,
-     HAVE_NEW_BADGE, HAVE_NEW_SUFFIX_BADGE, BADGE_PAGE_HAS_NEW_SUFFIX_BADGE, CREW_BOOKS_ENABLED,
+     HAVE_NEW_BADGE, HAVE_NEW_SUFFIX_BADGE, BADGE_PAGE_HAS_NEW_SUFFIX_BADGE,
      COLLECTIBLE_VEHICLE_PREVIEW_ENABLED, DOGTAGS_ENABLED, PERSONAL_RESERVES_AVAILABLE)
 
 

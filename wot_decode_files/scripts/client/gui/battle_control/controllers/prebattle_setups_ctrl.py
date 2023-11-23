@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/prebattle_setups_ctrl.py
 import logging, typing, BigWorld
 from account_helpers.settings_core.settings_constants import GAME
@@ -60,7 +60,7 @@ class IPrebattleSetupsListener(object):
     def showSetupsView(self, vehicle, isArenaLoaded=False):
         pass
 
-    def updateVehicleParams(self, vehicle, factors):
+    def updateVehicleParams(self, vehicle, factors, _):
         pass
 
     def updateVehicleSetups(self, vehicle):
@@ -381,7 +381,7 @@ class PrebattleSetupsController(MethodsRules, IPrebattleSetupsController):
         self.__updateAmmoCtrlParams(newFactors)
         self.__updateFeedbackParams(newFactors)
         for component in self._viewComponents:
-            component.updateVehicleParams(self.__vehicle, newFactors)
+            component.updateVehicleParams(self.__vehicle, newFactors, self.__playerVehicleID)
             component.updateVehicleSetups(self.__vehicle)
 
         if self.__sessionProvider.isReplayPlaying:
@@ -392,4 +392,4 @@ class PrebattleSetupsController(MethodsRules, IPrebattleSetupsController):
         self.__updateAmmoCtrlParams(newFactors)
         self.__updateFeedbackParams(newFactors)
         for component in self._viewComponents:
-            component.updateVehicleParams(self.__vehicle, newFactors)
+            component.updateVehicleParams(self.__vehicle, newFactors, self.__playerVehicleID)

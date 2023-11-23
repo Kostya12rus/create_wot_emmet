@@ -1,10 +1,10 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_pass/battle_pass_awards_view.py
 import SoundGroups
 from battle_pass_common import BattlePassRewardReason, FinalReward
-from frameworks.wulf import ViewSettings, WindowFlags
+from frameworks.wulf import ViewSettings, WindowFlags, ViewStatus
 from gui.battle_pass.battle_pass_award import BattlePassAwardsManager
 from gui.battle_pass.battle_pass_bonuses_packers import packBonusModelAndTooltipData, useBigAwardInjection
 from gui.battle_pass.battle_pass_decorators import createBackportTooltipDecorator, createTooltipContentDecorator
@@ -100,8 +100,7 @@ class BattlePassAwardsView(ViewImpl):
             tx.setIsExtra(self.__battlePass.isExtraChapter(chapterID))
         if packageBonuses is not None and packageBonuses:
             self.__setPackageRewards(packageBonuses)
-        else:
-            self.__setAwards(bonuses, isFinalReward)
+        self.__setAwards(bonuses, isFinalReward)
         isRewardSelected = reason == BattlePassRewardReason.SELECT_REWARD
         self.viewModel.setIsNeedToShowOffer(not (isBattlePassPurchased or isRewardSelected))
         switchHangarOverlaySoundFilter(on=True)
@@ -166,6 +165,8 @@ class BattlePassAwardsView(ViewImpl):
             self.__showBuyCallback()
             self.__showBuyCallback = None
             self.__closeCallback = None
+            if self.viewStatus not in (ViewStatus.DESTROYING, ViewStatus.DESTROYED):
+                self.destroyWindow()
         return
 
 

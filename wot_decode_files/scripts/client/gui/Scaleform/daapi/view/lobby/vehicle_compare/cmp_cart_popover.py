@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_compare/cmp_cart_popover.py
 from debug_utils import LOG_ERROR
 from gui.Scaleform import getNationsFilterAssetPath
@@ -10,6 +10,7 @@ from gui.Scaleform.framework.entities.DAAPIDataProvider import SortableDAAPIData
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.VEH_COMPARE import VEH_COMPARE
 from gui.prb_control.dispatcher import g_prbLoader
+from gui.prb_control.settings import FUNCTIONAL_FLAG
 from gui.shared.event_dispatcher import showVehicleCompare
 from gui.shared.formatters import text_styles
 from gui.shared.gui_items.Vehicle import getTypeSmallIconPath
@@ -79,8 +80,12 @@ class VehicleCompareCartPopover(VehicleCompareCartPopoverMeta):
     def __updateButtonsState(self):
         count = self.comparisonBasket.getVehiclesCount()
         buttonsEnabled = count > 0
+        isHalloween = bool(g_prbLoader.getDispatcher().getEntity().getModeFlags() & FUNCTIONAL_FLAG.HALLOWEEN_BATTLE)
         if self.comparisonBasket.isFull():
             addBtnTT = VEH_COMPARE.CARTPOPOVER_FULLBASKETCMPBTN_TOOLTIP
+            addBtnIcon = RES_ICONS.MAPS_ICONS_LIBRARY_ALERTICON
+        elif isHalloween:
+            addBtnTT = VEH_COMPARE.CARTPOPOVER_UNSUPPORTEDMODECMPBTN_TOOLTIP
             addBtnIcon = RES_ICONS.MAPS_ICONS_LIBRARY_ALERTICON
         else:
             addBtnTT = VEH_COMPARE.CARTPOPOVER_OPENCMPBTN_TOOLTIP
@@ -88,7 +93,7 @@ class VehicleCompareCartPopover(VehicleCompareCartPopoverMeta):
         isNavigationEnabled = not g_prbLoader.getDispatcher().getFunctionalState().isNavigationDisabled()
         self.as_updateToCmpBtnPropsS({'btnLabel': _ms(VEH_COMPARE.CARTPOPOVER_GOTOCOMPAREBTN_LABEL, value=count), 
            'btnTooltip': addBtnTT, 
-           'btnEnabled': buttonsEnabled and isNavigationEnabled, 
+           'btnEnabled': buttonsEnabled and isNavigationEnabled and not isHalloween, 
            'btnIcon': addBtnIcon})
         isBasketLocked = self.comparisonBasket.isLocked
         self.as_updateClearBtnPropsS({'btnLabel': VEH_COMPARE.CARTPOPOVER_REMOVEALLBTN_LABEL, 

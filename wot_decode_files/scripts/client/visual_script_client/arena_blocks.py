@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/visual_script_client/arena_blocks.py
 import weakref
 from typing import List
@@ -390,3 +390,66 @@ class GetDataFromStorage(GetDataFromStorageBase):
     def _exec(self):
         self.arena = BigWorld.player().arena
         super(GetDataFromStorage, self)._exec()
+
+
+class SetPrebattleCountdownTimerText(Block, ArenaMeta):
+
+    def __init__(self, *args, **kwargs):
+        super(SetPrebattleCountdownTimerText, self).__init__(*args, **kwargs)
+        self._in = self._makeEventInputSlot('in', self._execute)
+        self._out = self._makeEventOutputSlot('out')
+        self._header = self._makeDataInputSlot('header', SLOT_TYPE.STR)
+        self._subheader = self._makeDataInputSlot('subheader', SLOT_TYPE.STR)
+        self._battleStartMessage = self._makeDataInputSlot('battleStartMessage', SLOT_TYPE.STR)
+
+    @classmethod
+    def blockAspects(cls):
+        return [ASPECT.CLIENT]
+
+    def validate(self):
+        if not self._header.hasValue():
+            return 'header value is required.'
+        if not self._battleStartMessage.hasValue():
+            return 'battleStartMessage value is required.'
+        return super(SetPrebattleCountdownTimerText, self).validate()
+
+    def _execute(self):
+        from gui.Scaleform.daapi.view.battle.shared.prebattle_timers.custom_text_timer import setTimerSettings
+        if helpers.isPlayerAvatar():
+            header = self._header.getValue()
+            battleStartMessage = self._battleStartMessage.getValue()
+            subheader = None
+            if self._subheader.hasValue():
+                subheader = self._subheader.getValue()
+            setTimerSettings(header, battleStartMessage, subheader)
+        else:
+            errorVScript(self, 'BigWorld.player is not player avatar.')
+        return
+
+
+class CollideSegment(Block, ArenaMeta):
+
+    def __init__(self, *args, **kwargs):
+        super(CollideSegment, self).__init__(*args, **kwargs)
+        self._in = self._makeEventInputSlot('in', self._collide)
+        self._out = self._makeEventOutputSlot('out')
+        self._spaceID = self._makeDataInputSlot('spaceId', SLOT_TYPE.INT)
+        self._from = self._makeDataInputSlot('from', SLOT_TYPE.VECTOR3)
+        self._to = self._makeDataInputSlot('to', SLOT_TYPE.VECTOR3)
+        self._hitFlags = self._makeDataInputSlot('excludeHitFlags', SLOT_TYPE.INT)
+        self._collision = self._makeDataOutputSlot('hasCollision', SLOT_TYPE.BOOL, None)
+        self._collidePosition = self._makeDataOutputSlot('position', SLOT_TYPE.VECTOR3, None)
+        return
+
+    @classmethod
+    def blockAspects(cls):
+        return [ASPECT.CLIENT, ASPECT.HANGAR]
+
+    def _collide(self):
+        res = BigWorld.wg_collideSegment(self._spaceID.getValue(), self._from.getValue(), self._to.getValue(), self._hitFlags.getValue())
+        collide = res is not None
+        self._collision.setValue(collide)
+        if collide:
+            self._collidePosition.setValue(res.closestPoint)
+        self._out.call()
+        return

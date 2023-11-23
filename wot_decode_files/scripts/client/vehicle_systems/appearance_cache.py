@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/appearance_cache.py
 import functools, logging
 from collections import namedtuple
@@ -147,6 +147,9 @@ class AppearanceCache(IAppearanceCache):
             onFinishedCallback(appearance)
             return appearance
 
+    def createAppearanceInstance(self):
+        return CompoundAppearance()
+
     def __load(self, key, info, onLoadedCallback=None):
         _logger.debug('__load(%d)', key[0])
         loadInfo = self.__loadingAssemblerQueue.get(key)
@@ -155,7 +158,7 @@ class AppearanceCache(IAppearanceCache):
                 loadInfo.onConstructed += onLoadedCallback
             return loadInfo.appearance
         else:
-            appearance = CompoundAppearance()
+            appearance = self.createAppearanceInstance()
             prereqs = appearance.prerequisites(info.typeDescr, key[0], info.health, info.isCrewActive, info.isTurretDetached, info.outfitCD)
             taskId = BigWorld.loadResourceListBG(prereqs, functools.partial(self.__onAppearanceLoaded, key), loadingPriority(key[0]))
             _logger.debug('loadResourceListBG vehicle = (%d), task = (%d)', key[0], taskId)

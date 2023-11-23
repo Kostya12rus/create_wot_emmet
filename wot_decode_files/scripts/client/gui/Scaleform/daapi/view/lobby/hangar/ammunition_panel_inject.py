@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/hangar/ammunition_panel_inject.py
 import BigWorld
 from shared_utils import nextTick
@@ -45,23 +45,18 @@ class AmmunitionPanelInject(AmmunitionPanelInjectMeta, IGlobalListener):
 
     def _makeInjectView(self):
         viewClass = self.__getInjectViewClass()
-        return viewClass(flags=ViewFlags.COMPONENT)
+        return viewClass(flags=ViewFlags.VIEW)
 
     def _addInjectContentListeners(self):
         super(AmmunitionPanelInject, self)._addInjectContentListeners()
         self.startGlobalListening()
-        self.getInjectView().onSizeChanged += self.__onSizeChanged
         self.getInjectView().onPanelSectionResized += self.__onPanelSectionResized
         self.getInjectView().onVehicleChanged += self.__onVehicleChanged
 
     def _removeInjectContentListeners(self):
         super(AmmunitionPanelInject, self)._removeInjectContentListeners()
         self.stopGlobalListening()
-        self.getInjectView().onSizeChanged -= self.__onSizeChanged
         self.getInjectView().onVehicleChanged -= self.__onVehicleChanged
-
-    def __onSizeChanged(self, width, height, offsetY):
-        self.as_setPanelSizeS(width, height, offsetY)
 
     def __onPanelSectionResized(self, sectionType, offsetX, offsetY, width, height):
         self.as_setHelpLayoutS({'sectionType': sectionType, 

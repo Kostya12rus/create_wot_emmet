@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/vehicle_preview/items_kit_helper.py
 import itertools, typing
 from collections import Container, namedtuple
@@ -109,6 +109,7 @@ _TOOLTIP_TYPE = {ItemPackType.ITEM_DEVICE: TOOLTIPS_CONSTANTS.SHOP_MODULE,
    ItemPackType.PLAYER_BADGE: TOOLTIPS_CONSTANTS.SHOP_BADGE, 
    ItemPackType.TRADE_IN_INFO: TOOLTIPS_CONSTANTS.TRADE_IN_INFO, 
    ItemPackType.CREW_BUNDLE: TOOLTIPS_CONSTANTS.SHOP_CREW_BUNDLE, 
+   ItemPackType.ITEM_CREW_SKIN: TOOLTIPS_CONSTANTS.CREW_SKIN, 
    ItemPackType.CREW_BOOK: TOOLTIPS_CONSTANTS.CREW_BOOK, 
    ItemPackType.CREW_BOOK_BROCHURE: TOOLTIPS_CONSTANTS.CREW_BOOK, 
    ItemPackType.CREW_BOOK_GUIDE: TOOLTIPS_CONSTANTS.CREW_BOOK, 
@@ -292,6 +293,8 @@ def getItemTitle(rawItem, item, forBox=False, additionalInfo=False):
         title = _ms(key=QUESTS.BONUSES_EVENTCOIN_DESCRIPTION, value=rawItem.count)
     elif rawItem.type == ItemPackType.CUSTOM_BPCOIN:
         title = backport.text(R.strings.quests.bonuses.bpcoin.header(), value=backport.getIntegralFormat(rawItem.count))
+    elif rawItem.type == ItemPackType.CUSTOM_EQUIP_COIN:
+        title = backport.text(R.strings.quests.bonuses.equipCoin.description(), value=rawItem.count)
     elif rawItem.type == ItemPackType.CUSTOM_SUPPLY_POINT:
         title = _ms(EPIC_BATTLE.EPICBATTLEITEM_SUPPLYPOINTS_HEADER)
     elif rawItem.type == ItemPackType.CUSTOM_PREMIUM:
@@ -311,12 +314,14 @@ def getItemTitle(rawItem, item, forBox=False, additionalInfo=False):
             title = _ms(TOOLTIPS.CREW_HEADER)
     elif rawItem.type == ItemPackType.CUSTOM_X5_BATTLE_BONUS:
         title = backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.header())
+    elif rawItem.type == ItemPackType.CUSTOM_X3_CREW_BONUS:
+        title = backport.text(R.strings.tooltips.quests.bonuses.token.crew_bonus_x3.header())
     elif rawItem.type == ItemPackType.CREW_BOOK_RANDOM:
         title = backport.text(R.strings.tooltips.awardItem.randomBooklet.header())
-    elif rawItem.type == ItemPackType.CUSTOM_ANY_COLLECTION_ITEM:
-        title = backport.text(getCollectionRes(rawItem.id).anyCollectionItem.tooltip.header())
     elif rawItem.type == ItemPackType.CUSTOM_FREE_XP:
         title = backport.text(R.strings.tooltips.awardItem.freeXP.header())
+    elif rawItem.type == ItemPackType.CUSTOM_ANY_COLLECTION_ITEM:
+        title = backport.text(getCollectionRes(rawItem.id).anyCollectionItem.tooltip.header())
     else:
         title = rawItem.title or ''
     return title
@@ -337,6 +342,8 @@ def getItemDescription(rawItem, item):
         description = _ms(TOOLTIPS.AWARDITEM_EVENTCOIN_BODY)
     elif rawItem.type == ItemPackType.CUSTOM_BPCOIN:
         description = backport.text(R.strings.tooltips.awardItem.bp())
+    elif rawItem.type == ItemPackType.CUSTOM_EQUIP_COIN:
+        description = backport.text(R.strings.tooltips.awardItem.equipCoin.body())
     elif rawItem.type == ItemPackType.CUSTOM_PREMIUM:
         description = backport.text(R.strings.tooltips.awardItem.premium.body())
     elif rawItem.type == ItemPackType.CUSTOM_PREMIUM_PLUS:
@@ -355,12 +362,14 @@ def getItemDescription(rawItem, item):
                ItemPackType.CUSTOM_CREW_100: CrewTypes.SKILL_100}.get(rawItem.type))
     elif rawItem.type == ItemPackType.CUSTOM_X5_BATTLE_BONUS:
         description = backport.text(R.strings.tooltips.quests.bonuses.token.battle_bonus_x5.body())
+    elif rawItem.type == ItemPackType.CUSTOM_X3_CREW_BONUS:
+        description = backport.text(R.strings.tooltips.quests.bonuses.token.crew_bonus_x3.body())
     elif rawItem.type == ItemPackType.CREW_BOOK_RANDOM:
         description = backport.text(R.strings.tooltips.awardItem.randomBooklet.body())
-    elif rawItem.type == ItemPackType.CUSTOM_ANY_COLLECTION_ITEM:
-        description = backport.text(getCollectionRes(rawItem.id).anyCollectionItem.tooltip.body())
     elif rawItem.type == ItemPackType.CUSTOM_FREE_XP:
         description = backport.text(R.strings.tooltips.awardItem.freeXP.body())
+    elif rawItem.type == ItemPackType.CUSTOM_ANY_COLLECTION_ITEM:
+        description = backport.text(getCollectionRes(rawItem.id).anyCollectionItem.tooltip.body())
     else:
         description = rawItem.description or ''
     return description

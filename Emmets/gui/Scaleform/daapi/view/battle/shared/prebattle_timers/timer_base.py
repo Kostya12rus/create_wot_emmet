@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/prebattle_timers/timer_base.py
 import BigWorld
 from constants import ARENA_PERIOD
@@ -53,14 +53,14 @@ class PreBattleTimerBase(PrebattleTimerBaseMeta, IAbstractPeriodView, IArenaVehi
             self._state = state
             self.as_setMessageS(self._getMessage())
         if state == COUNTDOWN_STATE.WAIT:
-            self.__clearTimeShiftCallback()
+            self._clearTimeShiftCallback()
             self.as_setTimerS(0)
         else:
-            self.__setTimeShitCallback()
+            self.__setTimeShiftCallback()
 
     def hideCountdown(self, state, speed):
         self.as_setMessageS(backport.text(_STATE_TO_MESSAGE[state]))
-        self.__clearTimeShiftCallback()
+        self._clearTimeShiftCallback()
         self.as_hideAllS(speed != 0)
 
     def _getMessage(self):
@@ -79,10 +79,10 @@ class PreBattleTimerBase(PrebattleTimerBaseMeta, IAbstractPeriodView, IArenaVehi
 
     def _dispose(self):
         self.sessionProvider.removeArenaCtrl(self)
-        self.__clearTimeShiftCallback()
+        self._clearTimeShiftCallback()
         super(PreBattleTimerBase, self)._dispose()
 
-    def __setTimeShitCallback(self):
+    def __setTimeShiftCallback(self):
         self.__callbackID = BigWorld.callback(_TIMER_ANIMATION_SHIFT, self.__updateTimer)
 
     def __updateTimer(self):
@@ -92,7 +92,7 @@ class PreBattleTimerBase(PrebattleTimerBaseMeta, IAbstractPeriodView, IArenaVehi
             self.as_setTimerS(timeLeftWithShift)
         return
 
-    def __clearTimeShiftCallback(self):
+    def _clearTimeShiftCallback(self):
         if self.__callbackID is not None:
             BigWorld.cancelCallback(self.__callbackID)
             self.__callbackID = None

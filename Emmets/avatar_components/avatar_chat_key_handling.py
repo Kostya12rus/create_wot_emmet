@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/avatar_components/avatar_chat_key_handling.py
 import logging
 from collections import namedtuple
@@ -37,7 +37,8 @@ _SKIP_ON_COMMAND_RECEIVED = {
  BATTLE_CHAT_COMMAND_NAMES.VEHICLE_SPOTPOINT,
  BATTLE_CHAT_COMMAND_NAMES.PREBATTLE_WAYPOINT,
  BATTLE_CHAT_COMMAND_NAMES.CLEAR_CHAT_COMMANDS,
- BATTLE_CHAT_COMMAND_NAMES.NAVIGATION_POINT}
+ BATTLE_CHAT_COMMAND_NAMES.NAVIGATION_POINT,
+ BATTLE_CHAT_COMMAND_NAMES.FLAG_POINT}
 CommandNotificationData = namedtuple('CommandNotificationData', 'matrixProvider, targetID')
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +58,11 @@ class AvatarChatKeyHandling(object):
            MarkerType.BASE_MARKER_TYPE: self.__getBaseMatrixProvider, 
            MarkerType.HEADQUARTER_MARKER_TYPE: self.__getHQMatrixProvider, 
            MarkerType.LOCATION_MARKER_TYPE: self.__getLocationMarkerMatrixProvider}
+        self.__isKeyHandlingOn = True
         return
+
+    def setKeyHandling(self, value):
+        self.__isKeyHandlingOn = value
 
     def onBecomePlayer(self):
         if g_bootcamp.isRunning() or self.__isBattleRoyale():
@@ -81,12 +86,14 @@ class AvatarChatKeyHandling(object):
         self.__deactivateHandling()
 
     def handleKey(self, isDown, key, mods):
-        calloutCtrl = self.guiSessionProvider.shared.calloutCtrl
-        if not self.__isEnabled or calloutCtrl is None or BattleReplay.g_replayCtrl.isPlaying:
-            return False
-        if self.__isEpicBattleOverviewMapScreenVisible():
+        if not self.__isKeyHandlingOn:
             return False
         else:
+            calloutCtrl = self.guiSessionProvider.shared.calloutCtrl
+            if not self.__isEnabled or calloutCtrl is None or BattleReplay.g_replayCtrl.isPlaying:
+                return False
+            if self.__isEpicBattleOverviewMapScreenVisible():
+                return False
             cmdMap = CommandMapping.g_instance
             if cmdMap.isFiredList((CommandMapping.CMD_CHAT_SHORTCUT_THANKYOU,
              CommandMapping.CMD_CHAT_SHORTCUT_BACKTOBASE,

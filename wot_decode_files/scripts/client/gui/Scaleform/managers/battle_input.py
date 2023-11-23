@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/managers/battle_input.py
 import Keys
 from AvatarInputHandler import aih_global_binding
@@ -66,6 +66,7 @@ class BattleGameInputMgr(object):
 
     def handleKey(self, isDown, key, mods):
         isEventBattle = self.guiSessionProvider.arenaVisitor.gui.isEventBattle()
+        isEventBattle = isEventBattle or self.guiSessionProvider.arenaVisitor.gui.isHalloweenBattle()
         if key == Keys.KEY_ESCAPE:
             if self.__keyHandlers:
                 for handler in self.__keyHandlers[:]:

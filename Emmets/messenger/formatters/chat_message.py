@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/messenger/formatters/chat_message.py
 from helpers import dependency
 from messenger import g_settings
@@ -110,6 +110,7 @@ class LobbyMessageBuilder(object):
         self.__name = ''
         self.__time = 0.0
         self.__text = ''
+        self.__linkParams = ('', '')
 
     @storage_getter('users')
     def usersStorage(self):
@@ -141,5 +142,14 @@ class LobbyMessageBuilder(object):
         self.__text = text
         return self
 
+    def setTextLink(self, dbID, nickName, shouldAddTextLink):
+        if shouldAddTextLink:
+            openLink = ('<a href="event:{}:{}">').format(dbID, nickName)
+            closeLink = '</a>'
+            self.__linkParams = (openLink, closeLink)
+        else:
+            self.__linkParams = ('', '')
+        return self
+
     def build(self):
-        return g_settings.lobby.getMessageFormat(self.__templateKey).format(self.__name, self.__time, self.__text)
+        return g_settings.lobby.getMessageFormat(self.__templateKey).format(self.__name, self.__time, self.__text, linkOpen=self.__linkParams[0], linkClose=self.__linkParams[1])

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/dedication/dedication_reward_view.py
 from frameworks.wulf import ViewSettings, WindowFlags
 from gui.impl import backport
@@ -9,7 +9,7 @@ from gui.impl.gen.view_models.views.lobby.dedication.dedication_reward_view_mode
 from gui.impl.pub import ViewImpl
 from gui.impl.pub.lobby_window import LobbyWindow
 from gui.server_events.bonuses import getNonQuestBonuses
-from gui.shared.missions.packers.bonus import packBonusModelAndTooltipData, getDefaultBonusPacker
+from gui.shared.missions.packers.bonus import packMissionsBonusModelAndTooltipData, getDefaultBonusPacker
 from gui.sounds.filters import switchHangarOverlaySoundFilter
 
 class DedicationRewardView(ViewImpl):
@@ -75,7 +75,7 @@ class DedicationRewardView(ViewImpl):
         rewards = self._convertNonQuestBonuses(bonuses)
         with self.viewModel.transaction() as (tx):
             tx.setLevel(str(data.get('reason', '')))
-            packBonusModelAndTooltipData(rewards, getDefaultBonusPacker(), tx.getMainRewards(), tooltipData=self.__tooltipItems)
+            packMissionsBonusModelAndTooltipData(rewards, getDefaultBonusPacker(), tx.getMainRewards(), tooltipData=self.__tooltipItems)
 
 
 class DedicationRewardWindow(LobbyWindow):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/dialogs/dialog_template_utils.py
 import typing, constants
 from gui.Scaleform.genConsts.CURRENCIES_CONSTANTS import CURRENCIES_CONSTANTS
@@ -9,7 +9,7 @@ from gui.impl.gen_utils import DynAccessor
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 if typing.TYPE_CHECKING:
-    from typing import Union
+    from gui.impl.pub import ViewImpl
 
 def toString(value):
     if isinstance(value, DynAccessor):
@@ -19,14 +19,23 @@ def toString(value):
     return value
 
 
-def checkDialogTemplateIsOpened(uniqueID):
+def findDialogTemplatesByUniqueID(uniqueID):
     from gui.impl.dialogs.dialog_template import DialogTemplateView
     guiLoader = dependency.instance(IGuiLoader)
 
     def predicate(view):
-        return isinstance(view, DialogTemplateView) and view.uniqueID == uniqueID
+        return isinstance(view, DialogTemplateView) and view.dialogUniqueID == uniqueID
 
-    return len(guiLoader.windowsManager.findViews(predicate)) != 0
+    return guiLoader.windowsManager.findViews(predicate)
+
+
+def checkDialogTemplateIsOpened(uniqueID):
+    return len(findDialogTemplatesByUniqueID(uniqueID)) != 0
+
+
+def closeDialogTemplate(uniqueID):
+    for dlg in findDialogTemplatesByUniqueID(uniqueID):
+        dlg.destroyWindow()
 
 
 def getCurrencyTooltipAlias(currency):

@@ -1,11 +1,12 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/dyn_objects_cache.py
 import logging
 from collections import namedtuple
 import typing, BigWorld, CGF, resource_helper
 from constants import ARENA_GUI_TYPE
+from gui.shared.system_factory import registerDynObjCache, collectDynObjCache
 from gui.shared.utils.graphics import isRendererPipelineDeferred
 from items.components.component_constants import ZERO_FLOAT
 from shared_utils import first
@@ -269,6 +270,7 @@ class _EpicBattleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
 
 
 class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
+    _LOOT_TYPES = 'lootTypes'
 
     def __init__(self):
         super(_BattleRoyaleDynObjects, self).__init__()
@@ -301,7 +303,7 @@ class _BattleRoyaleDynObjects(_CommonForBattleRoyaleAndEpicBattleDynObjects):
             prerequisites = set()
             self.__dropPlane = _createDropPlane(dataSection['dropPlane'], prerequisites)
             self.__airDrop = _createAirDrop(dataSection['airDrop'], prerequisites)
-            self.__loots = _createLoots(dataSection, dataSection['lootTypes'], prerequisites)
+            self.__loots = _createLoots(dataSection, dataSection[self._LOOT_TYPES], prerequisites)
             BigWorld.loadResourceListBG(list(prerequisites), makeCallbackWeak(self.__onResourcesLoaded))
             super(_BattleRoyaleDynObjects, self).init(dataSection)
         return
@@ -485,13 +487,13 @@ class _PointsOfInterestConfig(object):
         return cls(points)
 
 
-_CONF_STORAGES = {ARENA_GUI_TYPE.SORTIE_2: _StrongholdDynObjects, 
-   ARENA_GUI_TYPE.FORT_BATTLE_2: _StrongholdDynObjects, 
-   ARENA_GUI_TYPE.BATTLE_ROYALE: _BattleRoyaleDynObjects, 
-   ARENA_GUI_TYPE.EPIC_BATTLE: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.EPIC_TRAINING: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.EVENT_BATTLES: _EpicBattleDynObjects, 
-   ARENA_GUI_TYPE.COMP7: _Comp7DynObjects}
+registerDynObjCache(ARENA_GUI_TYPE.SORTIE_2, _StrongholdDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.FORT_BATTLE_2, _StrongholdDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.BATTLE_ROYALE, _BattleRoyaleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EPIC_BATTLE, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EPIC_TRAINING, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.EVENT_BATTLES, _EpicBattleDynObjects)
+registerDynObjCache(ARENA_GUI_TYPE.COMP7, _Comp7DynObjects)
 
 class BattleDynamicObjectsCache(IBattleDynamicObjectsCache):
 
@@ -507,11 +509,13 @@ class BattleDynamicObjectsCache(IBattleDynamicObjectsCache):
         _, section = resource_helper.getRoot(_CONFIG_PATH)
         if arenaType in self.__configStorage:
             self.__configStorage[arenaType].init(section)
-        elif arenaType in _CONF_STORAGES:
-            confStorage = _CONF_STORAGES[arenaType]()
-            self.__configStorage[arenaType] = confStorage
-            confStorage.init(section)
-            resource_helper.purgeResource(_CONFIG_PATH)
+        else:
+            cache = collectDynObjCache(arenaType)
+            if cache:
+                confStorage = cache()
+                self.__configStorage[arenaType] = confStorage
+                confStorage.init(section)
+                resource_helper.purgeResource(_CONFIG_PATH)
 
     def unload(self, arenaType):
         for cV in self.__configStorage.itervalues():

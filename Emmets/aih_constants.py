@@ -1,7 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/aih_constants.py
+
+
+class CTRL_TYPE(object):
+    USUAL = 0
+    OPTIONAL = 1
+    DEVELOPMENT = 2
 
 
 class ShakeReason(object):
@@ -29,7 +35,7 @@ class CTRL_MODE_NAME(object):
     DUAL_GUN = 'dualgun'
     MAP_CASE_ARCADE_EPIC_MINEFIELD = 'arcadeEpicMinefieldMapcase'
     VEHICLES_SELECTION = 'vehiclesSelection'
-    FLAMETHROWER = 'flamethrower'
+    SPG_ONLY_ARTY_MODE = 'spgOnlyArtyMode'
     DEFAULT = ARCADE
 
 
@@ -50,7 +56,7 @@ CTRL_MODES = (
  CTRL_MODE_NAME.DUAL_GUN,
  CTRL_MODE_NAME.MAP_CASE_ARCADE_EPIC_MINEFIELD,
  CTRL_MODE_NAME.VEHICLES_SELECTION,
- CTRL_MODE_NAME.FLAMETHROWER)
+ CTRL_MODE_NAME.SPG_ONLY_ARTY_MODE)
 GUN_MARKER_MIN_SIZE = 32.0
 SPG_GUN_MARKER_ELEMENTS_COUNT = 37
 SPG_GUN_MARKER_ELEMENTS_RATE = 10
@@ -62,6 +68,7 @@ class GUN_MARKER_TYPE(int):
     UNDEFINED = 0
     CLIENT = 1
     SERVER = 2
+    DUAL_ACC = 3
 
 
 class GUN_MARKER_FLAG(int):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/COMP7_CONSTS.py
 
 
@@ -25,5 +25,6 @@ class COMP7_CONSTS(object):
     ROLE_SKILL_AGGRESSIVE_DETECTION = 'aggressiveDetection'
     ROLE_SKILL_POINT_RECON = 'pointRecon'
     MINIMAP_ROLE_SKILL_POINT_RECON = 'Comp7PointReconMinimapEntryUI'
-    COMP7_SUB_TASK_UI = 'Comp7SubTaskUI'
+    COMP7_RANK_SUB_TASK_UI = 'Comp7RankSubTaskUI'
+    COMP7_QUALIFICATION_SUB_TASK_UI = 'Comp7QualificationSubTaskUI'
     STATUS_MARKER_CONFIRMED_STATE = 'confirmed'

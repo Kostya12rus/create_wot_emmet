@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/flash_wrapper.py
 import json, logging, weakref
 from collections import defaultdict
@@ -78,14 +78,14 @@ class FlashComponentWrapper(object):
         self.__component = None
         return
 
-    def createComponent(self, swf='', className=_DEFAULT_FLASH_COMPONENT_CLASS, args=None, path=SCALEFORM_SWF_PATH_V3, descriptor=0):
+    def createComponent(self, swf='', className=_DEFAULT_FLASH_COMPONENT_CLASS, args=None, path=SCALEFORM_SWF_PATH_V3, **kwargs):
         if swf:
             fileName = ('{}/{}').format(path, swf)
         else:
             fileName = ''
         if self.__component is None:
             args = args or []
-            self.__component = getattr(GUI, className)(fileName, descriptor, *args)
+            self.__component = getattr(GUI, className)(fileName, *args, **kwargs)
             self.__component.focus = True
             self.__component.moveFocus = True
             self.__component.position.z = 0.5
@@ -168,9 +168,9 @@ class FlashComponentWrapper(object):
 
 class Flash(FlashComponentWrapper):
 
-    def __init__(self, swf='', className='Flash', args=None, path=SCALEFORM_SWF_PATH_V3, descriptor=0):
+    def __init__(self, swf='', className='Flash', args=None, path=SCALEFORM_SWF_PATH_V3):
         super(Flash, self).__init__()
-        self.createComponent(swf=swf, className=className, args=args, path=path, descriptor=descriptor)
+        self.createComponent(swf=swf, className=className, args=args, path=path)
 
 
 class _ExternalInterfaceObj(object):

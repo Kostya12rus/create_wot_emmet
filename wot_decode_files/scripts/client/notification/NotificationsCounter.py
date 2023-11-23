@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/notification/NotificationsCounter.py
 from gui.prb_control import prbInvitesProperty
 from messenger.m_constants import PROTO_TYPE
@@ -26,11 +26,10 @@ class _GroupCounter(object):
 
     def reset(self):
         self.__seenNotifications |= {entry for entry in self.__notifications if entry[_COUNT_ONLY_ONCE_INDEX]}
-        self.__notifications.clear()
         self.resetUnreadCount()
 
     def resetUnreadCount(self):
-        pass
+        self.__notifications.clear()
 
     @classmethod
     def getGroupID(cls):
@@ -44,6 +43,7 @@ class _InfoGroupCounter(_GroupCounter):
         return
 
     def resetUnreadCount(self):
+        super(_InfoGroupCounter, self).resetUnreadCount()
         self.proto.serviceChannel.resetUnreadCount()
 
     @classmethod
@@ -58,6 +58,7 @@ class _InviteGroupCounter(_GroupCounter):
         return
 
     def resetUnreadCount(self):
+        super(_InviteGroupCounter, self).resetUnreadCount()
         if self.prbInvites is not None:
             self.prbInvites.resetUnreadCount()
         return

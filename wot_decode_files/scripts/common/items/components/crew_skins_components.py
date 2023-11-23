@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/components/crew_skins_components.py
 import items, nations
 from constants import CURRENT_REALM, CURRENT_REALM_IS_REGIONAL
@@ -11,10 +11,10 @@ from soft_exception import SoftException
 class CrewSkin(object):
     itemType = CrewSkinType.CREW_SKIN
     __slots__ = ('id', 'tags', 'priceGroup', 'firstNameID', 'lastNameID', 'iconID',
-                 'description', 'roleID', 'nation', 'sex', 'rarity', 'maxCount',
-                 'historical', 'soundSetID', 'priceGroupTags', 'realms')
+                 'description', 'nation', 'sex', 'rarity', 'historical', 'soundSetID',
+                 'priceGroupTags', 'realms')
 
-    def __init__(self, ID, priceGroup, firstNameID, lastNameID, iconID, description, rarity, maxCount, tags, historical, soundSetID, realms):
+    def __init__(self, ID, priceGroup, firstNameID, lastNameID, iconID, description, rarity, tags, historical, soundSetID, realms):
         self.id = ID
         self.priceGroup = priceGroup
         self.tags = tags
@@ -22,11 +22,9 @@ class CrewSkin(object):
         self.lastNameID = lastNameID
         self.iconID = iconID
         self.description = description
-        self.roleID = None
         self.sex = ''
         self.nation = None
         self.rarity = rarity
-        self.maxCount = maxCount
         self.historical = historical
         self.soundSetID = soundSetID if soundSetID else '-'
         self.priceGroupTags = frozenset()
@@ -72,22 +70,10 @@ class CrewSkinsCache(object):
         else:
             return self._validateItem(tmanDescr, item)
 
-    def confirmCrewSkinRole(self, role, itemId):
-        item = self.skins.get(itemId, None)
-        if item is None:
-            return False
-        else:
-            if item.roleID and item.roleID != role:
-                return False
-            return True
-
     @staticmethod
     def _validateItem(tmanDescr, item):
         resultMask = CREW_SKIN_PROPERTIES_MASKS.EMPTY_MASK
         resultMsg = ''
-        if item.roleID and item.roleID != tmanDescr.role:
-            resultMask = resultMask | CREW_SKIN_PROPERTIES_MASKS.ROLE
-            resultMsg += ('{} {} incompatible roles {};').format(item.roleID, item.id, tmanDescr.role)
         tmanSex = TANKMAN_SEX.getTankmanSex(tmanDescr)
         if item.sex and item.sex != tmanSex:
             resultMask = resultMask | CREW_SKIN_PROPERTIES_MASKS.SEX

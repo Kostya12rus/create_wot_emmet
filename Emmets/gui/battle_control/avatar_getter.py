@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/avatar_getter.py
 import logging, BigWorld, Math
 from gui import GUI_CTRL_MODE_FLAG
@@ -244,14 +244,14 @@ def getArenaUniqueID(avatar=None):
     return
 
 
-def updateVehicleSetting(code, value, avatar=None):
+def predictVehicleSetting(code, value, avatar=None):
     if avatar is None:
         avatar = BigWorld.player()
     vehicleid = avatar.playerVehicleID
     if avatar.getVehicleAttached() is not None:
         vehicleid = avatar.getVehicleAttached().id
     try:
-        avatar.updateVehicleSetting(vehicleid, code, value)
+        avatar.predictVehicleSetting(vehicleid, code, value)
     except AttributeError:
         _logger.exception('Attribute "updateVehicleSetting" not found')
 

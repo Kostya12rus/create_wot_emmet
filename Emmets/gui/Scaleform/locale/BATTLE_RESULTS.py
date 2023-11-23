@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/BATTLE_RESULTS.py
 from debug_utils import LOG_WARNING
 
@@ -130,6 +130,7 @@ class BATTLE_RESULTS(object):
     COMMON_VEHICLESTATE_DEAD7 = '#battle_results:common/vehicleState/dead7'
     COMMON_VEHICLESTATE_DEAD13 = '#battle_results:common/vehicleState/dead13'
     COMMON_VEHICLESTATE_DEAD27 = '#battle_results:common/vehicleState/dead27'
+    COMMON_VEHICLESTATE_DEAD29 = '#battle_results:common/vehicleState/dead29'
     COMMON_VEHICLESTATE_PREMATURELEAVE = '#battle_results:common/vehicleState/prematureLeave'
     COMMON_DETAILS_NOPREMTITLE = '#battle_results:common/details/noPremTitle'
     COMMON_DETAILS_PREMTITLE = '#battle_results:common/details/premTitle'
@@ -472,7 +473,8 @@ class BATTLE_RESULTS(object):
      COMMON_VEHICLESTATE_DEAD6,
      COMMON_VEHICLESTATE_DEAD7,
      COMMON_VEHICLESTATE_DEAD13,
-     COMMON_VEHICLESTATE_DEAD27)
+     COMMON_VEHICLESTATE_DEAD27,
+     COMMON_VEHICLESTATE_DEAD29)
 
     @classmethod
     def getDetailsTimeLbl(cls, statName):

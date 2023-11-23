@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/comp7/comp7_model_helpers.py
 import typing
 from gui.Scaleform.genConsts.TOOLTIPS_CONSTANTS import TOOLTIPS_CONSTANTS
@@ -26,8 +26,14 @@ def setDivisionInfo(model, division=None):
     return
 
 
+def getValidSeason(season=None):
+    return season or _getCurrentSeason() or _getPrevSeason() or _getNextSeason()
+
+
 def setSeasonInfo(model, season=None):
-    season = season or _getCurrentSeason() or _getNextSeason() or _getPrevSeason()
+    season = getValidSeason(season)
+    seasonState = comp7_shared.getProgressionSeasonState()
+    model.setState(seasonState)
     if season is not None:
         model.setStartTimestamp(season.getStartDate())
         model.setEndTimestamp(season.getEndDate())
@@ -35,18 +41,20 @@ def setSeasonInfo(model, season=None):
     return
 
 
-def setScheduleInfo(model, season=None):
-    season = season or _getCurrentSeason() or _getNextSeason() or _getPrevSeason()
+def setScheduleInfo(model):
+    season = getValidSeason()
     if season is not None:
         model.setTooltipId(TOOLTIPS_CONSTANTS.COMP7_CALENDAR_DAY_INFO)
-        setSeasonInfo(model=model.season, season=season)
+    setSeasonInfo(model=model.season, season=season)
+    yearState = comp7_shared.getProgressionYearState()
+    model.year.setState(yearState)
     return
 
 
 @dependency.replace_none_kwargs(comp7Controller=IComp7Controller)
-def setRanksInfo(model, comp7Controller=None):
+def setRanksInactivityInfo(model, comp7Controller=None):
+    model.setHasRankInactivityWarning(comp7_shared.hasPlayerRankInactivityWarning())
     model.setRankInactivityCount(comp7Controller.activityPoints)
-    setElitePercentage(model)
 
 
 @dependency.replace_none_kwargs(comp7Controller=IComp7Controller)

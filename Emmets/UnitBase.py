@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/UnitBase.py
 import cPickle, copy, struct, weakref
 from collections import namedtuple
@@ -186,6 +186,7 @@ class UNIT_ERROR:
     NO_ARENA_VEHICLES = 113
     EXPIRED_PLAY_LIMITS = 114
     EXPIRED_PLAY_LIMITS_TO_COMMANDER = 115
+    COMP7_QUALIFICATION = 116
 
 
 OK = UNIT_ERROR.OK
@@ -228,7 +229,7 @@ class UNIT_OP:
     SET_PLAYER_PROFILE = 24
     DEL_PLAYER_PROFILE = 25
     ESTIMATED_TIME_IN_QUEUE = 26
-    ONLY_10_MODE = 27
+    RANDOM_FLAGS = 27
     CLEAR_SEARCH_FLAGS = 28
     REMOVE_SEARCH_FLAGS = 29
     SET_SEARCH_FLAGS = 30
@@ -310,6 +311,7 @@ class UNIT_NOTIFY_CMD:
     REMOVED_VEHICLE_MAX_SCOUT_EXCEED = 18
     CHANGE_SQUAD_SIZE = 19
     PLAYER_LIMITS_EXPIRED = 20
+    REMOVED_VEHICLE_BAD_TYPE = 21
 
 
 class CLIENT_UNIT_CMD:
@@ -337,9 +339,9 @@ class CLIENT_UNIT_CMD:
     SET_VEHICLE_LIST = 23
     SET_UNIT_VEHICLE_TYPE = 25
     SET_ARENA_TYPE = 26
-    SET_ONLY_10_MODE = 27
     SET_SQUAD_SIZE = 28
     CHANGE_FUN_EVENT_ID = 29
+    SET_RANDOM_FLAGS = 30
 
 
 CMD_NAMES = dict([ (v, k) for k, v in CLIENT_UNIT_CMD.__dict__.items() if not k.startswith('__') ])
@@ -365,6 +367,7 @@ class UNIT_MGR_FLAGS:
     RTS = 65536
     FUN_RANDOM = 131072
     COMP7 = 262144
+    VERSUS_AI = 1073741824
 
 
 class UnitAssemblerSearchFlags(object):
@@ -539,7 +542,8 @@ class ROSTER_TYPE:
     MAPBOX_ROSTER = UNIT_MGR_FLAGS.MAPBOX | UNIT_MGR_FLAGS.SQUAD
     FUN_RANDOM_ROSTER = UNIT_MGR_FLAGS.FUN_RANDOM | UNIT_MGR_FLAGS.SQUAD
     COMP7_ROSTER = UNIT_MGR_FLAGS.SQUAD | UNIT_MGR_FLAGS.COMP7
-    _MASK = SQUAD_ROSTER | SPEC_ROSTER | UNIT_MGR_FLAGS.FALLOUT_CLASSIC | UNIT_MGR_FLAGS.FALLOUT_MULTITEAM | UNIT_MGR_FLAGS.EVENT | STRONGHOLD_ROSTER | TOURNAMENT_ROSTER | UNIT_MGR_FLAGS.EPIC | UNIT_MGR_FLAGS.BATTLE_ROYALE | UNIT_MGR_FLAGS.MAPBOX | UNIT_MGR_FLAGS.FUN_RANDOM | COMP7_ROSTER
+    VERSUS_AI_ROSTER = UNIT_MGR_FLAGS.VERSUS_AI | UNIT_MGR_FLAGS.SQUAD
+    _MASK = SQUAD_ROSTER | SPEC_ROSTER | UNIT_MGR_FLAGS.FALLOUT_CLASSIC | UNIT_MGR_FLAGS.FALLOUT_MULTITEAM | UNIT_MGR_FLAGS.EVENT | STRONGHOLD_ROSTER | TOURNAMENT_ROSTER | UNIT_MGR_FLAGS.EPIC | UNIT_MGR_FLAGS.BATTLE_ROYALE | UNIT_MGR_FLAGS.MAPBOX | UNIT_MGR_FLAGS.FUN_RANDOM | COMP7_ROSTER | UNIT_MGR_FLAGS.VERSUS_AI
 
 
 class EXTRAS_HANDLER_TYPE:
@@ -632,7 +636,7 @@ class UnitBase(OpsUnpacker):
        UNIT_OP.SET_PLAYER_PROFILE: ('', '_setProfileVehicleByData'), 
        UNIT_OP.DEL_PLAYER_PROFILE: ('q', '_delProfileVehicle'), 
        UNIT_OP.ESTIMATED_TIME_IN_QUEUE: ('i', '_setEstimatedTimeInQueue'), 
-       UNIT_OP.ONLY_10_MODE: ('?', '_setOnly10Mode'), 
+       UNIT_OP.RANDOM_FLAGS: ('?', '_setRandomFlags'), 
        UNIT_OP.SQUAD_SIZE: ('i', '_setSquadSize'), 
        UNIT_OP.SET_SEARCH_FLAGS: ('qH', 'setAutoSearchFlags'), 
        UNIT_OP.CLEAR_SEARCH_FLAGS: (None, 'clearAutoSearchFlags'), 
@@ -675,7 +679,7 @@ class UnitBase(OpsUnpacker):
         self._reservedSlots = set()
         self._modalTimestamp = 0
         self._estimatedTimeInQueue = 0
-        self._isOnly10ModeEnabled = False
+        self._randomFlags = 0
         self._squadSize = 0
         self._unitAssemblerSearchFlags = {}
 
@@ -846,12 +850,12 @@ class UnitBase(OpsUnpacker):
 
         return True
 
-    _HEADER = '<HHHHHHHHBiiii?i'
+    _HEADER = '<HHHHHHHHBiiiiii'
     _PLAYER_DATA = '<qiIHBHHHq?'
     _PLAYER_VEHICLES_LIST = '<qH'
     _PLAYER_VEHICLE_TUPLE = '<iI'
     _SLOT_PLAYERS = '<Bq'
-    _IDS = '<IBB'
+    _IDS = '<IBI'
     _VEHICLE_DICT_HEADER = '<Hq'
     _VEHICLE_DICT_ITEM = '<Ii'
     _VEHICLE_PROFILE_HEADER = '<qBB'
@@ -881,7 +885,7 @@ class UnitBase(OpsUnpacker):
          len(members), len(vehs), len(players), len(profileVehicles), len(searchFlags), len(extrasStr),
          self._readyMask, self._flags, self._closedSlotMask,
          self._modalTimestamp, self._estimatedTimeInQueue, self._gameplaysMask, self._arenaType,
-         self._isOnly10ModeEnabled, self._squadSize)
+         self._squadSize, self._randomFlags)
         packed += struct.pack(self._HEADER, *args)
         for accountDBID, vehList in vehs.iteritems():
             packed += struct.pack(self._PLAYER_VEHICLES_LIST, accountDBID, len(vehList))
@@ -916,7 +920,7 @@ class UnitBase(OpsUnpacker):
         unpacking = self._roster.unpack(unpacking)
         slotCount = self.getMaxSlotCount()
         self._freeSlots = set(xrange(0, slotCount))
-        memberCount, vehCount, playerCount, profilesCount, searchFlagsCount, extrasLen, self._readyMask, self._flags, self._closedSlotMask, self._modalTimestamp, self._estimatedTimeInQueue, self._gameplaysMask, self._arenaType, self._isOnly10ModeEnabled, self._squadSize = struct.unpack_from(self._HEADER, unpacking)
+        memberCount, vehCount, playerCount, profilesCount, searchFlagsCount, extrasLen, self._readyMask, self._flags, self._closedSlotMask, self._modalTimestamp, self._estimatedTimeInQueue, self._gameplaysMask, self._arenaType, self._squadSize, self._randomFlags = struct.unpack_from(self._HEADER, unpacking)
         unpacking = unpacking[self._HEADER_SIZE:]
         for i in xrange(0, vehCount):
             accountDBID, vehListCount = struct.unpack_from(self._PLAYER_VEHICLES_LIST, unpacking)
@@ -1196,11 +1200,11 @@ class UnitBase(OpsUnpacker):
             self.storeOp(UNIT_OP.GAMEPLAYS_MASK, newGameplaysMask)
         return OK
 
-    def _setOnly10Mode(self, newIsOnly10Mode):
-        isOnly10ModeEnabled = self._isOnly10ModeEnabled
-        if isOnly10ModeEnabled != newIsOnly10Mode:
-            self._isOnly10ModeEnabled = newIsOnly10Mode
-            self.storeOp(UNIT_OP.ONLY_10_MODE, newIsOnly10Mode)
+    def _setRandomFlags(self, newRandomFlags):
+        randomFlags = self._randomFlags
+        if randomFlags != newRandomFlags:
+            self._randomFlags = newRandomFlags
+            self.storeOp(UNIT_OP.RANDOM_FLAGS, newRandomFlags)
         return OK
 
     def _setSquadSize(self, newSquadSize):

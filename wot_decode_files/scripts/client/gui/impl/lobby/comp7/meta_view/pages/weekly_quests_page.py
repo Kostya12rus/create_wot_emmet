@@ -1,13 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/comp7/meta_view/pages/weekly_quests_page.py
 import logging
 from collections import namedtuple
 import typing
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import COMP7_UI_SECTION, COMP7_WEEKLY_QUESTS_PAGE_TOKENS_COUNT
-from comp7_common import COMP7_TOKEN_WEEKLY_REWARD_NAME
+from comp7_common import COMP7_TOKEN_WEEKLY_REWARD_ID
 from frameworks.wulf.view.array import fillViewModelsArray
 from gui.impl import backport
 from gui.impl.gen import R
@@ -108,7 +108,7 @@ class WeeklyQuestsPage(PageSubModelPresenter):
         sortedQuestsIds = sorted(self.__quests.keys())
         for qID in sortedQuestsIds:
             quest = self.__quests[qID]
-            questCardModel = Comp7WeeklyQuestPacker(quest).pack()
+            questCardModel = Comp7WeeklyQuestPacker(quest, self.__getPeriodState()).pack()
             packedBonuses, tooltipsData = packQuestBonuses(quest.getBonuses(), getComp7BonusPacker())
             self.__updateRewards(qID, questCardModel, packedBonuses, tooltipsData)
             questCards.append(questCardModel)
@@ -118,7 +118,7 @@ class WeeklyQuestsPage(PageSubModelPresenter):
     def __updateProgression(self, model):
         settings = AccountSettings.getUIFlag(COMP7_UI_SECTION)
         lastTokensCount = settings.get(COMP7_WEEKLY_QUESTS_PAGE_TOKENS_COUNT, 0)
-        currentTokensCount = self.__eventsCache.questsProgress.getTokenCount(COMP7_TOKEN_WEEKLY_REWARD_NAME)
+        currentTokensCount = self.__eventsCache.questsProgress.getTokenCount(COMP7_TOKEN_WEEKLY_REWARD_ID)
         model.setPreviousTokenValue(lastTokensCount)
         model.setCurrentTokenValue(currentTokensCount)
         self.__updateProgressionPoints(model)

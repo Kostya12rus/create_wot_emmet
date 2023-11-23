@@ -1,12 +1,13 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/locale/VEH_COMPARE.py
 from debug_utils import LOG_WARNING
 
 class VEH_COMPARE(object):
     CARTPOPOVER_OPENCMPBTN_TOOLTIP = '#veh_compare:cartPopover/openCmpBtn/tooltip'
     CARTPOPOVER_FULLBASKETCMPBTN_TOOLTIP = '#veh_compare:cartPopover/fullBasketCmpBtn/tooltip'
+    CARTPOPOVER_UNSUPPORTEDMODECMPBTN_TOOLTIP = '#veh_compare:cartPopover/unsupportedModeCmpBtn/tooltip'
     CARTPOPOVER_REMOVEALLBTN_TOOLTIP = '#veh_compare:cartPopover/removeAllBtn/tooltip'
     CARTPOPOVER_REMOVEBTNLOCKED_TOOLTIP = '#veh_compare:cartPopover/removeBtnLocked/tooltip'
     CARTPOPOVER_REMOVELOCKEDBTN_TOOLTIP = '#veh_compare:cartPopover/removeLockedBtn/tooltip'
@@ -64,6 +65,8 @@ class VEH_COMPARE(object):
     CARTPOPOVER_OPENCMPBTN_TOOLTIP_BODY = '#veh_compare:cartPopover/openCmpBtn/tooltip/body'
     CARTPOPOVER_FULLBASKETCMPBTN_TOOLTIP_HEADER = '#veh_compare:cartPopover/fullBasketCmpBtn/tooltip/header'
     CARTPOPOVER_FULLBASKETCMPBTN_TOOLTIP_ATTENTION = '#veh_compare:cartPopover/fullBasketCmpBtn/tooltip/attention'
+    CARTPOPOVER_UNSUPPORTEDMODECMPBTN_TOOLTIP_HEADER = '#veh_compare:cartPopover/unsupportedModeCmpBtn/tooltip/header'
+    CARTPOPOVER_UNSUPPORTEDMODECMPBTN_TOOLTIP_BODY = '#veh_compare:cartPopover/unsupportedModeCmpBtn/tooltip/body'
     CARTPOPOVER_REMOVEALLBTN_LABEL = '#veh_compare:cartPopover/removeAllBtn/label'
     CARTPOPOVER_REMOVEALLBTN_TOOLTIP_HEADER = '#veh_compare:cartPopover/removeAllBtn/tooltip/header'
     CARTPOPOVER_REMOVEALLBTN_TOOLTIP_BODY = '#veh_compare:cartPopover/removeAllBtn/tooltip/body'
@@ -176,13 +179,6 @@ class VEH_COMPARE(object):
     VEHCONF_TOOLTIPS_DEFCAMOINFO = '#veh_compare:vehConf/tooltips/defCamoInfo'
     VEHCONF_TOOLTIPS_CAMOINFODISABLED_HEADER = '#veh_compare:vehConf/tooltips/camoInfoDisabled/header'
     VEHCONF_TOOLTIPS_CAMOINFODISABLED_BODY = '#veh_compare:vehConf/tooltips/camoInfoDisabled/body'
-    VEHCONF_TOOLTIPS_SKILLS_HEADER = '#veh_compare:vehConf/tooltips/skills/header'
-    VEHCONF_TOOLTIPS_SKILLS_DESCHEADER = '#veh_compare:vehConf/tooltips/skills/descHeader'
-    VEHCONF_TOOLTIPS_SKILLS_DESC1 = '#veh_compare:vehConf/tooltips/skills/desc1'
-    VEHCONF_TOOLTIPS_SKILLS_DESC1_INFLUENCE = '#veh_compare:vehConf/tooltips/skills/desc1/influence'
-    VEHCONF_TOOLTIPS_SKILLS_DESC2 = '#veh_compare:vehConf/tooltips/skills/desc2'
-    VEHCONF_TOOLTIPS_SKILLS_DESC2_PERC = '#veh_compare:vehConf/tooltips/skills/desc2/perc'
-    VEHCONF_TOOLTIPS_SKILLS_SKILLSLIST = '#veh_compare:vehConf/tooltips/skills/skillsList'
     VEHCONF_SKILLS_FADETEXT = '#veh_compare:vehConf/skills/fadeText'
     VEHCONF_TOOLTIPS_TOPMODULESOFF_HEADER = '#veh_compare:vehConf/tooltips/topModulesOff/header'
     VEHCONF_TOOLTIPS_TOPMODULESOFF_BODY = '#veh_compare:vehConf/tooltips/topModulesOff/body'

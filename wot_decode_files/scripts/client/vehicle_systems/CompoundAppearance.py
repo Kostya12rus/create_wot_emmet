@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/CompoundAppearance.py
 from functools import partial
 import logging, math
@@ -35,6 +35,10 @@ _CAMOUFLAGE_MIN_INTENSITY = 1.0
 _PITCH_SWINGING_MODIFIERS = (0.9, 1.88, 0.3, 4.0, 1.0, 1.0)
 _MIN_DEPTH_FOR_HEAVY_SPLASH = 0.5
 _logger = logging.getLogger(__name__)
+
+def createHighlighter(isAlive):
+    return Highlighter(isAlive, None)
+
 
 class CompoundHolder(object):
 
@@ -206,14 +210,14 @@ class CompoundAppearance(CommonTankAppearance, CallbackDelayer):
         if self._vehicle.isPlayerVehicle:
             self.delayCallback(_PERIODIC_TIME_ENGINE, self.__onPeriodicTimerEngine)
             self.highlighter.highlight(True)
-        self.delayCallback(_PERIODIC_TIME_DIRT[0][0], self.__onPeriodicTimerDirt)
+        self.delayCallback(_PERIODIC_TIME_DIRT[0][0], self._onPeriodicTimerDirt)
 
     def _stopSystems(self):
         super(CompoundAppearance, self)._stopSystems()
         if self._vehicle.isPlayerVehicle:
             self.highlighter.highlight(False)
             self.stopCallback(self.__onPeriodicTimerEngine)
-        self.stopCallback(self.__onPeriodicTimerDirt)
+        self.stopCallback(self._onPeriodicTimerDirt)
 
     def _onEngineStart(self):
         super(CompoundAppearance, self)._onEngineStart()
@@ -525,13 +529,11 @@ class CompoundAppearance(CommonTankAppearance, CallbackDelayer):
     def __onModelsRefresh(self, modelState, resourceList):
         if not self.damageState.isCurrentModelDamaged:
             _logger.error('Current model is not damaged. Wrong refresh request!')
-        if BattleReplay.isFinished():
+        if modelState != self.damageState.modelState:
+            _logger.error('Required modelState differs from actual one. Wrong refresh request!')
+        if self._vehicle is None:
             return
         else:
-            if modelState != self.damageState.modelState:
-                _logger.error('Required modelState differs from actual one. Wrong refresh request!')
-            if self._vehicle is None:
-                return
             self.highlighter.highlight(False)
             oldHolder = self.findComponentByType(CompoundHolder)
             if oldHolder is not None:
@@ -616,7 +618,7 @@ class CompoundAppearance(CommonTankAppearance, CallbackDelayer):
             self.__updateTransmissionScroll()
             return
 
-    def __onPeriodicTimerDirt(self):
+    def _onPeriodicTimerDirt(self):
         if self.fashion is None or self._vehicle is None:
             return
         dt = 1.0

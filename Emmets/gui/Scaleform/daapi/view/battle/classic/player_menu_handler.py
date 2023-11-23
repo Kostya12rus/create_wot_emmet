@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/classic/player_menu_handler.py
 from gui.Scaleform.daapi.view.lobby.user_cm_handlers import USER
 from gui.Scaleform.framework.managers.context_menu import AbstractContextMenuHandler
@@ -10,7 +10,7 @@ from gui.shared import events, EVENT_BUS_SCOPE, g_eventBus
 from gui.shared.denunciator import DENUNCIATIONS, BattleDenunciator, DENUNCIATIONS_MAP
 from helpers import dependency
 from helpers import i18n
-from constants import DENUNCIATIONS_PER_DAY, IS_CHINA
+from constants import IS_CHINA
 from messenger.m_constants import PROTO_TYPE, UserEntityScope
 from messenger.proto import proto_getter
 from messenger.storage import storage_getter
@@ -276,7 +276,7 @@ class PlayerMenuHandler(AbstractContextMenuHandler):
             order = DENUNCIATIONS.ENEMY_ORDER
         sub = [ make(denunciation, MENU.contextmenu(denunciation), optInitData={'enabled': self.__isAppealsForTopicEnabled(denunciation)}) for denunciation in order
               ]
-        label = ('{} {}/{}').format(i18n.makeString(MENU.CONTEXTMENU_APPEAL), self.__denunciator.getDenunciationsLeft(), DENUNCIATIONS_PER_DAY)
+        label = ('{} {}/{}').format(i18n.makeString(MENU.CONTEXTMENU_APPEAL), self.__denunciator.getDenunciationsLeft(), self.__denunciator.getDenunciationsPerDay())
         options.append(make(DENUNCIATIONS.APPEAL, label, optInitData={'enabled': self.__denunciator.isAppealsEnabled()}, optSubMenu=sub))
         return options
 

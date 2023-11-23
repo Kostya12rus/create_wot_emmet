@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/server_events/awards_formatters.py
 from gui.Scaleform.daapi.view.lobby.missions.awards_formatters import NewStyleBonusComposer
 from gui.impl import backport
@@ -8,7 +8,7 @@ from gui.impl.gen import R
 from gui.impl.auxiliary.rewards_helper import NEW_STYLE_FORMATTED_BONUSES
 from gui.server_events import formatters
 from gui.server_events.awards_formatters import AWARDS_SIZES, AwardsPacker, QuestsBonusComposer, getPostBattleAwardsPacker
-from gui.server_events.bonuses import BlueprintsBonusSubtypes
+from gui.server_events.bonuses import BlueprintsBonusSubtypes, formatBlueprint
 from gui.battle_pass.battle_pass_bonuses_helper import BonusesHelper
 from gui.shared.gui_items.crew_skin import localizedFullName as localizeSkinName
 from nations import NAMES
@@ -152,30 +152,12 @@ class BlueprintsFormatter(OldStyleBonusFormatter):
             if fragments:
                 fragmentLabels = []
                 for fragment in fragments:
-                    fragmentLabels.append(self._formatBlueprint(fragment, fragment.getCount()))
+                    fragmentLabels.append(formatBlueprint(fragment, fragment.getCount()))
 
                 result.append(formatters.packLongBonusesBlock(fragmentLabels, linesLimit=len(NAMES)))
 
         self._groupedFragments = {}
         return result
-
-    @classmethod
-    def _formatBlueprint(cls, bonus, count):
-        blueprintType = bonus.getBlueprintName()
-        if blueprintType == BlueprintsBonusSubtypes.FINAL_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.any())
-        elif blueprintType == BlueprintsBonusSubtypes.UNIVERSAL_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.universal())
-        elif blueprintType == BlueprintsBonusSubtypes.NATION_FRAGMENT:
-            nation = backport.text(R.strings.nations.dyn(bonus.getImageCategory(), '')())
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.nation(), nationName=nation)
-        elif blueprintType == BlueprintsBonusSubtypes.VEHICLE_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.vehicle.any())
-        elif blueprintType == BlueprintsBonusSubtypes.RANDOM_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.any())
-        elif blueprintType == BlueprintsBonusSubtypes.RANDOM_NATIONAL_FRAGMENT:
-            blueprintString = backport.text(R.strings.quests.bonusName.blueprints.nation.any())
-        return (' ').join([blueprintString, str(count)])
 
 
 class BattlePassPointsFormatter(OldStyleBonusFormatter):

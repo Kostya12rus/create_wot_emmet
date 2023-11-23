@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/uilogging/deprecated/bootcamp/constants.py
 from bootcamp.BootcampConstants import HINT_TYPE
 __all__ = ('ACTIONS_HINTS_TO_LOG_ONCE', 'ACTION_SEQUENCES', 'BC_AWARDS_MAP', 'BATTLE_HINTS_TO_LOG_ON_ANIMATION_FINISH',
@@ -112,7 +112,6 @@ class BC_LOG_KEYS:
     BC_HANGAR_HINTS = 'bc_hangar_hints'
     BC_RESEARCH_VEHICLES = 'bc_research_vehicles'
     BC_HANGAR_MENU = 'bc_hangar_menu'
-    BC_PERSONAL_CASE = 'bc_personal_case'
     BC_CURRENT_PROGRESS_WIDGET = 'bc_current_progress_widget'
     BC_PROGRESS_WIDGET = 'bc_progress_widget'
     BC_EXIT_VIEW = 'bc_exit_view'

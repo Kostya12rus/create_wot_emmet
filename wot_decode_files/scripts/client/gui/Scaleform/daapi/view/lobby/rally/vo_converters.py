@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/rally/vo_converters.py
 import BigWorld
 from UnitBase import UNIT_ROLE
@@ -15,7 +15,6 @@ from gui.shared.utils.functions import getArenaShortName
 from gui.Scaleform.daapi.view.lobby.cyberSport import PLAYER_GUI_STATUS, SLOT_LABEL
 from gui.Scaleform.genConsts.FORTIFICATION_ALIASES import FORTIFICATION_ALIASES as FORT_ALIAS
 from gui.Scaleform.locale.FORTIFICATIONS import FORTIFICATIONS
-from gui.Scaleform.locale.MESSENGER import MESSENGER
 from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.Scaleform.locale.PLATOON import PLATOON
 from gui.Scaleform.locale.TOOLTIPS import TOOLTIPS
@@ -36,6 +35,8 @@ from nations import INDICES as NATIONS_INDICES, NAMES as NATIONS_NAMES
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.shared import IItemsCache
+from skeletons.gui.game_control import IEpicBattleMetaGameController
+from CurrentVehicle import g_currentVehicle
 MAX_PLAYER_COUNT_ALL = 0
 
 def getPlayerStatus(slotState, pInfo):
@@ -371,7 +372,21 @@ def _getSlotsData(unitMgrID, fullData, levelsRange=None, checkForVehicles=True, 
             isVisibleAdtMsg = player and player.isCurrentPlayer() and not vehicle
             additionMsg = ''
             if isVisibleAdtMsg:
-                additionMsg = i18n.makeString(MESSENGER.DIALOGS_EVENTSQUAD_VEHICLE, vehName='')
+                commanderVehiclesList = unit.getMemberVehicles(unit.getCommanderDBID())
+                commanderVehicle = None
+                if commanderVehiclesList:
+                    commanderVehicle = vehicleGetter(commanderVehiclesList[0].vehTypeCompDescr)
+                start, end = unit.getRoster().SLOT_TYPE.DEFAULT_LEVELS
+                rangeString = toRomanRangeString(xrange(start, end + 1), 1)
+                additionMsg = i18n.makeString(PLATOON.MEMBERS_CARD_SELECTVEHICLE, level=rangeString)
+                if commanderVehicle:
+                    rangeString = toRomanRangeString([commanderVehicle.level], 1)
+                    additionMsg = i18n.makeString(PLATOON.MEMBERS_CARD_SELECTVEHICLE, level=rangeString)
+                    if g_currentVehicle.isPresent() and commanderVehicle.level == g_currentVehicle.item.level:
+                        if commanderVehicle.isWheeledTech and not g_currentVehicle.item.isWheeledTech:
+                            additionMsg = backport.text(R.strings.hw_platoon.members.card.selectWheeledVehicle())
+                        elif not commanderVehicle.isWheeledTech and g_currentVehicle.item.isWheeledTech:
+                            additionMsg = backport.text(R.strings.hw_platoon.members.card.selectNotWheeledVehicle())
             slot.update({'isVisibleAdtMsg': isVisibleAdtMsg, 
                'additionalMsg': additionMsg})
         elif unit.getPrebattleType() == PREBATTLE_TYPE.EPIC and squadPremBonusEnabled:
@@ -393,8 +408,9 @@ def _getBalancedSquadInfo(isPlayerCreator, levelsRange, player, unit, vehicle):
        'additionalMsg': additionMsg}
 
 
-def _updateEpicBattleSlotInfo(player, vehicle):
-    return _updateSpecialBattleSlotInfo(player, vehicle, backport.text(R.strings.messenger.dialogs.simpleSquad.epicBattle.VehicleRestriction()))
+@dependency.replace_none_kwargs(epicMetaGameController=IEpicBattleMetaGameController)
+def _updateEpicBattleSlotInfo(player, vehicle, epicMetaGameController=None):
+    return _updateSpecialBattleSlotInfo(player, vehicle, backport.text(R.strings.messenger.dialogs.simpleSquad.epicBattle.VehicleRestriction(), level=epicMetaGameController.getSuitableForQueueVehicleLevelStr()))
 
 
 def _updateSpecialBattleSlotInfo(player, vehicle, message):

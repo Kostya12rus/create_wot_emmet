@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/dict2model/validate.py
 from __future__ import absolute_import
 import typing, re
@@ -163,3 +163,50 @@ class URL(Validator):
 
     def _reprArgs(self):
         return ('relative={}').format(self.relative)
+
+
+class NoneOf(Validator):
+    _message = 'Value: {value} must not be one of: {values}.'
+    __slots__ = ('_choices', '_choicesText')
+
+    def __init__(self, choices):
+        self._choices = choices
+        self._choicesText = (', ').join(str(each) for each in self._choices)
+
+    def __call__(self, incoming):
+        try:
+            if incoming in self._choices:
+                raise ValidationError(self._message.format(value=incoming, values=self._choicesText))
+        except TypeError:
+            pass
+
+    def _reprArgs(self):
+        return ('choices={}').format(self._choices)
+
+
+class OneOf(NoneOf):
+    _message = 'Value: {value} must be one of: {values}.'
+    __slots__ = ()
+
+    def __call__(self, incoming):
+        try:
+            if incoming not in self._choices:
+                raise ValidationError(self._message.format(value=incoming, values=self._choicesText))
+        except TypeError:
+            raise ValidationError(self._message.format(value=incoming, values=self._choicesText))
+
+
+class Regexp(Validator):
+    _message = 'String: {value} does not match pattern: {pattern}.'
+    __slots__ = ('_regex', )
+
+    def __init__(self, regex, flags=0):
+        self._regex = re.compile(regex, flags) if isinstance(regex, str) else regex
+
+    def __call__(self, incoming):
+        if self._regex.match(incoming) is None:
+            raise ValidationError(self._message.format(value=incoming, pattern=self._regex.pattern))
+        return
+
+    def _reprArgs(self):
+        return ('regex={}').format(self._regex.pattern)

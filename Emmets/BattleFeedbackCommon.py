@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/BattleFeedbackCommon.py
 from constants import ATTACK_REASON, ATTACK_REASON_INDICES
 BATTLE_EVENTS_PROCESSING_TIMEOUT = 0.2
@@ -34,6 +34,7 @@ class BATTLE_EVENT_TYPE:
     MULTI_STUN = 21
     DETECTED = 22
     EQUIPMENT_TIMER_EXPIRED = 23
+    HW_GAMEPLAY_ACTION = 24
     HIDE_IF_TARGET_INVISIBLE = (
      CRIT, DAMAGE, TRACK_ASSIST, STUN_ASSIST, RADIO_ASSIST, MULTI_STUN, INSPIRE_ASSIST)
     DISCLOSED_ATTACK_REASON_IDS = (

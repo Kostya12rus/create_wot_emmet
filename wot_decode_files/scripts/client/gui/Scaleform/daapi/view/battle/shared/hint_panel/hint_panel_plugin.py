@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/hint_panel/hint_panel_plugin.py
 from collections import namedtuple
 from datetime import datetime
@@ -10,15 +10,16 @@ from gui.shared.utils.plugins import IPlugin
 _HINT_DISPLAY_COUNT_AFTER_RESET = 1
 
 class HintPriority(object):
-    DYN_SQUAD = 0
-    TRAJECTORY = 1
-    HELP = 2
-    MAPBOX = 3
-    BATTLE_COMMUNICATION = 4
-    QUESTS = 5
-    RESERVES = 6
-    RADAR = 7
-    SIEGE = 8
+    DYN_SQUAD = 1
+    TRAJECTORY = 2
+    HELP = 3
+    MAPBOX = 4
+    DEV_MAPS = 4
+    BATTLE_COMMUNICATION = 5
+    QUESTS = 6
+    RESERVES = 7
+    RADAR = 8
+    SIEGE = 9
 
 
 class HelpHintContext(object):
@@ -26,13 +27,17 @@ class HelpHintContext(object):
     ROLE_HELP = 'roleHelp'
     MAPS_TRAINING = 'mapsTraining'
     MAPBOX = 'mapbox'
+    DEV_MAPS = 'devMaps'
     BATTLE_ROYALE = 'battleRoyale'
     COMMANDER_CAMERA = 'commanderCamera'
+    EVENT_BATTLE = 'eventBattle'
 
 
 HintData = namedtuple('HintData', ('vKey', 'key', 'messageLeft', 'messageRight', 'offsetX',
-                                   'offsetY', 'priority', 'reducedPanning', 'hintCtx'))
-HintData.__new__.__defaults__ = ('', '', '', '', 0, 0, HintPriority.HELP, False, None)
+                                   'offsetY', 'priority', 'reducedPanning', 'hintCtx',
+                                   'centeredMessage'))
+HintData.__new__.__defaults__ = (
+ '', '', '', '', 0, 0, HintPriority.HELP, False, None, False)
 
 class HintPanelPlugin(IPlugin):
     __slots__ = ()

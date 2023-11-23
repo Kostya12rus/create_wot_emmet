@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/missions/vehicle_selector.py
 from CurrentVehicle import g_currentVehicle
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
@@ -60,10 +60,12 @@ class MissionVehicleSelector(MissionsVehicleSelectorMeta):
         super(MissionVehicleSelector, self).__init__()
         self._carousel = None
         self.__isQuestForBattleRoyale = False
+        self.__isQuestForEventBattle = False
         return
 
-    def setCriteria(self, criteria, extraConditions, isQuestForBattleRoyale=False):
+    def setCriteria(self, criteria, extraConditions, isQuestForBattleRoyale=False, isForEventBattle=False):
         self.__isQuestForBattleRoyale = isQuestForBattleRoyale
+        self.__isQuestForEventBattle = isForEventBattle
         self._carousel.setCriteria(criteria, extraConditions)
         self.__updateSelectedVehicle()
 
@@ -101,7 +103,7 @@ class MissionVehicleSelector(MissionsVehicleSelectorMeta):
             title = ''
         else:
             if suitableVehicles and vehicle and vehicle.intCD in suitableVehicles:
-                selectedVeh = getVehicleDataVO(vehicle)
+                selectedVeh = getVehicleDataVO(vehicle, canShowDailyXPFactor=not self.__isQuestForEventBattle)
                 status = text_styles.bonusAppliedText(QUESTS.MISSIONS_VEHICLESELECTOR_STATUS_SELECTED)
             elif suitableVehicles:
                 label = QUESTS.MISSIONS_VEHICLESELECTOR_STATUS_SELECT

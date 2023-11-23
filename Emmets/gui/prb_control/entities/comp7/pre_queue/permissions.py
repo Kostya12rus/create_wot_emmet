@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/prb_control/entities/comp7/pre_queue/permissions.py
 from gui.prb_control.entities.base.pre_queue.permissions import PreQueuePermissions
 from helpers import dependency
@@ -13,5 +13,7 @@ class Comp7Permissions(PreQueuePermissions):
         if self.__comp7Controller.isOffline or self.__comp7Controller.isBanned:
             return False
         if not self.__comp7Controller.hasPlayableVehicle():
+            return False
+        if not self.__comp7Controller.isQualificationSquadAllowed():
             return False
         return super(Comp7Permissions, self).canCreateSquad()

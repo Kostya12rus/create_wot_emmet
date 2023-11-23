@@ -1,8 +1,8 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/classic/battle_end_warning_panel.py
-import WWISE
+import WWISE, Event
 from gui.Scaleform.daapi.view.meta.BattleEndWarningPanelMeta import BattleEndWarningPanelMeta
 from gui.battle_control.controllers.period_ctrl import IAbstractPeriodView
 from helpers import dependency
@@ -20,6 +20,8 @@ _CALLBACK_NAME = 'battle.onLoadEndWarningPanel'
 
 class BattleEndWarningPanel(BattleEndWarningPanelMeta, IAbstractPeriodView):
     sessionProvider = dependency.descriptor(IBattleSessionProvider)
+    onBattleEndWarningShow = Event.Event()
+    onBattleEndWarningHide = Event.Event()
 
     def __init__(self):
         super(BattleEndWarningPanel, self).__init__()
@@ -47,9 +49,11 @@ class BattleEndWarningPanel(BattleEndWarningPanelMeta, IAbstractPeriodView):
             self.as_setTextInfoS(_ms(_WARNING_TEXT_KEY))
             self.as_setStateS(True)
             self.__isShown = True
+            BattleEndWarningPanel.onBattleEndWarningShow()
         if (totalTime <= self.__appearTime - self.__duration or totalTime > self.__appearTime) and self.__isShown:
             self.as_setStateS(False)
             self.__isShown = False
+            BattleEndWarningPanel.onBattleEndWarningHide()
 
     def _callWWISE(self, wwiseEventName):
         WWISE.WW_eventGlobal(wwiseEventName)

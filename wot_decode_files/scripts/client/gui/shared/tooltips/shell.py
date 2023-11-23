@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/tooltips/shell.py
 from debug_utils import LOG_ERROR
 from constants import SHELL_TYPES
@@ -21,6 +21,7 @@ from gui.shared.tooltips.module import ModuleTooltipBlockConstructor
 from helpers import dependency
 from helpers.i18n import makeString as _ms
 from skeletons.gui.shared import IItemsCache
+from skeletons.gui.game_control import IHalloweenController
 _TOOLTIP_MIN_WIDTH = 380
 _TOOLTIP_MAX_WIDTH = 420
 _AUTOCANNON_SHOT_DISTANCE = 400
@@ -133,6 +134,7 @@ _PARAMS_FORMATTERS_BY_KIND = {SHELL_TYPES.FLAME: HeaderBlockConstructor.emptyFor
    HeaderBlockConstructor.DEFAULT_FORMATTER: HeaderBlockConstructor.formatParam}
 
 class PriceBlockConstructor(ShellTooltipBlockConstructor):
+    _hwController = dependency.descriptor(IHalloweenController)
 
     def __init__(self, shell, configuration, valueWidth):
         super(PriceBlockConstructor, self).__init__(shell, configuration)
@@ -144,10 +146,12 @@ class PriceBlockConstructor(ShellTooltipBlockConstructor):
         configuration = self.configuration
         buyPrice = configuration.buyPrice
         sellPrice = configuration.sellPrice
-        if buyPrice and sellPrice:
-            LOG_ERROR('You are not allowed to use buyPrice and sellPrice at the same time')
-            return
+        if self._hwController.isEventHangar():
+            return (None, False)
         else:
+            if buyPrice and sellPrice:
+                LOG_ERROR('You are not allowed to use buyPrice and sellPrice at the same time')
+                return
             notEnoughMoney = False
             showDelimiter = False
             shop = self.itemsCache.items.shop
@@ -265,8 +269,6 @@ class CommonStatsBlockConstructor(_BaseCommonStatsBlockConstructor):
 
             formattedParameters = params_formatters.getFormattedParamsList(shell.descriptor, self._params)
             block.append(formatters.packTitleDescBlock(title=text_styles.middleTitle(_ms(TOOLTIPS.TANKCARUSEL_MAINPROPERTY)), padding=bottomPadding))
-            asteriskCount = 0
-            footNotes = []
             for paramName, paramValue in formattedParameters:
                 if paramName == ModuleTooltipBlockConstructor.CALIBER:
                     continue
@@ -277,30 +279,19 @@ class CommonStatsBlockConstructor(_BaseCommonStatsBlockConstructor):
                     isPiercingPower = paramName == 'avgPiercingPower'
                     if isPiercingPower:
                         if piercingPowerTable != NO_DATA:
-                            asteriskCount += 1
-                            asterisks = _ASTERISK * asteriskCount
-                            paramUnits += asterisks
-                            title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
-                            if tableData and isDistanceDependent:
-                                paramValue = '%s-%s' % (tableData[0][0], tableData[-1][0])
-                                title = _ms(MENU.MODULEINFO_PARAMS_PIERCINGDISTANCE_FOOTNOTE, minDist=tableData[0][1], maxDist=tableData[-1][1])
-                            footNotes.append(asterisks + title)
-                    isDamage = paramName == 'damage'
-                    isDamagePerSecond = paramName == 'damagePerSecond'
-                    if (isDamage or isDamagePerSecond) and shell.isGuaranteedDamage:
-                        asteriskCount += 1
-                        asterisks = _ASTERISK * asteriskCount
-                        paramUnits += asterisks
-                        footNotes.append(asterisks + _ms(MENU.MODULEINFO_PARAMS_GUARANTEEDDAMAGE_FOOTNOTE))
+                            paramUnits += _ASTERISK
+                        if tableData and isDistanceDependent:
+                            paramValue = '%s-%s' % (tableData[0][0], tableData[-1][0])
                     block.append(self._packParameterBlock(backport.text(R.strings.menu.moduleInfo.params.dyn(paramName)()), paramValue, paramUnits))
 
-            for footNote in footNotes:
-                if self.shell.type == SHELL_TYPES.FLAME:
+            if piercingPowerTable != NO_DATA:
+                if isDistanceDependent and tableData:
+                    title = _ms(MENU.MODULEINFO_PARAMS_PIERCINGDISTANCE_FOOTNOTE, minDist=tableData[0][1], maxDist=tableData[-1][1])
+                elif self.shell.type == SHELL_TYPES.FLAME:
                     title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTEFLAME)
                 else:
                     title = _ms(MENU.MODULEINFO_PARAMS_NOPIERCINGDISTANCE_FOOTNOTE)
-                block.append(formatters.packTitleDescBlock(title=text_styles.standard(footNote), padding=topPadding))
-
+                block.append(formatters.packTitleDescBlock(title=text_styles.standard(title), padding=topPadding))
         return block
 
     @staticmethod

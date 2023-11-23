@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/vehicle_systems/components/vehicleDecal.py
 import weakref, BigWorld
 from helpers import dependency
@@ -34,7 +34,6 @@ class VehicleDecal(object):
         self.__hullParent = None
         self.__turretDecals = []
         self.__turretParent = None
-        self.settingsCore.onSettingsChanged += self.onSettingsChanged
         return
 
     def destroy(self):
@@ -48,6 +47,7 @@ class VehicleDecal(object):
 
     def create(self):
         self.__createDecals(VehicleDecal.getDecalType())
+        self.settingsCore.onSettingsChanged += self.onSettingsChanged
 
     def attach(self):
         if self.__attached or self.__appearance is None:

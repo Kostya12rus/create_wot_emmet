@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/server_events/EventsCache.py
 import math, sys
 from collections import defaultdict, namedtuple
@@ -8,10 +8,9 @@ import typing, BigWorld, motivation_quests, customization_quests, nations
 from Event import Event, EventManager
 from PlayerEvents import g_playerEvents
 from adisp import adisp_async, adisp_process
-from constants import EVENT_CLIENT_DATA, EVENT_TYPE, LOOTBOX_TOKEN_PREFIX, OFFER_TOKEN_PREFIX, TWITCH_TOKEN_PREFIX
+from constants import EVENT_CLIENT_DATA, EVENT_TYPE
 from debug_utils import LOG_DEBUG
 from dossiers2.ui.achievements import ACHIEVEMENT_BLOCK
-from gui.collection.collections_constants import COLLECTION_ITEM_TOKEN_PREFIX_NAME
 from gui.server_events import caches as quests_caches
 from gui.server_events.event_items import MotiveQuest, Quest, ServerEventAbstract, createAction, createQuest
 from gui.server_events.events_helpers import getEventsData, getRerollTimeout, isBattleRoyale, isDailyEpic, isBattleMattersQuestID, isMapsTraining, isMarathon, isPremium, isRankedDaily, isRankedPlatform, isFunRandomQuest
@@ -24,7 +23,6 @@ from gui.shared.system_factory import collectQuestBuilders
 from gui.shared.utils.requesters.QuestsProgressRequester import QuestsProgressRequester
 from helpers import dependency, time_utils
 from items import getTypeOfCompactDescr
-from items.tankmen import RECRUIT_TMAN_TOKEN_PREFIX
 from personal_missions import PERSONAL_MISSIONS_XML_PATH
 from quest_cache_helpers import readQuestsFromFile
 from shared_utils import first, findFirst
@@ -36,11 +34,11 @@ from skeletons.gui.shared.utils import IRaresCache
 if typing.TYPE_CHECKING:
     from typing import Optional, Dict, Callable, Union
     from gui.server_events.event_items import DailyEpicTokenQuest, DailyQuest
-NOT_FOR_PERSONAL_MISSIONS_TOKENS = [LOOTBOX_TOKEN_PREFIX, 
- RECRUIT_TMAN_TOKEN_PREFIX, 
- TWITCH_TOKEN_PREFIX, 
- OFFER_TOKEN_PREFIX, 
- COLLECTION_ITEM_TOKEN_PREFIX_NAME]
+PM_TOKEN_PREFIXES = frozenset([
+ 'pm2_',
+ 'token:pt:',
+ 'free_award_list',
+ 'regular_'])
 _ProgressiveReward = namedtuple('_ProgressiveReward', ('currentStep', 'probability',
                                                        'maxSteps'))
 
@@ -218,7 +216,7 @@ class EventsCache(IEventsCache):
                 isQPUpdated = 'quests' in diff or 'potapovQuests' in diff or 'pm2_progress' in diff
                 if not isQPUpdated and 'tokens' in diff:
                     for tokenID in diff['tokens'].iterkeys():
-                        if all(not tokenID.startswith(t) for t in NOT_FOR_PERSONAL_MISSIONS_TOKENS):
+                        if any(tokenID.startswith(t) for t in PM_TOKEN_PREFIXES):
                             isQPUpdated = True
                             break
 
@@ -343,13 +341,13 @@ class EventsCache(IEventsCache):
         svrGroups.update(self._getActionsGroups(filterFunc))
         return svrGroups
 
-    def getHiddenQuests(self, filterFunc=None):
+    def getHiddenQuests(self, filterFunc=None, noSkip=False):
         filterFunc = filterFunc or (lambda a: True)
 
         def hiddenFilterFunc(q):
             return q.isHidden() and filterFunc(q)
 
-        return self._getQuests(hiddenFilterFunc)
+        return self._getQuests(hiddenFilterFunc, noSkip=noSkip)
 
     def getRankedQuests(self, filterFunc=None):
         filterFunc = filterFunc or (lambda a: True)
@@ -359,8 +357,8 @@ class EventsCache(IEventsCache):
 
         return self._getQuests(rankedFilterFunc)
 
-    def getAllQuests(self, filterFunc=None, includePersonalMissions=False):
-        return self._getQuests(filterFunc, includePersonalMissions)
+    def getAllQuests(self, filterFunc=None, includePersonalMissions=False, noSkip=False):
+        return self._getQuests(filterFunc, includePersonalMissions, noSkip)
 
     def getActions(self, filterFunc=None):
         filterFunc = filterFunc or (lambda a: True)
@@ -553,7 +551,7 @@ class EventsCache(IEventsCache):
             alias = first(m.getAlias() for m in action.getModifiers())
         return (alias, counterValue)
 
-    def _getQuests(self, filterFunc=None, includePersonalMissions=False):
+    def _getQuests(self, filterFunc=None, includePersonalMissions=False, noSkip=False):
         result = {}
         groups = {}
         filterFunc = filterFunc or (lambda a: True)
@@ -563,7 +561,8 @@ class EventsCache(IEventsCache):
             if q.getType() == EVENT_TYPE.GROUP:
                 groups[qID] = q
                 continue
-            if q.getFinishTimeLeft() <= 0:
+            noSkipResult = noSkip and q.noSkip()
+            if q.getFinishTimeLeft() <= 0 and not noSkipResult:
                 continue
             if not filterFunc(q):
                 continue

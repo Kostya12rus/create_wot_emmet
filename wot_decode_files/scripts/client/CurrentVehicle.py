@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/CurrentVehicle.py
-import typing, BigWorld
+from typing import Optional
+import BigWorld
 from constants import CustomizationInvData
 from gui.SystemMessages import pushMessagesFromResult
 from items.components.c11n_constants import SeasonType
@@ -253,6 +254,9 @@ class _CurrentVehicle(_CachedVehicle):
 
     def isTelecom(self):
         return self.isPresent() and self.item.isTelecom
+
+    def isWotPlus(self):
+        return self.isPresent() and self.item.isWotPlus
 
     def isInPrebattle(self):
         return self.isPresent() and self.item.isInPrebattle

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/rally/action_button_state_vo.py
 import re
 from gui.impl import backport
@@ -16,6 +16,7 @@ from helpers import i18n
 from shared_utils import BoundMethodWeakref
 from helpers import dependency
 from skeletons.gui.game_control import IComp7Controller
+from constants import PREBATTLE_TYPE
 
 class ActionButtonStateVO(dict):
     __comp7Ctrl = dependency.descriptor(IComp7Controller)
@@ -141,15 +142,20 @@ class ActionButtonStateVO(dict):
                                                      FORTIFICATIONS.UNIT_WINDOW_WILLSEARCHPLAYERS, {}), 
            UNIT_RESTRICTION.HAS_FROZEN_VEHICLES: (
                                                 backport.text(R.strings.cyberSport.window.unit.message.has_frozen_vehicles()), {})}
-        stateKey, stateCtx = self.__getState()
+        self.__HW_INVALID_UNIT_MESSAGES = {UNIT_RESTRICTION.UNSUITABLE_VEHICLE: (
+                                               self.__getNotAvailableIcon() + backport.text(R.strings.hw_platoon.readyButton.footerMessage.unsuitableVehicle()), {}), 
+           UNIT_RESTRICTION.VEHICLE_INVALID_LEVEL: (
+                                                  PLATOON.MEMBERS_FOOTER_INVALIDVEHICLELEVEL, {})}
+        prbType = unitEntity.getEntityType()
+        stateKey, stateCtx = self.__getState(prbType)
         self['stateString'] = self.__stateTextStyleFormatter(i18n.makeString(stateKey, **stateCtx))
         self['label'] = self._getLabel()
         self['isEnabled'] = self.__isEnabled
         self['isReady'] = self._playerInfo.isReady
         self['toolTipData'] = self.__toolTipData
 
-    def getSimpleState(self):
-        stateKey, stateCtx = self.__getState()
+    def getSimpleState(self, prbType):
+        stateKey, stateCtx = self.__getState(prbType)
         return re.sub('<.*/> ', '', i18n.makeString(stateKey, **stateCtx))
 
     def isReadinessTooltip(self):
@@ -196,7 +202,7 @@ class ActionButtonStateVO(dict):
         return (
          CYBERSPORT.WINDOW_UNIT_MESSAGE_GETREADY, {})
 
-    def __getState(self):
+    def __getState(self, prbType=None):
         if self.__isEnabled:
             if self._playerInfo.isInSlot:
                 if self._playerInfo.isReady:
@@ -211,9 +217,12 @@ class ActionButtonStateVO(dict):
             if self.__flags.isLocked():
                 return (CYBERSPORT.WINDOW_UNIT_MESSAGE_UNITISLOCKED, {})
             return (CYBERSPORT.WINDOW_UNIT_MESSAGE_UNITISFULL, {})
-        if callable(self.__INVALID_UNIT_MESSAGES[self.__restrictionType]):
-            return self.__INVALID_UNIT_MESSAGES[self.__restrictionType]()
-        return self.__INVALID_UNIT_MESSAGES[self.__restrictionType]
+        invalid_unit_message = self.__INVALID_UNIT_MESSAGES[self.__restrictionType]
+        if prbType and prbType == PREBATTLE_TYPE.EVENT and self.__restrictionType in self.__HW_INVALID_UNIT_MESSAGES:
+            invalid_unit_message = self.__HW_INVALID_UNIT_MESSAGES[self.__restrictionType]
+        if callable(invalid_unit_message):
+            return invalid_unit_message()
+        return invalid_unit_message
 
     @property
     def __toolTipData(self):

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/techtree/research_page.py
 import typing
 from logging import getLogger
@@ -487,7 +487,7 @@ class Research(ResearchMeta):
     def __getViewLayoutData(self):
         root = self.vehicle
         result = self.__getBackBtnData()
-        result['isPremiumLayout'] = root.isPremium
+        result['isPremiumLayout'] = root.isPremium and not root.isEvent
         if root.isPremium:
             benefitData = []
             for benefitGetter in _BENEFIT_GETTERS:
@@ -527,6 +527,8 @@ class Research(ResearchMeta):
 
     @staticmethod
     def __getRootStatusStr(root):
+        if root.isEvent:
+            return ''
         if root.isRented and not root.rentalIsOver and not root.isTelecom and not root.isPremiumIGR and not root.isWotPlus:
             return text_styles.concatStylesToSingleLine(icons.makeImageTag(backport.image(R.images.gui.maps.icons.library.ClockIcon_1()), width=38, height=38, vSpace=-14), RentLeftFormatter(root.rentInfo).getRentLeftStr(strForSpecialTimeFormat=backport.text(R.strings.menu.research.status.rentLeft())))
         return ''

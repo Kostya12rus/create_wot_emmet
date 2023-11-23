@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/MusicControllerWWISE.py
 import WWISE, BigWorld, ResMgr
 from PlayerEvents import g_playerEvents
@@ -305,8 +305,10 @@ class MusicController(object):
                 wwSetup = self.__specialSounds.arenaMusicSetup
                 self.stopAmbient()
                 if wwSetup is not None:
-                    import SoundGroups
-                    SoundGroups.g_instance.playSound2D(wwSetup.get('wwmusicEndbattleStop', ''))
+                    endBattleSoundName = wwSetup.get('wwmusicEndbattleStop', '')
+                    if endBattleSoundName:
+                        import SoundGroups
+                        SoundGroups.g_instance.playSound2D(endBattleSoundName)
                 lastBattleEvents = {}
                 if wwSetup is not None:
                     lastBattleEvents[MUSIC_EVENT_COMBAT_VICTORY] = wwSetup.get('wwmusicResultWin', '')

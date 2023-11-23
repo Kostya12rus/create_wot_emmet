@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/player_subscriptions/player_subscriptions_view.py
 import logging, typing
 from frameworks.wulf import ViewFlags, ViewSettings
@@ -22,7 +22,8 @@ from skeletons.gui.game_control import IExternalLinksController, ISteamCompletio
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.platform.product_fetch_controller import ISubscriptionsFetchController
 from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
-from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource
+from uilogging.wot_plus.loggers import WotPlusSubscriptionViewLogger
+from uilogging.wot_plus.logging_constants import WotPlusInfoPageSource, SubscriptionPageKeys
 from wg_async import wg_await, wg_async
 _logger = logging.getLogger(__name__)
 if typing.TYPE_CHECKING:
@@ -70,7 +71,8 @@ class PlayerSubscriptionsView(ViewImpl):
     _wgnpSteamAccCtrl = dependency.descriptor(IWGNPSteamAccRequestController)
     _steamCompletionCtrl = dependency.descriptor(ISteamCompletionController)
     _wotPlusCtrl = dependency.descriptor(IWotPlusController)
-    __slots__ = ('__subscriptionsFetchResult', '__incompleteSteamAccount', '__subscriptions')
+    __slots__ = ('__subscriptionsFetchResult', '__incompleteSteamAccount', '__subscriptions',
+                 '_wotPlusUILogger')
 
     def __init__(self, layoutID=R.views.lobby.player_subscriptions.PlayerSubscriptions()):
         settings = ViewSettings(layoutID)
@@ -79,15 +81,18 @@ class PlayerSubscriptionsView(ViewImpl):
         self.__subscriptionsFetchResult = None
         self.__subscriptions = {}
         self.__incompleteSteamAccount = False
+        self._wotPlusUILogger = WotPlusSubscriptionViewLogger()
         super(PlayerSubscriptionsView, self).__init__(settings)
         return
 
     def _initialize(self, *args, **kwargs):
         super(PlayerSubscriptionsView, self)._initialize(*args, **kwargs)
         self._wotPlusCtrl.onDataChanged += self.__onWotPlusStatusChanged
+        self._wotPlusUILogger.onViewInitialize()
 
     def _finalize(self):
         self._wotPlusCtrl.onDataChanged -= self.__onWotPlusStatusChanged
+        self._wotPlusUILogger.onViewFinalize()
         super(PlayerSubscriptionsView, self)._finalize()
 
     @wg_async
@@ -155,17 +160,17 @@ class PlayerSubscriptionsView(ViewImpl):
             subscriptions.invalidate()
 
     def __onBackClick(self):
+        self._wotPlusUILogger.logCloseEvent()
         self.destroyWindow()
 
     def __onCardClick(self, args):
         id_ = args['subscriptionId']
         if self.__subscriptions[id_] == SubscriptionTypeEnum.WOTSUBSCRIPTION:
             if self._steamCompletionCtrl.isSteamAccount:
+                self._wotPlusUILogger.logClickEvent(SubscriptionPageKeys.INFO_BUTTON)
                 showSteamRedirectWotPlus()
-            elif self._wotPlusCtrl.isEnabled():
-                showWotPlusProductPage()
             else:
-                showWotPlusInfoPage(WotPlusInfoPageSource.SUBSCRIPTION_PAGE)
+                showWotPlusInfoPage(WotPlusInfoPageSource.SUBSCRIPTION_PAGE, includeSubscriptionInfo=True)
             return
         if self.__subscriptions[id_] == SubscriptionTypeEnum.EXTERNALSUBSCRIPTION:
             url = GUI_SETTINGS.playerSubscriptionsURL
@@ -174,6 +179,7 @@ class PlayerSubscriptionsView(ViewImpl):
     def __onButtonClick(self, args):
         id_ = args['subscriptionId']
         if self.__subscriptions[id_] == SubscriptionTypeEnum.WOTSUBSCRIPTION:
+            self._wotPlusUILogger.logClickEvent(SubscriptionPageKeys.CTA_BUTTON)
             if self._steamCompletionCtrl.isSteamAccount:
                 showSteamRedirectWotPlus()
             else:

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/battle_matters/battle_matters_entry_point_view.py
 import typing
 from frameworks.wulf import ViewFlags, ViewSettings
@@ -24,7 +24,7 @@ class BattleMattersEntryPointView(ViewImpl):
 
     def __init__(self):
         settings = ViewSettings(R.views.lobby.battle_matters.BattleMattersEntryPointView())
-        settings.flags = ViewFlags.COMPONENT
+        settings.flags = ViewFlags.VIEW
         settings.model = BattleMattersEntryPointViewModel()
         super(BattleMattersEntryPointView, self).__init__(settings)
 
@@ -52,8 +52,8 @@ class BattleMattersEntryPointView(ViewImpl):
 
     def __update(self, *_):
         with self.viewModel.transaction() as (tx):
-            tx.setIsCompleted(self.__battleMattersController.isFinished())
             currentQuest = self.__battleMattersController.getCurrentQuest()
+            tx.setIsCompleted(currentQuest is None)
             state = State.NORMAL
             if self.__battleMattersController.isPaused():
                 state = State.ERROR

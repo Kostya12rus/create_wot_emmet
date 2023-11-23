@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarPositionControl.py
 import weakref, logging, math_utils, BigWorld, Math
 from Event import Event
@@ -33,7 +33,7 @@ class ConsistentMatrices(object):
             self.notifyVehicleChanged(avatar)
         elif vehicle.id == avatar.playerVehicleID:
             self.__linkOwnVehicle(vehicle)
-            self.__setTarget(vehicle.matrix, False)
+            self.__setTarget(vehicle.cameraTargetMatrix, False)
 
     def notifyPreBind(self, avatar):
         vehicle = avatar.getVehicleAttached()
@@ -41,20 +41,21 @@ class ConsistentMatrices(object):
             bindMatrix = self.attachedVehicleMatrix
             useStatic = True
         else:
-            bindMatrix = vehicle.matrix
+            bindMatrix = vehicle.cameraTargetMatrix
             useStatic = False
         self.__setTarget(bindMatrix, useStatic)
         return
 
     def notifyVehicleChanged(self, avatar, updateStopped=False):
-        if avatar.vehicle is None or not updateStopped and not avatar.vehicle.isStarted:
+        vehicle = avatar.vehicle
+        if vehicle is None or not updateStopped and not vehicle.isStarted and not vehicle.isHidden:
             self.__attachedVehicleMatrix.target = None
             self.onVehicleMatrixBindingChanged(True)
             return
         else:
-            if avatar.vehicle.id == avatar.playerVehicleID:
-                self.__linkOwnVehicle(avatar.vehicle)
-            self.__setTarget(avatar.vehicle.matrix, False)
+            if vehicle.id == avatar.playerVehicleID:
+                self.__linkOwnVehicle(vehicle)
+            self.__setTarget(vehicle.cameraTargetMatrix, False)
             return
 
     def notifyViewPointChanged(self, avatar, staticPosition=None):
@@ -72,13 +73,11 @@ class ConsistentMatrices(object):
         return
 
     def __linkOwnVehicle(self, vehicle):
+        self.__ownVehicleMProv.target = vehicle.matrix
         if isinstance(vehicle.filter, BigWorld.WGVehicleFilter):
-            self.__ownVehicleMProv.target = vehicle.filter.bodyMatrix
             self.__ownVehicleTurretMProv.target = vehicle.filter.turretMatrix
-        else:
-            self.__ownVehicleMProv.target = vehicle.matrix
-            if vehicle.appearance:
-                self.__ownVehicleTurretMProv.target = vehicle.appearance.turretMatrix
+        elif vehicle.appearance:
+            self.__ownVehicleTurretMProv.target = vehicle.appearance.turretMatrix
 
 
 class AvatarPositionControl(CallbackDelayer):

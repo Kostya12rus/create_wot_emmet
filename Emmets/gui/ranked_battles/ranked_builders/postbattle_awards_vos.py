@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/ranked_battles/ranked_builders/postbattle_awards_vos.py
 import typing
 from collections import namedtuple
@@ -30,8 +30,6 @@ def getVOsSequence(awardBlocks, ranks, rankedInfo):
             result.append(_getRankCongVO(awardBlock, rank))
             if rank.isInitialForNextDivision():
                 result.append(_getDivisionCongVO(awardBlock, ranks, rankedInfo))
-            if rank.isFinal():
-                result.append(_getLeagueCongVO(rankedInfo))
 
     return result
 
@@ -74,8 +72,8 @@ def _getDivisionVO(division, newDivision):
 
 
 def _getBonusBattleFields(stepsBonus, efficiencyBonus, isDaily):
-    return {'bonusBattleText': _getBonusBattlesDiffLabel(stepsBonus + efficiencyBonus), 
-       'bonusBattleTooltip': _getBonusBattlesTooltip(stepsBonus, efficiencyBonus, isDaily)}
+    return {'bonusBattleText': _getBonusBattlesDiffLabel(stepsBonus + efficiencyBonus) if stepsBonus else '', 
+       'bonusBattleTooltip': _getBonusBattlesTooltip(stepsBonus, efficiencyBonus, isDaily) if stepsBonus else ''}
 
 
 def _getBonusBattlesDiffLabel(bonusBattlesDiff):

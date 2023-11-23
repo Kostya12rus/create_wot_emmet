@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/system_factory.py
 from collections import defaultdict
 BATTLE_REPO = 1
@@ -48,6 +48,8 @@ HANGAR_PRESETS_READERS = 42
 HANGAR_PRESETS_PROCESSORS = 43
 AMMUNITION_PANEL_VIEW = 44
 VEHICLE_VIEW_STATE = 45
+DYN_OBJ_CACHE = 46
+SHARED_REPO = 47
 
 class _CollectEventsManager(object):
 
@@ -157,6 +159,20 @@ def registerBattleControllerRepo(guiType, repoCls):
 
 def collectBattleControllerRepo(guiType, setup):
     ctx = __collectEM.handleEvent((BATTLE_REPO, guiType), ctx={'setup': setup})
+    return (ctx.get('repo'), 'repo' in ctx)
+
+
+def registerSharedControllerRepo(guiType, repoCls):
+
+    def onCollect(ctx):
+        ctx['repo'] = repoCls.create(ctx['setup']) if repoCls else None
+        return
+
+    __collectEM.addListener((SHARED_REPO, guiType), onCollect)
+
+
+def collectSharedControllerRepo(guiType, setup):
+    ctx = __collectEM.handleEvent((SHARED_REPO, guiType), ctx={'setup': setup})
     return (ctx.get('repo'), 'repo' in ctx)
 
 
@@ -714,3 +730,15 @@ def registerVehicleViewState(viewState):
 
 def collectVehicleViewStates():
     return __collectEM.handleEvent(VEHICLE_VIEW_STATE, ctx={'viewStates': []})['viewStates']
+
+
+def registerDynObjCache(queueType, dynCache):
+
+    def onCollect(ctx):
+        ctx['dynCache'] = dynCache
+
+    __collectEM.addListener((DYN_OBJ_CACHE, queueType), onCollect)
+
+
+def collectDynObjCache(queueType):
+    return __collectEM.handleEvent((DYN_OBJ_CACHE, queueType), ctx={}).get('dynCache')

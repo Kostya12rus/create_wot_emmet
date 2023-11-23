@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/genConsts/BATTLE_VIEW_ALIASES.py
 
 
@@ -46,7 +46,7 @@ class BATTLE_VIEW_ALIASES(object):
     BOOTCAMP_CONSUMABLES_PANEL = 'bootcampConsumablesPanel'
     BOOTCAMP_RIBBONS_PANEL = 'bootcampRibbonsPanel'
     BOOTCAMP_SECONDARY_HINT = 'bootcampSecondaryHint'
-    BOOTCAMP_BATTLE_TOP_HINT = 'bootcampBattleTopHint'
+    ANIMATED_BATTLE_HINT = 'animatedBattleHint'
     GAME_MESSAGES_PANEL = 'gameMessagesPanel'
     EPIC_RESPAWN_VIEW = 'epicRespawnView'
     EPIC_SCORE_PANEL = 'epicScorePanel'
@@ -67,11 +67,15 @@ class BATTLE_VIEW_ALIASES(object):
     HELP_DETAILED = 'helpDetailed'
     PLAYERS_PANEL_EVENT = 'playersPanelEvent'
     BATTLE_HINT = 'battleHint'
+    BATTLE_BUFF_HINT = 'battleBuffHint'
+    BATTLE_PICKUP_HINT = 'battlePickupHint'
+    BATTLE_BASE_HINT = 'battleBaseHint'
     EVENT_POINT_COUNTER = 'eventPointCounter'
     EVENT_TIMER = 'eventTimer'
     EVENT_STATS = 'eventStats'
     EVENT_DESTROY_TIMERS_PANEL = 'eventDestroyTimersPanel'
     EVENT_BUFFS_PANEL = 'eventBuffsPanel'
+    EVENT_BASE_PANEL = 'eventBasePanel'
     EVENT_OBJECTIVES = 'eventObjectives'
     CALLOUT_PANEL = 'calloutPanel'
     BATTLE_NOTIFIER = 'battleNotifier'
@@ -92,5 +96,6 @@ class BATTLE_VIEW_ALIASES(object):
     EPIC_RESPAWN_AMMUNITION_PANEL = 'epicRespawnAmmunitionPanel'
     MAPS_TRAINING_GOALS = 'mapsTrainingGoals'
     PIERCING_DEBUG_PANEL = 'piercingDebugPanel'
+    MAP_INFO_TIP = 'mapInfoTip'
     COMP7_TANK_CAROUSEL = 'comp7BattleTankCarousel'
     COMP7_TANK_CAROUSEL_FILTER_POPOVER = 'comp7TankCarouselFilterPopover'

@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/items/_xml.py
 from typing import *
 from functools import wraps, partial
@@ -652,28 +652,26 @@ def removeSameSection(sectionA, sectionB):
     for section in childSectionsToRemove:
         sectionA.deleteSection(section)
 
-    if dictChildA:
-        if isAllChildRemoved:
-            return True
-        else:
-            return False
-
-    try:
-        floatListsA = [ float(item) for item in sectionA.asString.split() ]
-        floatListsB = [ float(item) for item in sectionB.asString.split() ]
-        if len(floatListsA) != len(floatListsB):
-            return False
-        for a, b in zip(floatListsA, floatListsB):
-            if abs(a - b) > 1e-05:
-                return False
-
-        return True
-    except ValueError:
-        pass
-
-    if sectionA.asBinary == sectionB.asBinary:
-        return True
+    if dictChildA and not isAllChildRemoved:
+        return False
     else:
+        try:
+            floatListsA = [ float(item) for item in sectionA.asString.split() ]
+            floatListsB = [ float(item) for item in sectionB.asString.split() ]
+            if len(floatListsA) != len(floatListsB):
+                return False
+            for a, b in zip(floatListsA, floatListsB):
+                if abs(a - b) > 1e-05:
+                    return False
+
+            return True
+        except ValueError:
+            pass
+
+        if sectionA.asString == sectionB.asString:
+            return True
+        if sectionA.asBinary == sectionB.asBinary:
+            return True
         return False
         return
 

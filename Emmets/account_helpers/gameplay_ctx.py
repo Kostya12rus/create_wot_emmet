@@ -1,8 +1,9 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/account_helpers/gameplay_ctx.py
 import ArenaType, constants
+from constants import RANDOM_FLAGS
 from debug_utils import LOG_DEBUG, LOG_ERROR, LOG_WARNING
 from helpers import dependency
 from skeletons.account_helpers.settings_core import ISettingsCore
@@ -66,3 +67,18 @@ def isOnly10ModeEnabled():
     from account_helpers.settings_core.settings_constants import GAME
     settingsCore = dependency.instance(ISettingsCore)
     return settingsCore.getSetting(GAME.GAMEPLAY_ONLY_10_MODE)
+
+
+def isMapsInDevelopmentEnabled():
+    from account_helpers.settings_core.settings_constants import GAME
+    settingsCore = dependency.instance(ISettingsCore)
+    return settingsCore.getSetting(GAME.GAMEPLAY_DEV_MAPS)
+
+
+def getRandomFlags():
+    flags = 0
+    if isOnly10ModeEnabled():
+        flags |= RANDOM_FLAGS.IS_ONLY_10_MODE_ENABLED
+    if isMapsInDevelopmentEnabled():
+        flags |= RANDOM_FLAGS.IS_MAPS_IN_DEVELOPMENT_ENABLED
+    return flags

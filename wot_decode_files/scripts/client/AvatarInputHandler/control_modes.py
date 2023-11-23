@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/AvatarInputHandler/control_modes.py
 import logging, time, weakref
 from collections import namedtuple
@@ -12,7 +12,7 @@ from AvatarInputHandler import AimingSystems, aih_global_binding, gun_marker_ctr
 from AvatarInputHandler.DynamicCameras.camera_switcher import SwitchToPlaces
 from AvatarInputHandler.StrategicCamerasInterpolator import StrategicCamerasInterpolator
 from AvatarInputHandler.spg_marker_helpers.spg_marker_helpers import getSPGShotResult, getSPGShotFlyTime
-from DynamicCameras import SniperCamera, StrategicCamera, ArcadeCamera, ArtyCamera, DualGunCamera, FlameArtyCamera
+from DynamicCameras import SniperCamera, StrategicCamera, ArcadeCamera, ArtyCamera, DualGunCamera, OnlyArtyCamera
 from PostmortemDelay import PostmortemDelay
 from ProjectileMover import collideDynamicAndStatic
 from TriggersManager import TRIGGER_TYPE
@@ -121,7 +121,7 @@ class IControlMode(object):
         return
 
     def enableSwitchAutorotationMode(self, triggeredByKey=False):
-        return True
+        return not (triggeredByKey and BigWorld.player().isVehicleMoving())
 
     def setForcedGuiControlMode(self, enable):
         pass
@@ -479,7 +479,7 @@ class ArcadeControlMode(_GunControlMode):
 
     def __init__(self, dataSection, avatarInputHandler):
         super(ArcadeControlMode, self).__init__(dataSection, avatarInputHandler, mode=CTRL_MODE_NAME.ARCADE)
-        self._cam = ArcadeCamera.ArcadeCamera(dataSection['camera'], defaultOffset=self._defaultOffset)
+        self._setupCamera(dataSection)
         self.__mouseVehicleRotator = _MouseVehicleRotator()
         self.__videoControlModeAvailable = dataSection.readBool('videoModeAvailable', constants.HAS_DEV_RESOURCES)
         self.__videoControlModeAvailable &= BattleReplay.g_replayCtrl.isPlaying or constants.HAS_DEV_RESOURCES
@@ -622,11 +622,14 @@ class ArcadeControlMode(_GunControlMode):
         else:
             return False
 
+    def _setupCamera(self, dataSection):
+        self._cam = ArcadeCamera.ArcadeCamera(dataSection['camera'], defaultOffset=self._defaultOffset)
+
     def __activateAlternateMode(self, pos=None, bByScroll=False):
         ownVehicle = BigWorld.entity(BigWorld.player().playerVehicleID)
         if ownVehicle is not None and ownVehicle.isStarted and avatar_getter.isVehicleBarrelUnderWater() or BigWorld.player().isGunLocked or BigWorld.player().isObserver():
             return
-        if self._aih.isSPG and not bByScroll or self._aih.isFlamethrower:
+        if self._aih.isSPG and not bByScroll or self._aih.isOnlyArty:
             self._cam.update(0, 0, 0, False, False)
             equipmentID = None
             if BattleReplay.isPlaying():
@@ -634,7 +637,7 @@ class ArcadeControlMode(_GunControlMode):
                 pos = BattleReplay.g_replayCtrl.getGunMarkerPos()
                 equipmentID = BattleReplay.g_replayCtrl.getEquipmentId()
             else:
-                mode = CTRL_MODE_NAME.FLAMETHROWER if self._aih.isFlamethrower else self.__getSpgAlternativeMode()
+                mode = CTRL_MODE_NAME.SPG_ONLY_ARTY_MODE if self._aih.isOnlyArty else self.__getSpgAlternativeMode()
                 if pos is None:
                     pos = self.camera.aimingSystem.getDesiredShotPoint()
                     if pos is None:
@@ -984,27 +987,28 @@ class ArtyControlMode(_TrajectoryControlMode):
         self.strategicCamera = STRATEGIC_CAMERA.AERIAL
 
 
-class FlamethrowerControlMode(_TrajectoryControlMode):
+class OnlyArtyControlMode(_TrajectoryControlMode):
     __sessionProvider = dependency.descriptor(IBattleSessionProvider)
     _TRAJECTORY_UPDATE_INTERVAL = 0.05
 
     def __init__(self, dataSection, avatarInputHandler):
-        super(FlamethrowerControlMode, self).__init__(dataSection, avatarInputHandler, CTRL_MODE_NAME.FLAMETHROWER, FlamethrowerControlMode._TRAJECTORY_UPDATE_INTERVAL)
+        super(OnlyArtyControlMode, self).__init__(dataSection, avatarInputHandler, CTRL_MODE_NAME.SPG_ONLY_ARTY_MODE, OnlyArtyControlMode._TRAJECTORY_UPDATE_INTERVAL)
         self._nextControlMode = None
-        self._cam = FlameArtyCamera.FlameArtyCamera(dataSection['camera'])
+        self._cam = OnlyArtyCamera.OnlyArtyCamera(dataSection['camera'])
         return
 
     def enable(self, **args):
-        super(FlamethrowerControlMode, self).enable(**args)
+        super(OnlyArtyControlMode, self).enable(**args)
         self.strategicCamera = STRATEGIC_CAMERA.TRAJECTORY
-        self._cam.setMaxDistance(BigWorld.player().getVehicleDescriptor().shot.maxDistance)
+        if self._aih.isFlamethrower:
+            self._cam.setMaxDistance(BigWorld.player().getVehicleDescriptor().shot.maxDistance)
         ammoCtrl = self.__sessionProvider.shared.ammo
         if ammoCtrl is not None:
             ammoCtrl.onCurrentShellChanged += self.__onCurrentShellChanged
         return
 
     def disable(self):
-        super(FlamethrowerControlMode, self).disable()
+        super(OnlyArtyControlMode, self).disable()
         self.strategicCamera = STRATEGIC_CAMERA.AERIAL
         ammoCtrl = self.__sessionProvider.shared.ammo
         if ammoCtrl is not None:
@@ -1360,19 +1364,23 @@ class PostMortemControlMode(IControlMode):
 
     def enable(self, **args):
         SoundGroups.g_instance.changePlayMode(0)
+        playerPostmortemViewPointDefined = False
         player = BigWorld.player()
         if player:
             self.__selfVehicleID = player.playerVehicleID
             self.__isObserverMode = 'observer' in player.vehicleTypeDescriptor.type.tags
             self.__curVehicleID = self.__selfVehicleID
+            playerVehicle = BigWorld.entities.get(player.playerVehicleID)
+            if playerVehicle:
+                playerPostmortemViewPointDefined = playerVehicle.isPostmortemViewPointDefined
         camTransitionParams = {'cameraTransitionDuration': args.get('transitionDuration', -1), 'camMatrix': args.get('camMatrix', None)}
         self.__cam.enable(None, False, args.get('postmortemParams'), None, None, camTransitionParams)
         newVehicle = args.get('newVehicleID', None)
-        self.__cam.vehicleMProv = BigWorld.player().consistentMatrices.attachedVehicleMatrix if newVehicle is None else BigWorld.entities.get(newVehicle).matrix
+        self.__cam.vehicleMProv = player.consistentMatrices.attachedVehicleMatrix if newVehicle is None else BigWorld.entities.get(newVehicle).matrix
         self.__connectToArena()
         _setCameraFluency(self.__cam.camera, self.__CAM_FLUENCY)
         self.__isEnabled = True
-        BigWorld.player().consistentMatrices.onVehicleMatrixBindingChanged += self._onMatrixBound
+        player.consistentMatrices.onVehicleMatrixBindingChanged += self._onMatrixBound
         if not BattleReplay.g_replayCtrl.isPlaying:
             if self.__isObserverMode:
                 vehicleID = args.get('vehicleID')
@@ -1381,7 +1389,7 @@ class PostMortemControlMode(IControlMode):
                 else:
                     self.__fakeSwitchToVehicle(vehicleID)
                 return
-            if (self._isPostmortemDelayEnabled() or bool(args.get('respawn', False))) and bool(args.get('bPostmortemDelay')):
+            if (self._isPostmortemDelayEnabled() or bool(args.get('respawn', False))) and bool(args.get('bPostmortemDelay')) and not playerPostmortemViewPointDefined:
                 self.__startPostmortemDelay(self.__selfVehicleID)
             else:
                 self.__switchToVehicle(None)
@@ -1397,6 +1405,9 @@ class PostMortemControlMode(IControlMode):
                 respawnCtrl.onRespawnInfoUpdated += self.__onRespawnInfoUpdated
                 if respawnCtrl.respawnInfo is not None:
                     self.__onRespawnInfoUpdated(respawnCtrl.respawnInfo)
+        if playerPostmortemViewPointDefined:
+            matrix = Math.Matrix(player.consistentMatrices.attachedVehicleMatrix)
+            self.__cam.setYawPitch(matrix.yaw, -matrix.pitch)
         return
 
     def __startPostmortemDelay(self, vehicleID):
@@ -1818,39 +1829,6 @@ class _ShellingControl(object):
         self.__targetModel.visible = value
 
 
-class _PlayerGunInformation(object):
-
-    @staticmethod
-    def getCurrentShotInfo():
-        player = BigWorld.player()
-        gunRotator = player.gunRotator
-        shotDesc = player.getVehicleDescriptor().shot
-        gunMat = AimingSystems.getPlayerGunMat(gunRotator.turretYaw, gunRotator.gunPitch)
-        position = gunMat.translation
-        velocity = gunMat.applyVector(Math.Vector3(0, 0, shotDesc.speed))
-        return (
-         position, velocity, Math.Vector3(0, -shotDesc.gravity, 0))
-
-    @staticmethod
-    def updateMarkerDispersion(spgMarkerComponent, isServerAim=False):
-        dispersionAngle = BigWorld.player().gunRotator.dispersionAngle
-        replayCtrl = BattleReplay.g_replayCtrl
-        if replayCtrl.isPlaying and replayCtrl.isClientReady:
-            d, s = replayCtrl.getSPGGunMarkerParams()
-            if d != -1.0 and s != -1.0:
-                dispersionAngle = d
-        elif replayCtrl.isRecording:
-            if replayCtrl.isServerAim and isServerAim:
-                replayCtrl.setSPGGunMarkerParams(dispersionAngle, 0.0)
-            elif not isServerAim:
-                replayCtrl.setSPGGunMarkerParams(dispersionAngle, 0.0)
-        spgMarkerComponent.setupConicDispersion(dispersionAngle)
-
-    @staticmethod
-    def updateServerMarkerDispersion(spgMarkerComponent):
-        _PlayerGunInformation.updateMarkerDispersion(spgMarkerComponent, True)
-
-
 class _MouseVehicleRotator(object):
     ROTATION_ACTIVITY_INTERVAL = 0.2
 
@@ -1971,4 +1949,4 @@ def _swap(data, index1, index2):
 
 def _isEnabledChangeModeByScroll(camera, aih):
     sniperModeByShift = camera.getUserConfigValue(GAME.SNIPER_MODE_BY_SHIFT)
-    return not sniperModeByShift and not aih.isFlamethrower or aih.isObserverFPV
+    return not sniperModeByShift and not aih.isOnlyArty or aih.isObserverFPV

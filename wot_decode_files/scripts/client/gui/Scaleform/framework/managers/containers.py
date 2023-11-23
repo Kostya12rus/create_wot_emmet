@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/framework/managers/containers.py
 import logging, weakref
 from collections import OrderedDict
@@ -620,6 +620,7 @@ class ContainerManager(ContainerManagerMeta, IContainerManager):
         self.onViewAddedToContainer = Event()
         self.onViewLoading = Event()
         self.onViewLoaded = Event()
+        self.onViewLoadCanceled = Event()
         self.__globalContainer = _GlobalViewContainer(weakref.proxy(self))
         for container in containers:
             self.__globalContainer.addChildContainer(container)
@@ -627,6 +628,7 @@ class ContainerManager(ContainerManagerMeta, IContainerManager):
         self.__loader = loader
         self.__loader.onViewLoadInit += self.__onViewLoadInit
         self.__loader.onViewLoaded += self.__onViewLoaded
+        self.__loader.onViewLoadCanceled += self.__onViewLoadCanceled
         self.__scopeController = GlobalScopeController()
         self.__scopeController.create()
         self.__viewCache = _ViewCollection()
@@ -638,6 +640,7 @@ class ContainerManager(ContainerManagerMeta, IContainerManager):
         if self.__loader is not None:
             self.__loader.onViewLoaded -= self.__onViewLoaded
             self.__loader.onViewLoadInit -= self.__onViewLoadInit
+            self.__loader.onViewLoadCanceled -= self.__onViewLoadCanceled
             self.__loader = None
         for layer, layerName in enumerate(LAYER_NAMES.LAYER_ORDER):
             container = self.__globalContainer.findContainer(layer)
@@ -889,3 +892,6 @@ class ContainerManager(ContainerManagerMeta, IContainerManager):
 
     def __onViewLoadInit(self, view, *args, **kwargs):
         self.onViewLoading(view)
+
+    def __onViewLoadCanceled(self, key, item):
+        self.onViewLoadCanceled(key, item)

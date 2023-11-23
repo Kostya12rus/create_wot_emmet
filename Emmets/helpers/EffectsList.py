@@ -1,6 +1,6 @@
 # uncompyle6 version 3.9.0
 # Python bytecode version base 2.7 (62211)
-# Decompiled from: Python 3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]
+# Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/helpers/EffectsList.py
 import logging, random, string
 from collections import namedtuple
@@ -9,7 +9,6 @@ from collections import defaultdict
 import AnimationSequence, BigWorld, Math, WWISE, DecalMap, SoundGroups, helpers, material_kinds
 from PixieBG import PixieBG
 from helpers import dependency
-from items.readers import sound_readers
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.battle_session import IBattleSessionProvider
 from soft_exception import SoftException
@@ -116,9 +115,6 @@ class EffectsList(object):
 
             del data['_EffectsList_effects']
             return
-
-    def descriptors(self):
-        return self.__effectDescList
 
 
 class EffectsListPlayer(object):
@@ -343,14 +339,13 @@ class _PixieEffectDesc(_EffectDesc):
         return self._files
 
     def reattach(self, elem, model):
-        newPos = elem['newPos']
         nodePos = self._nodeName
         elem['model'] = model
-        if newPos is not None:
-            nodePos = string.split(newPos[0], '/') if newPos[0] else []
+        if elem['newPos'] is not None:
+            nodePos = string.split(elem['newPos'][0], '/') if elem['newPos'][0] else []
         if elem['pixie'].pixie is not None and elem['node'] is not None:
             elem['node'].detach(elem['pixie'].pixie)
-            elem['node'] = _findTargetNode(model, nodePos, newPos[1] if newPos and len(newPos) > 1 else None, self._orientByClosestSurfaceNormal, elem['surfaceNormal'])
+            elem['node'] = _findTargetNode(model, nodePos, elem['newPos'][1] if elem['newPos'] else None, self._orientByClosestSurfaceNormal, elem['surfaceNormal'])
             elem['node'].attach(elem['pixie'].pixie)
         else:
             elem['node'] = _findTargetNode(model, nodePos, None, self._orientByClosestSurfaceNormal, elem['surfaceNormal'])
@@ -360,10 +355,10 @@ class _PixieEffectDesc(_EffectDesc):
         elem = {}
         node = args.get('node', None)
         if node is None:
-            elem['newPos'] = newPos = args.get('position', None)
+            elem['newPos'] = args.get('position', None)
             nodePos = self._nodeName
-            if newPos is not None:
-                nodePos = string.split(newPos[0], '/') if newPos[0] else []
+            if elem['newPos'] is not None:
+                nodePos = string.split(elem['newPos'][0], '/') if elem['newPos'][0] else []
             scale = args.get('scale')
             if scale is not None:
                 elem['scale'] = scale
@@ -372,7 +367,7 @@ class _PixieEffectDesc(_EffectDesc):
             if surfaceMatKind is not None and self._surfaceMatKinds is not None:
                 if surfaceMatKind not in self._surfaceMatKinds:
                     return
-            elem['node'] = _findTargetNode(model, nodePos, newPos[1] if newPos and len(newPos) > 1 else None, self._orientByClosestSurfaceNormal, elem['surfaceNormal'])
+            elem['node'] = _findTargetNode(model, nodePos, elem['newPos'][1] if elem['newPos'] else None, self._orientByClosestSurfaceNormal, elem['surfaceNormal'])
         else:
             elem['node'] = node
         elem['model'] = model
@@ -514,11 +509,10 @@ class _ModelEffectDesc(_EffectDesc):
 
     def reattach(self, elem, model):
         elem['node'].detach(elem['attachment'])
-        newPos = elem['newPos']
         nodeName = self._nodeName
-        if newPos is not None:
-            nodeName = string.split(newPos[0], '/') if newPos[0] else []
-        targetNode = _findTargetNode(model, nodeName, newPos[1] if newPos and len(newPos) > 1 else None)
+        if elem['newPos'] is not None:
+            nodeName = string.split(elem['newPos'][0], '/') if elem['newPos'][0] else []
+        targetNode = _findTargetNode(model, nodeName, elem['newPos'][1] if elem['newPos'] else None)
         targetNode.attach(model)
         return
 
@@ -528,7 +522,7 @@ class _ModelEffectDesc(_EffectDesc):
         nodeName = self._nodeName
         if newPos is not None:
             nodeName = string.split(newPos[0], '/') if newPos[0] else []
-        targetNode = _findTargetNode(model, nodeName, newPos[1] if newPos and len(newPos) > 1 else None)
+        targetNode = _findTargetNode(model, nodeName, newPos[1] if newPos else None)
         targetNode.attach(currentModel)
         animator = None
         if self._animation:
@@ -778,15 +772,13 @@ class _TracerSoundEffectDesc(_NodeSoundEffectDesc):
 
     def create(self, model, effects, args):
         isPlayer, _ = self._isPlayer(args)
-        if self._canCreateSoundObject(isPlayer):
-            soundName, _ = self._getName(args)
-            if soundName and not soundName[0].startswith('flamer'):
-                self.__stopSoundEventName = 'psb_pc_stop' if isPlayer else 'psb_npc_stop'
-            soundObject = super(_TracerSoundEffectDesc, self).create(model, effects, args)
-            if soundObject is not None and self.__tracerDelaySound is not None:
-                self.__tracerDelaySound.create(soundObject, args)
-            return soundObject
-        return
+        soundName, _ = self._getName(args)
+        if soundName and not soundName[0].startswith('flamer'):
+            self.__stopSoundEventName = 'psb_pc_stop' if isPlayer else 'psb_npc_stop'
+        soundObject = super(_TracerSoundEffectDesc, self).create(model, effects, args)
+        if soundObject is not None and self.__tracerDelaySound is not None:
+            self.__tracerDelaySound.create(soundObject, args)
+        return soundObject
 
     def delete(self, elem, reason):
         if self.__tracerDelaySound is not None:
@@ -810,28 +802,6 @@ class _TracerSoundEffectDesc(_NodeSoundEffectDesc):
             return (attackerID == BigWorld.player().playerVehicleID, attackerID)
         else:
             return super(_TracerSoundEffectDesc, self)._isPlayer(args)
-
-    def _canCreateSoundObject(self, isPlayer):
-        return True
-
-
-class _PartialTracerSoundEffectDesc(_TracerSoundEffectDesc):
-    __slots__ = ('__partialCount', )
-    effectNumber = 0
-    TYPE = '_ProbTracerSoundEffectDesc'
-
-    def __init__(self, dataSection):
-        super(_PartialTracerSoundEffectDesc, self).__init__(dataSection)
-        self.__partialCount = dataSection.readInt('partialCount', 1)
-
-    @classmethod
-    def nextEffectNumber(cls):
-        effectNumber = cls.effectNumber
-        cls.effectNumber += 1
-        return effectNumber
-
-    def _canCreateSoundObject(self, isPlayer):
-        return self.nextEffectNumber() % self.__partialCount == 0
 
 
 class _CollisionSoundEffectDesc(_BaseSoundEvent):
@@ -1419,17 +1389,6 @@ class _TracerDelaySound(object):
         return self._soundName[0]
 
 
-class _AutoShootEffectDesc(_EffectDesc):
-    __slots__ = ('effectsPrefab', 'activationSound', 'deactivationSound')
-    TYPE = '_AutoShootEffectDesc'
-
-    def __init__(self, dataSection):
-        super(_AutoShootEffectDesc, self).__init__(dataSection)
-        self.effectsPrefab = dataSection.readString('effectsPrefab')
-        self.activationSound = sound_readers.readWWTripleSoundConfig(dataSection['activationSound'])
-        self.deactivationSound = sound_readers.readWWTripleSoundConfig(dataSection['deactivationSound'])
-
-
 _effectDescFactory = {'pixie': _PixieEffectDesc, 
    'animation': _AnimationEffectDesc, 
    'sound': _SoundEffectDesc, 
@@ -1437,7 +1396,6 @@ _effectDescFactory = {'pixie': _PixieEffectDesc,
    'collisionSound': _CollisionSoundEffectDesc, 
    'collisionDamageSound': _CollisionDamageSoundEffectDesc, 
    'tracerSound': _TracerSoundEffectDesc, 
-   'pTracerSound': _PartialTracerSoundEffectDesc, 
    'shotSound': _ShotSoundEffectDesc, 
    'continuousShotSound': _ContinuousShotSoundEffectDesc, 
    'visibility': _VisibilityEffectDesc, 
@@ -1450,8 +1408,7 @@ _effectDescFactory = {'pixie': _PixieEffectDesc,
    'posteffect': _PostProcessEffectDesc, 
    'light': _LightEffectDesc, 
    'destructionSound': _DestructionSoundEffectDesc, 
-   'lifetimeSound': _DestructionSoundEffectDesc, 
-   'autoShoot': _AutoShootEffectDesc}
+   'lifetimeSound': _DestructionSoundEffectDesc}
 
 def _createEffectDesc(eType, dataSection):
     if not dataSection.values():
@@ -1704,7 +1661,3 @@ class RespawnDestroyEffect(object):
             effectsPlayer = EffectsListPlayer(effects[0][1], effects[0][0])
             effectsPlayer.play(fakeModel, SpecialKeyPointNames.START, partial(BigWorld.player().delModel, fakeModel))
         return
-
-
-def resetPartialTracers():
-    _PartialTracerSoundEffectDesc.effectNumber = 0
