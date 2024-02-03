@@ -26,7 +26,7 @@ from helpers import dependency, i18n, uniprof
 from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
 from skeletons.gui.app_loader import IWaitingWidget
-from skeletons.gui.game_control import IIGRController, IMapsTrainingController
+from skeletons.gui.game_control import IIGRController, IMapsTrainingController, IArmoryYardController
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.shared import IItemsCache
 
@@ -97,6 +97,7 @@ class LobbyView(LobbyPageMeta, IWaitingWidget):
     igrCtrl = dependency.descriptor(IIGRController)
     lobbyContext = dependency.descriptor(ILobbyContext)
     mapsTrainingController = dependency.descriptor(IMapsTrainingController)
+    armoryYardController = dependency.descriptor(IArmoryYardController)
 
     def __init__(self, ctx=None):
         super(LobbyView, self).__init__(ctx)
@@ -125,6 +126,8 @@ class LobbyView(LobbyPageMeta, IWaitingWidget):
             view = container.getView()
             if view and view.alias not in VEHICLE_PREVIEW_ALIASES:
                 return
+        if self.armoryYardController.isSceneLoaded() and not isOver3dScene:
+            return
         self.fireEvent(events.LobbySimpleEvent(events.LobbySimpleEvent.NOTIFY_CURSOR_OVER_3DSCENE, ctx={'isOver3dScene': isOver3dScene}))
 
     def notifyCursorDragging(self, isDragging):

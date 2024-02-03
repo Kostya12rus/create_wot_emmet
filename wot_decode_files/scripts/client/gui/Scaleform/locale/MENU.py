@@ -81,7 +81,6 @@ class MENU(object):
     HANGAR_CREW_RODY_DOG_MOREINFOLABEL = '#menu:hangar/crew/rody/dog/moreInfoLabel'
     HANGAR_CREW_TOOLTIP_NEW_SKILL = '#menu:hangar/crew/tooltip/new_skill'
     HANGAR_CREW_TOOLTIP_DROP_SKILL = '#menu:hangar/crew/tooltip/drop_skill'
-    HANGAR_XPTOTMENCHECKBOX_TITLE = '#menu:hangar/xpToTmenCheckbox/title'
     LOGIN_STATUS_LOGIN_REJECTED_RATE_LIMITED = '#menu:login/status/LOGIN_REJECTED_RATE_LIMITED'
     LOGIN_STATUS_LOGIN_REJECTED_USERS_LIMIT = '#menu:login/status/LOGIN_REJECTED_USERS_LIMIT'
     LOGIN_STATUS_LOGIN_REJECTED_DB_GENERAL_FAILURE = '#menu:login/status/LOGIN_REJECTED_DB_GENERAL_FAILURE'
@@ -392,7 +391,6 @@ class MENU(object):
     PREBATTLE_ALREADY_IN_AWAITING_BATTLE = '#menu:prebattle/already_in_awaiting_battle'
     PREBATTLE_TITLE = '#menu:prebattle/title'
     PREBATTLE_DESCRIPTION = '#menu:prebattle/description'
-    PREBATTLE_EVENTWHEELEDVEHICLESWARNING = '#menu:prebattle/eventWheeledVehiclesWarning'
     PREBATTLE_WAITINGTIMEWARNING = '#menu:prebattle/waitingTimeWarning'
     PREBATTLE_COMPANIESTITLE_JUNIOR = '#menu:prebattle/CompaniesTitle/JUNIOR'
     PREBATTLE_COMPANIESTITLE_MIDDLE = '#menu:prebattle/CompaniesTitle/MIDDLE'
@@ -666,7 +664,6 @@ class MENU(object):
     HEADERBUTTONS_BATTLE_TYPES_STANDART = '#menu:headerButtons/battle/types/standart'
     HEADERBUTTONS_BATTLE_TYPES_STANDART_DESCR = '#menu:headerButtons/battle/types/standart/descr'
     HEADERBUTTONS_BATTLE_TYPES_STANDARTLEAVE_DESCR = '#menu:headerButtons/battle/types/standartLeave/descr'
-    HEADERBUTTONS_BATTLE_TYPES_EVENT = '#menu:headerButtons/battle/types/event'
     HEADERBUTTONS_BATTLE_TYPES_RANKED = '#menu:headerButtons/battle/types/ranked'
     HEADERBUTTONS_BATTLE_TYPES_RANKED_DESCR = '#menu:headerButtons/battle/types/ranked/descr'
     HEADERBUTTONS_BATTLE_TYPES_RANKED_AVAILABILITY_SEASON = '#menu:headerButtons/battle/types/ranked/availability/season'
@@ -1261,7 +1258,6 @@ class MENU(object):
     VEHICLEINFO_COMPAREBTN_TOOLTIP_BODY = '#menu:vehicleInfo/compareBtn/tooltip/body'
     UNLOCKS_UNLOCKBUTTON = '#menu:unlocks/unlockButton'
     UNLOCKS_EXCHANGEBUTTON = '#menu:unlocks/exchangeButton'
-    UNLOCKS_XPTOTMENCHECKBOX = '#menu:unlocks/xpToTmenCheckbox'
     RESEARCH_PREMIUM_BENEFITS_FIRST = '#menu:research/premium/benefits/first'
     RESEARCH_PREMIUM_BENEFITS_SECOND = '#menu:research/premium/benefits/second'
     RESEARCH_PREMIUM_BENEFITS_THIRD = '#menu:research/premium/benefits/third'
@@ -1628,7 +1624,6 @@ class MENU(object):
     CONTEXTMENU_CREATESQUAD = '#menu:contextMenu/createSquad'
     CONTEXTMENU_CREATEEVENTSQUAD = '#menu:contextMenu/createEventSquad'
     CONTEXTMENU_CREATEBATTLEROYALESQUAD = '#menu:contextMenu/createBattleRoyaleSquad'
-    CONTEXTMENU_CREATEHALLOWEENSQUAD = '#menu:contextMenu/createHalloweenSquad'
     CONTEXTMENU_CREATEMAPBOXSQUAD = '#menu:contextMenu/createMapboxSquad'
     CONTEXTMENU_CREATECOMP7SQUAD = '#menu:contextMenu/createComp7Squad'
     CONTEXTMENU_INVITE = '#menu:contextMenu/invite'
@@ -2338,7 +2333,6 @@ class MENU(object):
      CONTEXTMENU_CREATESQUAD,
      CONTEXTMENU_CREATEEVENTSQUAD,
      CONTEXTMENU_CREATEBATTLEROYALESQUAD,
-     CONTEXTMENU_CREATEHALLOWEENSQUAD,
      CONTEXTMENU_CREATEMAPBOXSQUAD,
      CONTEXTMENU_CREATECOMP7SQUAD,
      CONTEXTMENU_INVITE,

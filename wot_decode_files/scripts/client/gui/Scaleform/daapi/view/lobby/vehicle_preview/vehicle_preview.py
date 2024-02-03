@@ -38,6 +38,7 @@ from gui.prb_control.dispatcher import g_prbLoader
 from gui.resource_well.resource_well_helpers import isResourceWellRewardVehicle
 from gui.shared import EVENT_BUS_SCOPE, event_bus_handlers, event_dispatcher, events, g_eventBus
 from gui.shared.event_dispatcher import showShop, showVehPostProgressionView
+from gui.shared.events import LobbySimpleEvent
 from gui.shared.formatters import getRoleTextWithIcon, text_styles
 from gui.shared.gui_items import GUI_ITEM_TYPE
 from gui.shared.money import MONEY_UNDEFINED
@@ -159,6 +160,7 @@ class VehiclePreview(LobbySelectableView, VehiclePreviewMeta):
         self.__topPanelData = ctx.get('topPanelData') or {}
         self.__style = ctx.get('style')
         self.__subscriptions = ctx.get('subscriptions') or ()
+        self.__bottomPanelTextData = ctx.get('bottomPanelTextData')
         self.__unmodifiedItemsPack = deepcopy(self._itemsPack)
         addBuiltInEquipment(self._itemsPack, self._itemsCache, self._vehicleCD)
         notInteractive = (
@@ -217,6 +219,8 @@ class VehiclePreview(LobbySelectableView, VehiclePreviewMeta):
                 self.__uiFlowLogger.logOpenPreview()
                 self.__uiMetricsLogger.onViewOpen()
             self.addListener(CameraRelatedEvents.CAMERA_ENTITY_UPDATED, self.handleSelectedEntityUpdated)
+            self.addListener(LobbySimpleEvent.ENTITY_TOOLTIP_SHOW, self.__onEntityTooltipShow)
+            self.addListener(LobbySimpleEvent.ENTITY_TOOLTIP_HIDE, self.__onEntityTooltipHide)
             specialData = getHeroTankPreviewParams() if self.__isHeroTank else None
             if specialData is not None and specialData.enterEvent:
                 SoundGroups.g_instance.playSound2D(specialData.enterEvent)
@@ -233,6 +237,8 @@ class VehiclePreview(LobbySelectableView, VehiclePreviewMeta):
         if specialData is not None and specialData.exitEvent:
             SoundGroups.g_instance.playSound2D(specialData.exitEvent)
         self.removeListener(CameraRelatedEvents.VEHICLE_LOADING, self.__onVehicleLoading, EVENT_BUS_SCOPE.DEFAULT)
+        self.removeListener(LobbySimpleEvent.ENTITY_TOOLTIP_SHOW, self.__onEntityTooltipShow)
+        self.removeListener(LobbySimpleEvent.ENTITY_TOOLTIP_HIDE, self.__onEntityTooltipHide)
         g_clientUpdateManager.removeObjectCallbacks(self)
         g_currentPreviewVehicle.onChanged -= self.__onVehicleChanged
         g_currentPreviewVehicle.onVehicleInventoryChanged -= self._onInventoryChanged
@@ -261,6 +267,13 @@ class VehiclePreview(LobbySelectableView, VehiclePreviewMeta):
             event -= callback
 
         return
+
+    def __onEntityTooltipShow(self, event):
+        itemId = event.ctx.get('selectionId', '')
+        self.as_show3DSceneTooltipS(TOOLTIPS_CONSTANTS.ENVIRONMENT, [itemId])
+
+    def __onEntityTooltipHide(self, _):
+        self.as_hide3DSceneTooltipS()
 
     def closeView(self):
         if self._backAlias == VIEW_ALIAS.LOBBY_STORE:
@@ -328,8 +341,11 @@ class VehiclePreview(LobbySelectableView, VehiclePreviewMeta):
                 viewPy.setTimerData(self.__endTime)
                 viewPy.setBuyParams(self.__buyParams)
                 viewPy.setBundlePreviewMetricsLogger(self.__uiMetricsLogger)
-            elif self.__offers:
-                viewPy.setOffers(self.__offers, self._title)
+            else:
+                if self.__offers:
+                    viewPy.setOffers(self.__offers, self._title)
+                elif self.__bottomPanelTextData:
+                    viewPy.setPanelTextData(**self.__bottomPanelTextData)
         elif alias == VEHPREVIEW_CONSTANTS.CREW_LINKAGE:
             if self._itemsPack:
                 crewItems = tuple(item for item in self._itemsPack if item.type in ItemPackTypeGroup.CREW)

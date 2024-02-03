@@ -89,6 +89,7 @@ def getGameControllersConfig(manager):
     from gui.game_control.debut_boxes_controller import DebutBoxesController
     from gui.game_control.collections_controller import CollectionsSystemController
     from gui.hangar_presets.hangar_gui_controller import HangarGuiController
+    from gui.game_control.extension_stubs.gui_lootboxes_controller import GuiLootBoxesControllerStub
     tracker = GameStateTracker()
     tracker.init()
     manager.addInstance(_interface.IGameStateTracker, tracker, finalizer='fini')
@@ -172,4 +173,5 @@ def getGameControllersConfig(manager):
     _config(_interface.ILimitedUIController, LimitedUIController())
     _config(_interface.IHangarGuiController, HangarGuiController())
     _config(_interface.IDebutBoxesController, DebutBoxesController())
+    _config(_interface.IGuiLootBoxesController, GuiLootBoxesControllerStub())
     collectGameControllers(_config)

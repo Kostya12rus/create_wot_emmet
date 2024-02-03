@@ -36,6 +36,7 @@ from gui.game_control.links import URLMacros
 from gui.impl import backport
 from gui.impl.backport import TooltipData
 from gui.impl.gen import R
+from gui.impl.gen_utils import INVALID_RES_ID
 from gui.selectable_reward.constants import FEATURE_TO_PREFIX, SELECTABLE_BONUS_NAME
 from gui.server_events.awards_formatters import AWARDS_SIZES, BATTLE_BONUS_X5_TOKEN, CREW_BONUS_X3_TOKEN
 from gui.server_events.events_helpers import parseC11nProgressToken
@@ -1693,6 +1694,19 @@ class VehiclesBonus(SimpleBonus):
 
         return bonuses
 
+    def getPossibleCompensationBonuses(self, vehicle, bonus):
+        bonuses = []
+        for curVehicle, vehInfo in self.getVehicles():
+            compensation = vehInfo.get('customCompensation')
+            if compensation is not None and curVehicle == vehicle:
+                money = Money(*compensation)
+                for currency, value in money.iteritems():
+                    if value:
+                        cls = _BONUSES.get(currency)
+                        bonuses.append(cls(currency, value, isCompensation=True, compensationReason=bonus))
+
+        return bonuses
+
     def checkIsCompensatedVehicle(self, vehicle):
         for curVehicle, vehInfo in self.getVehicles():
             compensation = vehInfo.get('customCompensation')
@@ -1724,6 +1738,13 @@ class VehiclesBonus(SimpleBonus):
             pack.append(crew)
 
         return pack
+
+    def isOneOf(self):
+        vehiclesInBonus = self.getVehicles()
+        if vehiclesInBonus:
+            _, vehicleData = vehiclesInBonus[0]
+            return vehicleData.get('oneof', False)
+        return False
 
     def __getCommonAwardsVOs(self, vehicle, vehInfo, iconSize='small', align=TEXT_ALIGN.RIGHT, withCounts=False):
         vehicleVO = self.__getVehicleVO(vehicle, vehInfo, partial(RES_ICONS.getBonusIcon, iconSize))
@@ -2781,8 +2802,8 @@ class CrewBooksBonus(SimpleBonus):
                 result.append({'id': item.intCD, 
                    'type': ('crew_book/{}').format(item.getBookType()), 
                    'value': count, 
-                   'icon': {AWARDS_SIZES.SMALL: backport.image(iconSmall), 
-                            AWARDS_SIZES.BIG: backport.image(iconBig)}, 
+                   'icon': {AWARDS_SIZES.SMALL: backport.image(iconSmall) if iconSmall != INVALID_RES_ID else '', 
+                            AWARDS_SIZES.BIG: backport.image(iconBig) if iconBig != INVALID_RES_ID else ''}, 
                    'name': item.userName, 
                    'description': item.fullDescription})
 

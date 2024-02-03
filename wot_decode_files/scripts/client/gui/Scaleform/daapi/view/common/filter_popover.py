@@ -19,7 +19,7 @@ from gui.prb_control.settings import VEHICLE_LEVELS
 from gui.shared.formatters import text_styles
 from gui.shared.formatters.ranges import toRomanRangeString
 from gui.shared.gui_items import GUI_ITEM_TYPE
-from gui.shared.gui_items.Vehicle import VEHICLE_TYPES_ORDER, VEHICLE_ROLES_LABELS, VEHICLE_CLASS_NAME, VEHICLE_ROLES_LABELS_BY_CLASS
+from gui.shared.gui_items.Vehicle import VEHICLE_TYPES_ORDER, VEHICLE_ROLES_LABELS, VEHICLE_ROLES_LABELS_BY_CLASS
 from gui.shared.utils.functions import makeTooltip
 from gui.shared.utils.requesters.ItemsRequester import REQ_CRITERIA
 from helpers import dependency
@@ -86,9 +86,9 @@ class VehiclesFilterPopover(TankCarouselFilterPopoverMeta):
     def _getUpdateVO(self, filters):
         mapping = self.__mapping
         vehType = self.__getSelectedVehType(filters)
-        return {'nations': [ filters[key] for key in mapping[FILTER_SECTION.NATIONS] ], 'vehicleTypes': [ filters[key] for key in mapping[FILTER_SECTION.VEHICLE_TYPES] ], 'levels': [ filters[key] for key in mapping[FILTER_SECTION.LEVELS] ], 'specials': [ filters[key] for key in mapping[FILTER_SECTION.SPECIALS] ], 'hidden': [ filters[key] for key in mapping[FILTER_SECTION.HIDDEN] ], 'progressions': [ filters[key] for key in mapping[FILTER_SECTION.PROGRESSIONS] ], 'roles': {vType: [ filters[role] for role in mapping[FILTER_SECTION.ROLES].get(vType, []) ] for vType in mapping[FILTER_SECTION.VEHICLE_TYPES] if vType != VEHICLE_CLASS_NAME.SPG}, 
+        return {'nations': [ filters[key] for key in mapping[FILTER_SECTION.NATIONS] ], 'vehicleTypes': [ filters[key] for key in mapping[FILTER_SECTION.VEHICLE_TYPES] ], 'levels': [ filters[key] for key in mapping[FILTER_SECTION.LEVELS] ], 'specials': [ filters[key] for key in mapping[FILTER_SECTION.SPECIALS] ], 'hidden': [ filters[key] for key in mapping[FILTER_SECTION.HIDDEN] ], 'progressions': [ filters[key] for key in mapping[FILTER_SECTION.PROGRESSIONS] ], 'roles': {vType: [ filters[role] for role in mapping[FILTER_SECTION.ROLES].get(vType, []) ] for vType in mapping[FILTER_SECTION.VEHICLE_TYPES]}, 
            'rolesLabel': self.__getRolesLabel(vehType), 
-           'rolesSectionVisible': self._withRoles and vehType is not None and vehType is not VEHICLE_CLASS_NAME.SPG}
+           'rolesSectionVisible': self._withRoles and vehType is not None}
 
     def _getInitialVO(self, filters, xpRateMultiplier):
         mapping = self.__mapping
@@ -158,15 +158,14 @@ class VehiclesFilterPopover(TankCarouselFilterPopoverMeta):
                'selected': isSelected(entry)})
 
         for vType in mapping[FILTER_SECTION.VEHICLE_TYPES]:
-            if vType != VEHICLE_CLASS_NAME.SPG:
-                dataVO['roles'][vType] = [ self.__getRoleVO(entry, filters) for entry in mapping[FILTER_SECTION.ROLES].get(vType, []) if entry is not None
-                                         ]
+            dataVO['roles'][vType] = [ self.__getRoleVO(entry, filters) for entry in mapping[FILTER_SECTION.ROLES].get(vType, []) if entry is not None
+                                     ]
 
         if not dataVO['hidden']:
             dataVO['hiddenSectionVisible'] = False
         if not dataVO['specials']:
             dataVO['specialSectionVisible'] = False
-        if self._withRoles and vehType is not None and vehType is not VEHICLE_CLASS_NAME.SPG:
+        if self._withRoles and vehType is not None:
             dataVO['rolesSectionVisible'] = True
         return dataVO
 
@@ -236,7 +235,7 @@ class VehiclesFilterPopover(TankCarouselFilterPopoverMeta):
     @staticmethod
     def __getRolesLabel(vehType):
         levels = toRomanRangeString(constants.ROLE_LEVELS)
-        if vehType is not None and vehType != VEHICLE_CLASS_NAME.SPG:
+        if vehType is not None:
             return text_styles.standard(_ms(TANK_CAROUSEL_FILTER.getRolesLabel(vehType), levels=levels))
         else:
             return ''

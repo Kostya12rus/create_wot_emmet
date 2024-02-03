@@ -3,6 +3,7 @@
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/video/video_view.py
 import logging, Windowing, BigWorld
+from PlayerEvents import g_playerEvents
 from frameworks.wulf import ViewSettings, WindowFlags, WindowLayer
 from gui.impl.gen import R
 from gui.impl.gen.view_models.views.lobby.video.video_view_model import VideoViewModel
@@ -106,9 +107,7 @@ class VideoView(ViewImpl):
             language = getClientLanguage()
             self.viewModel.setSubtitleTrack(_LOCALE_TO_SUBTITLE_MAP.get(language, 0))
             self.viewModel.setIsWindowAccessible(Windowing.isWindowAccessible())
-            self.viewModel.onCloseBtnClick += self.__onCloseWindow
-            self.viewModel.onVideoStarted += self.__onVideoStarted
-            self.viewModel.onVideoStopped += self.__onVideoStopped
+            g_playerEvents.onAccountBecomeNonPlayer += self.__removeClosedHandle
             Windowing.addWindowAccessibilitynHandler(self.__onWindowAccessibilityChanged)
             switchVideoOverlaySoundFilter(on=True)
         return
@@ -120,12 +119,21 @@ class VideoView(ViewImpl):
         super(VideoView, self)._initialize(*args, **kwargs)
         self.__hideBack()
 
+    def _getEvents(self):
+        return (
+         (
+          self.viewModel.onCloseBtnClick, self.__onCloseWindow),
+         (
+          self.viewModel.onVideoStarted, self.__onVideoStarted),
+         (
+          self.viewModel.onVideoStopped, self.__onVideoStopped),
+         (
+          self.viewModel.onLoadError, self.__onLoadError))
+
     def _finalize(self):
         Waiting.resume(id(self))
         self.__showBack()
-        self.viewModel.onCloseBtnClick -= self.__onCloseWindow
-        self.viewModel.onVideoStarted -= self.__onVideoStarted
-        self.viewModel.onVideoStopped -= self.__onVideoStopped
+        g_playerEvents.onAccountBecomeNonPlayer -= self.__removeClosedHandle
         Windowing.removeWindowAccessibilityHandler(self.__onWindowAccessibilityChanged)
         if self.__onVideoClosedHandle is not None:
             self.__onVideoClosedHandle()
@@ -139,6 +147,10 @@ class VideoView(ViewImpl):
 
     def __onCloseWindow(self, _=None):
         self.destroyWindow()
+
+    def __removeClosedHandle(self):
+        self.__onVideoClosedHandle = None
+        return
 
     def __onVideoStarted(self, _=None):
         if self.__onVideoStartedHandle is not None:
@@ -157,6 +169,9 @@ class VideoView(ViewImpl):
         if self.__isAutoClose:
             self.destroyWindow()
         return
+
+    def __onLoadError(self, _=None):
+        self.__onVideoStopped()
 
     def __onWindowAccessibilityChanged(self, isWindowAccessible):
         if isWindowAccessible:

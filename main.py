@@ -6,7 +6,7 @@ import zipfile
 import shutil
 import uncompyle_dir
 
-# Lesta v.1.22.1.0 #1723
+# Lesta v.1.24.0.0 #1758
 
 thread_decode = 50  # Самое лучшее значение 20, чем выше, тем больше нагрузка на ЦП
 # Процесор 4 ядра 8 потоков

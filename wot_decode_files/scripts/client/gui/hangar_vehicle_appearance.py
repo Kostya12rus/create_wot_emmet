@@ -424,6 +424,8 @@ class HangarVehicleAppearance(ScriptGameObject):
             self.__fireResourcesLoadedEvent()
             if succesLoaded:
                 self.__doFinalSetup(buildInd)
+            from vehicle_systems import model_assembler
+            model_assembler.addShellCasingsEjectionPrefab(self, self.__vEntity.typeDescriptor)
             super(HangarVehicleAppearance, self).activate()
             return
 
@@ -728,6 +730,8 @@ class HangarVehicleAppearance(ScriptGameObject):
         self.__updateDecals(outfit)
         self.__updateProjectionDecals(outfit)
         self.__updateSequences(outfit)
+        from vehicle_systems import model_assembler
+        model_assembler.addShellCasingsEjectionPrefab(self, self.__vEntity.typeDescriptor, True)
         if callback is not None:
             callback()
         return

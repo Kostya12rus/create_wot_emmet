@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/achievements/summary/summary_view.py
-import typing
+import logging, typing
 from account_helpers import AccountSettings
 from account_helpers.AccountSettings import ACHIEVEMENTS_VISITED
 from achievements20.WTRStageChecker import WTRStageChecker
@@ -48,6 +48,7 @@ _STATISTIC_LIST_ORDER = (KPITypes.DAMAGE,
  KPITypes.DESTROYED,
  KPITypes.ASSISTANCE,
  KPITypes.BLOCKED)
+_logger = logging.getLogger(__name__)
 
 class SummaryView(SubModelPresenter):
     __slots__ = ('__dossier', '__uniqueAwardsCount', '__prevRatingRank', '__prevRatingSubRank',
@@ -117,10 +118,16 @@ class SummaryView(SubModelPresenter):
         super(SummaryView, self).finalize()
         return
 
+    def onError(self, args):
+        errorFilePath = str(args.get('errorFilePath', ''))
+        _logger.error('Rating animation error: %s', errorFilePath)
+
     def _getEvents(self):
         return (
          (
           self.viewModel.onAchievementsSettings, self.__onAchievementsSettings),
+         (
+          self.viewModel.onError, self.onError),
          (
           self.viewModel.otherPlayerInfo.onOpenProfile, self.__openClanStatistic),
          (

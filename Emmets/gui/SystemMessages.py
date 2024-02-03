@@ -46,6 +46,7 @@ SM_TYPE = Enumeration('System message type', [
  'RecruitGift', 
  'LootBoxes', 
  'LootBoxRewards', 
+ 'LootBoxesSuspendSale', 
  'SkinCompensation', 
  'FeatureSwitcherOn', 
  'FeatureSwitcherOff', 

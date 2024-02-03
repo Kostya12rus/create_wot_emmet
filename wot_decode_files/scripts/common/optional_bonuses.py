@@ -648,25 +648,12 @@ class ProbabilityVisitor(NodeVisitor):
             availableBonusNodes = []
             sumOfAvailableProbabilities = 0
             sumOfPreviousProbabilities = 0
-            previousOwnProbability = 0.0
-            canUsePrevInsteadOfZeroProbability = False
             for index, (probabilities, bonusProbability, _, bonusValue) in enumerate(bonusNodes):
                 ownProbability = bonusProbability if useBonusProbability else probabilities[probablitiesStage]
-                if ownProbability != 0.0:
-                    ownProbability, sumOfPreviousProbabilities = ownProbability - sumOfPreviousProbabilities, ownProbability
-                if ownProbability != 0.0:
-                    canUsePrevInsteadOfZeroProbability = True
-                    previousOwnProbability = ownProbability
-                    probability = ownProbability
-                else:
-                    if canUsePrevInsteadOfZeroProbability and previousOwnProbability != 0.0:
-                        probability = previousOwnProbability
-                    else:
-                        continue
+                ownProbability, sumOfPreviousProbabilities = ownProbability - sumOfPreviousProbabilities, ownProbability
                 if index != selectedIdx and bonusValue.get('properties', {}).get('compensation', False) and isAcceptable(bonusValue):
-                    sumOfAvailableProbabilities += probability
-                    availableBonusNodes.append((index, probability, bonusValue))
-                    canUsePrevInsteadOfZeroProbability = False
+                    sumOfAvailableProbabilities += ownProbability
+                    availableBonusNodes.append((index, ownProbability, bonusValue))
 
             if not availableBonusNodes:
                 shouldCompensated = selectedValue.get('properties', {}).get('shouldCompensated', False)
@@ -731,29 +718,47 @@ class StripVisitor(NodeVisitor):
         def copyMerger(storage, name, value, isLeaf):
             storage[name] = value
 
-    def __init__(self, needProbabilitiesInfo=False):
+    def __init__(self, needProbabilitiesInfo=False, requiredLimitIds=None):
         self.__needProbabilitiesInfo = needProbabilitiesInfo
+        self.__requiredLimitIds = requiredLimitIds
         super(StripVisitor, self).__init__(self.ValuesMerger(), tuple())
 
     def onOneOf(self, storage, values):
         strippedValues = []
         _, values = values
         needProbabilitiesInfo = self.__needProbabilitiesInfo
+        requiredLimitIds = self.__requiredLimitIds
         for probability, bonusProbability, refGlobalID, bonusValue in values:
-            stippedValue = {}
-            self._walkSubsection(stippedValue, bonusValue)
-            strippedValues.append(([probability if needProbabilitiesInfo else -1], -1, None, stippedValue))
+            if bonusValue.get('properties', {}).get('surprise', False):
+                continue
+            strippedValue = {}
+            self._walkSubsection(strippedValue, bonusValue)
+            strippedValues.append((
+             [
+              probability if needProbabilitiesInfo else -1],
+             -1,
+             refGlobalID.intersection(requiredLimitIds) if refGlobalID and requiredLimitIds else None,
+             strippedValue))
 
-        storage['oneof'] = (None, strippedValues)
+        storage['oneof'] = (
+         None, strippedValues)
         return
 
     def onAllOf(self, storage, values):
         strippedValues = []
         needProbabilitiesInfo = self.__needProbabilitiesInfo
+        requiredLimitIds = self.__requiredLimitIds
         for probability, bonusProbability, refGlobalID, bonusValue in values:
-            stippedValue = {}
-            self._walkSubsection(stippedValue, bonusValue)
-            strippedValues.append(([probability if needProbabilitiesInfo else -1], -1, None, stippedValue))
+            if bonusValue.get('properties', {}).get('surprise', False):
+                continue
+            strippedValue = {}
+            self._walkSubsection(strippedValue, bonusValue)
+            strippedValues.append((
+             [
+              probability if needProbabilitiesInfo else -1],
+             -1,
+             refGlobalID.intersection(requiredLimitIds) if refGlobalID and requiredLimitIds else None,
+             strippedValue))
 
         storage['allof'] = strippedValues
         return
@@ -761,8 +766,8 @@ class StripVisitor(NodeVisitor):
     def onGroup(self, storage, values):
         strippedValues = []
         for bonusValue in values:
-            stippedValue = {}
-            self._walkSubsection(stippedValue, bonusValue)
-            strippedValues.append(stippedValue)
+            strippedValue = {}
+            self._walkSubsection(strippedValue, bonusValue)
+            strippedValues.append(strippedValue)
 
         storage['groups'] = strippedValues

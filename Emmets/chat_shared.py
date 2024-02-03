@@ -1579,10 +1579,7 @@ SYS_MESSAGE_TYPE = Enumeration('systemMessageType', [
  'collectionsReward', 
  'collectionEntitlementReceived', 
  'showSurvey', 
- 'armoryYardDeferredRewardCollecting', 
- 'hwRewardCongrats', 
- 'hwDailyQuest', 
- 'prbVehicleBadTypeKick'])
+ 'armoryYardDeferredRewardCollecting'])
 SYS_MESSAGE_IMPORTANCE = Enumeration('systemMessageImportance', [
  'normal',
  'high'])

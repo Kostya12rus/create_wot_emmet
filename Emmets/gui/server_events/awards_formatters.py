@@ -290,22 +290,12 @@ def getMarathonRewardScrenFormatterMap():
     return mapping
 
 
-def getHalloweenFormatterMap():
-    mapping = getDefaultFormattersMap()
-    mapping['items'] = HWItemsBonusFormatter()
-    return mapping
-
-
 def getDefaultAwardFormatter():
     return AwardsPacker(getDefaultFormattersMap())
 
 
 def getMissionsDefaultAwardFormatter():
     return AwardsPacker(getMissionsDefaultFormatterMap())
-
-
-def getHalloweenAwardFormatter():
-    return AwardsPacker(getHalloweenFormatterMap())
 
 
 def getEpicAwardFormatter():
@@ -816,7 +806,7 @@ class TokenBonusFormatter(SimpleBonusFormatter):
         for size in AWARDS_SIZES.ALL():
             images[size] = RES_ICONS.getLootBoxBonusIcon(size, lootBox.getIconName())
 
-        return PreformattedBonus(label=self._formatBonusLabel(token.count), userName=lootBox.getUserName(), labelFormatter=self._getLabelFormatter(bonus), images=images, tooltip=makeTooltip(header=lootBox.getUserName(), body=''), align=self._getLabelAlign(bonus), isCompensation=self._isCompensation(bonus))
+        return PreformattedBonus(label=self._formatBonusLabel(token.count), userName=lootBox.getUserName(), labelFormatter=self._getLabelFormatter(bonus), images=images, tooltip=makeTooltip(header=lootBox.getUserName(), body=lootBox.getDescriptionText()), align=self._getLabelAlign(bonus), isCompensation=self._isCompensation(bonus))
 
     def _formatBonusToken(self, name, token, bonus):
         if token.count <= 0:
@@ -1556,30 +1546,6 @@ class ItemsBonusFormatter(SimpleBonusFormatter):
                     result[size] = RES_ICONS.getBonusOverlay(size, SLOT_HIGHLIGHT_TYPES.BATTLE_BOOSTER)
             elif item.getOverlayType():
                 result[size] = RES_ICONS.getBonusOverlay(size, item.getOverlayType())
-
-        return result
-
-
-class HWItemsBonusFormatter(ItemsBonusFormatter):
-    ORDERED_EQUIPMENT_LIST = ('hpRepairAndCrewHeal', 'hwVehicleFireArrow', 'damageShield',
-                              'halloweenNitro', 'hwVehicleCurseArrow', 'hwVehicleFrozenArrow',
-                              'hwVehicleHealingArrow', 'hwVehicleLaughArrow')
-
-    def _format(self, bonus):
-        result = []
-        sortedBonuses = sorted(bonus.getItems().items(), key=(lambda i: self.ORDERED_EQUIPMENT_LIST.index(i[0].name) if i[0].name in self.ORDERED_EQUIPMENT_LIST else -1), reverse=True)
-        for item, count in sortedBonuses:
-            if item is not None and count:
-                result.append(PreformattedBonus(bonusName=bonus.getName(), images=self._getImages(item), isSpecial=True, label=self._formatBonusLabel(count), labelFormatter=self._getLabelFormatter(bonus), userName=self._getUserName(item), specialAlias=self.getTooltip(item), specialArgs=[
-                 item.intCD], align=LABEL_ALIGN.RIGHT, isCompensation=self._isCompensation(bonus), highlightType=self._getHighlightType(item), overlayType=self._getOverlayType(item), highlightIcon=self._getHighlightIcon(item), overlayIcon=self._getOverlayIcon(item)))
-
-        return result
-
-    @classmethod
-    def _getImages(cls, item):
-        result = {}
-        for size in AWARDS_SIZES.ALL():
-            result[size] = backport.image(R.images.gui.maps.icons.quests.bonuses.dyn(size).dyn(item.getGUIEmblemID())())
 
         return result
 

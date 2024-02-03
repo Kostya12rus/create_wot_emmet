@@ -4,7 +4,7 @@
 # Embedded file name: scripts/client/account_helpers/settings_core/migrations.py
 import BigWorld, constants
 from account_helpers.AccountSettings import NEW_SETTINGS_COUNTER
-from account_helpers.settings_core.settings_constants import GAME, CONTROLS, VERSION, DAMAGE_INDICATOR, DAMAGE_LOG, BATTLE_EVENTS, SESSION_STATS, BattlePassStorageKeys, BattleCommStorageKeys, OnceOnlyHints, ScorePanelStorageKeys, SPGAim, GuiSettingsBehavior
+from account_helpers.settings_core.settings_constants import GAME, CONTROLS, VERSION, DAMAGE_INDICATOR, DAMAGE_LOG, BATTLE_EVENTS, SESSION_STATS, BattlePassStorageKeys, BattleCommStorageKeys, OnceOnlyHints, ScorePanelStorageKeys, SPGAim, GuiSettingsBehavior, NewYearStorageKeys
 from adisp import adisp_process, adisp_async
 from debug_utils import LOG_DEBUG
 from gui.server_events.pm_constants import PM_TUTOR_FIELDS
@@ -1031,6 +1031,83 @@ def _migrateTo112(core, data, initialized):
         AccountSettings.setSettings(CREW_SKINS_VIEWED, {})
 
 
+def _migrateTo113(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import GUI_START_BEHAVIOR
+    data[GUI_START_BEHAVIOR][GuiSettingsBehavior.COMP7_WHATS_NEW_SHOWN] = False
+
+
+def _migrateTo114(core, data, initialized):
+    nyStorageData = data['nyStorage']
+    for key in NewYearStorageKeys.BOOL_FLAGS:
+        nyStorageData[key] = False
+
+
+def _migrateTo115(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import SETTINGS_SECTIONS, ARMORY_YARD_KEYS
+    from account_helpers import AccountSettings
+    data[SETTINGS_SECTIONS.ARMORY_YARD][ARMORY_YARD_KEYS.BUILD_PROGRESS] = 0
+    AccountSettings.clearArmoryYard()
+
+
+def _migrateTo116(core, data, initialized):
+    from account_helpers.settings_core.ServerSettingsManager import GUI_START_BEHAVIOR
+    data[GUI_START_BEHAVIOR][GuiSettingsBehavior.RANKED_WELCOME_VIEW_SHOWED] = False
+
+
+def _migrateTo117(core, data, initialized):
+    data['rankedCarouselFilter1'] = {'ussr': False, 
+       'germany': False, 
+       'usa': False, 
+       'china': False, 
+       'france': False, 
+       'uk': False, 
+       'japan': False, 
+       'czech': False, 
+       'sweden': False, 
+       'poland': False, 
+       'italy': False, 
+       'lightTank': False, 
+       'mediumTank': False, 
+       'heavyTank': False, 
+       'SPG': False, 
+       'AT-SPG': False, 
+       'level_1': False, 
+       'level_2': False, 
+       'level_3': False, 
+       'level_4': False, 
+       'level_5': False, 
+       'level_6': False, 
+       'level_7': False, 
+       'level_8': False, 
+       'level_9': False, 
+       'level_10': False}
+    data['rankedCarouselFilter2'] = {'premium': False, 
+       'elite': False, 
+       'igr': False, 
+       'rented': True, 
+       'event': True, 
+       'gameMode': False, 
+       'favorite': False, 
+       'bonus': False, 
+       'crystals': False, 
+       'ranked': True, 
+       'role_HT_assault': False, 
+       'role_HT_break': False, 
+       'role_HT_universal': False, 
+       'role_HT_support': False, 
+       'role_MT_assault': False, 
+       'role_MT_universal': False, 
+       'role_MT_sniper': False, 
+       'role_MT_support': False, 
+       'role_ATSPG_assault': False, 
+       'role_ATSPG_universal': False, 
+       'role_ATSPG_sniper': False, 
+       'role_ATSPG_support': False, 
+       'role_LT_universal': False, 
+       'role_LT_wheeled': False, 
+       'role_SPG': False}
+
+
 _versions = (
  (
   1, _initializeDefaultSettings, True, False),
@@ -1253,7 +1330,17 @@ _versions = (
  (
   111, _migrateTo111, False, False),
  (
-  112, _migrateTo112, False, False))
+  112, _migrateTo112, False, False),
+ (
+  113, _migrateTo113, False, False),
+ (
+  114, _migrateTo114, False, False),
+ (
+  115, _migrateTo115, False, False),
+ (
+  116, _migrateTo116, False, False),
+ (
+  117, _migrateTo117, False, False))
 
 @adisp_async
 @adisp_process

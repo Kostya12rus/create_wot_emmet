@@ -6,9 +6,9 @@ from gui.impl.gen import R
 from frameworks.wulf import ViewModel
 
 class VideoViewModel(ViewModel):
-    __slots__ = ('onCloseBtnClick', 'onVideoStarted', 'onVideoStopped')
+    __slots__ = ('onCloseBtnClick', 'onVideoStarted', 'onVideoStopped', 'onLoadError')
 
-    def __init__(self, properties=5, commands=3):
+    def __init__(self, properties=5, commands=4):
         super(VideoViewModel, self).__init__(properties=properties, commands=commands)
 
     def getVideoSource(self):
@@ -51,3 +51,4 @@ class VideoViewModel(ViewModel):
         self.onCloseBtnClick = self._addCommand('onCloseBtnClick')
         self.onVideoStarted = self._addCommand('onVideoStarted')
         self.onVideoStopped = self._addCommand('onVideoStopped')
+        self.onLoadError = self._addCommand('onLoadError')

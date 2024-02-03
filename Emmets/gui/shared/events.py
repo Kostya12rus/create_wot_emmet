@@ -16,8 +16,7 @@ __all__ = ('ArgsEvent', 'ComponentEvent', 'LoadViewEvent', 'LoadGuiImplViewEvent
            'HangarCustomizationEvent', 'GameEvent', 'BootcampEvent', 'ViewEventType',
            'OpenLinkEvent', 'ChannelManagementEvent', 'PreBattleChannelEvent', 'AmmunitionSetupViewEvent',
            'HasCtxEvent', 'DogTagsEvent', 'FullscreenModeSelectorEvent', 'MarkersManagerEvent',
-           'ModeSelectorPopoverEvent', 'ModeSelectorLoadedEvent', 'ModeSubSelectorEvent',
-           'ArmoryYardEvent')
+           'ModeSelectorPopoverEvent', 'ModeSubSelectorEvent', 'ArmoryYardEvent')
 _logger = logging.getLogger(__name__)
 
 class HasCtxEvent(SharedEvent):
@@ -685,11 +684,6 @@ class AirDropEvent(HasCtxEvent):
     AIR_DROP_LOOP_LEFT = 'onAirDropLootLeft'
 
 
-class LootEvent(HasCtxEvent):
-    LOOT_SPAWNED = 'onLootSpawned'
-    LOOT_PICKED_UP = 'onLootPickedUp'
-
-
 class ProfilePageEvent(HasCtxEvent):
     SELECT_PROFILE_ALIAS = 'onProfileSelectAlias'
 
@@ -791,10 +785,6 @@ class ModeSelectorPopoverEvent(HasCtxEvent):
     NAME = 'ModeSelectorPopoverEvent'
 
 
-class ModeSelectorLoadedEvent(SharedEvent):
-    NAME = 'ModeSelectorLoadedEvent'
-
-
 class ModeSubSelectorEvent(HasCtxEvent):
     CHANGE_VISIBILITY = 'subSelectorViewEvent/changeVisibility'
     CLICK_PROCESSING = 'subSelectorViewEvent/clickProcessing'
@@ -828,8 +818,11 @@ class CollectionsEvent(HasCtxEvent):
 
 class ArmoryYardEvent(HasCtxEvent):
     STAGE_FINISHED = 'ayStageFinished'
+    STAGE_MUTE_SOUND = 'ayStageMuteSound'
+    STAGE_UNMUTE_SOUND = 'ayStageUnmuteSound'
     DESTROY_ARMORY_YARD_MAIN_VIEW = 'armoryYardEvents/destroyMainView'
     SHOW_ARMORY_YARD_BUY_VIEW = 'armoryYardEvents/showBuyView'
+    POI_ACTIVATED = 'ayPoiActivated'
 
 
 class Achievements20Event(HasCtxEvent):

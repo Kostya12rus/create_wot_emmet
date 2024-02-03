@@ -273,9 +273,7 @@ def vehicleAttributeFactors():
        'engineReduceFineFactor': 1.0, 
        'ammoBayReduceFineFactor': 1.0, 
        'moduleDamageFactor': 1.0, 
-       'engineAndFuelTanksDamageFactor': 1.0, 
-       'vehicle/canBeDamaged': True, 
-       'vehicle/canBeRammed': True}
+       'engineAndFuelTanksDamageFactor': 1.0}
     for ten in TANKMAN_EXTRA_NAMES:
         factors[ten + CHANCE_TO_HIT_SUFFIX_FACTOR] = 0.0
 
@@ -381,13 +379,13 @@ class VehicleDescriptor(object):
             compactDescr += struct.pack('<6HB', type.chassis[0].id[1], type.engines[0].id[1], type.fuelTanks[0].id[1], type.radios[0].id[1], turretDescr.id[1], turretDescr.guns[0].id[1], 0)
         self.__initFromCompactDescr(compactDescr, vehMode, vehType)
         self.__applyExternalData(extData)
-        self.__updateAttributes()
+        self._updateAttributes()
         return
 
     @property
     def maxHealth(self):
         if IS_BASEAPP:
-            self.__updateAttributes(onAnyApp=True)
+            self._updateAttributes(onAnyApp=True)
         return self._maxHealth
 
     @property
@@ -432,6 +430,7 @@ class VehicleDescriptor(object):
     hasHydraulicChassis = property((lambda self: self.type.hasHydraulicChassis))
     hasCharge = property((lambda self: self.type.hasCharge))
     hasRocketAcceleration = property((lambda self: self.type.hasRocketAcceleration))
+    hasShellCasingsEjection = property((lambda self: self.type.hasShellCasingsEjection))
     hasBurst = property((lambda self: self.gun.burst != component_constants.DEFAULT_GUN_BURST))
     role = property((lambda self: self.type.role))
     isPitchHullAimingAvailable = property((lambda self: self.type.hullAimingParams['pitch']['isAvailable']))
@@ -500,12 +499,12 @@ class VehicleDescriptor(object):
         self._updateSupplySlots()
         self._rebuildOptDevSlotsMap()
         if rebuildAttrs:
-            self.__updateAttributes()
+            self._updateAttributes()
 
     def installModifications(self, modificationIDs, rebuildAttrs=True):
         self._modifications = modificationIDs
         if rebuildAttrs:
-            self.__updateAttributes()
+            self._updateAttributes()
 
     def setCamouflage(self, position, camouflageID, startTime, durationDays):
         p = self.camouflages
@@ -675,7 +674,7 @@ class VehicleDescriptor(object):
         removed = [prevTurretDescr.compactDescr]
         if gunCompactDescr != 0:
             removed.append(prevGunDescr.compactDescr)
-        self.__updateAttributes()
+        self._updateAttributes()
         return removed
 
     def installEnhancements(self, enhancements, rebuildAttrs=True):
@@ -685,7 +684,7 @@ class VehicleDescriptor(object):
                     self.enhancements.append(EnhancementItem(attr['name'], attr['value'], attr['operation']))
 
         if rebuildAttrs:
-            self.__updateAttributes()
+            self._updateAttributes()
 
     def mayInstallComponent(self, compactDescr, positionIndex=0, optDevicesLayouts=None):
         itemTypeID, nationID, compID = parseIntCompactDescr(compactDescr)
@@ -746,7 +745,7 @@ class VehicleDescriptor(object):
             return (True, None)
 
     def rebuildAttrs(self):
-        return self.__updateAttributes()
+        return self._updateAttributes()
 
     def installComponent(self, compactDescr, positionIndex=0):
         itemTypeID, nationID, compID = parseIntCompactDescr(compactDescr)
@@ -772,7 +771,7 @@ class VehicleDescriptor(object):
         setattr(self, attrName, newDescr)
         if attrName == 'chassis' and len(self.type.hulls) > 1:
             self.hull = self.__selectBestHull(self.turrets, self.chassis)
-        self.__updateAttributes()
+        self._updateAttributes()
         return (
          prevDescr.compactDescr,)
 
@@ -848,7 +847,7 @@ class VehicleDescriptor(object):
         optDevs = [ getItemByCompactDescr(cd) if cd != 0 else None for cd in optDevSequence ]
         self.optionalDevices = optDevs
         self._rebuildOptDevSlotsMap()
-        self.__updateAttributes()
+        self._updateAttributes()
         return
 
     def installOptionalDevice(self, compactDescr, slotIdx, rebuildAttrs=True):
@@ -858,7 +857,7 @@ class VehicleDescriptor(object):
         devices[slotIdx] = device
         self._optDevSlotsMap[compactDescr] = self.supplySlots.getSlotByIdxInItemType(ITEM_TYPES.optionalDevice, slotIdx)
         if rebuildAttrs:
-            self.__updateAttributes()
+            self._updateAttributes()
         if prevDevice is None:
             return (component_constants.EMPTY_TUPLE, component_constants.EMPTY_TUPLE)
         else:
@@ -888,7 +887,7 @@ class VehicleDescriptor(object):
             self.optionalDevices[slotIdx] = None
             self._optDevSlotsMap.pop(device.compactDescr)
             if rebuildAttrs:
-                self.__updateAttributes()
+                self._updateAttributes()
             if device.removable:
                 return ((device.compactDescr,), component_constants.EMPTY_TUPLE)
             return (component_constants.EMPTY_TUPLE, (device.compactDescr,))
@@ -920,7 +919,7 @@ class VehicleDescriptor(object):
             self._optDevSlotsMap[leftDevice.compactDescr] = self.supplySlots.getSlotByIdxInItemType(ITEM_TYPES.optionalDevice, rightID)
         if rightDevice:
             self._optDevSlotsMap[rightDevice.compactDescr] = self.supplySlots.getSlotByIdxInItemType(ITEM_TYPES.optionalDevice, leftID)
-        self.__updateAttributes()
+        self._updateAttributes()
 
     def iterOptDevsWithSlots(self):
         optDevSlotIDs = self.supplySlots.getSlotIDsByType(ITEM_TYPES.optionalDevice)
@@ -1266,7 +1265,7 @@ class VehicleDescriptor(object):
         self.hull = hullDescr
         if self.__activeTurretPos == turretPositionIdx:
             self.activeTurretPosition = turretPositionIdx
-        self.__updateAttributes()
+        self._updateAttributes()
         return (
          prevGunDescr.compactDescr,)
 
@@ -1459,8 +1458,11 @@ class VehicleDescriptor(object):
     def applyModificationsAttrs(self):
         vppCache = g_cache.postProgression()
         modifications = vppCache.modifications
-        items = iter(modifications[modificationID].modifiers for modificationID in self._modifications)
-        onCollectAttributes(self.miscAttrs, items, STATIC_ATTR_PREFIX, True)
+        modifiers = iter(modifications[modificationID].modifiers for modificationID in self._modifications)
+        self._applyModifiers(modifiers, True)
+
+    def _applyModifiers(self, modifiers, asAggregated):
+        onCollectAttributes(self.miscAttrs, modifiers, STATIC_ATTR_PREFIX, asAggregated)
 
     @property
     def shootExtraName(self):
@@ -1468,7 +1470,7 @@ class VehicleDescriptor(object):
             return 'shoot'
         return 'dualShoot'
 
-    def __updateAttributes(self, onAnyApp=False):
+    def _updateAttributes(self, onAnyApp=False):
         self.miscAttrs = None
         self.physics = None
         type = self.type
@@ -1690,11 +1692,11 @@ class CompositeVehicleDescriptor(object):
         return self.__vehicleDescr.__installGun(gunID, turretPositionIdx)
 
 
-def VehicleDescr(compactDescr=None, typeID=None, typeName=None, xmlPath=None, extData=None):
-    defaultDescriptor = VehicleDescriptor(compactDescr, typeID, typeName, xmlPath=xmlPath, extData=extData)
+def VehicleDescr(compactDescr=None, typeID=None, typeName=None, xmlPath=None, extData=None, descriptorClass=VehicleDescriptor):
+    defaultDescriptor = descriptorClass(compactDescr, typeID, typeName, xmlPath=xmlPath, extData=extData)
     if not defaultDescriptor.hasSiegeMode:
         return defaultDescriptor
-    siegeDescriptor = VehicleDescriptor(compactDescr, typeID, typeName, VEHICLE_MODE.SIEGE, xmlPath=xmlPath, extData=extData)
+    siegeDescriptor = descriptorClass(compactDescr, typeID, typeName, VEHICLE_MODE.SIEGE, xmlPath=xmlPath, extData=extData)
     return CompositeVehicleDescriptor(defaultDescriptor, siegeDescriptor)
 
 
@@ -1805,7 +1807,7 @@ class VehicleType(object):
      'invisibility', 'invisibilityDeltas', 'crewRoles', 'extras', 'extrasDict', 'extrasProtection',
      'devices', 'tankmen', 'damageByStaticsChances', 'i18nInfo', 'balanceByClass',
      'balanceByComponentLevels', 'damageStickersLodDist', 'heavyCollisionEffectVelocities', 'effects', 'camouflage',
-     'emblemsLodDist', 'emblemsAlpha', '_prereqs', 'clientAdjustmentFactors', 'isScout',
+     'emblemsLodDist', 'emblemsAlpha', '_prereqs', 'clientAdjustmentFactors',
      'defaultPlayerEmblemID', '_defEmblem', '_defEmblems', 'unlocks', 'chassis', 'engines',
      'fuelTanks', 'radios', 'turrets', 'hulls', 'installableComponents', 'unlocksDescrs',
      'autounlockedItems', 'collisionEffectVelocities', 'isRotationStill', 'useHullZSize', 'useHullZOffset',
@@ -1814,7 +1816,7 @@ class VehicleType(object):
      'nationChangeGroupId', 'isCollectorVehicle', 'isPremium', 'hasTurboshaftEngine', 'hasHydraulicChassis',
      'hasSpeedometer', 'supplySlots', 'optDevsOverrides', 'postProgressionTree', 'postProgressionPricesOverrides',
      'customRoleSlotOptions', 'hasRocketAcceleration', 'rocketAccelerationParams', 'classTag', 'armorMaxHealth',
-     '__weakref__')
+     'hasShellCasingsEjection', 'shellCasingsEjectionPrefab', '__weakref__')
 
     def __init__(self, nationID, basicInfo, xmlPath, vehMode=VEHICLE_MODE.DEFAULT):
         self.name = basicInfo.name
@@ -1833,7 +1835,6 @@ class VehicleType(object):
         self.hasHydraulicChassis = 'hydraulicChassis' in self.tags
         self.hasAutoSiegeMode = 'autoSiege' in self.tags
         self.isWheeledVehicle = 'wheeledVehicle' in self.tags
-        self.isScout = 'scout' in self.tags
         self.isFlamethrower = VEHICLE_TAGS.FLAMETHROWER in self.tags
         self.isAssaultSPG = VEHICLE_TAGS.ASSAULT_SPG in self.tags
         self.isDualgunVehicleType = 'dualgun' in self.tags
@@ -1842,6 +1843,7 @@ class VehicleType(object):
         self.hasCharge = 'charger' in self.tags
         self.builtins = {t.split('_user')[0] for t in self.tags if t.startswith('builtin')}
         self.hasRocketAcceleration = 'rocketAcceleration' in self.tags
+        self.hasShellCasingsEjection = 'shellCasingsEjection' in self.tags
         self.isCollectorVehicle = CollectorVehicleConsts.COLLECTOR_VEHICLES_TAG in self.tags
         self.isPremium = 'premium' in self.tags
         self.role = self.__getRoleFromTags() if self.level in ROLE_LEVELS else ROLE_TYPE.NOT_DEFINED
@@ -1991,6 +1993,10 @@ class VehicleType(object):
             self.rocketAccelerationParams = _readRocketAccelerationParams(xmlCtx, section)
         else:
             self.rocketAccelerationParams = None
+        if self.hasShellCasingsEjection:
+            self.shellCasingsEjectionPrefab = _readShellCasingsEjectionPrefab(xmlCtx, section)
+        else:
+            self.shellCasingsEjectionPrefab = None
         if IS_CELLAPP:
             overmatchVer = _xml.readIntOrNone(xmlCtx, section, 'overmatchMechanicsVer')
             if overmatchVer is None:
@@ -3150,6 +3156,10 @@ def hasAnyOfTags(vehTypeCD, tags=()):
 
 def isFlamethrower(vehTypeCD):
     return hasAnyOfTags(vehTypeCD, (VEHICLE_TAGS.FLAMETHROWER,))
+
+
+def isAssaultSPG(vehTypeCD):
+    return hasAnyOfTags(vehTypeCD, (VEHICLE_TAGS.ASSAULT_SPG,))
 
 
 def _readComponents(xmlPath, reader, nationID, itemTypeID):
@@ -6791,6 +6801,15 @@ def _readRocketAccelerationParams(xmlCtx, section):
     return shared_components.RocketAccelerationParams(deployTime=_xml.readNonNegativeFloat(rocketCtx, rocketSection, 'deployTime'), reloadTime=_xml.readNonNegativeFloat(rocketCtx, rocketSection, 'reloadTime'), reuseCount=_xml.readInt(rocketCtx, rocketSection, 'reuseCount', minVal=-1), duration=_xml.readNonNegativeFloat(rocketCtx, rocketSection, 'duration'), impulse=impulse, modifiers=modifiers, kpi=kpi, effectsPrefab=effectsPrefab)
 
 
+def _readShellCasingsEjectionPrefab(xmlCtx, section):
+    if IS_CLIENT or IS_UE_EDITOR:
+        effectsCtx, effectsSection = _xml.getSubSectionWithContext(xmlCtx, section, 'effects')
+        effectsPrefab = _xml.readStringOrEmpty(effectsCtx, effectsSection, 'shellCasingsEjectionPrefab')
+    else:
+        effectsPrefab = None
+    return effectsPrefab
+
+
 def _readGunDualGunParams(xmlCtx, section):
     subSection = section['dualGun']
     if subSection is None:
@@ -6987,8 +7006,8 @@ def _readBurnout(xmlCtx, section):
         return None
     else:
         burnoutCtx, burnoutSection = _xml.getSubSectionWithContext(xmlCtx, section, 'burnout')
-        burnout = {'preparationTime': _xml.readFloatOrNone(burnoutCtx, burnoutSection, 'preparationTime'), 
-           'activityTime': _xml.readFloatOrNone(burnoutCtx, burnoutSection, 'activityTime')}
+        burnout = {'preparationTime': _xml.readPositiveFloat(burnoutCtx, burnoutSection, 'preparationTime'), 
+           'activityTime': _xml.readPositiveFloat(burnoutCtx, burnoutSection, 'activityTime')}
         burnoutParams = ('engineDamageMin', 'engineDamageMax', 'warningMaxHealth',
                          'warningMaxHealthCritEngine', 'power', 'impulse')
         burnout.update(_parseFloatList(burnoutCtx, burnoutSection, burnoutParams))

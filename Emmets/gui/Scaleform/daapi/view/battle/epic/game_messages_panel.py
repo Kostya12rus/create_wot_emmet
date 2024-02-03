@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/epic/game_messages_panel.py
-import BattleReplay
+import time, BattleReplay
 from gui.Scaleform.daapi.view.meta.GameMessagesPanelMeta import GameMessagesPanelMeta
 from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider
@@ -18,16 +18,22 @@ class EpicMessagePanel(GameMessagesPanelMeta):
     def __init__(self):
         super(EpicMessagePanel, self).__init__()
         self.__blockNewMessages = False
+        self.currentHint = None
+        self.currentHintStartTime = 0
+        return
 
     def showHint(self, hint, data):
         if hint.name == 'CaptureBase':
             ctrl = self.sessionProvider.dynamic.missions
             if ctrl is not None:
                 ctrl.onSectorBaseCaptured(int(data.get('param1', 0)), data.get('param2', 'false') == 'true')
+            self.currentHintStartTime = time.time()
+            self.currentHint = hint
         return
 
     def hideHint(self, hint):
-        pass
+        self.currentHint = None
+        return
 
     def sendEndGameMessage(self, winningTeam, reason, extraData):
         isWinner = avatar_getter.getPlayerTeam() == winningTeam

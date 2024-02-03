@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/common/quest_cache_helpers.py
-import logging, time
+import logging, time, itertools
 from constants import EVENT_TYPE, IS_CLIENT
 from debug_utils import LOG_WARNING
 import quest_xml_source
@@ -21,15 +21,12 @@ def _getEventName(eventType):
     return EVENT_TYPE.TYPE_TO_NAME.get(eventType, '<wrong EVENT_TYPE>')
 
 
-def readQuestsFromFile(filePath, eventType):
+def readQuestsFromFile(filePath, eventType=()):
     xmlSource = quest_xml_source.Source()
     nodes = xmlSource.readFromInternalFile(filePath, int(time.time()))
-    nodes = nodes.get(eventType, None)
+    nodes = [ node for et, node in nodes.iteritems() if et in eventType ] if eventType else nodes.itervalues()
     questIDs = set()
-    if nodes is None:
-        _logger.info('No quests of type %s were found in %s.', _getEventName(eventType), filePath)
-        return
-    for node in nodes:
+    for node in itertools.chain.from_iterable(nodes):
         info = node.info
         questID = info.get('id', None)
         if not questID:
@@ -46,7 +43,7 @@ def readQuestsFromFile(filePath, eventType):
             questName = makeI18nString(questName.get('key', ''))
         questDescr = questData.get('description', None)
         if questDescr:
-            questDescr = makeI18nString(questDescr['key'])
+            questDescr = makeI18nString(questDescr.get('key', ''))
         yield (questID, questName, questDescr, questData, node)
 
     return

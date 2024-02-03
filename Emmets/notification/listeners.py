@@ -41,6 +41,7 @@ from gui.server_events import settings as settings_records
 from gui.server_events.recruit_helper import getAllRecruitsInfo
 from gui.shared import events, g_eventBus
 from gui.shared.formatters import text_styles, time_formatters
+from gui.shared.money import Currency
 from gui.shared.notifications import NotificationPriorityLevel
 from gui.shared.system_factory import collectAllNotificationsListeners, registerNotificationsListeners
 from gui.shared.utils import showInvitationInWindowsBar
@@ -62,7 +63,7 @@ from notification.decorators import BattlePassLockButtonDecorator, BattlePassSwi
 from notification.settings import NOTIFICATION_TYPE, NotificationData
 from shared_utils import first
 from skeletons.gui.battle_matters import IBattleMattersController
-from skeletons.gui.game_control import IBattlePassController, IBootcampController, ICollectionsSystemController, IGuiLootBoxesController, IEventsNotificationsController, IGameSessionController, ILimitedUIController, IResourceWellController, ISeniorityAwardsController, ISteamCompletionController, IWinbackController, IArmoryYardController, IReferralProgramController, IWotPlusController
+from skeletons.gui.game_control import IBattlePassController, IBootcampController, ICollectionsSystemController, IEventsNotificationsController, IGameSessionController, ILimitedUIController, IResourceWellController, ISeniorityAwardsController, ISteamCompletionController, IWinbackController, IArmoryYardController, IReferralProgramController, IWotPlusController
 from skeletons.gui.goodies import IGoodiesCache
 from skeletons.gui.impl import INotificationWindowController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -1642,6 +1643,7 @@ class ResourceWellListener(_NotificationListener):
     __RESOURCE_WELL_MESSAGES = R.strings.messenger.serviceChannelMessages.resourceWell
     __START_ENTITY_ID = 0
     __resourceWell = dependency.descriptor(IResourceWellController)
+    __luiController = dependency.descriptor(ILimitedUIController)
 
     def __init__(self):
         super(ResourceWellListener, self).__init__()
@@ -1667,18 +1669,22 @@ class ResourceWellListener(_NotificationListener):
         isActive = self.__resourceWell.isActive()
         isPaused = self.__resourceWell.isPaused()
         isFinished = self.__resourceWell.isFinished()
+        isRuleCompleted = self.__luiController.isRuleCompleted(LuiRules.RESOURCE_WELL)
         season = self.__resourceWell.getSeason()
         settings = AccountSettings.getNotifications(RESOURCE_WELL_NOTIFICATIONS)
         settings.setdefault(RESOURCE_WELL_START_SHOWN, set())
         settings.setdefault(RESOURCE_WELL_END_SHOWN, set())
-        if isActive and not self.__isActive and season not in settings[RESOURCE_WELL_START_SHOWN]:
-            self.__pushStarted()
-        elif isPaused and not self.__isPaused:
-            self.__pushPaused()
-        elif self.__isPaused and isActive:
-            self.__pushEnabled()
-        elif isFinished and not self.__isFinished and season in settings[RESOURCE_WELL_START_SHOWN] and season not in settings[RESOURCE_WELL_END_SHOWN]:
-            self.__pushFinished()
+        if isRuleCompleted:
+            if isActive and not self.__isActive and season not in settings[RESOURCE_WELL_START_SHOWN]:
+                self.__pushStarted()
+            else:
+                if isPaused and not self.__isPaused:
+                    self.__pushPaused()
+                else:
+                    if self.__isPaused and isActive:
+                        self.__pushEnabled()
+                    elif season in settings[RESOURCE_WELL_START_SHOWN] and isFinished and not self.__isFinished and season not in settings[RESOURCE_WELL_END_SHOWN]:
+                        self.__pushFinished()
         self.__isActive = isActive
         self.__isPaused = isPaused
         self.__isFinished = isFinished
@@ -1817,54 +1823,6 @@ class IntegratedAuctionListener(_NotificationListener):
 
     def __isNotificationNeeded(self, eventType):
         return eventType == AUCTION_START_EVENT_TYPE and not self.__isFinishNotificationActive() or eventType == AUCTION_FINISH_EVENT_TYPE
-
-
-class EventLootBoxesListener(_NotificationListener, EventsHandler):
-    __slots__ = ('__isActive', )
-    __guiLootBoxes = dependency.descriptor(IGuiLootBoxesController)
-    __START_ENTITY_ID = 0
-
-    def __init__(self):
-        super(EventLootBoxesListener, self).__init__()
-        self.__isActive = False
-
-    def start(self, model):
-        super(EventLootBoxesListener, self).start(model)
-        self._subscribe()
-        self.__isActive = self.__guiLootBoxes.isEnabled()
-        return True
-
-    def stop(self):
-        self._unsubscribe()
-        super(EventLootBoxesListener, self).stop()
-
-    def _getEvents(self):
-        return (
-         (
-          self.__guiLootBoxes.onStatusChange, self.__onStatusChange),
-         (
-          self.__guiLootBoxes.onBoxInfoUpdated, self.__onStatusChange),
-         (
-          self.__guiLootBoxes.onAvailabilityChange, self.__onAvailabilityChange))
-
-    def __onStatusChange(self):
-        self.__isActive = self.__guiLootBoxes.isEnabled()
-
-    def __onAvailabilityChange(self, previous, current):
-        if previous is not None and previous != current and self.__isActive:
-            if current:
-                self.__pushLootBoxesEnabled()
-            else:
-                self.__pushLootBoxesDisabled()
-        return
-
-    @staticmethod
-    def __pushLootBoxesEnabled():
-        SystemMessages.pushMessage(text=backport.text(R.strings.lootboxes.notification.lootBoxesIsEnabled.text()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.EventLootBoxEnabled, messageData={'title': backport.text(R.strings.lootboxes.notification.lootBoxesIsEnabled.title())})
-
-    @staticmethod
-    def __pushLootBoxesDisabled():
-        SystemMessages.pushMessage(text=backport.text(R.strings.lootboxes.notification.lootBoxesIsDisabled.text()), priority=NotificationPriorityLevel.HIGH, type=SystemMessages.SM_TYPE.EventLootBoxDisabled, messageData={'title': backport.text(R.strings.lootboxes.notification.lootBoxesIsDisabled.title())})
 
 
 class CollectionsListener(_NotificationListener, EventsHandler):
@@ -2039,6 +1997,8 @@ class ArmoryYardListener(_NotificationListener):
     __armoryYardCtrl = dependency.descriptor(IArmoryYardController)
     __armoryYardText = R.strings.armory_yard.notifications
     __systemMessages = dependency.descriptor(ISystemMessages)
+    __lastTimeErrorShown = 0
+    __timeDelay = 2
     ARMORY_YARD_TEXT = R.strings.armory_yard.notifications
 
     def start(self, model):
@@ -2052,6 +2012,9 @@ class ArmoryYardListener(_NotificationListener):
         self.__armoryYardCtrl.onQuestsUpdated += self.__checkChapter
         self.__armoryYardCtrl.onCollectReward += self.__collectReward
         self.__armoryYardCtrl.onPayedError += self.__payedError
+        self.__armoryYardCtrl.onBundleOutTime += self.__bundleOutTime
+        self.__lastTimeErrorShown = 0
+        self.__onCheckNotify()
         return True
 
     def stop(self):
@@ -2064,6 +2027,8 @@ class ArmoryYardListener(_NotificationListener):
         self.__armoryYardCtrl.onQuestsUpdated -= self.__checkChapter
         self.__armoryYardCtrl.onCollectReward -= self.__collectReward
         self.__armoryYardCtrl.onPayedError -= self.__payedError
+        self.__armoryYardCtrl.onBundleOutTime -= self.__bundleOutTime
+        self.__lastTimeErrorShown = 0
         super(ArmoryYardListener, self).stop()
 
     def __getHeader(self):
@@ -2091,16 +2056,28 @@ class ArmoryYardListener(_NotificationListener):
                 SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.announcement.chapter(), count=chapterInfo.ordinalNumber, chapter_name=backport.text(R.strings.armory_yard.mainView.chapter.index.dyn('c_%d' % chapterInfo.ordinalNumber)()), startDate=backport.getDateTimeFormat(startDate)), type=SystemMessages.SM_TYPE.InformationHeader, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
         return
 
-    def __payed(self, count):
-        SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.payed(), count=count), type=SystemMessages.SM_TYPE.InformationHeader, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
+    def __payed(self, count, price=None):
+        messageResID = self.ARMORY_YARD_TEXT.payed.single() if count == 1 else self.ARMORY_YARD_TEXT.payed.multiple()
+        SystemMessages.pushMessage(text=backport.text(messageResID, count=count), type=SystemMessages.SM_TYPE.InformationHeader, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
+        if price is None:
+            return
+        else:
+            messagePriceGoldResID = self.ARMORY_YARD_TEXT.payed.priceGold()
+            SystemMessages.pushMessage(text=backport.text(messagePriceGoldResID, price=backport.getGoldFormat(price.getSignValue(Currency.GOLD))), type=SystemMessages.SM_TYPE.FinancialTransactionWithGold, priority=NotificationPriorityLevel.MEDIUM)
+            return
 
     def __payedError(self):
+        currentTime = time_utils.getServerUTCTime()
+        if currentTime - self.__lastTimeErrorShown < self.__timeDelay:
+            return
+        self.__lastTimeErrorShown = currentTime
         SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.payed.error()), type=SystemMessages.SM_TYPE.ErrorHeader, priority=NotificationPriorityLevel.HIGH, messageData={'header': self.__getHeader()})
+
+    def __bundleOutTime(self):
+        SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.bundleOutTime()), type=SystemMessages.SM_TYPE.ErrorHeader, priority=NotificationPriorityLevel.HIGH, messageData={'header': self.__getHeader()})
 
     def __checkState(self):
         state = self.__armoryYardCtrl.getState()
-        if state == State.ACTIVELASTHOURS:
-            state = State.ACTIVE
         if self.__armoryYardCtrl.isActive() and not AccountSettings.getArmoryYard(state.value):
             AccountSettings.setArmoryYard(state.value, True)
             if state == State.POSTPROGRESSION:
@@ -2109,16 +2086,19 @@ class ArmoryYardListener(_NotificationListener):
                 SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.active()), type=SystemMessages.SM_TYPE.ArmoryYardMain, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
 
     def __checkChapter(self):
-        if self.__armoryYardCtrl.getState() not in (State.ACTIVELASTHOURS, State.ACTIVE):
+        if self.__armoryYardCtrl.getState() != State.ACTIVE:
             return
         nowTime = time_utils.getServerUTCTime()
         for cycle in self.__armoryYardCtrl.serverSettings.getCurrentSeason().getAllCycles().values():
             key = '%s_%s' % (ArmoryYard.START_CHAPTER_PREFIX, cycle.ID)
             if cycle.startDate <= nowTime < cycle.endDate and not AccountSettings.getArmoryYard(key):
                 AccountSettings.setArmoryYard(key, True)
-                SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.started.chapter(), count=cycle.ordinalNumber, chapter_name=backport.text(R.strings.armory_yard.mainView.chapter.index.dyn('c_%d' % cycle.ordinalNumber)())), type=SystemMessages.SM_TYPE.ArmoryYardOpenChapter, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
+                SystemMessages.pushMessage(text=backport.text(self.ARMORY_YARD_TEXT.started.chapter.untitled()), type=SystemMessages.SM_TYPE.ArmoryYardOpenChapter, priority=NotificationPriorityLevel.MEDIUM, messageData={'header': self.__getHeader()})
 
     def __onCheckNotify(self):
+        if not self.__armoryYardCtrl.isEnabled():
+            return
+        self.__armoryYardCtrl.checkAnnouncement()
         self.__checkState()
         self.__checkChapter()
 
@@ -2319,7 +2299,7 @@ registerNotificationsListeners((
  BattlePassListener, UpgradeTrophyDeviceListener, RecertificationFormStateListener, RecruitReminderListener,
  EmailConfirmationReminderListener, VehiclePostProgressionUnlockListener,
  BattlePassSwitchChapterReminder, ResourceWellListener, IntegratedAuctionListener,
- SeniorityAwardsQuestListener, SeniorityAwardsTokenListener, EventLootBoxesListener, CollectionsListener,
+ SeniorityAwardsQuestListener, SeniorityAwardsTokenListener, CollectionsListener,
  WinbackSelectableRewardReminder, ArmoryYardListener,
  ReferralProgramListener, WotPlusIntroViewListener, Birthday2023Listener,
  BattleMattersTaskReminderListener))

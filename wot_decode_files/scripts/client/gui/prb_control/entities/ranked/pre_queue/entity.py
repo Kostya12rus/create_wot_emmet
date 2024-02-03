@@ -4,6 +4,7 @@
 # Embedded file name: scripts/client/gui/prb_control/entities/ranked/pre_queue/entity.py
 import logging, BigWorld
 from CurrentVehicle import g_currentVehicle
+from account_helpers.settings_core.settings_constants import GuiSettingsBehavior
 from constants import QUEUE_TYPE
 from gui.impl.gen import R
 from gui.prb_control.entities.ranked.pre_queue.actions_validator import RankedActionsValidator
@@ -113,7 +114,7 @@ class RankedEntity(PreQueueEntity):
         filters = self.__settingsCore.serverSettings.getSection(GUI_START_BEHAVIOR, defaults)
         rankedWelcomeCallback = self.__rankedController.getRankedWelcomeCallback()
         if rankedWelcomeCallback is None:
-            if not filters['isRankedWelcomeViewShowed']:
+            if not filters[GuiSettingsBehavior.RANKED_WELCOME_VIEW_SHOWED]:
                 g_eventDispatcher.loadRanked()
                 return FUNCTIONAL_FLAG.LOAD_PAGE
             return FUNCTIONAL_FLAG.UNDEFINED

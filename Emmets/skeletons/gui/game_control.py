@@ -76,9 +76,6 @@ class IGameController(object):
     def onAvatarBecomePlayer(self):
         pass
 
-    def onAvatarBecomeNonPlayer(self):
-        pass
-
     def onAccountBecomePlayer(self):
         pass
 
@@ -95,9 +92,6 @@ class IGameController(object):
         pass
 
     def onLobbyStarted(self, ctx):
-        pass
-
-    def handlePostponedByHandler(self, handlerCls):
         pass
 
 
@@ -474,7 +468,6 @@ class IPlatoonController(IGameController):
     onAvailableTiersForSearchChanged = None
     onAutoSearchCooldownChanged = None
     onPlatoonTankRemove = None
-    onLeavePlatoon = None
 
     def buildExtendedSquadInfoVo(self):
         raise NotImplementedError
@@ -548,7 +541,7 @@ class IPlatoonController(IGameController):
     def setPlatoonPopoverPosition(self, xPopoverOffset):
         raise NotImplementedError
 
-    def togglePlayerReadyAction(self, checkAmmo, callback):
+    def togglePlayerReadyAction(self, callback):
         raise NotImplementedError
 
     def getChannelController(self):
@@ -2355,7 +2348,7 @@ class IEntitlementsController(IGameController):
         raise NotImplementedError
 
 
-class IGuiLootBoxesController(IGameController, IEntitlementsConsumer):
+class IGuiLootBoxesController(IGameController):
     onStatusChange = None
     onAvailabilityChange = None
     onBoxesCountChange = None
@@ -2394,15 +2387,6 @@ class IGuiLootBoxesController(IGameController, IEntitlementsConsumer):
         raise NotImplementedError
 
     def openShop(self):
-        raise NotImplementedError
-
-    def getDayInfoStatistics(self):
-        raise NotImplementedError
-
-    def getExpiresAtLootBoxBuyCounter(self):
-        raise NotImplementedError
-
-    def getTimeLeftToResetPurchase(self):
         raise NotImplementedError
 
     def getBoxInfo(self, boxType):
@@ -2983,12 +2967,22 @@ class IArmoryYardController(IGameController):
     onAnnouncement = None
     onPayed = None
     onPayedError = None
+    onBundleOutTime = None
     onServerSwitchChange = None
     onStyleQuestEnds = None
     onCollectReward = None
+    cameraManager = None
+    isVehiclePreview = None
+    bundlesProducts = None
+    onTabIdChanged = None
+    onCollectFinalReward = None
 
     @property
     def serverSettings(self):
+        raise NotImplementedError
+
+    @property
+    def isFinalQuestCompleted(self):
         raise NotImplementedError
 
     def getCollectableRewards(self):
@@ -3010,6 +3004,9 @@ class IArmoryYardController(IGameController):
         raise NotImplementedError
 
     def getProgressionTimes(self):
+        raise NotImplementedError
+
+    def getPostProgressionTimes(self):
         raise NotImplementedError
 
     def totalTokensInChapter(self, cycleID):
@@ -3063,6 +3060,9 @@ class IArmoryYardController(IGameController):
     def isQuestActive(self):
         raise NotImplementedError
 
+    def isSceneLoaded(self):
+        raise NotImplementedError
+
     def getAvailableQuestsCount(self):
         raise NotImplementedError
 
@@ -3075,7 +3075,28 @@ class IArmoryYardController(IGameController):
     def update(self):
         raise NotImplementedError
 
-    def showHeroTankVehiclePreview(self):
+    def onLoadingHangar(self):
+        raise NotImplementedError
+
+    def unloadScene(self, isReload=True):
+        raise NotImplementedError
+
+    def isCompleted(self):
+        raise NotImplementedError
+
+    def isStarterPackAvailable(self):
+        raise NotImplementedError
+
+    def disableVideoStreaming(self):
+        raise NotImplementedError
+
+    def getStarterPackSettings(self):
+        raise NotImplementedError
+
+    def refreshBundle(self):
+        raise NotImplementedError
+
+    def checkAnnouncement(self):
         raise NotImplementedError
 
 
@@ -3413,47 +3434,4 @@ class IDebutBoxesController(IGameController):
         raise NotImplementedError
 
     def getInfoPageUrl(self):
-        raise NotImplementedError
-
-
-class IHalloweenController(IGameController, ISeasonProvider):
-    onPrimeTimeStatusUpdated = None
-    onEventDisabled = None
-    onQuestsUpdated = None
-    onSyncCompleted = None
-    onChangeActivePhase = None
-    onCompleteActivePhase = None
-    phases = None
-
-    def isPostPhase(self):
-        raise NotImplementedError
-
-    def isEnabled(self):
-        raise NotImplementedError
-
-    def isAvailable(self):
-        raise NotImplementedError
-
-    def isFrozen(self):
-        raise NotImplementedError
-
-    def isEventShutDown(self):
-        raise NotImplementedError
-
-    def isEventPrbActive(self):
-        raise NotImplementedError
-
-    def getConfig(self):
-        raise NotImplementedError
-
-    def getCurrentQueueType(self):
-        raise NotImplementedError
-
-    def isEventHangar(self):
-        raise NotImplementedError
-
-    def isCurrentQueueEnabled(self):
-        raise NotImplementedError
-
-    def isQueueEnabled(self, queueType):
         raise NotImplementedError

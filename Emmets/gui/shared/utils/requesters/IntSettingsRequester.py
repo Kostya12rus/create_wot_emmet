@@ -81,6 +81,7 @@ class IntSettingsRequester(object):
        'SPG_AIM': constants.USER_SERVER_SETTINGS.SPG_AIM, 
        MAPBOX_CAROUSEL_FILTER_1: 103, 
        MAPBOX_CAROUSEL_FILTER_2: 104, 
+       'NEW_YEAR': constants.USER_SERVER_SETTINGS.NEW_YEAR, 
        'CONTOUR': constants.USER_SERVER_SETTINGS.CONTOUR, 
        FUN_RANDOM_CAROUSEL_FILTER_1: 107, 
        FUN_RANDOM_CAROUSEL_FILTER_2: 108, 
@@ -93,9 +94,7 @@ class IntSettingsRequester(object):
        'ONCE_ONLY_HINTS_3': 115, 
        'ARMORY_YARD': 31001, 
        VERSUS_AI_CAROUSEL_FILTER_1: 31002, 
-       VERSUS_AI_CAROUSEL_FILTER_2: 31003, 
-       'HW22_CAROUSEL_FILTER_1': 115, 
-       'HW22_CAROUSEL_FILTER_2': 116}
+       VERSUS_AI_CAROUSEL_FILTER_2: 31003}
 
     def __init__(self):
         self.__isSynced = False

@@ -215,6 +215,9 @@ class IItemsRequester(requesters.IRequester):
     def getLayoutState(self, databaseID=None):
         raise NotImplementedError
 
+    def resetBattleAbilitiesUnlock(self):
+        raise NotImplementedError
+
 
 class IHangarSpace(object):
     onStatsReceived = None
@@ -239,6 +242,10 @@ class IHangarSpace(object):
         raise NotImplementedError
 
     @property
+    def spaceID(self):
+        raise NotImplementedError
+
+    @property
     def inited(self):
         raise NotImplementedError
 
@@ -252,10 +259,6 @@ class IHangarSpace(object):
 
     @property
     def isModelLoaded(self):
-        raise NotImplementedError
-
-    @property
-    def isSelectionEnabled(self):
         raise NotImplementedError
 
     @property
@@ -313,9 +316,6 @@ class IHangarSpace(object):
         raise NotImplementedError
 
     def getCentralPointForArea(self, areaID):
-        raise NotImplementedError
-
-    def setSelectionEnabled(self, enabled):
         raise NotImplementedError
 
     def getAnchorParams(self, slotId, areaId, regionId):

@@ -188,10 +188,10 @@ def onClientUpdate(diff, updateOnlyLobbyCtx):
         ServicesLocator.lobbyContext.update(diff)
     else:
         if isPlayerAccount():
-            yield crewBooksViewedCache().onCrewBooksUpdated(diff)
-            yield ServicesLocator.itemsCache.update(CACHE_SYNC_REASON.CLIENT_UPDATE, diff)
-            yield ServicesLocator.eventsCache.update(diff)
-            yield g_clanCache.update(diff)
+            yield (crewBooksViewedCache().onCrewBooksUpdated(diff),
+             ServicesLocator.itemsCache.update(CACHE_SYNC_REASON.CLIENT_UPDATE, diff),
+             ServicesLocator.eventsCache.update(diff),
+             g_clanCache.update(diff))
         ServicesLocator.lobbyContext.update(diff)
         _logger.info('onClientUpdate: diff = %r', diff)
         g_clientUpdateManager.update(diff)
@@ -233,7 +233,6 @@ def init():
     global onAccountBecomeNonPlayer
     global onAccountBecomePlayer
     global onAccountShowGUI
-    global onAvatarBecomeNonPlayer
     global onAvatarBecomePlayer
     global onCenterIsLongDisconnected
     global onIGRTypeChanged
@@ -290,7 +289,6 @@ def fini():
     g_playerEvents.onAccountShowGUI -= onAccountShowGUI
     g_playerEvents.onAccountBecomeNonPlayer -= onAccountBecomeNonPlayer
     g_playerEvents.onAvatarBecomePlayer -= onAvatarBecomePlayer
-    g_playerEvents.onAvatarBecomeNonPlayer -= onAvatarBecomeNonPlayer
     g_playerEvents.onAccountBecomePlayer -= onAccountBecomePlayer
     g_playerEvents.onAvatarBecomeNonPlayer -= onAvatarBecomeNonPlayer
     g_playerEvents.onClientUpdated -= onClientUpdate

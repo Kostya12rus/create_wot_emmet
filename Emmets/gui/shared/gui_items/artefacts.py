@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/shared/gui_items/artefacts.py
-import typing, BigWorld
+import typing
 from constants import MIN_VEHICLE_LEVEL, MAX_VEHICLE_LEVEL
 from debug_utils import LOG_CURRENT_EXCEPTION
 from gui.Scaleform.genConsts.SLOT_HIGHLIGHT_TYPES import SLOT_HIGHLIGHT_TYPES
@@ -144,13 +144,7 @@ class Equipment(VehicleArtefact):
         return TAG_TRIGGER in self.tags
 
     def mayInstall(self, vehicle, slotIdx=None):
-        installed = vehicle.consumables.installed
-        isHalloween = 'halloween_equipment' in self.tags
-        if isHalloween:
-            hwEqCtrl = BigWorld.player().HWAccountEquipmentController
-            vehicle = hwEqCtrl.makeVehicleHWAdapter(vehicle)
-            installed = vehicle.hwConsumables.installed
-        for idx, eq in enumerate(installed):
+        for idx, eq in enumerate(vehicle.consumables.installed):
             if slotIdx is not None and idx == slotIdx or eq is None:
                 continue
             if eq.intCD != self.intCD:
@@ -158,9 +152,7 @@ class Equipment(VehicleArtefact):
                 if installPossible:
                     installPossible = self.descriptor.checkCompatibilityWithEquipment(eq.descriptor)
                 if not installPossible:
-                    reason = 'not with installed equipment' if not isHalloween else 'hw not with installed equipment'
-                    return (
-                     False, reason)
+                    return (False, 'not with installed equipment')
 
         return self.descriptor.checkCompatibilityWithVehicle(vehicle.descriptor)
 
@@ -182,14 +174,6 @@ class Equipment(VehicleArtefact):
                 compatibility = self.descriptor.checkCompatibilityWithEquipment(e.descriptor)
             if not compatibility:
                 conflictEqs.append(e)
-
-        if hasattr(vehicle, 'hwConsumables'):
-            for e in vehicle.hwConsumables.installed.getItems():
-                compatibility = e.descriptor.checkCompatibilityWithActiveEquipment(self.descriptor)
-                if compatibility:
-                    compatibility = self.descriptor.checkCompatibilityWithEquipment(e.descriptor)
-                if not compatibility:
-                    conflictEqs.append(e)
 
         return conflictEqs
 

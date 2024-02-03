@@ -26,7 +26,7 @@ from gui.prb_control import prbDispatcherProperty, prbInvitesProperty
 from gui.ranked_battles import ranked_helpers
 from gui.server_events.events_dispatcher import showMissionsBattlePass, showMissionsMapboxProgression, showPersonalMission
 from gui.shared import EVENT_BUS_SCOPE, actions, event_dispatcher as shared_events, events, g_eventBus
-from gui.shared.event_dispatcher import hideWebBrowserOverlay, showBlueprintsSalePage, showCollectionAwardsWindow, showCollectionWindow, showDelayedReward, showEpicBattlesAfterBattleWindow, showProgressiveRewardWindow, showRankedYearAwardWindow, showResourceWellProgressionWindow, showShop, showSteamConfirmEmailOverlay, showPersonalReservesConversion, showWinbackSelectRewardView, showWotPlusIntroView, showBarracks
+from gui.shared.event_dispatcher import hideWebBrowserOverlay, showBlueprintsSalePage, showCollectionAwardsWindow, showCollectionWindow, showDelayedReward, showEpicBattlesAfterBattleWindow, showPersonalReservesConversion, showProgressiveRewardWindow, showRankedYearAwardWindow, showResourceWellProgressionWindow, showShop, showSteamConfirmEmailOverlay, showWinbackSelectRewardView, showWotPlusIntroView, showBarracks
 from gui.shared.notifications import NotificationPriorityLevel
 from gui.shared.system_factory import collectAllNotificationsActionsHandlers, registerNotificationsActionsHandlers
 from gui.shared.utils import decorators
@@ -39,7 +39,7 @@ from notification.settings import NOTIFICATION_BUTTON_STATE, NOTIFICATION_TYPE
 from predefined_hosts import g_preDefinedHosts
 from skeletons.gui.battle_results import IBattleResultsService
 from skeletons.gui.customization import ICustomizationService
-from skeletons.gui.game_control import IBattlePassController, IBattleRoyaleController, IBrowserController, IGuiLootBoxesController, IMapboxController, ICollectionsSystemController, IRankedBattlesController, ISeniorityAwardsController, IReferralProgramController, IWinbackController, IArmoryYardController
+from skeletons.gui.game_control import IBattlePassController, IBattleRoyaleController, IBrowserController, IMapboxController, ICollectionsSystemController, IRankedBattlesController, ISeniorityAwardsController, IReferralProgramController, IWinbackController, IArmoryYardController
 from skeletons.gui.impl import INotificationWindowController
 from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
 from skeletons.gui.web import IWebController
@@ -1232,21 +1232,6 @@ class _OpenAchievementsScreen(NavigationDisabledActionHandler):
         g_eventBus.handleEvent(events.LoadViewEvent(SFViewLoadParams(VIEW_ALIAS.LOBBY_PROFILE), ctx={'selectedAlias': VIEW_ALIAS.PROFILE_SUMMARY_PAGE}), scope=EVENT_BUS_SCOPE.LOBBY)
 
 
-class _OpenEventLootBoxesShopHandler(NavigationDisabledActionHandler):
-    __guiLootBoxes = dependency.descriptor(IGuiLootBoxesController)
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openEventLootBoxesShop', )
-
-    def doAction(self, model, entityID, action):
-        self.__guiLootBoxes.openShop()
-
-
 class _OpenReferralProgramMainViewHandler(NavigationDisabledActionHandler):
     __referralProgramController = dependency.descriptor(IReferralProgramController)
 
@@ -1311,6 +1296,21 @@ class _OpenArmoryYardMain(NavigationDisabledActionHandler):
         self.__ctrl.goToArmoryYard()
 
 
+class _OpenArmoryYardBuyView(NavigationDisabledActionHandler):
+    __ctrl = dependency.descriptor(IArmoryYardController)
+
+    @classmethod
+    def getNotType(cls):
+        return NOTIFICATION_TYPE.MESSAGE
+
+    @classmethod
+    def getActions(cls):
+        return ('openArmoryYardBuy', )
+
+    def doAction(self, model, entityID, action):
+        self.__ctrl.goToArmoryYard(loadBuyView=True)
+
+
 class _OpenArmoryYardQuest(NavigationDisabledActionHandler):
     __ctrl = dependency.descriptor(IArmoryYardController)
 
@@ -1356,6 +1356,20 @@ class _OpenWotDailyRewardView(ActionHandler):
         super(_OpenWotDailyRewardView, self).handleAction(model, entityID, action)
         WotPlusNotificationLogger().logDetailsButtonClickEvent(NotificationAdditionalData.RELEASE_NOTIFICATION)
         showWotPlusIntroView()
+
+
+class _OpenPremShopHandler(ActionHandler):
+
+    @classmethod
+    def getNotType(cls):
+        return NOTIFICATION_TYPE.MESSAGE
+
+    @classmethod
+    def getActions(cls):
+        return ('openPremShop', )
+
+    def handleAction(self, model, entityID, action):
+        g_eventBus.handleEvent(events.OpenLinkEvent(events.OpenLinkEvent.PREM_SHOP))
 
 
 _AVAILABLE_HANDLERS = (
@@ -1416,7 +1430,6 @@ _AVAILABLE_HANDLERS = (
  _SeniorityAwardsTokensHandler,
  _OpenSeniorityAwards,
  _OpenMissingEventsHandler,
- _OpenEventLootBoxesShopHandler,
  _OpenReferralProgramMainViewHandler,
  _OpenCollectionHandler,
  _OpenCollectionRewardHandler,
@@ -1424,10 +1437,12 @@ _AVAILABLE_HANDLERS = (
  _OpenWinbackSelectableRewardViewFromQuest,
  _OpenArmoryYardMain,
  _OpenArmoryYardQuest,
+ _OpenArmoryYardBuyView,
  _OpenAchievementsScreen,
  _OpenWotPlusIntroView,
  _OpenWotDailyRewardView,
- _OpenBarracksHandler)
+ _OpenBarracksHandler,
+ _OpenPremShopHandler)
 registerNotificationsActionsHandlers(_AVAILABLE_HANDLERS)
 
 class NotificationsActionsHandlers(object):

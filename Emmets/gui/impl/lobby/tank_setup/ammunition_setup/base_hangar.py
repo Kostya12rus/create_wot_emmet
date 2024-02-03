@@ -2,7 +2,6 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/impl/lobby/tank_setup/ammunition_setup/base_hangar.py
-import BigWorld
 from BWUtil import AsyncReturn
 import adisp
 from CurrentVehicle import g_currentVehicle
@@ -26,9 +25,9 @@ from gui.impl.lobby.tank_setup.tank_setup_sounds import playEnterTankSetupView, 
 from gui.impl.lobby.tank_setup.tooltips.setup_tab_tooltip_view import SetupTabTooltipView
 from gui.impl.lobby.tank_setup.tooltips.warning_tooltip_view import WarningTooltipView
 from gui.prb_control import prbDispatcherProperty
-from gui.shared import g_eventBus, EVENT_BUS_SCOPE, events
+from gui.shared import g_eventBus, EVENT_BUS_SCOPE
 from gui.shared.close_confiramtor_helper import CloseConfirmatorsHelper
-from gui.shared.events import AmmunitionSetupViewEvent
+from gui.shared.events import AmmunitionSetupViewEvent, PrbActionEvent
 from gui.shared.gui_items.items_actions import factory as ActionsFactory
 from gui.shared.view_helpers.blur_manager import CachedBlur
 from helpers import dependency
@@ -36,7 +35,6 @@ from post_progression_common import TANK_SETUP_GROUPS, TankSetupGroupsId
 from skeletons.gui.lobby_context import ILobbyContext
 from soft_exception import SoftException
 from wg_async import wg_async, wg_await
-from skeletons.gui.game_control import IHalloweenController
 
 class TankSetupCloseConfirmatorsHelper(CloseConfirmatorsHelper):
 
@@ -48,13 +46,12 @@ class TankSetupCloseConfirmatorsHelper(CloseConfirmatorsHelper):
 
     def getRestrictedEvents(self):
         result = super(TankSetupCloseConfirmatorsHelper, self).getRestrictedEvents()
-        result.remove(events.PrbActionEvent.LEAVE)
+        result.remove(PrbActionEvent.LEAVE)
         return result
 
 
 class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
     _lobbyContext = dependency.descriptor(ILobbyContext)
-    _hwController = dependency.descriptor(IHalloweenController)
     __slots__ = ('__blur', '__isClosed', '__closeConfirmatorHelper', 'onClose', 'onAnimationEnd',
                  '__moneyCache', '_previousSectionName')
 
@@ -168,7 +165,6 @@ class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
     def _onLoading(self, **kwargs):
         super(BaseHangarAmmunitionSetupView, self)._onLoading(**kwargs)
         fillVehicleInfo(self.viewModel.vehicleInfo, self._vehItem.getItem())
-        self.viewModel.setIsHalloween(self._hwController.isEventHangar())
 
     def _initialize(self, *args, **kwargs):
         super(BaseHangarAmmunitionSetupView, self)._initialize()
@@ -214,9 +210,6 @@ class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
         if quitResult:
             self.__closeWindow()
 
-    def _forceCloseWindow(self):
-        self.__closeWindow()
-
     @adisp.adisp_process
     def __onSpecializationSelect(self, args=None):
         action = ActionsFactory.getAction(ActionsFactory.SET_EQUIPMENT_SLOT_TYPE, self._vehItem.getItem())
@@ -246,11 +239,7 @@ class BaseHangarAmmunitionSetupView(BaseAmmunitionSetupView):
         copyVehicle = self._itemsCache.items.getVehicleCopy(currentVehicle)
         copyVehicle.battleAbilities.setInstalled(*currentVehicle.battleAbilities.installed)
         copyVehicle.battleAbilities.setLayout(*currentVehicle.battleAbilities.layout)
-        hwEqCtrl = BigWorld.player().components.get('HWAccountEquipmentController', None)
-        if hwEqCtrl is not None:
-            return hwEqCtrl.makeVehicleHWAdapter(copyVehicle)
-        else:
-            return copyVehicle
+        return copyVehicle
 
     def __onResized(self, args):
         g_eventBus.handleEvent(AmmunitionSetupViewEvent(AmmunitionSetupViewEvent.GF_RESIZED, args), EVENT_BUS_SCOPE.LOBBY)

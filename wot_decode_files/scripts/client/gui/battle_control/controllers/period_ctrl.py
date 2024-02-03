@@ -2,7 +2,7 @@
 # Python bytecode version base 2.7 (62211)
 # Decompiled from: Python 3.10.0 (tags/v3.10.0:b494f59, Oct  4 2021, 19:00:18) [MSC v.1929 64 bit (AMD64)]
 # Embedded file name: scripts/client/gui/battle_control/controllers/period_ctrl.py
-import weakref, BattleReplay, BigWorld, Event
+import weakref, BattleReplay, BigWorld
 from constants import ARENA_PERIOD as _PERIOD
 from gui.battle_control import event_dispatcher
 from gui.battle_control.arena_info.interfaces import IArenaPeriodController
@@ -73,7 +73,7 @@ class ITimersBar(object):
 class ArenaPeriodController(IArenaPeriodController, ViewComponentsController):
     __slots__ = ('_callbackID', '_period', '_endTime', '_length', '_cdState', '_ttState',
                  '_isNotified', '_totalTime', '_countdown', '_playingTime', '_switcherState',
-                 '_battleCtx', '_arenaVisitor', '_timeNotifications', 'onPreBattleTimerHide')
+                 '_battleCtx', '_arenaVisitor', '_timeNotifications')
 
     def __init__(self):
         super(ArenaPeriodController, self).__init__()
@@ -91,7 +91,6 @@ class ArenaPeriodController(IArenaPeriodController, ViewComponentsController):
         self._battleCtx = None
         self._arenaVisitor = None
         self._timeNotifications = []
-        self.onPreBattleTimerHide = Event.Event()
         return
 
     def getControllerID(self):
@@ -211,7 +210,6 @@ class ArenaPeriodController(IArenaPeriodController, ViewComponentsController):
 
     def _hideCountdown(self, state, speed):
         self._countdown = None
-        self.onPreBattleTimerHide()
         for viewCmp in self._viewComponents:
             viewCmp.hideCountdown(state, speed)
             viewCmp.setState(state)

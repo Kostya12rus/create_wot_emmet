@@ -505,7 +505,8 @@ _SINGLE_ACHIEVEMENTS_VALUES = [
  'prime_gaming_reserved_24', 'onboardingMedal', 
  'BattlePassCommonPr_12', 'comp7_3_1', 
  'mt_comp_3_1', '13YearsOfService', 
- 'hw2023Medal01', 'hw2023Medal02']
+ 'hw2023Medal01', 'hw2023Medal02', 
+ 'comp7_3_2', 'NY24_AtmsphrLevel']
 _singleAchievementsPopUps = [
  'titleSniper', 'invincible', 'diehard', 'handOfDeath', 
  'armorPiercer', 
@@ -607,7 +608,8 @@ _singleAchievementsPopUps = [
  'onboardingMedal', 
  'BattlePassCommonPr_12', 'comp7_3_1', 'mt_comp_3_1', 
  '13YearsOfService', 
- 'hw2023Medal01', 'hw2023Medal02']
+ 'hw2023Medal01', 'hw2023Medal02', 
+ 'comp7_3_2', 'NY24_AtmsphrLevel']
 _singleAchievementsBlockBuilder = BinarySetDossierBlockBuilder('singleAchievements', _SINGLE_ACHIEVEMENTS_VALUES, SINGLE_ACHIEVEMENTS_DEPENDENCIES, _singleAchievementsPopUps)
 FORT_ACHIEVEMENTS_BLOCK_LAYOUT = [
  'conqueror', 'fireAndSword', 'crusher', 'counterblow', 'kampfer', 'soldierOfFortune']

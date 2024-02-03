@@ -746,12 +746,9 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                     if cmdMap.isFired(CommandMapping.CMD_TOGGLE_GUI, key) and isDown and self.__couldToggleGUIVisibility():
                         gui_event_dispatcher.toggleGUIVisibility()
                     if constants.HAS_DEV_RESOURCES and isDown:
-                        if key == Keys.KEY_I and mods == 0:
-                            import Cat
-                            if Cat.Tasks.ScreenInfo.ScreenInfoObject.getVisible():
-                                Cat.Tasks.ScreenInfo.ScreenInfoObject.setVisible(False)
-                            else:
-                                Cat.Tasks.ScreenInfo.ScreenInfoObject.setVisible(True)
+                        if key == Keys.KEY_I and mods == 0 and not isGuiEnabled:
+                            from Cat.Tasks.ScreenInfo import ScreenInfoObject
+                            ScreenInfoObject.setVisible(not ScreenInfoObject.getVisible())
                             return True
                     if cmdMap.isFired(CommandMapping.CMD_INCREMENT_CRUISE_MODE, key) and isDown and self.__isVehicleAlive:
                         if self.__stopUntilFire:
@@ -1167,8 +1164,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                 self.__deviceStates = {'crew': 'destroyed'}
                 self.guiSessionProvider.invalidateVehicleState(VEHICLE_VIEW_STATE.CREW_DEACTIVATED, deathReasonID)
             elif not self.guiSessionProvider.getCtx().isObserver(self.playerVehicleID):
-                if self.arenaGuiType != ARENA_GUI_TYPE.HALLOWEEN_BATTLES or not self.guiSessionProvider.shared.vehicleState.isInPostmortem:
-                    self.soundNotifications.play('vehicle_destroyed')
+                self.soundNotifications.play('vehicle_destroyed')
                 self.__deviceStates = {'vehicle': 'destroyed'}
                 self.guiSessionProvider.invalidateVehicleState(VEHICLE_VIEW_STATE.DESTROYED, deathReasonID)
             if self.vehicle is not None:
@@ -1654,6 +1650,8 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         effectsDescr = vehicles.g_cache.shotEffects[effectsIndex]
         startPoint = refStartPoint
         shooter = BigWorld.entity(shooterID)
+        if shooter is not None:
+            g_playerEvents.onShowShooterTracer(shooter)
         if not isRicochet and shooter is not None and shooter.isStarted and effectsDescr.get('artilleryID') is None:
             multiGun = shooter.typeDescriptor.turret.multiGun
             nodeName = multiGun[gunIndex].gunFire if shooter.typeDescriptor.isDualgunVehicle and multiGun is not None else 'HP_gunFire'
@@ -2535,6 +2533,11 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                 vehicle.drawEdge()
             else:
                 vehicle.removeEdge()
+            if self.target is not None:
+                if flag:
+                    self.target.drawEdge()
+                else:
+                    self.target.removeEdge()
             CombatEquipmentManager.setGUIVisible(self, flag)
             self.inputHandler.setGUIVisible(flag)
             return
@@ -2628,8 +2631,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         if soundType is not None and damageCode not in self.__damageInfoNoNotification:
             sound = extra.sounds.get(soundType)
             if sound is not None and not ignoreMessages:
-                if sound == 'track_destroyed' and damageCode.find('AT_SUPER_SHOT') != -1:
-                    sound = 'track_destroyed_at_super_shot'
                 self.playSoundIfNotMuted(sound, soundNotificationCheckFn)
         return
 
@@ -2658,8 +2659,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
      'DEVICE_DESTROYED', 'DEVICE_DESTROYED_AT_SHOT', 'DEVICE_DESTROYED_AT_RAMMING',
      'DEVICE_DESTROYED_AT_FIRE', 'DEVICE_DESTROYED_AT_WORLD_COLLISION', 'DEVICE_DESTROYED_AT_DROWNING',
      'TANKMAN_HIT', 'TANKMAN_HIT_AT_SHOT', 'TANKMAN_HIT_AT_WORLD_COLLISION', 'TANKMAN_HIT_AT_DROWNING',
-     'ENGINE_DESTROYED_AT_UNLIMITED_RPM', 'ENGINE_DESTROYED_AT_BURNOUT',
-     'DEVICE_DESTROYED_AT_SUPER_SHOT', 'TANKMAN_HIT_AT_SUPER_SHOT')
+     'ENGINE_DESTROYED_AT_UNLIMITED_RPM', 'ENGINE_DESTROYED_AT_BURNOUT')
     __damageInfoHealings = (
      'DEVICE_REPAIRED', 'TANKMAN_RESTORED', 'FIRE_STOPPED')
     __damageInfoNoNotification = (

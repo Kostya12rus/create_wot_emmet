@@ -425,9 +425,6 @@ class FINISH_REASON:
     OWN_VEHICLE_DESTROYED = 9
     DESTROYED_OBJECTS = 10
     OBJECTIVES_COMPLETED = 11
-    EVENT_DAMAGE_TIMEOUT = 12
-    EVENT_EXTERMINATION = 13
-    EVENT_2_BASES_CAPTURED = 14
 
 
 FINISH_REASON_NAMES = dict([ (v, k) for k, v in FINISH_REASON.__dict__.iteritems() if not k.startswith('_') ])
@@ -1196,7 +1193,6 @@ FIRE_NOTIFICATION_INDICES = dict((x[1], x[0]) for x in enumerate(FIRE_NOTIFICATI
 DAMAGE_INFO_CODES = ('DEVICE_CRITICAL', 'DEVICE_DESTROYED', 'TANKMAN_HIT', 'DEVICE_CRITICAL_AT_SHOT',
                      'DEVICE_DESTROYED_AT_SHOT', 'DEVICE_CRITICAL_AT_RAMMING', 'DEVICE_DESTROYED_AT_RAMMING',
                      'TANKMAN_HIT_AT_SHOT', 'DEATH_FROM_DEVICE_EXPLOSION_AT_SHOT',
-                     'DEVICE_DESTROYED_AT_SUPER_SHOT', 'TANKMAN_HIT_AT_SUPER_SHOT',
                      'DEVICE_CRITICAL_AT_FIRE', 'DEVICE_DESTROYED_AT_FIRE', 'DEVICE_CRITICAL_AT_WORLD_COLLISION',
                      'DEVICE_DESTROYED_AT_WORLD_COLLISION', 'DEVICE_CRITICAL_AT_DROWNING',
                      'DEVICE_DESTROYED_AT_DROWNING', 'DEVICE_REPAIRED_TO_CRITICAL',
@@ -1559,7 +1555,6 @@ class AUTO_MAINTENANCE_TYPE:
     EQUIP = 3
     EQUIP_BOOSTER = 4
     CUSTOMIZATION = 5
-    EVENT_EQUIP = 6
 
 
 class AUTO_MAINTENANCE_RESULT:
@@ -1857,6 +1852,7 @@ class USER_SERVER_SETTINGS:
     BATTLE_MATTERS_QUESTS = 89
     QUESTS_PROGRESS = 90
     SESSION_STATS = 96
+    NEW_YEAR = 105
     CONTOUR = 106
     UI_STORAGE_2 = 109
     _ALL = (
@@ -1977,6 +1973,7 @@ INT_USER_SETTINGS_KEYS = {USER_SERVER_SETTINGS.VERSION: 'Settings version',
    USER_SERVER_SETTINGS.GAME_EXTENDED_2: 'Game extended section settings 2', 
    103: 'Mapbox carousel filter 1', 
    104: 'Mapbox carousel filter 2', 
+   USER_SERVER_SETTINGS.NEW_YEAR: 'New Year settings storage', 
    USER_SERVER_SETTINGS.CONTOUR: 'Contour settings', 
    107: 'Fun Random carousel filter 1', 
    108: 'Fun Random carousel filter 2', 
@@ -1989,9 +1986,7 @@ INT_USER_SETTINGS_KEYS = {USER_SERVER_SETTINGS.VERSION: 'Settings version',
    115: 'Once only hints', 
    31001: 'Armory Yard progression', 
    31002: 'Versus AI carousel filter 1', 
-   31003: 'Versus AI carousel filter 2', 
-   31004: 'HW22 carousel filter 1', 
-   31005: 'HW22 carousel filter 2'}
+   31003: 'Versus AI carousel filter 2'}
 
 class WG_GAMES:
     TANKS = 'wot'
@@ -2380,7 +2375,6 @@ class RESPAWN_TYPES:
     LIMITED = 3
     EPIC = 4
     SAFE = 5
-    EVENT_INFINITE = 6
 
 
 class VISIBILITY:
@@ -2555,7 +2549,6 @@ GAMEPLAY_NAMES_WITH_DISABLED_QUESTS = ('bootcamp', )
 class BASE_TYPE:
     TEAM_BASE = 1
     SECTOR_BASE = 2
-    TEAM_BASE_RECAPTURABLE = 3
 
 
 class SECTOR_STATE:
@@ -2701,10 +2694,6 @@ class LOOT_TYPE(object):
     ADVANCED = 2
     AIRDROP = 3
     CORPSE = 4
-    BUFF_SHOOTINGSPEED = 5
-    BUFF_DOUBLEDAMAGE = 6
-    BUFF_BREAKINGMODULES = 7
-    BUFF_FIRESHELLS = 8
 
 
 class AirdropType(object):
@@ -2724,18 +2713,6 @@ class BattleRoyaleMode(object):
     SQUAD = 'squad'
     ALL = (
      SOLO, SQUAD)
-
-
-class MarkerItem(object):
-    DEFAULT = 0
-    DEATHZONE = 1
-    COMP7_RECON = 2
-    HW_TEAM_BASE = 4
-    HW_PICKUP_PLACEMENT = 5
-    HW_PICKUP_SPAWNED = 6
-    POLYGONAL_ZONE = 7
-    STATIC_DEATH_ZONE = 8
-    STATIC_DEATH_ZONE_PROXIMITY = 9
 
 
 class CLIENT_COMMAND_SOURCES:
@@ -3316,6 +3293,14 @@ class WINBACK_BATTLE_TOKEN_DRAW_REASON(enum.IntEnum):
     REGULAR = 0
     MANUAL = 1
     SQUAD = 2
+
+
+class MarkerItem(object):
+    DEFAULT = 0
+    COMP7_RECON = 1
+    POLYGONAL_ZONE = 2
+    STATIC_DEATH_ZONE = 3
+    STATIC_DEATH_ZONE_PROXIMITY = 4
 
 
 class DROP_SKILL_OPTIONS(object):

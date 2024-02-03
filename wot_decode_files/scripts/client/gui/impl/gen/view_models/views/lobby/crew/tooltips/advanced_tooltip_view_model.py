@@ -5,9 +5,9 @@
 from frameworks.wulf import ViewModel
 
 class AdvancedTooltipViewModel(ViewModel):
-    __slots__ = ()
+    __slots__ = ('onError', )
 
-    def __init__(self, properties=3, commands=0):
+    def __init__(self, properties=3, commands=1):
         super(AdvancedTooltipViewModel, self).__init__(properties=properties, commands=commands)
 
     def getMovie(self):
@@ -33,3 +33,4 @@ class AdvancedTooltipViewModel(ViewModel):
         self._addStringProperty('movie', '')
         self._addStringProperty('header', '')
         self._addStringProperty('description', '')
+        self.onError = self._addCommand('onError')

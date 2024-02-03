@@ -70,11 +70,16 @@ def raiseWrongXml(xmlContext, subsectionName, msg):
         xmlContext = xmlContext[0]
 
     text = "error in '" + fileName + "': " + msg
+    return raiseWrongData(text)
+
+
+def raiseWrongData(msg):
     if constants.IS_EDITOR:
-        LOG_ERROR(text)
+        LOG_ERROR(msg)
+        return
     else:
-        raise SoftException(text)
-    return
+        raise SoftException(msg)
+        return
 
 
 def raiseWrongSection(xmlContext, subsectionName):

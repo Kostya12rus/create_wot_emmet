@@ -100,7 +100,3 @@ class HangarMeta(View):
     def as_updateHangarComponentsS(self, showComponents=None, hideComponents=None):
         if self._isDAAPIInited():
             return self.flashObject.as_updateHangarComponents(showComponents, hideComponents)
-
-    def as_toggleEventModeS(self, isEventMode):
-        if self._isDAAPIInited():
-            return self.flashObject.as_toggleEventMode(isEventMode)
